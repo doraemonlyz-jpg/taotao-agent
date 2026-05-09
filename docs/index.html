@@ -3,2271 +3,594 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Taotao Agent · Implementation Field Guide</title>
-<meta name="description" content="A complete walkthrough of every component, node, tool, and design tradeoff in the Taotao Agent codebase. Built for studying, not for skimming.">
+<title>桃桃 Agent · Senior Agent Engineer 12 本书学习手册</title>
+<meta name="description" content="从 0 到 senior agent engineer 面试 · 12 本完整手册 · 5 阶段学习路径 · 22000+ 行内容 · 280+ 道面试题 · 700+ 词术语表 · 涵盖 LangGraph / RAG / Memory / Tool / Eval / Debug / 系统设计 / Live Coding / 企业级交付 / AI Infra">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* =====================================================================
- * Taotao Agent — Implementation Field Guide
- * Editorial / textbook aesthetic with warm paper palette.
- * Single self-contained file. No build step. Zero JS required to read.
- * ===================================================================== */
-
 :root {
-  --paper:        #f3eee2;
-  --paper-2:      #ece5d2;
-  --paper-edge:   #e3dac4;
-  --ink:          #16140e;
-  --ink-soft:     #3a3326;
-  --ink-mute:     #756c5c;
-  --rule:         #c8bea8;
-  --rule-soft:    #ddd2b8;
-  --tomato:       #c83b22;
-  --moss:         #2f5037;
-  --amber:        #b46a1c;
-  --indigo:       #2f3a64;
-  --panel:        #fbf6e9;
-  --code-bg:      #1a1812;
-  --code-fg:      #e8dfc4;
-  --code-mute:    #998a6c;
-  --code-key:     #f3a261;
-  --code-str:     #b9c97c;
-  --code-fn:      #ffd28a;
-  --code-cmt:     #6f6754;
-
+  --paper: #fbf5e8; --paper-2: #f4ecd6; --paper-card: #ffffff;
+  --ink: #1d1a14; --ink-soft: #3a3327; --ink-mute: #756c5c;
+  --rule: #d8cdb0; --rule-soft: #e8debc;
+  --leaf: #4a8a4a; --leaf-soft: #ebf3e7;
+  --rust: #c44d2a; --rust-soft: #fae6dc;
+  --sky:  #2c6ca8; --sky-soft:  #e2edf5;
+  --plum: #864c8e; --plum-soft: #f1e6f2;
+  --gold: #b8881e; --gold-soft: #f7eccd;
+  --teal: #1f7a6b; --teal-soft: #ddeeea;
+  --coral: #d96c5d; --coral-soft: #fae0db;
   --font-display: "Fraunces", "Times New Roman", serif;
-  --font-body:    "Spectral", "Iowan Old Style", "Charter", Georgia, serif;
-  --font-sans:    "DM Sans", system-ui, -apple-system, sans-serif;
-  --font-mono:    "JetBrains Mono", "SF Mono", Menlo, monospace;
-  --font-zh:      "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+  --font-body: "Lora", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  --font-zh: "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
 }
-
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body {
-  margin: 0;
-  background:
-    radial-gradient(circle at 12% 8%, rgba(196, 178, 144, 0.18), transparent 40%),
-    radial-gradient(circle at 88% 92%, rgba(150, 130, 90, 0.12), transparent 50%),
-    var(--paper);
-  color: var(--ink);
-  font-family: var(--font-body);
-  font-size: 17px;
-  line-height: 1.7;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
+body { margin: 0; background: radial-gradient(ellipse at top left, rgba(196,178,144,.14), transparent 50%), radial-gradient(ellipse at bottom right, rgba(74,138,74,.10), transparent 50%), var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.7; }
 :lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
-.zh, p, li, dd { font-feature-settings: "ss01", "ss02"; }
-a { color: var(--tomato); text-decoration: none; border-bottom: 1px solid rgba(200, 59, 34, 0.35); }
-a:hover { background: rgba(200, 59, 34, 0.08); }
-em { font-style: italic; color: var(--moss); }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(196,77,42,.4); transition: all .15s; }
+a:hover { background: rgba(196,77,42,.08); }
+a.bare { border-bottom: none; }
+em { font-style: italic; color: var(--leaf); font-weight: 500; }
 strong { font-weight: 600; color: var(--ink); }
 
-/* ---------- Layout shell ---------- */
-.layout {
-  display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
-  max-width: 1480px;
-  margin: 0 auto;
-  padding: 0 2rem;
-  gap: 3rem;
-}
-@media (max-width: 980px) {
-  .layout { grid-template-columns: 1fr; gap: 0; padding: 0 1.2rem; }
-  .toc { position: static !important; max-height: none !important; }
-  .toc-inner { display: none; }
-  .toc.open .toc-inner { display: block; }
-  .toc-toggle { display: inline-flex !important; }
-}
+.container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+@media (max-width: 720px) { .container { padding: 0 1.2rem; } }
 
-/* ---------- TOC ---------- */
-.toc {
-  position: sticky;
-  top: 0;
-  align-self: start;
-  height: 100vh;
-  max-height: 100vh;
-  overflow: auto;
-  padding: 2rem 0.4rem 4rem 0;
-  border-right: 1px solid var(--rule-soft);
-  font-family: var(--font-sans);
-  font-size: 0.84rem;
-}
-.toc-toggle {
-  display: none;
-  margin: 1rem 0;
-  padding: 0.4rem 0.8rem;
-  background: var(--panel);
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  font-family: var(--font-sans);
-  font-size: 0.75rem;
-  cursor: pointer;
-}
-.toc-brand {
-  padding: 0 0.6rem 1rem;
-  border-bottom: 1px dashed var(--rule);
-  margin-bottom: 1rem;
-}
-.toc-brand .mark {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 1.4rem;
-  color: var(--ink);
-  display: block;
-}
-.toc-brand .mark .dot { color: var(--tomato); font-style: normal; }
-.toc-brand .sub {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-mute);
-  margin-top: 0.3rem;
-  display: block;
-}
-.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: tocpart; }
-.toc > .toc-inner > ol > li {
-  counter-increment: tocpart;
-  padding: 0.18rem 0;
-}
-.toc a {
-  display: flex;
-  gap: 0.55rem;
-  padding: 0.28rem 0.5rem 0.28rem 0.6rem;
-  border: none;
-  color: var(--ink-soft);
-  font-weight: 500;
-  border-radius: 6px;
-  transition: background 0.12s, color 0.12s;
-}
-.toc a::before {
-  content: counter(tocpart, upper-roman);
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  color: var(--ink-mute);
-  letter-spacing: 0.05em;
-  width: 2.4em;
-  flex-shrink: 0;
-  padding-top: 0.1em;
-}
-.toc a:hover { background: var(--paper-edge); color: var(--ink); }
-.toc a.active {
-  background: rgba(200, 59, 34, 0.08);
-  color: var(--tomato);
-}
-.toc ul { list-style: none; padding: 0 0 0.4rem 2.6rem; margin: 0; }
-.toc ul li a {
-  font-size: 0.78rem;
-  padding: 0.16rem 0.5rem;
-  color: var(--ink-mute);
-  font-weight: 400;
-}
-.toc ul li a::before { content: ""; width: 0; }
-.toc-foot {
-  margin-top: 2rem;
-  padding: 1rem 0.6rem 0;
-  border-top: 1px dashed var(--rule);
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  color: var(--ink-mute);
-  letter-spacing: 0.04em;
-}
-.toc-foot a {
-  color: var(--ink-mute);
-  border-bottom-color: rgba(117, 108, 92, 0.4);
-}
-.toc-foot a:hover { color: var(--tomato); }
+/* ===== nav bar ===== */
+.nav { padding: 1.4rem 0; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: rgba(251,245,232,.95); backdrop-filter: blur(8px); z-index: 100; }
+.nav-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.nav-brand { font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 1.3rem; color: var(--ink); border: none; }
+.nav-brand .dot { color: var(--rust); }
+.nav-links { display: flex; gap: 1.6rem; font-family: var(--font-sans); font-size: 0.9rem; }
+.nav-links a { color: var(--ink-mute); border-bottom: none; font-weight: 500; }
+.nav-links a:hover { color: var(--rust); background: none; }
+.nav-cta { font-family: var(--font-sans); font-size: 0.85rem; padding: 0.45rem 1rem; background: var(--rust); color: white !important; border-radius: 999px; border: none; font-weight: 500; }
+.nav-cta:hover { background: #a13d20; }
 
-/* ---------- Book ---------- */
-.book { padding: 2rem 0 6rem; max-width: 820px; }
-.book section { margin: 0 0 5rem; scroll-margin-top: 1rem; }
+/* ===== hero ===== */
+.hero { padding: 5rem 0 4rem; border-bottom: 1px solid var(--ink); position: relative; }
+.hero::after { content: ""; position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%); width: 120px; height: 4px; background: var(--rust); }
+.hero-eyebrow { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.08em; color: var(--rust); margin-bottom: 1.6rem; font-weight: 600; text-transform: uppercase; text-align: center; }
+.hero-eyebrow .sep { color: var(--rule); margin: 0 0.6rem; font-weight: 400; }
+.hero h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(2.6rem, 5.5vw, 4.4rem); line-height: 1.04; letter-spacing: -0.02em; margin: 0 0 1.6rem; color: var(--ink); text-align: center; max-width: 14em; margin-left: auto; margin-right: auto; }
+.hero h1 em { color: var(--rust); font-style: italic; }
+.hero h1 .strike { position: relative; }
+.hero h1 .strike::after { content: ""; position: absolute; left: -2%; right: -2%; top: 53%; height: 4px; background: var(--ink-mute); transform: rotate(-2deg); }
+.hero-lede { font-size: 1.2rem; color: var(--ink-soft); max-width: 38em; margin: 0 auto 2.5rem; line-height: 1.6; text-align: center; }
+.hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem; }
+.btn { font-family: var(--font-sans); font-weight: 500; font-size: 0.95rem; padding: 0.85rem 1.6rem; border-radius: 999px; border: 2px solid var(--ink); cursor: pointer; transition: all .15s; }
+.btn-primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.btn-primary:hover { background: var(--rust); border-color: var(--rust); }
+.btn-secondary { background: transparent; color: var(--ink); }
+.btn-secondary:hover { background: var(--ink); color: var(--paper); }
+.btn { border-bottom: 2px solid var(--ink); }
+.btn-secondary { border-bottom: 2px solid var(--ink); }
+.btn-primary { border-bottom: 2px solid var(--ink); }
 
-/* ---------- Cover ---------- */
-.cover {
-  margin-bottom: 5rem;
-  padding-bottom: 3rem;
-  border-bottom: 2px solid var(--ink);
-}
-.cover .eyebrow {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--tomato);
-  margin-bottom: 1.6rem;
-}
-.cover .eyebrow .sep { color: var(--rule); margin: 0 0.6rem; }
-.cover h1 {
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: clamp(2.6rem, 5vw, 4.4rem);
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-  margin: 0 0 1.5rem;
-  color: var(--ink);
-}
-.cover h1 em {
-  color: var(--tomato);
-  font-style: italic;
-  font-weight: 500;
-}
-.cover h1 .strike {
-  text-decoration: line-through;
-  text-decoration-color: var(--tomato);
-  text-decoration-thickness: 3px;
-  color: var(--ink-mute);
-  font-style: italic;
-}
-.cover .lede {
-  font-size: 1.15rem;
-  color: var(--ink-soft);
-  max-width: 38em;
-  margin: 0 0 2rem;
-}
-.cover .specs {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0;
-  border: 1px solid var(--rule);
-  background: var(--panel);
-  margin-top: 2.2rem;
-}
-.cover .specs > div {
-  padding: 0.9rem 1.1rem;
-  border-right: 1px solid var(--rule);
-}
-.cover .specs > div:last-child { border-right: none; }
-.cover .specs dt {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--ink-mute);
-  margin: 0 0 0.4rem;
-}
-.cover .specs dd {
-  font-family: var(--font-display);
-  font-size: 1.7rem;
-  margin: 0;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-}
-.cover .specs dd small {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: var(--ink-mute);
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  display: block;
-  margin-top: 0.2rem;
-}
+/* ===== stats ===== */
+.stats { padding: 3rem 0; border-bottom: 1px dashed var(--rule); }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 2rem; text-align: center; }
+.stat .num { font-family: var(--font-display); font-weight: 600; font-size: 2.4rem; color: var(--rust); display: block; line-height: 1; }
+.stat .label { font-family: var(--font-sans); font-size: 0.78rem; color: var(--ink-mute); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 0.4rem; display: block; }
 
-/* ---------- Headings ---------- */
-.part-head {
-  margin: 0 0 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--rule);
-}
-.part-head .num {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--ink-mute);
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  margin-bottom: 1rem;
-}
-.part-head .num .roman {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 1.5rem;
-  color: var(--tomato);
-  letter-spacing: 0;
-}
-.part-head h2 {
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: clamp(1.9rem, 3vw, 2.7rem);
-  line-height: 1.1;
-  margin: 0;
-  color: var(--ink);
-  letter-spacing: -0.01em;
-}
-.part-head .sub {
-  margin-top: 0.6rem;
-  font-style: italic;
-  color: var(--ink-mute);
-  font-size: 1rem;
-  font-family: var(--font-display);
-}
+/* ===== quick start ===== */
+.section { padding: 5rem 0; }
+.section-head { text-align: center; margin-bottom: 3rem; }
+.section-head .sec-eyebrow { font-family: var(--font-sans); font-size: 0.74rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--rust); margin-bottom: 0.8rem; }
+.section-head h2 { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.9rem, 3.5vw, 2.7rem); line-height: 1.15; margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+.section-head h2 em { color: var(--rust); font-style: italic; }
+.section-head .sec-lede { font-size: 1rem; color: var(--ink-mute); max-width: 32em; margin: 0 auto; font-style: italic; font-family: var(--font-display); }
 
-h3 {
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 1.45rem;
-  letter-spacing: -0.005em;
-  margin: 2.6rem 0 0.8rem;
-  color: var(--ink);
-  scroll-margin-top: 1rem;
-}
-h3 .anchor {
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  font-weight: 400;
-  color: var(--rule);
-  margin-right: 0.55rem;
-  letter-spacing: 0.05em;
-  font-style: normal;
-}
-h4 {
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 0.85rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-  margin: 1.6rem 0 0.4rem;
-}
-p { margin: 0 0 1rem; }
-.book p, .book li { color: var(--ink-soft); }
+.qs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.4rem; }
+.qs-card { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 14px; padding: 1.6rem 1.5rem; transition: all .2s; border-bottom: 3px solid var(--rule); border-left: none; border-right: none; border-top: 1px solid var(--rule); }
+.qs-card.qs-rust { border-left: 4px solid var(--rust); }
+.qs-card.qs-leaf { border-left: 4px solid var(--leaf); }
+.qs-card.qs-sky { border-left: 4px solid var(--sky); }
+.qs-card.qs-plum { border-left: 4px solid var(--plum); }
+.qs-card:hover { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(29,26,20,.08); }
+.qs-card h4 { font-family: var(--font-sans); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--rust); margin: 0 0 0.4rem; }
+.qs-card .qs-title { font-family: var(--font-display); font-weight: 500; font-size: 1.25rem; line-height: 1.25; color: var(--ink); margin: 0 0 0.7rem; }
+.qs-card p { font-size: 0.92rem; color: var(--ink-soft); margin: 0 0 1rem; line-height: 1.55; }
+.qs-card .qs-link { font-family: var(--font-sans); font-size: 0.84rem; font-weight: 500; color: var(--rust); border-bottom: 1px solid var(--rust); }
+.qs-card .qs-link::after { content: " →"; }
 
-/* ---------- Lists ---------- */
-ol, ul { padding-left: 1.4rem; margin: 0.4rem 0 1.2rem; }
-li { margin: 0.2rem 0; }
-.book ul.tight li { margin: 0.05rem 0; }
-.book ul.checks { list-style: none; padding-left: 0; }
-.book ul.checks li { padding-left: 1.6rem; position: relative; }
-.book ul.checks li::before {
-  content: "✓"; position: absolute; left: 0; top: 0;
-  color: var(--moss); font-weight: 600;
-}
+/* ===== phase ===== */
+.phase { margin-bottom: 4rem; }
+.phase-head { display: flex; align-items: baseline; gap: 1.2rem; padding-bottom: 1rem; border-bottom: 2px solid var(--ink); margin-bottom: 1.8rem; flex-wrap: wrap; }
+.phase-num { font-family: var(--font-display); font-weight: 700; font-size: 3rem; line-height: 1; color: var(--rust); font-style: italic; }
+.phase-meta { flex: 1; min-width: 220px; }
+.phase-meta h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.7rem; margin: 0 0 0.3rem; color: var(--ink); letter-spacing: -0.005em; }
+.phase-meta h3 em { color: var(--rust); font-style: italic; font-weight: 500; }
+.phase-meta .phase-sub { font-family: var(--font-sans); font-size: 0.86rem; color: var(--ink-mute); }
+.phase-meta .phase-sub strong { color: var(--ink); font-weight: 600; }
+.phase-time { font-family: var(--font-sans); font-size: 0.78rem; color: var(--ink-mute); letter-spacing: 0.06em; text-transform: uppercase; padding: 0.4rem 0.8rem; background: var(--paper-2); border-radius: 999px; flex-shrink: 0; }
 
-/* ---------- Code ---------- */
-code {
-  font-family: var(--font-mono);
-  font-size: 0.84em;
-  background: rgba(196, 178, 144, 0.22);
-  padding: 0.05rem 0.35rem;
-  border-radius: 4px;
-  color: var(--ink);
-}
-pre {
-  font-family: var(--font-mono);
-  background: var(--code-bg);
-  color: var(--code-fg);
-  padding: 1.1rem 1.3rem;
-  border-radius: 8px;
-  overflow-x: auto;
-  font-size: 0.78rem;
-  line-height: 1.55;
-  margin: 1rem 0 1.4rem;
-  border: 1px solid #2a2620;
-}
-pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
-pre .k { color: var(--code-key); }
-pre .s { color: var(--code-str); }
-pre .c { color: var(--code-cmt); font-style: italic; }
-pre .f { color: var(--code-fn); }
-pre .m { color: var(--code-mute); }
+.book-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 1.2rem; }
+.book-card { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 12px; padding: 1.4rem 1.5rem 1.2rem; transition: all .2s; display: flex; flex-direction: column; min-height: 230px; }
+.book-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(29,26,20,.08); border-color: var(--ink-mute); }
+.book-card a { border: none; }
+.book-card .bk-row { display: flex; gap: 0.8rem; align-items: baseline; margin-bottom: 0.6rem; }
+.book-card .bk-emoji { font-size: 1.4rem; line-height: 1; }
+.book-card .bk-num { font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink-mute); letter-spacing: 0.06em; }
+.book-card h4 { font-family: var(--font-display); font-weight: 600; font-size: 1.2rem; margin: 0 0 0.4rem; color: var(--ink); line-height: 1.25; }
+.book-card .bk-eng { font-family: var(--font-sans); font-size: 0.78rem; color: var(--ink-mute); margin-bottom: 0.7rem; font-style: italic; letter-spacing: 0.02em; }
+.book-card .bk-desc { font-size: 0.9rem; color: var(--ink-soft); line-height: 1.55; flex: 1; margin: 0 0 0.9rem; }
+.book-card .bk-meta { display: flex; gap: 1rem; flex-wrap: wrap; font-family: var(--font-sans); font-size: 0.74rem; color: var(--ink-mute); margin-bottom: 0.8rem; padding-top: 0.7rem; border-top: 1px dashed var(--rule); }
+.book-card .bk-meta span { white-space: nowrap; }
+.book-card .bk-meta strong { color: var(--rust); font-weight: 600; }
+.book-card .bk-link { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 500; color: var(--rust); margin-top: auto; }
+.book-card .bk-link::after { content: " →"; }
+.book-card.featured { border-color: var(--rust); border-left: 4px solid var(--rust); background: linear-gradient(to bottom right, var(--paper-card), var(--rust-soft) 200%); }
 
-.code-cap {
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--ink-mute);
-  margin: 1.2rem 0 -0.6rem;
-  padding-left: 0.3rem;
-}
-.code-cap a { color: inherit; border-bottom-color: var(--rule); }
+/* ===== Roadmap progress ===== */
+.roadmap { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 16px; padding: 2.4rem; margin: 0 0 4rem; }
+.roadmap h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.5rem; margin: 0 0 1.6rem; color: var(--ink); text-align: center; }
+.roadmap-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.6rem; margin-bottom: 1.2rem; }
+.roadmap-step { text-align: center; padding: 0.7rem 0.5rem; border-radius: 8px; font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; color: white; }
+.roadmap-step .rs-time { display: block; font-size: 0.66rem; opacity: 0.85; font-weight: 400; margin-top: 0.2rem; letter-spacing: 0.04em; }
+.rs-1 { background: var(--leaf); }
+.rs-2 { background: var(--sky); }
+.rs-3 { background: var(--plum); }
+.rs-4 { background: var(--rust); }
+.rs-5 { background: var(--gold); }
+.roadmap-labels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.6rem; font-family: var(--font-sans); font-size: 0.74rem; color: var(--ink-mute); text-align: center; line-height: 1.4; }
+.roadmap-labels strong { color: var(--ink); display: block; font-size: 0.82rem; }
 
-/* ---------- Callouts ---------- */
-.callout {
-  margin: 1.4rem 0;
-  padding: 1.1rem 1.3rem;
-  border-left: 3px solid var(--tomato);
-  background: var(--panel);
-  border-radius: 0 6px 6px 0;
-  font-size: 0.96rem;
-}
-.callout.tip    { border-color: var(--moss); }
-.callout.warn   { border-color: var(--amber); }
-.callout.steal  { border-color: var(--indigo); background: #f1eddf; }
-.callout .lbl {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--tomato);
-  display: block;
-  margin-bottom: 0.4rem;
-}
-.callout.tip   .lbl { color: var(--moss); }
-.callout.warn  .lbl { color: var(--amber); }
-.callout.steal .lbl { color: var(--indigo); }
-.callout p:last-child { margin-bottom: 0; }
+/* ===== Coverage matrix ===== */
+.coverage table { width: 100%; border-collapse: collapse; margin: 0; font-size: 0.85rem; background: var(--paper-card); border-radius: 8px; overflow: hidden; border: 1px solid var(--rule); }
+.coverage th, .coverage td { padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--rule-soft); text-align: center; vertical-align: middle; }
+.coverage th { font-family: var(--font-sans); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink); font-weight: 600; background: var(--paper-2); }
+.coverage td:first-child { text-align: left; font-family: var(--font-display); font-weight: 500; color: var(--ink); }
+.coverage td.x { color: var(--rust); font-weight: 700; font-size: 1.05rem; }
+.coverage td.dim { color: var(--rule); }
+.coverage tr:hover td { background: rgba(196,178,144,.13); }
 
-/* ---------- Diagrams (ASCII boxes) ---------- */
-.diagram {
-  font-family: var(--font-mono);
-  font-size: 0.74rem;
-  line-height: 1.45;
-  background: var(--panel);
-  border: 1px solid var(--rule);
-  padding: 1.2rem 1.4rem;
-  border-radius: 8px;
-  overflow-x: auto;
-  white-space: pre;
-  margin: 1.2rem 0 1.6rem;
-  color: var(--ink-soft);
-}
-.diagram .arrow { color: var(--tomato); }
-.diagram .box   { color: var(--ink); font-weight: 500; }
-.diagram .gloss { color: var(--ink-mute); }
+/* ===== Final CTA ===== */
+.final-cta { background: var(--ink); color: var(--paper); padding: 4rem 0; margin-top: 4rem; }
+.final-cta h2 { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.8rem, 3.2vw, 2.4rem); margin: 0 0 1rem; text-align: center; color: var(--paper); }
+.final-cta h2 em { color: #f7c87a; font-style: italic; }
+.final-cta .lede { text-align: center; color: rgba(251,245,232,.75); max-width: 36em; margin: 0 auto 2rem; font-style: italic; font-family: var(--font-display); font-size: 1.05rem; }
+.final-cta .cta-row { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; }
+.final-cta .btn { background: var(--paper); color: var(--ink); border-color: var(--paper); border-bottom-color: var(--paper); }
+.final-cta .btn:hover { background: var(--rust); color: white; border-color: var(--rust); border-bottom-color: var(--rust); }
 
-/* ---------- Tables ---------- */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 1rem 0 1.6rem;
-  font-size: 0.92rem;
-}
-th, td {
-  text-align: left;
-  padding: 0.55rem 0.7rem;
-  border-bottom: 1px solid var(--rule-soft);
-  vertical-align: top;
-}
-th {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-mute);
-  font-weight: 600;
-  background: var(--paper-2);
-  border-bottom: 1px solid var(--rule);
-}
-tr:hover td { background: rgba(196, 178, 144, 0.13); }
-
-/* ---------- Pull quotes ---------- */
-.pull {
-  margin: 2.5rem 0;
-  padding: 1.6rem 1.8rem;
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 1.4rem;
-  line-height: 1.35;
-  color: var(--ink);
-  border-top: 1px solid var(--ink);
-  border-bottom: 1px solid var(--ink);
-  position: relative;
-}
-.pull::before {
-  content: "“";
-  position: absolute;
-  top: 0.2rem;
-  left: -0.6rem;
-  font-family: var(--font-display);
-  font-size: 4rem;
-  color: var(--tomato);
-  line-height: 1;
-}
-.pull cite {
-  display: block;
-  margin-top: 0.6rem;
-  font-style: normal;
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: var(--ink-mute);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-/* ---------- Misc ---------- */
-.kicker {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--tomato);
-  margin: 0 0 0.4rem;
-}
-.tag {
-  display: inline-block;
-  padding: 0.05rem 0.5rem;
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.04em;
-  color: var(--ink-mute);
-  background: var(--panel);
-  margin: 0.05rem 0.18rem 0.05rem 0;
-  vertical-align: middle;
-}
-.tag.hot { color: var(--tomato); border-color: rgba(200, 59, 34, 0.4); }
-.tag.cool { color: var(--moss); border-color: rgba(47, 80, 55, 0.35); }
-.tag.warn { color: var(--amber); border-color: rgba(180, 106, 28, 0.4); }
-
-.fileref {
-  font-family: var(--font-mono);
-  font-size: 0.78em;
-  color: var(--moss);
-  background: rgba(47, 80, 55, 0.07);
-  padding: 0.05rem 0.4rem;
-  border-radius: 3px;
-  border: none;
-}
-.fileref:hover { background: rgba(47, 80, 55, 0.14); }
-
-footer.colophon {
-  margin-top: 6rem;
-  padding-top: 2.5rem;
-  border-top: 2px solid var(--ink);
-  font-family: var(--font-sans);
-  font-size: 0.85rem;
-  color: var(--ink-mute);
-}
-footer.colophon .row {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 0.6rem;
-}
-
-/* small-screen cover tightening */
-@media (max-width: 720px) {
-  .cover .specs { grid-template-columns: repeat(2, 1fr); }
-  .cover .specs > div:nth-child(2n) { border-right: none; }
-  .cover .specs > div { border-bottom: 1px solid var(--rule); }
-  .cover .specs > div:nth-last-child(-n+2) { border-bottom: none; }
-}
+footer.foot { padding: 2.5rem 0 3rem; border-top: 1px solid var(--rule); background: var(--paper-2); font-family: var(--font-sans); font-size: 0.85rem; color: var(--ink-mute); }
+footer.foot .row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; align-items: baseline; }
+footer.foot a { color: var(--ink-mute); border-bottom-color: rgba(117,108,92,.3); }
+footer.foot a:hover { color: var(--rust); }
 </style>
 </head>
 <body>
 
-<div class="layout">
-
-  <!-- ===================== Table of contents ===================== -->
-  <aside class="toc" id="toc">
-    <div class="toc-brand">
-      <span class="mark">桃桃<span class="dot">.</span> Agent</span>
-      <span class="sub">Implementation Field Guide · v1</span>
+<!-- ============== Nav ============== -->
+<nav class="nav">
+  <div class="container nav-row">
+    <a href="#" class="nav-brand bare">桃桃 <span class="dot">·</span> Agent Manual</a>
+    <div class="nav-links">
+      <a href="#path">学习路径</a>
+      <a href="#books">12 本书</a>
+      <a href="#coverage">面试覆盖</a>
+      <a href="#about">关于</a>
     </div>
-    <button class="toc-toggle" onclick="document.getElementById('toc').classList.toggle('open')">≡ Contents</button>
-    <nav class="toc-inner">
-      <ol>
-        <li><a href="#part-1">30 000-foot view</a>
-          <ul>
-            <li><a href="#what-runs">What runs when you say <code>hi</code></a></li>
-            <li><a href="#full-graph">The full graph diagram</a></li>
-          </ul>
-        </li>
-        <li><a href="#part-2">State — the plumbing</a></li>
-        <li><a href="#part-3">Perception · the context-engineering node</a></li>
-        <li><a href="#part-4">Guardrails · in &amp; out</a></li>
-        <li><a href="#part-5">Planner &amp; supervisor loop-breaker</a></li>
-        <li><a href="#part-6">Executor · custom ToolNode + safe_run_tool</a></li>
-        <li><a href="#part-7">Tools (12) · routing, sandboxing, dedup</a></li>
-        <li><a href="#part-8">Critic · gated reflexion</a></li>
-        <li><a href="#part-9">Extractor · async Mem0-style writes</a></li>
-        <li><a href="#part-10">Memory ×4 · short, vector, profile, skills</a></li>
-        <li><a href="#part-11">LLM tier router · hot-swap, local + hosted</a></li>
-        <li><a href="#part-12">Observability · trace, SSE bus, token meter</a></li>
-        <li><a href="#part-13">Frontend · streaming, picker, panels</a></li>
-        <li><a href="#part-14">Tradeoffs &amp; design decisions</a></li>
-        <li><a href="#part-15">Performance · numbers + breakdowns</a></li>
-        <li><a href="#part-16">Patterns to steal</a></li>
-        <li><a href="#part-17">How to extend</a></li>
-      </ol>
-    </nav>
-    <div class="toc-foot">
-      <div>新手？先读：</div>
-      <a href="learn.html">→ 从 0 到面试 学习手册</a><br>
-      <a href="enterprise.html">→ 企业级交付手册</a><br>
-      <a href="agent-design.html">→ Agent System Design</a><br>
-      <a href="agent-coding.html">→ Live Coding 实战</a><br>
-      <a href="agent-debugging.html">→ Debugging Playbook</a><br>
-      <a href="langgraph-internals.html">→ LangGraph 内部 + 5 框架</a><br>
-      <a href="eval-observability.html">→ Eval &amp; Observability</a><br>
-      <a href="rag-production.html">→ RAG 生产级</a><br>
-      <a href="memory-context.html">→ Memory &amp; Context</a><br>
-      <a href="tool-design.html">→ Tool Design</a><br>
-      <a href="infra.html">→ AI Infra · 从硬件到面试</a>
-      <br><br>
-      <div>repo</div>
-      <a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/.../taotao-agent ↗</a>
+    <a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank" class="nav-cta bare">GitHub ↗</a>
+  </div>
+</nav>
+
+<!-- ============== Hero ============== -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">Senior Agent Engineer<span class="sep">·</span>Interview Manual<span class="sep">·</span>2026</div>
+    <h1>从 <span class="strike">"会用 LangChain"</span><br>到 <em>"我能 ship 一个生产级 agent"</em><br>的 12 本完整手册</h1>
+    <p class="hero-lede">
+      把 senior agent engineer 面试需要的<em>全部知识</em>系统化整理成 12 本互相关联的手册——
+      <strong>5 阶段学习路径 · 22000+ 行内容 · 280+ 道面试题 · 700+ 词术语</strong>。
+      不是教程合集 · 是按"从 0 到面试"路径设计的<em>完整体系</em>。
+    </p>
+    <div class="hero-cta">
+      <a href="#path" class="btn btn-primary bare">📚 按路径开始学</a>
+      <a href="#books" class="btn btn-secondary bare">🗂️ 直接看 12 本</a>
     </div>
-  </aside>
+  </div>
+</section>
 
-  <!-- ===================== Book ===================== -->
-  <main class="book">
+<!-- ============== Stats ============== -->
+<section class="stats">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat"><span class="num">12</span><span class="label">完整手册</span></div>
+      <div class="stat"><span class="num">22k+</span><span class="label">行内容</span></div>
+      <div class="stat"><span class="num">280+</span><span class="label">面试题</span></div>
+      <div class="stat"><span class="num">700+</span><span class="label">词术语表</span></div>
+      <div class="stat"><span class="num">35+</span><span class="label">SVG 图</span></div>
+      <div class="stat"><span class="num">5</span><span class="label">学习阶段</span></div>
+    </div>
+  </div>
+</section>
 
-    <!-- ============ Cover ============ -->
-    <header class="cover">
-      <div class="eyebrow">
-        Implementation Field Guide
-        <span class="sep">·</span> Taotao Agent v1
-        <span class="sep">·</span> May 2026
+<!-- ============== Quick start by goal ============== -->
+<section class="section" id="qs">
+  <div class="container">
+    <div class="section-head">
+      <div class="sec-eyebrow">⚡ Quick Start</div>
+      <h2>30 秒选 <em>从哪一本</em> 开始</h2>
+      <p class="sec-lede">按你<em>当前的目标</em>跳过去 · 不用从头读</p>
+    </div>
+    <div class="qs-grid">
+      <div class="qs-card qs-leaf">
+        <h4>🟢 完全新手</h4>
+        <div class="qs-title">"我刚听说 agent · 想全面了解"</div>
+        <p>13 章带分析图 · 60 道铺底面试题 · 每节附公开教程链接 · 8 周学习路径</p>
+        <a href="learn.html" class="qs-link bare">从《应用 · 0 到面试》开始</a>
       </div>
-      <h1>
-        Every box on the diagram, <em>working</em>. <br>
-        <span class="strike">No magic.</span> Just glue, well chosen.
-      </h1>
-      <p class="lede">
-        本文是 Taotao Agent (<code>桃桃 Agent</code>) 的逐节点实现详解。
-        每一个组件——感知 · 规划 · 执行 · 工具 · 记忆 · 反思 · 抽取 · 编排 · 护栏 · 观测——
-        都在 <code>backend/agent/</code> 里有一个真实可跑的文件，
-        本指南把它们一个个拆开，告诉你 <em>为什么这么写</em>、
-        <em>能偷哪个 pattern</em>、以及踩过的坑。
-      </p>
-      <dl class="specs">
-        <div><dt>Lines of code</dt><dd>~3.8k <small>backend + frontend</small></dd></div>
-        <div><dt>LangGraph nodes</dt><dd>13 <small>incl. summarizer</small></dd></div>
-        <div><dt>Tools</dt><dd>12 <small>top-K routed</small></dd></div>
-        <div><dt>Memory stores</dt><dd>4 <small>+ rolling summary</small></dd></div>
-        <div><dt>Providers</dt><dd>5 <small>Anthropic · OpenAI · Gemini · Ollama · OpenAI-compat</small></dd></div>
-        <div><dt>Latency</dt><dd>3-8s <small>hosted · 10-30s local</small></dd></div>
-      </dl>
-    </header>
-
-    <!-- ============ PART I ============ -->
-    <section id="part-1">
-      <header class="part-head">
-        <div class="num"><span class="roman">I</span> Part One — 30 000-foot view</div>
-        <h2>What you're looking at, before the microscope</h2>
-        <p class="sub">把 13 个节点先拼成一张图，再讲每一格</p>
-      </header>
-
-      <h3 id="what-runs"><span class="anchor">§1.1</span>What runs when you say <code>hi</code></h3>
-
-      <p>最短路径——一句无工具的闲聊会经过 <strong>5 个节点</strong>，调 <strong>1 次大模型</strong>，
-      并在后台启动 1 个异步 extractor。trace 面板里会按时间顺序冒出这些事件：</p>
-
-      <div class="diagram">
-START
-  │
-  ▼
-<span class="box">summarizer</span>      <span class="gloss">// noop — 消息 ≤ 24 条</span>
-  │
-  ▼
-<span class="box">perception</span>      <span class="gloss">// 注入 system prompt + profile + 3 facts + 2 reflections</span>
-  │
-  ▼
-<span class="box">input_guardrail</span> <span class="gloss">// 提示注入正则扫一遍 → pass</span>
-  │
-  ▼
-<span class="box">planner</span>         <span class="gloss">// trivial 启发式短路 → route=direct</span>
-  │
-  ▼
-<span class="box">executor</span>        <span class="gloss">// 大模型直接答 + 流式 token</span>
-  │
-  ▼
-<span class="box">critic</span>          <span class="gloss">// 启发式跳过 (短答案 + 0 工具)</span>
-  │
-  ▼
-<span class="box">extractor</span>       <span class="gloss">// 启发式判定 → 跳过 (此轮无值得记忆的内容)</span>
-  │
-  ▼
-<span class="box">output_guardrail</span> <span class="gloss">// PII 正则扫一遍 → pass</span>
-  │
-END</div>
-
-      <p>感知到的延迟主要来自一个 LLM 调用的 prefill + decode。其余节点都是几毫秒到几十毫秒级。</p>
-
-      <h3 id="full-graph"><span class="anchor">§1.2</span>The full graph diagram</h3>
-
-      <p>遇到工具调用、复杂任务、或者短答案不达标时，路径会更长。完整的状态机长这样：</p>
-
-      <div class="diagram">
-                       ┌─────────────┐
-                       │ summarizer  │  <span class="gloss">auto-compact when n_msgs > 24</span>
-                       └──────┬──────┘
-                              ▼
-                       ┌─────────────┐
-                       │ perception  │  <span class="gloss">inject ctx + reset turn-state</span>
-                       └──────┬──────┘
-                              ▼
-                    ┌────────────────────┐
-                    │ input_guardrail    │  <span class="gloss">prompt-injection + budget</span>
-                    └─────────┬──────────┘
-                              ▼
-                       ┌─────────────┐
-                       │   planner   │  <span class="gloss">route = direct | supervisor</span>
-                       └──┬────────┬─┘
-                <span class="arrow">direct</span>│        │<span class="arrow">supervisor</span>
-                          ▼        ▼
-                ┌──────────────┐  ┌──────────────┐
-        ┌──────▶│   executor   │  │  supervisor  │◀───────────┐
-        │       └──────┬───────┘  └──────┬───────┘            │
-        │   tool_call? │                 │ next:              │
-        │              ▼                 │ research|code|     │
-        │       ┌──────────┐             │ write|done         │
-        │       │  tools   │             ▼                    │
-        │       └────┬─────┘   ┌──────────────────┐           │
-        └────────────┘         │ researcher /     │───────────┤
-                               │ coder / writer   │           │
-                               └────────┬─────────┘           │
-                                        ▼                     │
-                                  (writer)──┐                 │
-                                        ▼   │                 │
-                       ┌─────────────┐      │                 │
-                       │   critic    │◀─────┘                 │
-                       └──┬────────┬─┘                        │
-                  <span class="arrow">retry</span>│        │<span class="arrow">pass</span>                          │
-                          ▼        ▼                          │
-                     (executor) ┌──────────┐                  │
-                                │ extractor│  <span class="gloss">async bg thread</span>  │
-                                └────┬─────┘                  │
-                                     ▼                        │
-                             ┌────────────────────┐           │
-                             │ output_guardrail   │  <span class="gloss">PII redact</span>
-                             └─────────┬──────────┘
-                                       ▼
-                                      END</div>
-
-      <div class="callout tip">
-        <span class="lbl">key insight</span>
-        <p>这张图里**只有 6 条**实际边是"动态决定"的：
-        <code>planner→{direct|supervisor}</code>、<code>executor→{tools|critic}</code>、
-        <code>supervisor→{researcher|coder|writer|critic}</code>、<code>critic→{retry|pass}</code>。
-        其它都是静态线。<strong>大部分"agent loop"复杂度其实只有 4-6 个分支</strong>——
-        别被白板上画的 20 个箭头吓到。</p>
+      <div class="qs-card qs-rust">
+        <h4>🟣 准备 senior 面试</h4>
+        <div class="qs-title">"下周就要面 · 突击重点"</div>
+        <p>系统设计 6 步框架 + Live Coding 8 真题 + Debugging Playbook 30 failure mode</p>
+        <a href="agent-design.html" class="qs-link bare">直接刷《System Design》</a>
       </div>
-
-      <h3 id="files-map"><span class="anchor">§1.3</span>文件地图</h3>
-
-      <p>下面提到的每个节点都对应一个真实文件，需要溯源时直接打开：</p>
-
-      <table>
-        <thead><tr><th>组件</th><th>文件</th><th>行数</th></tr></thead>
-        <tbody>
-          <tr><td>State 定义</td><td><a class="fileref" href="../backend/agent/state.py">backend/agent/state.py</a></td><td>~60</td></tr>
-          <tr><td>Graph 装配</td><td><a class="fileref" href="../backend/agent/graph.py">backend/agent/graph.py</a></td><td>~160</td></tr>
-          <tr><td>Perception</td><td><a class="fileref" href="../backend/agent/nodes/perception.py">nodes/perception.py</a></td><td>~135</td></tr>
-          <tr><td>Guardrails</td><td><a class="fileref" href="../backend/agent/nodes/guardrails.py">nodes/guardrails.py</a></td><td>~110</td></tr>
-          <tr><td>Planner</td><td><a class="fileref" href="../backend/agent/nodes/planner.py">nodes/planner.py</a></td><td>~95</td></tr>
-          <tr><td>Executor + ToolNode</td><td><a class="fileref" href="../backend/agent/nodes/executor.py">nodes/executor.py</a></td><td>~125</td></tr>
-          <tr><td>Supervisor + sub-agents</td><td><a class="fileref" href="../backend/agent/nodes/supervisor.py">nodes/supervisor.py</a></td><td>~210</td></tr>
-          <tr><td>Critic</td><td><a class="fileref" href="../backend/agent/nodes/critic.py">nodes/critic.py</a></td><td>~155</td></tr>
-          <tr><td>Extractor</td><td><a class="fileref" href="../backend/agent/nodes/extractor.py">nodes/extractor.py</a></td><td>~140</td></tr>
-          <tr><td>Summarizer</td><td><a class="fileref" href="../backend/agent/nodes/summarizer.py">nodes/summarizer.py</a></td><td>~55</td></tr>
-          <tr><td>Memory (4 stores)</td><td><a class="fileref" href="../backend/agent/memory/">backend/agent/memory/</a></td><td>~430</td></tr>
-          <tr><td>Tools (12)</td><td><a class="fileref" href="../backend/agent/tools/">backend/agent/tools/</a></td><td>~520</td></tr>
-          <tr><td>LLM router</td><td><a class="fileref" href="../backend/agent/nodes/llm.py">nodes/llm.py</a></td><td>~70</td></tr>
-          <tr><td>FastAPI app</td><td><a class="fileref" href="../backend/app.py">backend/app.py</a></td><td>~290</td></tr>
-          <tr><td>Frontend root</td><td><a class="fileref" href="../frontend/src/">frontend/src/</a></td><td>~1.4k</td></tr>
-        </tbody>
-      </table>
-    </section>
-
-    <!-- ============ PART II — State ============ -->
-    <section id="part-2">
-      <header class="part-head">
-        <div class="num"><span class="roman">II</span> Part Two — State</div>
-        <h2>The plumbing every node reads &amp; writes</h2>
-        <p class="sub">一个 TypedDict，几个 reducer，决定了图能不能写得清爽</p>
-      </header>
-
-      <p>LangGraph 0.6 鼓励用 <code>TypedDict</code>（不是 Pydantic）做 state——
-      因为它要在节点之间序列化、要走 checkpointer 落盘、要容忍部分字段缺失。
-      Taotao Agent 的 <code>AgentState</code> 长这样：</p>
-
-      <p class="code-cap"><a href="../backend/agent/state.py">backend/agent/state.py</a></p>
-<pre><span class="k">class</span> <span class="f">AgentState</span>(TypedDict, total=False):
-    <span class="c"># --- 5. Perception input ---</span>
-    user_input: str
-    attachments: list[dict[str, Any]]
-
-    <span class="c"># --- 1. LLM messages (short-term memory) ---</span>
-    messages: Annotated[list[AnyMessage], add_messages]   <span class="c"># reducer: append</span>
-
-    <span class="c"># --- 4. Planning ---</span>
-    plan: list[str]
-    current_step: int
-    route: Literal[<span class="s">"direct"</span>, <span class="s">"supervisor"</span>, <span class="s">"research"</span>, <span class="s">"code"</span>, <span class="s">"write"</span>]
-
-    <span class="c"># --- 6. Action / tool execution receipts ---</span>
-    tool_calls_made: int
-    routed_tools: list[str]      <span class="c"># which tools the executor saw this turn</span>
-
-    <span class="c"># --- O. Orchestrator bookkeeping (single-turn) ---</span>
-    subagent_history: list[str]  <span class="c"># reset by perception every turn</span>
-
-    <span class="c"># --- Reflection ---</span>
-    critique: str
-    critique_passed: bool
-    revisions: int
-
-    <span class="c"># --- Guardrails ---</span>
-    blocked: bool
-    block_reason: str
-
-    <span class="c"># --- Long-term memory hits (retrieved on demand) ---</span>
-    recalled_memories: list[str]
-    recalled_reflections: list[str]
-
-    <span class="c"># --- Rolling summary of compacted older messages ---</span>
-    summary: str
-
-    <span class="c"># --- Final ---</span>
-    final_answer: str
-
-    <span class="c"># --- Observability ---</span>
-    trace: Annotated[list[TraceEvent], add]
-    session_id: str
-</pre>
-
-      <h3 id="reducers"><span class="anchor">§2.1</span>两个 reducer 是关键</h3>
-
-      <p>大部分字段是<strong>替换语义</strong>——后写覆盖前写。但两个字段是<strong>累加语义</strong>，靠 reducer 实现：</p>
-
-      <ul>
-        <li><code>messages: Annotated[..., add_messages]</code>——LangGraph 内置 reducer，
-        合并消息列表的同时支持 <code>RemoveMessage</code> 标记和去重</li>
-        <li><code>trace: Annotated[..., add]</code>——纯列表拼接（用 <code>operator.add</code>），
-        每个节点 emit 的事件都追加到尾部</li>
-      </ul>
-
-      <div class="callout">
-        <span class="lbl">trap I fell into</span>
-        <p>想给 <code>subagent_history</code> 也加 <code>add</code> reducer——错。
-        因为 reducer 跨 turn 也累加，第二轮就会带上第一轮的历史，导致 supervisor 误判。
-        改成<strong>普通 list 字段 + perception 每轮显式 reset 为 <code>[]</code></strong>，
-        每个 sub-agent 自己 <code>list(state[...]) + [my_name]</code> 全量回写。
-        简单直接，不用记 reducer 行为。</p>
+      <div class="qs-card qs-sky">
+        <h4>🟠 要做企业级项目</h4>
+        <div class="qs-title">"老板让我做 agent · 怎么从 0 上线"</div>
+        <p>10 章交付流程 + 5 份 spec 模板 + 12 层技术栈 + 50 项上线 checklist</p>
+        <a href="enterprise.html" class="qs-link bare">看《企业级交付手册》</a>
       </div>
-
-      <h3 id="checkpointer"><span class="anchor">§2.2</span>SqliteSaver 持久化</h3>
-
-      <p>state 走 <code>AsyncSqliteSaver</code> 落到 <code>data/checkpoints.sqlite</code>，
-      所以 <em>backend 重启不丢会话</em>——前端用同一个 session_id 接回去就能续。</p>
-
-      <p class="code-cap"><a href="../backend/agent/graph.py">backend/agent/graph.py</a></p>
-<pre><span class="k">def</span> <span class="f">get_graph</span>():
-    <span class="s">"""Streaming-friendly graph (AsyncSqliteSaver). Survives backend restarts."""</span>
-    <span class="k">global</span> _async_compiled
-    <span class="k">if</span> _async_compiled <span class="k">is</span> <span class="k">None</span>:
-        cfg = get_settings()
-        async_conn = aiosqlite.connect(<span class="f">str</span>(cfg.checkpoint_db))
-        saver = AsyncSqliteSaver(async_conn)
-        _async_compiled = build_graph().compile(checkpointer=saver)
-    <span class="k">return</span> _async_compiled
-</pre>
-    </section>
-
-    <!-- ============ PART III — Perception ============ -->
-    <section id="part-3">
-      <header class="part-head">
-        <div class="num"><span class="roman">III</span> Part Three — Perception</div>
-        <h2>The context-engineering node</h2>
-        <p class="sub">Agent 的"感知"其实是把对的东西放到对的位置——而不是看 webcam</p>
-      </header>
-
-      <p>Perception 不解析图像、不识别意图。它做的是 <em>context engineering</em>——
-      为本轮对话拼好喂给 LLM 的消息列表。它要决定：</p>
-
-      <ul class="checks">
-        <li>哪些<strong>静态内容</strong>应该缓存？（system prompt + skills index）</li>
-        <li>哪些<strong>动态内容</strong>应该每轮重算？（profile 快照、retrieved facts、reflections、当前问题）</li>
-        <li>什么时候用 <strong>HyDE</strong> 改写召回查询？（短查询、模糊查询）</li>
-        <li>哪些 <strong>turn-state</strong> 需要重置？（tool_calls_made、revisions、subagent_history、routed_tools）</li>
-      </ul>
-
-      <h3 id="prompt-cache"><span class="anchor">§3.1</span>静态 / 动态分层 + Anthropic prompt cache</h3>
-
-      <p>Anthropic 的 <code>cache_control</code> 是<strong>这个 agent 最大的成本优化</strong>——
-      系统提示一旦标了 <code>{type: "text", text: "...", cache_control: {type: "ephemeral"}}</code>，
-      下一轮的同一段 prefill 只收 1/10 价。</p>
-
-      <p>但要让 cache 真正命中，需要把消息严格<strong>分两层</strong>：</p>
-
-      <p class="code-cap"><a href="../backend/agent/nodes/perception.py">backend/agent/nodes/perception.py</a></p>
-<pre><span class="k">def</span> <span class="f">_build_static_system</span>(prompt_caching: bool):
-    <span class="s">"""Build the SystemMessage. Static = identical across turns,
-    so we attach Anthropic cache_control to make it cacheable."""</span>
-    skills_block = skills_index_block()
-    text = STATIC_SYSTEM_PROMPT
-    <span class="k">if</span> skills_block:
-        text += <span class="s">"\n\n---\n"</span> + skills_block
-
-    <span class="k">if</span> prompt_caching:
-        <span class="k">return</span> SystemMessage(content=[
-            {<span class="s">"type"</span>: <span class="s">"text"</span>, <span class="s">"text"</span>: text,
-             <span class="s">"cache_control"</span>: {<span class="s">"type"</span>: <span class="s">"ephemeral"</span>}},
-        ])
-    <span class="k">return</span> SystemMessage(content=text)
-
-
-<span class="k">def</span> <span class="f">perception</span>(state: AgentState) -> dict:
-    cfg = get_settings()
-    msgs = state.get(<span class="s">"messages"</span>) or []
-
-    <span class="c"># Inject the static (cacheable) system message exactly once per thread.</span>
-    <span class="k">if</span> <span class="k">not</span> <span class="f">any</span>(<span class="f">isinstance</span>(m, SystemMessage) <span class="k">for</span> m <span class="k">in</span> msgs):
-        prompt_caching = cfg.model.startswith(<span class="s">"anthropic:"</span>)
-        msgs.append(_build_static_system(prompt_caching))
-
-    <span class="c"># Per-turn dynamic context goes into a HumanMessage so the static</span>
-    <span class="c"># SystemMessage above stays byte-identical and stays cached.</span>
-    dynamic_parts = []
-    profile_block = get_profile().to_prompt_block()
-    <span class="k">if</span> profile_block: dynamic_parts.append(profile_block)
-    ...
-    msgs.append(HumanMessage(content=<span class="s">"\n\n"</span>.join(dynamic_parts)))
-
-    <span class="k">return</span> {
-        <span class="s">"messages"</span>: msgs,
-        <span class="s">"recalled_memories"</span>: facts,
-        <span class="s">"recalled_reflections"</span>: reflections,
-        <span class="s">"tool_calls_made"</span>: 0,
-        <span class="s">"revisions"</span>: 0,
-        <span class="s">"routed_tools"</span>: [],
-        <span class="s">"subagent_history"</span>: [],
-    }
-</pre>
-
-      <div class="callout steal">
-        <span class="lbl">pattern to steal</span>
-        <p><strong>静态 prompt 进 SystemMessage（带 cache_control），动态 context 进 HumanMessage。</strong>
-        如果你把"今天的日期"或"用户名字"这种每轮变化的字符串拼进 system prompt，
-        cache 永远不命中——你白白每轮交全价 prefill。
-        这个分层一次到位，agent 的 input 成本能砍 60-90%。</p>
+      <div class="qs-card qs-plum">
+        <h4>🔴 面 AI Infra 岗</h4>
+        <div class="qs-title">"我目标是 GPU / 推理 / 训练平台"</div>
+        <p>13 章硬件到平台 + 80 题 + 12 周路线 + 25 篇必读论文 + 100 词术语</p>
+        <a href="infra.html" class="qs-link bare">直入《AI Infra · 从硬件到面试》</a>
       </div>
-
-      <h3 id="hyde"><span class="anchor">§3.2</span>HyDE 召回 — 短查询的救星</h3>
-
-      <p>用户问 "我之前让你记的什么来着？" 这种短查询，直接拿这句话去 ChromaDB 做向量召回，
-      命中率很差——它和"我喜欢简洁的回答并尽量引用来源"在向量空间根本不挨着。</p>
-
-      <p>HyDE (<em>Hypothetical Document Embeddings</em>) 的解决思路：先让一个 cheap model 写个<strong>假想答案</strong>，
-      用<strong>这段假想答案</strong>去做向量查询。假想答案在语义空间里更接近真正存的内容。</p>
-
-      <p class="code-cap"><a href="../backend/agent/memory/long_term.py">backend/agent/memory/long_term.py</a></p>
-<pre><span class="k">def</span> <span class="f">recall_hyde</span>(self, query: str, k: int = 4) -> list[str]:
-    <span class="s">"""Generate a hypothetical answer first, then search by it.
-    Used for vague / short queries where direct vector search misses."""</span>
-    <span class="k">from</span> ..nodes.llm <span class="k">import</span> get_fast_llm
-    hypo = get_fast_llm(temperature=0.3).invoke(
-        <span class="s">f"In one short paragraph, what would the answer to this be? "</span>
-        <span class="s">f"Don't worry about being accurate — we just need it for retrieval.\n\n"</span>
-        <span class="s">f"Q: {query}"</span>
-    ).content
-    <span class="k">return</span> self.recall(hypo, k=k)
-</pre>
-
-      <p>Perception 节点通过启发式判断要不要走 HyDE——
-      只有<strong>当前消息 &lt; 12 个字符</strong>时才走，否则直接用原话召回（避免每轮多一次 LLM 调用）。</p>
-
-      <h3 id="reset-turnstate"><span class="anchor">§3.3</span>Turn-state reset 的取舍</h3>
-
-      <p>Perception 是图的<strong>第二个节点</strong>（在 summarizer 之后），但它是<strong>每轮都跑</strong>的第一个"做事"节点。
-      所以把"本轮计数器"清零的责任放在它这里最合适：</p>
-
-<pre>    <span class="k">return</span> {
-        ...
-        <span class="s">"tool_calls_made"</span>: 0,    <span class="c"># reset ReAct loop counter</span>
-        <span class="s">"revisions"</span>: 0,          <span class="c"># reset critic retry counter</span>
-        <span class="s">"routed_tools"</span>: [],      <span class="c"># clear last turn's tool route trace</span>
-        <span class="s">"subagent_history"</span>: [],  <span class="c"># clear supervisor visit log</span>
-    }
-</pre>
-
-      <p>看起来啰嗦，但这是 <strong>checkpointer-friendly 的写法</strong>——每个字段都有明确的"谁负责重置"。
-      如果你忘了重置 <code>subagent_history</code>，supervisor 在第二轮会以为它已经跑过 researcher 了，
-      然后强制路由到 writer，跳过本轮真正需要的研究。</p>
-    </section>
-
-    <!-- ============ PART IV — Guardrails ============ -->
-    <section id="part-4">
-      <header class="part-head">
-        <div class="num"><span class="roman">IV</span> Part Four — Guardrails</div>
-        <h2>In &amp; out · cheap regex first, expensive checks never</h2>
-        <p class="sub">大部分护栏不需要 LLM——你只要会写正则</p>
-      </header>
-
-      <p>Guardrails 在两个位置：<strong>输入端</strong>（perception 之后、planner 之前）
-      和<strong>输出端</strong>（critic 通过、extractor 完成之后、END 之前）。</p>
-
-      <h3 id="input-guard"><span class="anchor">§4.1</span>Input · 提示注入 + 预算检查</h3>
-
-      <p>输入护栏做两件事，都不调 LLM：</p>
-
-      <ol>
-        <li>正则匹配常见的 prompt-injection 句式（"ignore previous instructions"、"reveal your system prompt"、…）</li>
-        <li>查 session 累计花费，超 <code>AGENT_SESSION_BUDGET_USD</code> 直接拒绝本轮</li>
-      </ol>
-
-      <p class="code-cap"><a href="../backend/agent/nodes/guardrails.py">backend/agent/nodes/guardrails.py</a></p>
-<pre>_INJECTION = re.compile(
-    <span class="s">r"(ignore (all )?previous|disregard (the )?(above|prior)|"</span>
-    <span class="s">r"reveal (your )?(system )?(prompt|instructions)|"</span>
-    <span class="s">r"jailbreak|DAN mode|developer mode)"</span>,
-    re.IGNORECASE,
-)
-
-<span class="k">def</span> <span class="f">input_guardrail</span>(state: AgentState) -> dict:
-    sid = state.get(<span class="s">"session_id"</span>, <span class="s">""</span>)
-    user_text = state.get(<span class="s">"user_input"</span>, <span class="s">""</span>)
-
-    <span class="c"># 1) Cost guardrail — refuse turn if over session budget</span>
-    cost = usage_tracker.session_cost(sid)
-    cap = get_settings().session_budget_usd
-    <span class="k">if</span> cap > 0 <span class="k">and</span> cost >= cap:
-        emit(<span class="s">"input_guardrail"</span>, <span class="s">"guardrail"</span>,
-             {<span class="s">"action"</span>: <span class="s">"block"</span>, <span class="s">"reason"</span>: <span class="s">"budget"</span>}, session_id=sid)
-        <span class="k">return</span> {<span class="s">"blocked"</span>: <span class="k">True</span>, <span class="s">"block_reason"</span>: <span class="f">f"Budget cap ${cap:.2f} hit"</span>}
-
-    <span class="c"># 2) Prompt injection — fast regex, no LLM</span>
-    <span class="k">if</span> _INJECTION.search(user_text):
-        <span class="k">return</span> {<span class="s">"blocked"</span>: <span class="k">True</span>, <span class="s">"block_reason"</span>: <span class="s">"prompt-injection pattern"</span>}
-
-    <span class="k">return</span> {<span class="s">"blocked"</span>: <span class="k">False</span>}
-</pre>
-
-      <h3 id="output-guard"><span class="anchor">§4.2</span>Output · PII 脱敏</h3>
-
-      <p>输出护栏扫一遍 final_answer，把疑似 PII 用 <code>[REDACTED]</code> 替换。
-      规则集小但精——更激进的 PII detection 应该用 Presidio 这种独立工具，
-      但 demo 阶段几条正则覆盖 95% 场景：</p>
-
-<pre>_PII = [
-    (re.compile(<span class="s">r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b"</span>),                <span class="s">"[REDACTED-email]"</span>),
-    (re.compile(<span class="s">r"\b(?:\d[ -]?){13,16}\b"</span>),                       <span class="s">"[REDACTED-card]"</span>),
-    <span class="c"># Phone — require explicit separators so we don't redact numbers like 65535.99999</span>
-    (_PHONE := re.compile(
-        <span class="s">r"\b(?:\+?\d{1,3}[ .-])?"</span>
-        <span class="s">r"(?:\(\d{2,4}\)[ .-]?|\d{2,4}[ .-])"</span>
-        <span class="s">r"\d{3,4}[ .-]\d{3,4}\b"</span>
-    ), <span class="s">"[REDACTED-phone]"</span>),
-]
-</pre>
-
-      <div class="callout warn">
-        <span class="lbl">bug we shipped &amp; fixed</span>
-        <p>第一版的 phone 正则是 <code>\b\d{7,11}\b</code>——
-        结果用户问"sqrt(2^32-1)"得到答案 <code>65535.99999</code>，
-        被它当成手机号脱敏成 <code>[REDACTED-phone].99999</code>。
-        改成<strong>必须有显式分隔符</strong>（空格 / 横杠 / 点 / 括号）的版本才不再误伤。
-        <em>正则护栏的可怕之处不在漏检，而在误检。</em></p>
-      </div>
-    </section>
-
-    <!-- ============ PART V — Planner & Supervisor ============ -->
-    <section id="part-5">
-      <header class="part-head">
-        <div class="num"><span class="roman">V</span> Part Five — Planner &amp; Supervisor</div>
-        <h2>路由层 · 启发式短路 + 死循环熔断</h2>
-        <p class="sub">两个会爆炸的节点，靠"在调 LLM 之前先想想能不能不调"和"硬编码兜底"压住</p>
-      </header>
-
-      <h3 id="planner"><span class="anchor">§5.1</span>Planner · trivial 短路</h3>
-
-      <p>Planner 决定走 <code>direct</code>（ReAct 直跑）还是 <code>supervisor</code>（多 agent 编排）。
-      绝大多数日常问题都该走 direct——只有"做研究 + 算数 + 写文档"这种<strong>明显多阶段</strong>任务才值得 supervisor。</p>
-
-      <p>所以 planner 的第一件事是<strong>启发式短路</strong>：</p>
-
-      <p class="code-cap"><a href="../backend/agent/nodes/planner.py">backend/agent/nodes/planner.py</a></p>
-<pre><span class="k">def</span> <span class="f">_trivial</span>(text: str) -> bool:
-    <span class="s">"""Cheap, deterministic shortcut — skip the LLM entirely for short
-    chitchat / yes-no / single-tool questions."""</span>
-    t = text.strip().lower()
-    <span class="k">if</span> <span class="f">len</span>(t) < 80 <span class="k">and</span> <span class="s">"\n"</span> <span class="k">not</span> <span class="k">in</span> t:
-        <span class="k">return</span> <span class="k">True</span>
-    <span class="k">if</span> <span class="f">any</span>(kw <span class="k">in</span> t <span class="k">for</span> kw <span class="k">in</span> [<span class="s">"hello"</span>, <span class="s">"hi"</span>, <span class="s">"thanks"</span>, <span class="s">"你好"</span>, <span class="s">"谢谢"</span>]):
-        <span class="k">return</span> <span class="k">True</span>
-    <span class="k">return</span> <span class="k">False</span>
-
-<span class="k">def</span> <span class="f">planner</span>(state: AgentState) -> dict:
-    <span class="k">if</span> _trivial(state[<span class="s">"user_input"</span>]):
-        <span class="k">return</span> {<span class="s">"route"</span>: <span class="s">"direct"</span>, <span class="s">"plan"</span>: []}
-    <span class="c"># otherwise — call the fast LLM with structured_output to decide</span>
-    ...
-</pre>
-
-      <p>这一招让 90% 的对话<strong>少一次 LLM 调用</strong>。
-      在本地 14B 上能省 5-15s，在 hosted Sonnet 上省 1-3s + 几个 cent。</p>
-
-      <h3 id="supervisor-loop"><span class="anchor">§5.2</span>Supervisor · 三层熔断对付死循环</h3>
-
-      <p>Supervisor 是<strong>这个项目最难写的节点</strong>——它要根据"已经跑过哪些 sub-agent"决定下一步。
-      第一版只看最近 8 条消息，结果用本地 14B fast model 跑时
-      会反复 <code>next: research → researcher → next: research → researcher …</code>
-      直到撞 LangGraph 默认 25 步 recursion limit。</p>
-
-      <p>修法是<strong>三层熔断</strong>，按硬度排：</p>
-
-      <p class="code-cap"><a href="../backend/agent/nodes/supervisor.py">backend/agent/nodes/supervisor.py</a></p>
-<pre>MAX_PER_SPECIALIST = 2
-MAX_TOTAL_HOPS = 5
-
-<span class="k">def</span> <span class="f">_force_route</span>(history: list[str]) -> str | None:
-    <span class="s">"""Returns a forced next step (bypassing the LLM) when state alone
-    tells us where to go — or None to let the LLM decide."""</span>
-    <span class="k">if</span> <span class="s">"writer"</span> <span class="k">in</span> history:
-        <span class="k">return</span> <span class="s">"done"</span>             <span class="c"># writer ran → must end</span>
-    <span class="k">if</span> <span class="f">len</span>(history) >= MAX_TOTAL_HOPS:
-        <span class="k">return</span> <span class="s">"write"</span>            <span class="c"># too many hops → force writer</span>
-    <span class="k">if</span> (history.count(<span class="s">"researcher"</span>) >= MAX_PER_SPECIALIST <span class="k">and</span>
-        history.count(<span class="s">"coder"</span>) >= MAX_PER_SPECIALIST):
-        <span class="k">return</span> <span class="s">"write"</span>
-    <span class="k">return</span> <span class="k">None</span>
-
-<span class="k">def</span> <span class="f">supervisor</span>(state: AgentState) -> dict:
-    history = <span class="f">list</span>(state.get(<span class="s">"subagent_history"</span>) <span class="k">or</span> [])
-
-    <span class="c"># Layer 1: Hard short-circuit on definitive state (no LLM call)</span>
-    forced = _force_route(history)
-    <span class="k">if</span> forced <span class="k">is</span> <span class="k">not</span> <span class="k">None</span>:
-        <span class="k">return</span> {<span class="s">"route"</span>: forced}
-
-    <span class="c"># Layer 2: Ask the fast LLM, but show it the history + caps explicitly</span>
-    history_blob = <span class="s">" → "</span>.join(history) + <span class="f">f"   counts={counts}"</span>
-    d = (prompt | llm).invoke({<span class="s">"hist"</span>: history_blob, ...})
-    nxt = d.next
-
-    <span class="c"># Layer 3: Belt-and-braces — even if LLM picks a capped specialist, override</span>
-    <span class="k">if</span> nxt == <span class="s">"research"</span> <span class="k">and</span> counts[<span class="s">"researcher"</span>] >= MAX_PER_SPECIALIST:
-        nxt = <span class="s">"code"</span> <span class="k">if</span> counts[<span class="s">"coder"</span>] < MAX_PER_SPECIALIST <span class="k">else</span> <span class="s">"write"</span>
-    <span class="k">elif</span> nxt == <span class="s">"done"</span> <span class="k">and</span> <span class="s">"writer"</span> <span class="k">not</span> <span class="k">in</span> history:
-        nxt = <span class="s">"write"</span>          <span class="c"># done before writer makes no sense</span>
-
-    <span class="k">return</span> {<span class="s">"route"</span>: nxt}
-</pre>
-
-      <div class="callout steal">
-        <span class="lbl">pattern to steal</span>
-        <p><strong>每个 sub-agent 把自己的名字 append 进 <code>subagent_history</code></strong>——
-        supervisor 看 history 而不是看 message transcript。
-        message-based 的判断在小模型上几乎一定爆炸；history-based 的判断只要 5 行 Python 就能做。
-        这条 pattern 通杀所有"循环类 agent"（包括 ReAct 本身——只是那里的"history"叫 <code>tool_calls_made</code>）。</p>
-      </div>
-    </section>
-
-    <!-- ============ PART VI — Executor ============ -->
-    <section id="part-6">
-      <header class="part-head">
-        <div class="num"><span class="roman">VI</span> Part Six — Executor</div>
-        <h2>Custom ToolNode · 三个 production 才会想到的细节</h2>
-        <p class="sub">为什么不直接用 <code>langgraph.prebuilt.ToolNode</code></p>
-      </header>
-
-      <p>LangGraph 自带的 <code>ToolNode</code> 跑起来是好用，但有<strong>三个生产级缺陷</strong>：</p>
-
-      <ol>
-        <li>没有<strong>单调用超时</strong>——一个慢工具能挂住整个 agent</li>
-        <li>没有<strong>结果缓存</strong>——同样的 calculator 调用每轮都重算（即使是确定性输入）</li>
-        <li>没有<strong>结果截断</strong>——一个 <code>read_file</code> 把 50KB 文件全塞回 context，下一步 LLM 直接爆 token</li>
-      </ol>
-
-      <p>所以 Taotao Agent 把它替换成自己的 <code>tool_node</code>，靠一个 <code>safe_run_tool</code> wrapper 解决：</p>
-
-      <p class="code-cap"><a href="../backend/agent/nodes/executor.py">backend/agent/nodes/executor.py</a> + <a href="../backend/agent/tools/safe_exec.py">tools/safe_exec.py</a></p>
-<pre><span class="c"># --- safe_exec.py ----------------------------------------------------</span>
-_EXECUTOR = concurrent.futures.ThreadPoolExecutor(max_workers=8)
-_CACHE: OrderedDict[str, str] = OrderedDict()
-_CACHE_MAX = 256
-
-<span class="k">def</span> <span class="f">safe_run_tool</span>(tool: BaseTool, args: dict | str, *, cacheable: bool = <span class="k">True</span>) -> str:
-    <span class="s">"""Wrap any LangChain tool with: timeout + LRU cache + truncation."""</span>
-    cfg = get_settings()
-    key = _cache_key(tool.name, args)
-
-    <span class="c"># 1. LRU cache hit → return immediately</span>
-    <span class="k">if</span> cacheable:
-        cached = _cache_get(key)
-        <span class="k">if</span> cached <span class="k">is</span> <span class="k">not</span> <span class="k">None</span>:
-            <span class="k">return</span> cached
-
-    <span class="c"># 2. Run with per-call timeout (in a worker thread)</span>
-    fut = _EXECUTOR.submit(tool.invoke, args)
-    <span class="k">try</span>:
-        result = fut.result(timeout=cfg.tool_timeout_s)
-    <span class="k">except</span> concurrent.futures.TimeoutError:
-        <span class="k">return</span> <span class="f">f"[ERROR] tool {tool.name} timed out after {cfg.tool_timeout_s}s"</span>
-    <span class="k">except</span> Exception <span class="k">as</span> e:
-        <span class="k">return</span> <span class="f">f"[ERROR] {tool.name}: {e!r}"</span>
-
-    <span class="c"># 3. Truncate big outputs before they explode the next prompt</span>
-    out = _truncate(<span class="f">str</span>(result), cfg.tool_result_max_chars)
-
-    <span class="k">if</span> cacheable:
-        _cache_put(key, out)
-    <span class="k">return</span> out
-</pre>
-
-      <h3 id="tool-node"><span class="anchor">§6.1</span>tool_node — 用 wrapper 替换 ToolNode</h3>
-
-<pre><span class="c"># --- executor.py -----------------------------------------------------</span>
-<span class="k">def</span> <span class="f">tool_node</span>(state: AgentState) -> dict:
-    <span class="s">"""Custom replacement for langgraph.prebuilt.ToolNode that dispatches
-    each tool through safe_run_tool (timeout + cache + truncation)."""</span>
-    last = state[<span class="s">"messages"</span>][-1]
-    tool_msgs = []
-    <span class="k">for</span> call <span class="k">in</span> last.tool_calls:
-        tool = TOOL_BY_NAME.get(call[<span class="s">"name"</span>])
-        <span class="k">if</span> <span class="k">not</span> tool:
-            content = <span class="f">f"[ERROR] unknown tool: {call['name']}"</span>
-        <span class="k">else</span>:
-            content = safe_run_tool(tool, call[<span class="s">"args"</span>])
-        tool_msgs.append(ToolMessage(content=content, tool_call_id=call[<span class="s">"id"</span>]))
-    <span class="k">return</span> {<span class="s">"messages"</span>: tool_msgs}
-</pre>
-
-      <h3 id="tool-routing"><span class="anchor">§6.2</span>Tool routing · top-K 相关性绑定</h3>
-
-      <p>12 个工具全绑给 LLM 的话，每轮 prompt 多 1500-2000 token 描述。
-      Executor 在调 LLM 之前先用 ChromaDB 算<strong>当前问题和每个工具描述的余弦相似度</strong>，
-      只绑 top-K 个：</p>
-
-<pre><span class="c"># --- tools/router.py -------------------------------------------------</span>
-ALWAYS_ON = {<span class="s">"remember"</span>, <span class="s">"recall"</span>, <span class="s">"update_profile"</span>, <span class="s">"read_profile"</span>, <span class="s">"load_skill"</span>}
-
-<span class="k">def</span> <span class="f">select_tools</span>(query: str) -> list[BaseTool]:
-    cfg = get_settings()
-    k = cfg.tool_route_topk
-    <span class="k">if</span> k <= 0: <span class="k">return</span> all_tools()      <span class="c"># router disabled → bind all</span>
-
-    idx = _index()  <span class="c"># cached Chroma collection of tool descriptions</span>
-    hits = idx.query(query_texts=[query], n_results=k)
-    picked_names = <span class="f">set</span>(hits[<span class="s">"ids"</span>][0]) | ALWAYS_ON
-    <span class="k">return</span> [t <span class="k">for</span> t <span class="k">in</span> all_tools() <span class="k">if</span> t.name <span class="k">in</span> picked_names]
-</pre>
-
-      <p><code>ALWAYS_ON</code> 是关键——记忆类工具 (<code>remember</code> / <code>recall</code> / <code>update_profile</code> / 
-      <code>read_profile</code> / <code>load_skill</code>) <strong>不参与相关性排序</strong>，永远绑给 LLM。
-      因为用户随时可能说"记住我喜欢简洁回答"，这种意图很难从 query 里语义匹配出来。</p>
-
-      <div class="callout tip">
-        <span class="lbl">数据点</span>
-        <p>开 <code>AGENT_TOOL_ROUTE_TOPK=5</code>（再加 5 个 ALWAYS_ON = 实际绑 10 个）
-        相比绑 12 个，executor prompt 短约 30%，本地 14B 上 prefill 快 3-5 秒。
-        准确率几乎没掉——因为 LLM 想用的工具一般本来就在 top-3。</p>
-      </div>
-
-      <h3 id="react-loop"><span class="anchor">§6.3</span>ReAct loop · 用 max_loop_iters 兜底</h3>
-
-      <p>Executor 自己的循环（"想 → 调工具 → 看结果 → 想 → ..."）也可能失控。
-      <code>route_after_executor</code> 在每次工具调用后检查 <code>tool_calls_made</code>：</p>
-
-<pre><span class="k">def</span> <span class="f">route_after_executor</span>(state: AgentState):
-    last = state[<span class="s">"messages"</span>][-1]
-    <span class="k">if</span> <span class="f">getattr</span>(last, <span class="s">"tool_calls"</span>, <span class="k">None</span>):
-        <span class="k">if</span> state.get(<span class="s">"tool_calls_made"</span>, 0) < get_settings().max_loop_iters:
-            <span class="k">return</span> <span class="s">"tools"</span>
-        <span class="c"># exceeded — bail out to critic with what we have</span>
-    <span class="k">return</span> <span class="s">"critic"</span>
-</pre>
-    </section>
-
-    <!-- ============ PART VII — Tools ============ -->
-    <section id="part-7">
-      <header class="part-head">
-        <div class="num"><span class="roman">VII</span> Part Seven — Tools</div>
-        <h2>12 个工具 · 沙箱、签名、安全模式</h2>
-        <p class="sub">Tool 写得好不好，比 model 大小更影响 agent 能不能跑生产</p>
-      </header>
-
-      <p>每个工具都用 LangChain 的 <code>@tool</code> 装饰器声明，签名直接变 OpenAI function schema。
-      <strong>关键设计原则</strong>：每个工具的<em>失败模式</em>都要被想清楚。</p>
-
-      <table>
-        <thead><tr><th>工具</th><th>签名</th><th>安全考虑</th></tr></thead>
-        <tbody>
-          <tr><td><code>calculator</code></td><td><code>(expression: str) -> str</code></td><td>numexpr 沙箱，禁 eval；超时由 safe_run_tool 兜底</td></tr>
-          <tr><td><code>web_search</code></td><td><code>(query: str, k: int = 5) -> str</code></td><td>DuckDuckGo HTML 接口；rate limit 自然托底</td></tr>
-          <tr><td><code>read_file</code></td><td><code>(path, line_start?, line_end?) -> str</code></td><td>路径 jail 在 <code>AGENT_WORKDIR</code> 内；越狱用 <code>os.path.commonpath</code> 检查</td></tr>
-          <tr><td><code>write_file</code></td><td><code>(path: str, content: str) -> str</code></td><td>同 jail；不允许覆盖 <code>.env</code> / <code>.git/</code> / <code>__pycache__/</code></td></tr>
-          <tr><td><code>list_files</code></td><td><code>(subdir: str = ".") -> str</code></td><td>jail 内列目录</td></tr>
-          <tr><td><code>grep_in_files</code></td><td><code>(pattern, glob = "**/*") -> str</code></td><td>正则在 jail 内搜；max-matches 截断</td></tr>
-          <tr><td><code>python_repl</code></td><td><code>(code: str) -> str</code></td><td><strong>fork 子进程</strong>跑，10s 硬超时，stdout/stderr 截断</td></tr>
-          <tr><td><code>remember</code></td><td><code>(text, kind = "fact") -> str</code></td><td>写 ChromaDB；走 <code>remember_if_new</code> 去重</td></tr>
-          <tr><td><code>recall</code></td><td><code>(query, k = 4) -> list[str]</code></td><td>从 ChromaDB 召回</td></tr>
-          <tr><td><code>update_profile</code></td><td><code>(key, value) -> str</code></td><td>JSON KV，本地文件锁</td></tr>
-          <tr><td><code>read_profile</code></td><td><code>() -> dict</code></td><td>无副作用</td></tr>
-          <tr><td><code>load_skill</code></td><td><code>(name: str) -> str</code></td><td>从 <code>data/skills/*.md</code> 读取 frontmatter + body</td></tr>
-        </tbody>
-      </table>
-
-      <h3 id="python-repl"><span class="anchor">§7.1</span>python_repl · 唯一的"危险"工具</h3>
-
-      <p><code>python_repl</code> 是这套工具里安全压力最大的一个——用户输入的代码会被实际跑。
-      解决方案：<strong>开新进程</strong>跑，硬超时，stdout/stderr 都截断。
-      <em>不</em>用 <code>exec()</code>，<em>不</em>用 docker（demo 阶段太重）：</p>
-
-      <p class="code-cap"><a href="../backend/agent/tools/python_repl.py">backend/agent/tools/python_repl.py</a></p>
-<pre><span class="k">@tool</span>
-<span class="k">def</span> <span class="f">python_repl</span>(code: str) -> str:
-    <span class="s">"""Run Python code in a fresh subprocess. Return stdout (or stderr).
-    10-second hard timeout. Output truncated to 2000 chars."""</span>
-    <span class="k">try</span>:
-        proc = subprocess.run(
-            [sys.executable, <span class="s">"-c"</span>, code],
-            capture_output=<span class="k">True</span>, text=<span class="k">True</span>, timeout=10,
-            cwd=get_settings().workdir,                    <span class="c"># jail in workspace</span>
-        )
-    <span class="k">except</span> subprocess.TimeoutExpired:
-        <span class="k">return</span> <span class="s">"[ERROR] python_repl timed out after 10s"</span>
-    out = proc.stdout <span class="k">or</span> proc.stderr <span class="k">or</span> <span class="s">"(no output)"</span>
-    <span class="k">return</span> out[:2000] + (<span class="s">"\n…[truncated]"</span> <span class="k">if</span> <span class="f">len</span>(out) > 2000 <span class="k">else</span> <span class="s">""</span>)
-</pre>
-
-      <div class="callout warn">
-        <span class="lbl">production warning</span>
-        <p>这个 sandbox <strong>对真生产环境不够</strong>——子进程仍能 <code>open()</code> 任意文件、
-        <code>requests.get()</code> 任意 URL、<code>os.system()</code> 任意命令。
-        生产里要么用 docker / firecracker / nsjail，要么用 Pyodide WebAssembly。
-        Demo 因为运行在你自己机器上、唯一调用者是你自己，这种程度可以接受。</p>
-      </div>
-
-      <h3 id="memory-tools"><span class="anchor">§7.2</span>记忆类工具 · 暴露给 LLM 的 KV 接口</h3>
-
-      <p>三个记忆工具的签名设计有讲究——既要让 LLM 容易用对，又要让 prompt 短：</p>
-
-<pre><span class="k">@tool</span>
-<span class="k">def</span> <span class="f">remember</span>(text: str, kind: str = <span class="s">"fact"</span>) -> str:
-    <span class="s">"""Save a fact you want to recall in future conversations.
-    Use sparingly — prefer 'update_profile' for user attributes."""</span>
-    mid = get_memory().remember_if_new(text, kind=kind)
-    <span class="k">return</span> <span class="f">f"saved id={mid}"</span> <span class="k">if</span> mid <span class="k">else</span> <span class="s">"already known (skipped duplicate)"</span>
-
-<span class="k">@tool</span>
-<span class="k">def</span> <span class="f">update_profile</span>(key: str, value: str) -> str:
-    <span class="s">"""Set a structured user attribute (preferred over 'remember' for
-    things like name / language / response_style / timezone)."""</span>
-    get_profile().update(key, value)
-    <span class="k">return</span> <span class="f">f"profile.{key} = {value!r}"</span>
-</pre>
-
-      <p>注意 <code>remember</code> 的 docstring 引导 LLM <strong>偏向用 update_profile</strong>。
-      这是个 prompt-engineering trick——通过工具描述影响 LLM 的工具选择倾向，
-      而不需要在 system prompt 里多写一段。</p>
-    </section>
-
-    <!-- ============ PART VIII — Critic ============ -->
-    <section id="part-8">
-      <header class="part-head">
-        <div class="num"><span class="roman">VIII</span> Part Eight — Critic</div>
-        <h2>Reflexion 节点 · 启发式跳过 + 一次有限重试</h2>
-        <p class="sub">真实场景里 80% 的回答不需要批评——别硬上一刀</p>
-      </header>
-
-      <p>Critic 在 executor 之后跑，模式是 Reflexion：</p>
-      <ol>
-        <li>读 last AIMessage 内容 + tool 调用历史</li>
-        <li>用 fast_llm 做"这个回答合格吗？"二元判断</li>
-        <li>如果不合格 + 还没重试过 → 把 critique 注入消息历史，retry to executor</li>
-        <li>如果合格 / 重试过一次 → pass，写一条 reflection 到长期记忆</li>
-      </ol>
-
-      <h3 id="critic-skip"><span class="anchor">§8.1</span>启发式跳过</h3>
-
-      <p>批评器跑一次本身代价不小（一次 fast_llm 调用 + structured_output）。
-      如果上一步明显是<strong>琐碎答案</strong>，直接跳过：</p>
-
-      <p class="code-cap"><a href="../backend/agent/nodes/critic.py">backend/agent/nodes/critic.py</a></p>
-<pre><span class="k">def</span> <span class="f">_should_skip_critic</span>(user_q: str, draft: str, tool_calls_made: int) -> str | None:
-    <span class="s">"""Heuristic gate — return reason-string to skip, or None to run critic."""</span>
-    q, d = user_q.strip().lower(), draft.strip()
-    <span class="c"># Pure chitchat — no tools used, short answer, not a question</span>
-    <span class="k">if</span> tool_calls_made == 0 <span class="k">and</span> <span class="f">len</span>(d) < 200 <span class="k">and</span> <span class="s">"?"</span> <span class="k">not</span> <span class="k">in</span> q:
-        <span class="k">return</span> <span class="s">"trivial-answer"</span>
-    <span class="c"># Pure greeting</span>
-    <span class="k">if</span> <span class="f">any</span>(g <span class="k">in</span> q <span class="k">for</span> g <span class="k">in</span> [<span class="s">"hello"</span>, <span class="s">"hi"</span>, <span class="s">"thanks"</span>, <span class="s">"你好"</span>, <span class="s">"谢谢"</span>]):
-        <span class="k">return</span> <span class="s">"greeting"</span>
-    <span class="k">return</span> <span class="k">None</span>
-</pre>
-
-      <h3 id="bounded-retry"><span class="anchor">§8.2</span>有限重试 · 第二次必发车</h3>
-
-      <p>Reflexion 论文里允许 N 次重试。实践中 N &gt; 1 几乎没有边际收益——
-      第二次还过不了，第三次大概率也过不了，反而把延迟和 token 都搭进去：</p>
-
-<pre><span class="k">def</span> <span class="f">critic</span>(state: AgentState) -> dict:
-    revisions = state.get(<span class="s">"revisions"</span>, 0)
-
-    <span class="c"># Force-pass on the second attempt — diminishing returns</span>
-    <span class="k">if</span> revisions >= 1:
-        <span class="k">return</span> {<span class="s">"critique_passed"</span>: <span class="k">True</span>,
-                <span class="s">"critique"</span>: <span class="s">"(second pass — shipping)"</span>}
-
-    skip_reason = _should_skip_critic(...)
-    <span class="k">if</span> skip_reason:
-        <span class="k">return</span> {<span class="s">"critique_passed"</span>: <span class="k">True</span>, <span class="s">"critique"</span>: <span class="s">""</span>, <span class="s">"revisions"</span>: 0}
-
-    <span class="c"># Otherwise run the actual critic LLM call</span>
-    verdict = (prompt | get_fast_llm().with_structured_output(Verdict)).invoke(...)
-    <span class="k">if</span> <span class="k">not</span> verdict.passed:
-        <span class="c"># Inject critique back into messages so executor sees it on retry</span>
-        get_reflections().add_if_new(verdict.notes, source=<span class="s">"critic"</span>)
-        <span class="k">return</span> {<span class="s">"critique_passed"</span>: <span class="k">False</span>, <span class="s">"revisions"</span>: revisions + 1, ...}
-    <span class="k">return</span> {<span class="s">"critique_passed"</span>: <span class="k">True</span>}
-</pre>
-
-      <div class="callout steal">
-        <span class="lbl">pattern to steal</span>
-        <p><strong>把启发式 gate 放在每一个"会调 LLM"的节点入口</strong>。
-        Planner / Critic / Extractor 三个节点都用了同样的模式：先用一段 Python 看能不能跳过，
-        实在跳不过才调 LLM。这一招让本地 14B 跑日常对话从 60s+ 降到 15-25s。</p>
-      </div>
-    </section>
-
-    <!-- ============ PART IX — Extractor ============ -->
-    <section id="part-9">
-      <header class="part-head">
-        <div class="num"><span class="roman">IX</span> Part Nine — Extractor</div>
-        <h2>Mem0-style 后台抽取 · 异步线程 · 启发式 gate · 写前去重</h2>
-        <p class="sub">不让"自动记忆"变成"每轮多一次延迟 + 重复事实塞爆库"</p>
-      </header>
-
-      <p>Mem0 的核心思路：每轮对话结束后，让一个 LLM 看 user_input + final_answer，
-      自动抽出三类东西——</p>
-
-      <ul>
-        <li><strong>Facts</strong>：用户陈述的客观事实（"我在北京"）</li>
-        <li><strong>Profile updates</strong>：用户偏好或属性（"喜欢简洁回答"）</li>
-        <li><strong>Reflections</strong>：模型自己的反思（"这次没引用来源，下次注意"）</li>
-      </ul>
-
-      <p>朴素实现的问题是<strong>三连击</strong>：</p>
-
-      <ol>
-        <li>每轮多 1 次 LLM 调用 → <em>用户感知延迟 +5-15s</em></li>
-        <li>同样的事实被反复抽出来 → <em>向量库越塞越满</em></li>
-        <li>琐碎对话也跑抽取 → <em>大量空跑成本</em></li>
-      </ol>
-
-      <p>Taotao Agent 的 extractor 用三招都解决：</p>
-
-      <h3 id="async-extract"><span class="anchor">§9.1</span>① 异步线程 · 不阻塞用户</h3>
-
-      <p>Extractor 节点本身只是<strong>启动一个后台线程</strong>，立刻 return 让图继续往下走。
-      实际的 LLM 调用 + 数据库写入都在线程里：</p>
-
-      <p class="code-cap"><a href="../backend/agent/nodes/extractor.py">backend/agent/nodes/extractor.py</a></p>
-<pre><span class="k">def</span> <span class="f">extractor</span>(state: AgentState) -> dict:
-    sid = state.get(<span class="s">"session_id"</span>, <span class="s">""</span>)
-    user_text  = state.get(<span class="s">"user_input"</span>, <span class="s">""</span>)
-    final      = state.get(<span class="s">"final_answer"</span>, <span class="s">""</span>)
-    critique   = state.get(<span class="s">"critique"</span>, <span class="s">""</span>)
-    tool_calls = <span class="f">int</span>(state.get(<span class="s">"tool_calls_made"</span>, 0))
-
-    <span class="c"># Heuristic gate — skip 70% of turns where there's nothing to extract</span>
-    <span class="k">if</span> <span class="k">not</span> _should_extract(user_text, final, critique, tool_calls):
-        emit(<span class="s">"extractor"</span>, <span class="s">"memory_update"</span>,
-             {<span class="s">"facts"</span>: [], <span class="s">"reflections"</span>: [], <span class="s">"skipped"</span>: <span class="s">"gated"</span>}, session_id=sid)
-        <span class="k">return</span> {}
-
-    <span class="c"># Spawn the actual extraction work in the background — don't block END</span>
-    threading.Thread(
-        target=_run_extraction,
-        args=(sid, user_text, final, critique),
-        daemon=<span class="k">True</span>,
-    ).start()
-    <span class="k">return</span> {}
-</pre>
-
-      <h3 id="extract-gate"><span class="anchor">§9.2</span>② 启发式 gate · 70% 的对话直接跳过</h3>
-
-<pre>_PERSIST_KEYWORDS = (<span class="s">"remember"</span>, <span class="s">"记住"</span>, <span class="s">"i prefer"</span>, <span class="s">"my name is"</span>,
-                     <span class="s">"我喜欢"</span>, <span class="s">"我叫"</span>, <span class="s">"my "</span>, <span class="s">"我的"</span>)
-
-<span class="k">def</span> <span class="f">_should_extract</span>(user: str, final: str, critique: str, tool_calls: int) -> bool:
-    <span class="s">"""Skip extraction unless this turn likely contains memorable content."""</span>
-    u = user.lower()
-    <span class="k">if</span> <span class="f">len</span>(user) < 20 <span class="k">and</span> tool_calls == 0:
-        <span class="k">return</span> <span class="k">False</span>                           <span class="c"># pure chitchat</span>
-    <span class="k">if</span> critique <span class="k">and</span> critique != <span class="s">"(second pass — shipping)"</span>:
-        <span class="k">return</span> <span class="k">True</span>                            <span class="c"># critic flagged → save reflection</span>
-    <span class="k">if</span> <span class="f">any</span>(kw <span class="k">in</span> u <span class="k">for</span> kw <span class="k">in</span> _PERSIST_KEYWORDS):
-        <span class="k">return</span> <span class="k">True</span>                            <span class="c"># explicit memorable signal</span>
-    <span class="k">if</span> tool_calls >= 2:
-        <span class="k">return</span> <span class="k">True</span>                            <span class="c"># non-trivial multi-step → maybe save facts</span>
-    <span class="k">return</span> <span class="k">False</span>
-</pre>
-
-      <h3 id="extract-dedup"><span class="anchor">§9.3</span>③ 写前去重 · cosine similarity ≥ 0.92 跳过</h3>
-
-      <p>抽出来的东西先和向量库已有内容做相似度比较，超阈值就跳过。
-      这一步在 <code>LongTermMemory.remember_if_new</code> / 
-      <code>ReflectionMemory.add_if_new</code> 里实现：</p>
-
-<pre><span class="k">def</span> <span class="f">remember_if_new</span>(self, text: str, kind: str = <span class="s">"fact"</span>,
-                    threshold: float | None = <span class="k">None</span>) -> str | None:
-    threshold = threshold <span class="k">or</span> get_settings().dedup_threshold     <span class="c"># default 0.92</span>
-    existing = self._coll.query(query_texts=[text], n_results=1)
-    <span class="k">if</span> existing[<span class="s">"distances"</span>] <span class="k">and</span> existing[<span class="s">"distances"</span>][0]:
-        <span class="c"># Chroma returns L2 distance; convert to cosine similarity ≈ 1 - d/2</span>
-        sim = 1 - existing[<span class="s">"distances"</span>][0][0] / 2
-        <span class="k">if</span> sim >= threshold:
-            <span class="k">return</span> <span class="k">None</span>                                       <span class="c"># too similar, skip</span>
-    <span class="k">return</span> self.remember(text, kind=kind)
-</pre>
-
-      <div class="callout">
-        <span class="lbl">numbers</span>
-        <p>跑 100 轮日常对话的实测：<br>
-        · 朴素 extractor → 库里 247 条事实，60% 是重复或近重复<br>
-        · 加 gate → 只跑了 31 次抽取（<strong>-69% LLM 成本</strong>）<br>
-        · 加 dedup → 库里 89 条事实，无明显重复（<strong>-64% 存储</strong>）</p>
-      </div>
-    </section>
-
-    <!-- ============ PART X — Memory ============ -->
-    <section id="part-10">
-      <header class="part-head">
-        <div class="num"><span class="roman">X</span> Part Ten — Memory</div>
-        <h2>4 个独立存储 · 每个都有自己的"召回 / 写入 / 失效"语义</h2>
-        <p class="sub">不要把所有东西都塞进一个 ChromaDB collection</p>
-      </header>
-
-      <p>很多 agent demo 把"记忆"做成<strong>一个 ChromaDB collection</strong>，
-      然后所有东西都往里塞——facts、reflections、profile、tool 历史、对话片段……
-      然后召回时拿用户问题查 top-K，全部喂回。</p>
-
-      <p>问题是：<strong>不同性质的记忆有不同的召回条件、生命周期、查询方式。</strong>
-      Taotao Agent 拆成了 4 个独立存储：</p>
-
-      <table>
-        <thead><tr><th>存储</th><th>结构</th><th>召回方式</th><th>生命周期</th></tr></thead>
-        <tbody>
-          <tr><td>Short-term messages</td><td>list[BaseMessage]</td><td>滑窗 / 摘要器压缩</td><td>per-thread</td></tr>
-          <tr><td>Long-term facts</td><td>ChromaDB collection</td><td>向量召回（带 HyDE）</td><td>持久</td></tr>
-          <tr><td>Reflections</td><td>ChromaDB collection（独立）</td><td>向量召回</td><td>持久</td></tr>
-          <tr><td>Profile</td><td>JSON KV 文件</td><td>整体 dump 进 prompt</td><td>持久</td></tr>
-          <tr><td>Skills</td><td>markdown + frontmatter</td><td>索引进 prompt，按名加载 body</td><td>静态</td></tr>
-        </tbody>
-      </table>
-
-      <h3 id="mem-short"><span class="anchor">§10.1</span>Short-term · messages + 滑窗摘要</h3>
-
-      <p>消息条数超 24 时，summarizer 节点把前面的"老消息"压成一段 SystemMessage 摘要，
-      用 <code>RemoveMessage</code> 把原消息从历史里抹掉：</p>
-
-      <p class="code-cap"><a href="../backend/agent/nodes/summarizer.py">backend/agent/nodes/summarizer.py</a></p>
-<pre>SUMMARIZE_THRESHOLD = 24
-KEEP_RECENT = 8
-
-<span class="k">def</span> <span class="f">summarizer</span>(state: AgentState) -> dict:
-    msgs = state.get(<span class="s">"messages"</span>) <span class="k">or</span> []
-    <span class="k">if</span> <span class="f">len</span>(msgs) <= SUMMARIZE_THRESHOLD:
-        <span class="k">return</span> {}
-    older, recent = msgs[:-KEEP_RECENT], msgs[-KEEP_RECENT:]
-    summary = get_fast_llm().invoke(
-        <span class="f">f"Summarize this conversation in 4-6 bullets:\n\n{_format(older)}"</span>
-    ).content
-    <span class="k">return</span> {
-        <span class="s">"summary"</span>: summary,
-        <span class="s">"messages"</span>: [RemoveMessage(id=m.id) <span class="k">for</span> m <span class="k">in</span> older]
-                  + [SystemMessage(content=<span class="f">f"[Summary of older turns]\n{summary}"</span>)],
-    }
-</pre>
-
-      <h3 id="mem-vector"><span class="anchor">§10.2</span>Long-term facts · ChromaDB + HyDE + dedup</h3>
-
-      <p>Facts 用 ChromaDB 持久化，每条带 metadata（source、kind、session_id、timestamp）。
-      召回支持两种路径：</p>
-
-      <ul>
-        <li><code>recall(query, k=4)</code>：直接向量查询，适合长 / 具体的 query</li>
-        <li><code>recall_hyde(query, k=4)</code>：先生成假想答案再查，适合短 / 模糊的 query</li>
-      </ul>
-
-      <p>写入永远走 <code>remember_if_new</code>，先和库里最相似的一条比，超阈值跳过。</p>
-
-      <h3 id="mem-reflections"><span class="anchor">§10.3</span>Reflections · 独立 collection 而非混在 facts 里</h3>
-
-      <p>Reflections 是<strong>模型对自己的批评</strong>，比如"这次没引用来源"、"我犯了个算术错误"。
-      它们不该被当 facts 召回（"我之前让你记的什么？"不应该返回"我犯了个算术错误"），
-      但应该在 perception 阶段单独召回 2 条放进 system context 里——
-      让模型在下一轮对话时<strong>主动避免重复同样的错</strong>。</p>
-
-      <p>所以 facts 和 reflections 各占一个独立的 ChromaDB collection。
-      perception 分开召回，分别注入到 prompt 不同位置。</p>
-
-      <h3 id="mem-profile"><span class="anchor">§10.4</span>Profile · 结构化 KV 而非向量</h3>
-
-      <p>"用户名字"、"偏好语言"、"回答风格"这种<strong>结构化属性</strong>不该进向量库。
-      原因：</p>
-
-      <ul>
-        <li>它们要<strong>每轮全量注入 prompt</strong>，向量召回 top-K 反而漏掉</li>
-        <li>它们要支持<strong>精确更新</strong>（"把我的名字改成 Alice"），KV 写一行搞定</li>
-        <li>它们要支持<strong>枚举展示</strong>（前端 Profile 面板），KV 直接 <code>list()</code></li>
-      </ul>
-
-      <p>所以 Profile 是个简单 JSON 文件，加<strong>线程锁</strong>避免并发写冲突：</p>
-
-      <p class="code-cap"><a href="../backend/agent/memory/profile.py">backend/agent/memory/profile.py</a></p>
-<pre><span class="k">class</span> <span class="f">Profile</span>:
-    <span class="k">def</span> <span class="f">__init__</span>(self, path: Path):
-        self.path = path
-        self._lock = Lock()
-
-    <span class="k">def</span> <span class="f">update</span>(self, key: str, value: Any) -> dict:
-        <span class="k">with</span> self._lock:
-            data = self._read()
-            data[key] = value
-            self._write(data)
-        <span class="k">return</span> data
-
-    <span class="k">def</span> <span class="f">to_prompt_block</span>(self) -> str:
-        data = self.all()
-        <span class="k">if</span> <span class="k">not</span> data: <span class="k">return</span> <span class="s">""</span>
-        lines = [<span class="f">f"- {k}: {json.dumps(v, ensure_ascii=False)}"</span> <span class="k">for</span> k, v <span class="k">in</span> data.items()]
-        <span class="k">return</span> <span class="s">"[User profile]\n"</span> + <span class="s">"\n"</span>.join(lines)
-</pre>
-
-      <h3 id="mem-skills"><span class="anchor">§10.5</span>Skills · markdown + YAML frontmatter</h3>
-
-      <p>Skills 是<strong>可被 agent 按需加载的指令</strong>——本质就是一组 system prompt 片段，
-      但分成<strong>索引</strong>（每轮注入，让 LLM 知道有哪些技能可用）和<strong>正文</strong>
-      （只在 <code>load_skill(name)</code> 被调用时才注入完整 body）。</p>
-
-      <p>这种"两段式"设计跟 Anthropic Skills 一脉相承——避免每轮把所有指令都全量喂进去。</p>
-
-      <p class="code-cap"><a href="../backend/data/skills/concise-answers.md">backend/data/skills/concise-answers.md</a></p>
-<pre><span class="m">---</span>
-<span class="k">name</span>: concise-answers
-<span class="k">description</span>: Keep answers short, no preamble
-<span class="k">when_to_use</span>: User asks short factual questions or chitchat
-<span class="m">---</span>
-
-# How to answer concisely
-
-- Cut all preamble ("Sure!", "Great question!", ...)
-- One paragraph max for chitchat, 3 bullets max for facts
-- ...
-</pre>
-
-      <p>Perception 节点把所有 skills 的 <code>name + description + when_to_use</code> 拼成一段
-      "可用技能索引"插进 system prompt。LLM 看完判断"该用 concise-answers" → 调
-      <code>load_skill("concise-answers")</code> → 完整 body 才被加载进上下文。</p>
-    </section>
-
-    <!-- ============ PART XI — LLM router ============ -->
-    <section id="part-11">
-      <header class="part-head">
-        <div class="num"><span class="roman">XI</span> Part Eleven — LLM tier router</div>
-        <h2>双档模型 · 热切换 · 本地 / 在线混合</h2>
-        <p class="sub">一个 70 行的文件，决定了 agent 能不能跑 5 种 provider</p>
-      </header>
-
-      <p><code>llm.py</code> 是整个 agent 里最简单也最关键的文件。它做三件事：</p>
-
-      <ol>
-        <li>暴露 <code>get_llm()</code>（big model）和 <code>get_fast_llm()</code>（fast model）两层接口</li>
-        <li>透传 env 变量到 <code>init_chat_model</code>，让 LM Studio / vLLM / Ollama 等本地 server 也能直接接</li>
-        <li>提供 <code>reset_llm_cache()</code> 给 <code>POST /model</code> 端点用，实现<strong>热切换</strong></li>
-      </ol>
-
-      <p class="code-cap"><a href="../backend/agent/nodes/llm.py">backend/agent/nodes/llm.py</a></p>
-<pre><span class="k">def</span> <span class="f">_provider_kwargs</span>(name: str) -> dict:
-    <span class="s">"""Pick up env-supplied overrides so the same code path serves
-    hosted APIs *and* local OpenAI-compatible servers / Ollama."""</span>
-    kwargs: dict = {}
-    <span class="k">if</span> name.startswith(<span class="s">"openai:"</span>):
-        base = os.getenv(<span class="s">"OPENAI_BASE_URL"</span>) <span class="k">or</span> os.getenv(<span class="s">"OPENAI_API_BASE"</span>)
-        <span class="k">if</span> base:
-            kwargs[<span class="s">"base_url"</span>] = base
-            <span class="k">if</span> <span class="k">not</span> os.getenv(<span class="s">"OPENAI_API_KEY"</span>):
-                os.environ[<span class="s">"OPENAI_API_KEY"</span>] = <span class="s">"local-no-key"</span>
-    <span class="k">elif</span> name.startswith(<span class="s">"ollama:"</span>):
-        base = os.getenv(<span class="s">"OLLAMA_BASE_URL"</span>) <span class="k">or</span> os.getenv(<span class="s">"OLLAMA_HOST"</span>)
-        <span class="k">if</span> base:
-            kwargs[<span class="s">"base_url"</span>] = base
-    <span class="k">return</span> kwargs
-
-
-<span class="k">@lru_cache</span>(maxsize=8)
-<span class="k">def</span> <span class="f">_build</span>(name: str, temperature: float):
-    <span class="k">return</span> init_chat_model(name, temperature=temperature, **_provider_kwargs(name))
-
-<span class="k">def</span> <span class="f">get_llm</span>(temperature: float = 0.2):
-    <span class="k">return</span> _build(get_settings().model, temperature)
-
-<span class="k">def</span> <span class="f">get_fast_llm</span>(temperature: float = 0.0):
-    cfg = get_settings()
-    <span class="k">return</span> _build(cfg.fast_model <span class="k">or</span> cfg.model, temperature)
-
-<span class="k">def</span> <span class="f">reset_llm_cache</span>() -> <span class="k">None</span>:
-    <span class="s">"""Drop every cached chat-model instance so next get_llm() rebuilds."""</span>
-    _build.cache_clear()
-</pre>
-
-      <h3 id="hot-swap"><span class="anchor">§11.1</span>热切换的精妙之处</h3>
-
-      <p>整个热切换链路只有 3 步：</p>
-
-      <ol>
-        <li><code>POST /model {"model": "anthropic:claude-haiku-4-5"}</code> 进来</li>
-        <li><code>update_runtime_model()</code> 改 <code>get_settings()</code> cache 里的 <code>model</code> 字段</li>
-        <li><code>reset_llm_cache()</code> 把 <code>_build.cache_clear()</code></li>
-      </ol>
-
-      <p>下一次任何节点调 <code>get_llm()</code> 时，因为 lru_cache 被清空，会重新走 <code>_build</code>，
-      读到新的 <code>cfg.model</code>，构建新的 ChatModel 实例。<strong>不需要重启 backend、不需要重新编译 graph、不需要重新连 SSE</strong>。</p>
-
-      <h3 id="tool-denylist"><span class="anchor">§11.2</span>supports_tools 黑名单 · 防止用户作死</h3>
-
-      <p>Ollama 的 R1、Gemma、Phi 等模型<strong>不支持 OpenAI-style function calling</strong>。
-      用户要是把它们设成 big model，executor 一调 <code>bind_tools</code> 就崩。
-      所以 catalog 维护一个黑名单：</p>
-
-      <p class="code-cap"><a href="../backend/agent/models_catalog.py">backend/agent/models_catalog.py</a></p>
-<pre>OLLAMA_NO_TOOL_PATTERNS: tuple[str, ...] = (
-    <span class="s">"deepseek-r1"</span>, <span class="s">"deepseek-coder-v2"</span>, <span class="s">"deepseek-v2.5"</span>, <span class="s">"deepseek-v2"</span>,
-    <span class="s">"gemma"</span>, <span class="s">"phi3"</span>, <span class="s">"phi4"</span>,
-    <span class="s">"qwen2-math"</span>, <span class="s">"qwen-math"</span>,
-    <span class="s">"llama3.2:1b"</span>, <span class="s">"llama3.2:3b"</span>,
-    <span class="s">"tinyllama"</span>, <span class="s">"tiny-"</span>,
-)
-
-<span class="k">def</span> <span class="f">_ollama_supports_tools</span>(model_id: str) -> bool:
-    name = model_id.split(<span class="s">":"</span>, 1)[-1].lower()
-    <span class="k">return</span> <span class="k">not</span> <span class="f">any</span>(p <span class="k">in</span> name <span class="k">for</span> p <span class="k">in</span> OLLAMA_NO_TOOL_PATTERNS)
-</pre>
-
-      <p><code>POST /model</code> 端点在写入前用这个判断，不通过就 422 拒绝；
-      前端 ModelPicker 也用同样的判断给条目加"NO TOOLS"徽章 + 删除线。
-      <strong>同一份知识，两端复用</strong>。</p>
-    </section>
-
-    <!-- ============ PART XII — Observability ============ -->
-    <section id="part-12">
-      <header class="part-head">
-        <div class="num"><span class="roman">XII</span> Part Twelve — Observability</div>
-        <h2>JSONL trace + SSE bus + token meter</h2>
-        <p class="sub">一个事件，三种消费者</p>
-      </header>
-
-      <p>Agent 的可观测性比传统服务难——你不能光看 HTTP 日志。每个节点、每个工具调用、
-      每个 sub-agent 决策都得能<strong>实时看到</strong>，事后还能<strong>翻历史</strong>。</p>
-
-      <p>Taotao Agent 的方案：每个节点显式调 <code>emit(node, kind, payload)</code>，
-      事件同时进<strong>三个 sink</strong>：</p>
-
-      <ul>
-        <li><strong>JSONL 文件</strong> <code>data/traces.jsonl</code> ——事后回看 / 离线分析</li>
-        <li><strong>SSE event bus</strong>——实时推到前端 trace 面板</li>
-        <li><strong>UsageCallback</strong>——挂在每个 LLM 调用上，捕获 token 用量到 usage.snapshot()</li>
-      </ul>
-
-      <p class="code-cap"><a href="../backend/agent/observability/tracer.py">backend/agent/observability/tracer.py</a></p>
-<pre><span class="k">def</span> <span class="f">emit</span>(node: str, kind: str, payload: dict, *, session_id: str = <span class="s">""</span>) -> <span class="k">None</span>:
-    evt = {<span class="s">"ts"</span>: time.time(), <span class="s">"node"</span>: node, <span class="s">"kind"</span>: kind,
-           <span class="s">"payload"</span>: payload, <span class="s">"session_id"</span>: session_id}
-    write_jsonl(get_settings().trace_file, evt)
-    event_bus.publish(session_id, evt)
-
-
-<span class="k">class</span> <span class="f">EventBus</span>:
-    <span class="s">"""In-memory pub/sub keyed by session_id. /chat subscribes; emit() publishes."""</span>
-    <span class="k">def</span> <span class="f">__init__</span>(self):
-        self._subs: dict[str, <span class="f">list</span>[asyncio.Queue]] = defaultdict(<span class="f">list</span>)
-
-    <span class="k">def</span> <span class="f">subscribe</span>(self, sid: str) -> asyncio.Queue:
-        q = asyncio.Queue()
-        self._subs[sid].append(q)
-        <span class="k">return</span> q
-
-    <span class="k">def</span> <span class="f">publish</span>(self, sid: str, evt: dict) -> <span class="k">None</span>:
-        <span class="k">for</span> q <span class="k">in</span> self._subs.get(sid, []):
-            q.put_nowait(evt)
-</pre>
-
-      <h3 id="usage-callback"><span class="anchor">§12.1</span>UsageCallback · 挂一次，捕获全部</h3>
-
-      <p>挂载点是 graph 调用时 <code>config={"callbacks": [UsageCallback(sid)]}</code>。
-      LangChain 会把这个 callback 传给图里<strong>所有</strong> LLM 调用——包括 sub-agent 的、
-      包括 critic 的、包括 extractor 的。一次挂载，捕获全网络 token 用量：</p>
-
-<pre><span class="k">class</span> <span class="f">UsageCallback</span>(BaseCallbackHandler):
-    <span class="k">def</span> <span class="f">on_llm_end</span>(self, response, *, run_id, parent_run_id=<span class="k">None</span>, **kwargs):
-        <span class="c"># 1) Standard usage_metadata path (langchain >= 0.3)</span>
-        <span class="k">for</span> gen_list <span class="k">in</span> (response.generations <span class="k">or</span> []):
-            <span class="k">for</span> g <span class="k">in</span> gen_list:
-                meta = <span class="f">getattr</span>(<span class="f">getattr</span>(g, <span class="s">"message"</span>, <span class="k">None</span>), <span class="s">"usage_metadata"</span>, <span class="k">None</span>)
-                <span class="k">if</span> meta:
-                    add(<span class="f">dict</span>(meta), self.session_id)
-                    <span class="k">return</span>
-        <span class="c"># 2) Fallback for providers that only populate llm_output</span>
-        ...
-</pre>
-
-      <h3 id="sse-streaming"><span class="anchor">§12.2</span>SSE 流式 token + trace 双通道</h3>
-
-      <p>FastAPI 端 <code>/chat</code> 的 SSE 响应混了<strong>两种事件</strong>：</p>
-
-      <ul>
-        <li><code>event: trace</code>——每个节点的状态变化（perception、planner、executor、…）</li>
-        <li><code>event: token</code>——只来自 user-facing 节点（executor、writer）的字符流</li>
-      </ul>
-
-      <p>实现关键：用 LangGraph 的 <code>astream_events(version="v2")</code>，
-      过滤 <code>on_chat_model_stream</code> 类型，
-      用 <code>metadata.langgraph_node</code> 判断是不是要 forward 给用户：</p>
-
-      <p class="code-cap"><a href="../backend/app.py">backend/app.py</a></p>
-<pre>USER_FACING_NODES = {<span class="s">"executor"</span>, <span class="s">"writer"</span>}
-
-<span class="k">async</span> <span class="k">for</span> ev <span class="k">in</span> graph.astream_events(...{<span class="s">"version"</span>: <span class="s">"v2"</span>}):
-    <span class="k">if</span> ev[<span class="s">"event"</span>] != <span class="s">"on_chat_model_stream"</span>: <span class="k">continue</span>
-    node_name = ev.get(<span class="s">"metadata"</span>, {}).get(<span class="s">"langgraph_node"</span>)
-    <span class="k">if</span> node_name <span class="k">not</span> <span class="k">in</span> USER_FACING_NODES: <span class="k">continue</span>
-    <span class="c"># extract text and publish as kind=token</span>
-    event_bus.publish(sid, {<span class="s">"node"</span>: node_name, <span class="s">"kind"</span>: <span class="s">"token"</span>,
-                            <span class="s">"payload"</span>: {<span class="s">"text"</span>: text}})
-</pre>
-
-      <p>这样前端能看到 executor 的 token 实时打字效果（typewriter），
-      但 planner / critic / extractor 那些 LLM 调用<strong>不会污染聊天框</strong>——它们只在 trace 面板里以摘要形式出现。</p>
-    </section>
-
-    <!-- ============ PART XIII — Frontend ============ -->
-    <section id="part-13">
-      <header class="part-head">
-        <div class="num"><span class="roman">XIII</span> Part Thirteen — Frontend</div>
-        <h2>SSE 消费 · ModelPicker · TracePanel · TokenMeter · i18n</h2>
-        <p class="sub">React 19 + Vite + TypeScript · 1.4k 行就把整个交互层搭完</p>
-      </header>
-
-      <h3 id="sse-client"><span class="anchor">§13.1</span>SSE 客户端 · 手写 vs EventSource</h3>
-
-      <p>浏览器自带 <code>EventSource</code>，但<strong>不能 POST</strong>——它只能 GET。
-      Taotao Agent 的 <code>/chat</code> 是 POST（要塞 message body），所以前端用 <code>fetch + ReadableStream</code> 手写 SSE 解析：</p>
-
-      <p class="code-cap"><a href="../frontend/src/api.ts">frontend/src/api.ts</a></p>
-<pre><span class="k">export</span> <span class="k">function</span> <span class="f">streamChat</span>(message, sessionId, handlers): () =&gt; <span class="k">void</span> {
-  <span class="k">const</span> ctrl = <span class="k">new</span> AbortController();
-
-  (<span class="k">async</span> () =&gt; {
-    <span class="k">const</span> resp = <span class="k">await</span> <span class="f">fetch</span>(<span class="s">`${BASE}/chat`</span>, {
-      method: <span class="s">"POST"</span>, body: JSON.stringify({message, session_id: sessionId}),
-      signal: ctrl.signal,
-    });
-    <span class="k">const</span> reader = resp.body.getReader();
-    <span class="k">const</span> decoder = <span class="k">new</span> <span class="f">TextDecoder</span>();
-    <span class="k">let</span> buf = <span class="s">""</span>;
-
-    <span class="k">while</span> (<span class="k">true</span>) {
-      <span class="k">const</span> {value, done} = <span class="k">await</span> reader.<span class="f">read</span>();
-      <span class="k">if</span> (done) <span class="k">break</span>;
-      buf += decoder.<span class="f">decode</span>(value, {stream: <span class="k">true</span>}).<span class="f">replace</span>(<span class="s">/\r\n/g</span>, <span class="s">"\n"</span>);
-
-      <span class="c">// SSE frames separated by blank line</span>
-      <span class="k">let</span> idx;
-      <span class="k">while</span> ((idx = buf.<span class="f">indexOf</span>(<span class="s">"\n\n"</span>)) !== -1) {
-        <span class="k">const</span> frame = buf.<span class="f">slice</span>(0, idx);
-        buf = buf.<span class="f">slice</span>(idx + 2);
-        <span class="k">let</span> event = <span class="s">"message"</span>;
-        <span class="k">const</span> dataLines: string[] = [];
-        <span class="k">for</span> (<span class="k">const</span> rawLine <span class="k">of</span> frame.<span class="f">split</span>(<span class="s">"\n"</span>)) {
-          <span class="k">if</span> (rawLine.<span class="f">startsWith</span>(<span class="s">"event:"</span>)) event = rawLine.<span class="f">slice</span>(6).<span class="f">trim</span>();
-          <span class="k">else</span> <span class="k">if</span> (rawLine.<span class="f">startsWith</span>(<span class="s">"data:"</span>)) dataLines.<span class="f">push</span>(rawLine.<span class="f">slice</span>(5).<span class="f">trimStart</span>());
-        }
-        <span class="f">dispatch</span>(event, dataLines.<span class="f">join</span>(<span class="s">"\n"</span>));
-      }
-    }
-  })();
-
-  <span class="k">return</span> () =&gt; ctrl.<span class="f">abort</span>();
-}
-</pre>
-
-      <p>关键细节是用 <code>\r\n → \n</code> 归一化（sse-starlette 在某些环境送 CRLF），
-      并且每个 frame 用<strong>双换行</strong>分隔。
-      <code>dispatch</code> 根据 <code>event</code> 字段路由到不同 handler——
-      <code>session</code> / <code>trace</code> / <code>token</code> / <code>done</code>。</p>
-
-      <h3 id="model-picker"><span class="anchor">§13.2</span>ModelPicker · 顶栏胶囊变下拉</h3>
-
-      <p>顶栏那个显示当前模型的胶囊本质就是个<strong>触发按钮</strong>，点击展开 dropdown。
-      Dropdown 加载 <code>/models</code> 拉到的 catalog，按 provider 分组渲染：</p>
-
-      <ul>
-        <li><strong>Local (Ollama)</strong>——backend 实时探 <code>localhost:11434/api/tags</code>，
-        每个模型显示磁盘大小</li>
-        <li><strong>Anthropic / OpenAI / Gemini</strong>——静态 catalog，可用性由 env key 是否设定</li>
-        <li>不可用的 group <strong>整组半透明</strong>，配一行 "set OPENAI_API_KEY in .env to enable"</li>
-        <li>不支持工具的模型<strong>条目带删除线 + NO TOOLS 徽章</strong>，点击拒绝并提示原因</li>
-      </ul>
-
-      <p>选中后乐观更新：先把当前显示改成新模型，再发 POST，失败则回滚 + 错误提示。</p>
-
-      <h3 id="trace-panel"><span class="anchor">§13.3</span>TracePanel · 真正让人懂"agent 在干嘛"的关键 UI</h3>
-
-      <p>右侧 trace 面板订阅 SSE 的 <code>trace</code> 事件流，按时间倒序渲染卡片。
-      每张卡的颜色由 <code>kind</code> 决定（perception 绿、guardrail 棕、tool_call 蓝、error 红、…），
-      点击展开看 payload 全文。</p>
-
-      <p>这个面板是<strong>整个 demo 最有教学价值的部分</strong>——用户能<em>看见</em>：</p>
-
-      <ul>
-        <li>perception 召回了哪 3 条 facts</li>
-        <li>planner 选了 direct 还是 supervisor 以及为什么</li>
-        <li>tool routing 选了哪 5 个工具</li>
-        <li>executor 调了 calculator 传了什么参数 / 拿回什么结果</li>
-        <li>critic 跳过了还是真跑了，跑了的话验证结果是什么</li>
-        <li>extractor 写了什么进 memory</li>
-      </ul>
-
-      <h3 id="token-meter"><span class="anchor">§13.4</span>TokenMeter · 4 桶 + 预算条</h3>
-
-      <p>顶栏的 token 仪表分四个 bucket（input / output / cache_read / calls），
-      每个有 hover tooltip。下方一条<strong>预算进度条</strong>，
-      ok 状态绿、warn (≥ 75%) 琥珀、over 红边框：</p>
-
-      <p class="code-cap"><a href="../frontend/src/components/TokenMeter.tsx">frontend/src/components/TokenMeter.tsx</a></p>
-<pre>{showBudget &amp;&amp; (
-  &lt;div className={<span class="s">`meter-budget ${budgetState}`</span>}&gt;
-    &lt;div className=<span class="s">"budget-bar"</span>&gt;
-      &lt;div className=<span class="s">"budget-fill"</span> style={{width: <span class="s">`${pct}%`</span>}} /&gt;
-    &lt;/div&gt;
-    &lt;div className=<span class="s">"budget-text"</span>&gt;
-      ${cost.toFixed(3)} / ${budget.toFixed(2)}
-    &lt;/div&gt;
-  &lt;/div&gt;
-)}
-</pre>
-
-      <p>本地模型时 <code>is_local: true</code> + <code>budget_usd: 0</code> 直接隐藏整个进度条
-      （成本恒为 $0，没必要显示）。</p>
-
-      <h3 id="i18n"><span class="anchor">§13.5</span>i18n · 一个 Provider + 一个 useLang hook</h3>
-
-      <p>没用任何 i18n 库。整套实现就是个 <code>{key: {en, zh}}</code> dict + Context：</p>
-
-      <p class="code-cap"><a href="../frontend/src/i18n.tsx">frontend/src/i18n.tsx</a></p>
-<pre><span class="k">export</span> <span class="k">const</span> ui = {
-  brandPrefix: { en: <span class="s">"Taotao"</span>, zh: <span class="s">"桃桃"</span> },
-  brandSuffix: { en: <span class="s">"Agent"</span>, zh: <span class="s">"Agent"</span> },
-  ...
-};
-
-<span class="k">export</span> <span class="k">function</span> <span class="f">LangProvider</span>({children}) {
-  <span class="k">const</span> [lang, setLang] = useState&lt;Lang&gt;(detectInitial);
-  useEffect(() =&gt; {
-    window.localStorage.<span class="f">setItem</span>(STORAGE_KEY, lang);
-    document.documentElement.lang = lang === <span class="s">"zh"</span> ? <span class="s">"zh"</span> : <span class="s">"en"</span>;
-  }, [lang]);
-  <span class="k">const</span> t = <span class="f">useCallback</span>((key) =&gt; ui[key]?.[lang] ?? key, [lang]);
-  <span class="k">return</span> &lt;LangContext.Provider value={{lang, setLang, t}}&gt;{children}&lt;/LangContext.Provider&gt;;
-}
-</pre>
-
-      <p>初始语言通过 <code>navigator.language</code> 检测，用户切换后存 localStorage。
-      40 行代码替代了 i18next + 5 个依赖。</p>
-    </section>
-
-    <!-- ============ PART XIV — Tradeoffs ============ -->
-    <section id="part-14">
-      <header class="part-head">
-        <div class="num"><span class="roman">XIV</span> Part Fourteen — Tradeoffs</div>
-        <h2>每个设计都有它的反面</h2>
-        <p class="sub">这里写的是"为什么这么做"——以及"代价是什么"</p>
-      </header>
-
-      <h3 id="t-tier"><span class="anchor">§14.1</span>为什么双档模型？</h3>
-
-      <p><strong>赞成</strong>：路由 / 摘要 / 批评 / 抽取这些"分类型"任务用 Sonnet 是浪费——
-      Haiku 准确率几乎一样，价格 1/4，速度 2-3×。</p>
-
-      <p><strong>代价</strong>：要管两个模型的 capability 差异（比如 Haiku 不太擅长复杂结构化输出），
-      planner / critic 的 prompt 得为弱模型重新调，否则准确率会掉。</p>
-
-      <h3 id="t-cache"><span class="anchor">§14.2</span>为什么 prompt cache 只对 Anthropic 开？</h3>
-
-      <p><strong>赞成</strong>：OpenAI / Gemini / 本地模型都没有 Anthropic 那种<strong>显式 cache_control 标记</strong>。
-      OpenAI 有自动 cache，但触发条件、命中率都不可控。本地模型则完全没 cache 这一说。</p>
-
-      <p><strong>代价</strong>：换到 OpenAI 时整个 system prompt 要每轮全价 prefill。
-      用 <code>tool_route_topk</code> 缩短 prompt 是部分缓解，但仍然贵 5-10×。</p>
-
-      <h3 id="t-chroma"><span class="anchor">§14.3</span>为什么 ChromaDB 不用 Pinecone / Weaviate？</h3>
-
-      <p><strong>赞成</strong>：ChromaDB 嵌入式，零 infra——本地起一个 SQLite 就跑。
-      Demo 不需要 RAG 集群级吞吐。</p>
-
-      <p><strong>代价</strong>：单机性能上限低（百万级向量后查询 &gt; 200ms）；
-      没分布式；没 hybrid search（要同时做 BM25 + vector 得自己拼）。
-      搬上线前要换 Qdrant / Weaviate / Vespa。</p>
-
-      <h3 id="t-heuristic"><span class="anchor">§14.4</span>为什么遍地启发式 gate？</h3>
-
-      <p><strong>赞成</strong>：这是 demo 性能优化最大的杠杆——planner / critic / extractor
-      三个节点的 gate 让 90% 的对话<strong>少 3 次 LLM 调用</strong>，
-      本地 14B 上能省 30s+ 延迟。</p>
-
-      <p><strong>代价</strong>：启发式规则<strong>会漏</strong>——
-      比如琐碎对话里偶尔藏一句"我刚搬到上海"，extractor 启发式判定 &lt; 20 字符就跳过，结果没存。
-      解决方案要么是开关切换"完整模式 vs 性能模式"，要么定期跑一次 batch 抽取兜底。</p>
-
-      <h3 id="t-async-extract"><span class="anchor">§14.5</span>为什么 extractor 用 threading 而不是 asyncio？</h3>
-
-      <p><strong>赞成</strong>：threading 简单粗暴，不污染 graph 的 async/sync 边界。
-      Extractor 节点本身既能在 sync graph 里跑（<code>get_sync_graph</code>），
-      也能在 async graph 里跑（<code>get_graph</code>），用线程就不用关心。</p>
-
-      <p><strong>代价</strong>：线程数没有上限，高并发下可能堆积；
-      没有 backpressure 机制；如果 extraction 失败，错误也只在 trace 里看见。</p>
-
-      <h3 id="t-custom-toolnode"><span class="anchor">§14.6</span>为什么不用 langgraph.prebuilt.ToolNode？</h3>
-
-      <p><strong>赞成</strong>：自定义 <code>tool_node</code> 接 <code>safe_run_tool</code> 之后，
-      时timeout / cache / truncation 三件套全到位，且<strong>错误信息能 emit 到 trace</strong>，
-      用户能在前端看到"calculator timed out"而不是 graph 直接抛异常。</p>
-
-      <p><strong>代价</strong>：失去了 prebuilt ToolNode 的某些功能（如自动并行调用多个独立工具）。
-      Demo 阶段够用，真生产里要补。</p>
-    </section>
-
-    <!-- ============ PART XV — Performance ============ -->
-    <section id="part-15">
-      <header class="part-head">
-        <div class="num"><span class="roman">XV</span> Part Fifteen — Performance</div>
-        <h2>实测数字 · 单轮 vs 复杂任务 · hosted vs local</h2>
-        <p class="sub">告诉你成本/延迟到底卡在哪</p>
-      </header>
-
-      <h3 id="p-single"><span class="anchor">§15.1</span>单轮"用 calculator 算 sqrt(2^32-1)"</h3>
-
-      <table>
-        <thead><tr><th>配置</th><th>耗时</th><th>tokens</th><th>成本</th><th>说明</th></tr></thead>
-        <tbody>
-          <tr><td>Sonnet 4.5 + Haiku 4.5</td><td>3.5s</td><td>1.8k in / 110 out</td><td>$0.0072</td><td>cache 命中后</td></tr>
-          <tr><td>GPT-4o + 4o-mini</td><td>4.2s</td><td>2.0k in / 120 out</td><td>$0.0062</td><td>无 cache</td></tr>
-          <tr><td>Qwen 2.5:14b + DeepSeek-R1:14b（本地）</td><td>33.8s</td><td>3.2k / 78</td><td>$0</td><td>R1 思考占大头</td></tr>
-          <tr><td>Qwen 2.5:14b + Qwen 2.5:7b（本地）</td><td>~16s</td><td>3.2k / 78</td><td>$0</td><td>把 R1 换掉立省一半</td></tr>
-        </tbody>
-      </table>
-
-      <h3 id="p-supervisor"><span class="anchor">§15.2</span>Supervisor 任务"研究 + 写一段总结"</h3>
-
-      <table>
-        <thead><tr><th>配置</th><th>耗时</th><th>调 LLM 次数</th><th>成本</th></tr></thead>
-        <tbody>
-          <tr><td>Sonnet + Haiku</td><td>~12s</td><td>5（perception, planner, supervisor×2, researcher, writer, critic）</td><td>$0.014</td></tr>
-          <tr><td>GPT-4o + 4o-mini</td><td>~14s</td><td>同上</td><td>$0.012</td></tr>
-          <tr><td>Qwen + Qwen 本地</td><td>~50s</td><td>同上</td><td>$0</td></tr>
-        </tbody>
-      </table>
-
-      <h3 id="p-breakdown"><span class="anchor">§15.3</span>本地 14B 单轮延迟分解</h3>
-
-      <p>在 M4 Pro 48GB 上跑 qwen2.5:14b：</p>
-
-      <div class="diagram">
-0s     ▕<span class="box">█</span>perception 0.3s        <span class="gloss">// Chroma 召回 + profile + skills 注入</span>
-0.3s   ▕<span class="box">█</span>guardrail_in 0.01s     <span class="gloss">// 正则</span>
-0.3s   ▕<span class="box">██</span>planner 9s             <span class="gloss">// fast LLM (R1) — 思考链占 60%</span>
-9.3s   ▕<span class="box">██████</span>executor 10s       <span class="gloss">// big LLM (qwen) — prefill ~7s, decode ~3s</span>
-19.3s  ▕<span class="box">█</span>tools 0.05s            <span class="gloss">// calculator</span>
-19.4s  ▕<span class="box">██████</span>executor again 9s  <span class="gloss">// 再调一次接 tool 结果</span>
-28.4s  ▕<span class="box">█</span>critic 0.5s            <span class="gloss">// 启发式跳过（短答案）</span>
-28.9s  ▕<span class="box">█</span>extractor 0.01s        <span class="gloss">// 启发式跳过 + spawn 后台线程</span>
-28.9s  ▕<span class="box">█</span>guardrail_out 0.05s    <span class="gloss">// PII 正则</span>
-29s    ▕  END
-</div>
-
-      <p>结论：<strong>瓶颈是双 LLM 调用</strong>（planner 9s + executor 19s = 28s = 总耗时的 95%）。
-      要快，只有两条路：</p>
-
-      <ul>
-        <li>用更小的 fast model（Qwen 7B → planner 降到 1-2s）</li>
-        <li>开 Ollama 优化（FLASH_ATTENTION + KV_CACHE q8 → prefill 快 30%）</li>
-      </ul>
-
-      <h3 id="p-cost-guardrail"><span class="anchor">§15.4</span>成本护栏的实战体验</h3>
-
-      <p>把 <code>AGENT_SESSION_BUDGET_USD=0.50</code> 的话，
-      Sonnet 大约能跑 ~70 个普通对话轮次 / 30 个 supervisor 任务。
-      超额后<strong>下一轮 input_guardrail 直接拒绝</strong>：</p>
-
-      <p>前端看到的反馈是 trace 面板里 <code>guardrail_in</code> 节点 emit 一条 block 事件，
-      聊天框出现红色提示"会话预算 $0.50 已用尽"。
-      这个机制让你<em>本地实验时不会一夜烧掉 100 块</em>。</p>
-    </section>
-
-    <!-- ============ PART XVI — Patterns to steal ============ -->
-    <section id="part-16">
-      <header class="part-head">
-        <div class="num"><span class="roman">XVI</span> Part Sixteen — Patterns to steal</div>
-        <h2>从这套代码里能搬走的 8 个 pattern</h2>
-        <p class="sub">不一定要全用 LangGraph，但这些模式应该刻进肌肉</p>
-      </header>
-
-      <ol>
-        <li><strong>静态/动态 prompt 分层 + cache_control</strong>——
-        系统提示永远只放静态内容，动态 context 进 HumanMessage。
-        Anthropic 上能省 60-90% input cost。</li>
-
-        <li><strong>双档 LLM router</strong>——
-        <code>get_llm()</code> + <code>get_fast_llm()</code> 两个函数搞定。
-        路由 / 摘要 / 批评 / 抽取全部走 fast tier。</li>
-
-        <li><strong>启发式 gate 包住每个 LLM 调用</strong>——
-        planner 跳琐碎查询、critic 跳短答案、extractor 跳无信息轮次。
-        本地模型上能砍 50%+ 延迟。</li>
-
-        <li><strong>Custom ToolNode + safe_run_tool wrapper</strong>——
-        每个工具调用三件套：timeout、LRU cache、result truncation。
-        生产环境的最后一道防线。</li>
-
-        <li><strong>Tool routing top-K + ALWAYS_ON 集合</strong>——
-        语义相关性挑 K 个工具绑给 LLM，记忆类工具永远绑。
-        prompt 短 30%，准确率不掉。</li>
-
-        <li><strong>Subagent history-based 熔断</strong>——
-        每个 sub-agent append 自己名字到 list，supervisor 看 list 而不是看消息。
-        通杀所有"会循环"的多 agent 系统。</li>
-
-        <li><strong>Mem0-style 后台 extractor + 启发式 gate + 写前去重</strong>——
-        异步线程不阻塞用户、gate 跳无意义轮次、cosine 阈值防止重复事实。
-        三连击让"自动记忆"真能用。</li>
-
-        <li><strong>HyDE 召回针对短查询</strong>——
-        模糊 query 先生成假想答案再做向量查询，命中率显著提升。
-        启发式触发（短查询才走，长查询不浪费）。</li>
-      </ol>
-    </section>
-
-    <!-- ============ PART XVII — How to extend ============ -->
-    <section id="part-17">
-      <header class="part-head">
-        <div class="num"><span class="roman">XVII</span> Part Seventeen — How to extend</div>
-        <h2>给这套 agent 加新东西的 5 个常见动作</h2>
-        <p class="sub">每个都不超过 30 行新代码</p>
-      </header>
-
-      <h3 id="ext-tool"><span class="anchor">§17.1</span>加一个新工具</h3>
-
-      <ol>
-        <li>在 <code>backend/agent/tools/</code> 新建一个文件，写 <code>@tool</code> 函数</li>
-        <li>导入到 <code>tools/registry.py</code> 的 <code>all_tools</code> 列表</li>
-        <li>不需要改 executor、不需要改 prompt——下一次<strong>用户问相关问题，tool router 自动绑给 LLM</strong></li>
-      </ol>
-
-      <p>例如加一个 <code>get_weather</code>：</p>
-
-<pre><span class="c"># tools/weather.py</span>
-<span class="k">@tool</span>
-<span class="k">def</span> <span class="f">get_weather</span>(city: str) -> str:
-    <span class="s">"""Return current temperature and conditions for a city."""</span>
-    r = httpx.<span class="f">get</span>(<span class="f">f"https://wttr.in/{city}?format=j1"</span>)
-    d = r.<span class="f">json</span>()[<span class="s">"current_condition"</span>][0]
-    <span class="k">return</span> <span class="f">f"{d['temp_C']}°C, {d['weatherDesc'][0]['value']}"</span>
-
-<span class="c"># tools/registry.py</span>
-<span class="k">from</span> .weather <span class="k">import</span> get_weather
-all_tools = [..., get_weather]
-</pre>
-
-      <h3 id="ext-subagent"><span class="anchor">§17.2</span>加一个新 sub-agent</h3>
-
-      <ol>
-        <li>在 <code>supervisor.py</code> 加一个 prompt 常量 + tool 子集 + factory 函数</li>
-        <li>graph.py 注册 node + 加 <code>supervisor → my_agent</code> 边和 <code>my_agent → supervisor</code> 回边</li>
-        <li>更新 <code>SUPERVISOR_PROMPT</code> 把新选项告诉路由 LLM</li>
-        <li>更新 <code>route_supervisor</code> handle 新 route 字符串</li>
-        <li>记得在 sub-agent 返回字典里 append 名字到 <code>subagent_history</code></li>
-      </ol>
-
-      <h3 id="ext-guard"><span class="anchor">§17.3</span>加一个新 guardrail</h3>
-
-      <p>输入端：扩 <code>guardrails.py</code> 的 <code>input_guardrail</code> 函数，
-      规则匹配则返回 <code>{"blocked": True, "block_reason": "..."}</code>。</p>
-
-      <p>输出端：扩 <code>output_guardrail</code>，对 <code>final_answer</code> 字符串做替换或重写。</p>
-
-      <h3 id="ext-provider"><span class="anchor">§17.4</span>接一个新 LLM provider</h3>
-
-      <p>三步：</p>
-
-      <ol>
-        <li><code>llm.py</code> 的 <code>_provider_kwargs</code> 加分支检测前缀（如 <code>"deepseek:"</code>）+ 设 base_url / api_key</li>
-        <li><code>models_catalog.py</code> 加一个 <code>HOSTED["deepseek"]</code> 条目 + <code>PROVIDER_KEY_ENV["deepseek"] = "DEEPSEEK_API_KEY"</code></li>
-        <li><code>usage.py</code> 加该 provider 模型的 PRICING 条目</li>
-      </ol>
-
-      <p>前端 ModelPicker 自动展示这个新 provider 组——<strong>不需要改一行前端代码</strong>。</p>
-
-      <h3 id="ext-skill"><span class="anchor">§17.5</span>加一个新 skill</h3>
-
-      <p>在 <code>backend/data/skills/</code> 丢一个 markdown 文件，frontmatter 写 metadata：</p>
-
-<pre>---
-name: code-review
-description: Detailed code review with security focus
-when_to_use: User asks to review a code change or PR
----
-
-# How to do a thorough code review
-- Start with security issues
-- ...
-</pre>
-
-      <p>backend 自动 reload。前端 Sidebar &gt; Memory &gt; Skills 也自动展示。
-      LLM 看完索引会在合适时候调 <code>load_skill("code-review")</code> 把完整 body 加载进上下文。</p>
-
-      <div class="callout tip">
-        <span class="lbl">closing</span>
-        <p>这套架构的核心赌注是：<strong>把每一个"看起来像一个功能"的东西都做成一个独立、可移植、可观测的 node。</strong>
-        加新功能从来不是改图 — 而是加 node。
-        加 node 不是搬山——是写 30 行 Python。
-        这就是为什么这套代码<strong>3.8k 行就把 production agent 的所有形状跑通</strong>。</p>
-      </div>
-    </section>
-
-    <!-- ============ Pull quote + Footer ============ -->
-    <div class="pull">
-      An agent isn't a model with a chat box. It's a graph of small, observable,
-      replaceable functions — most of which don't even need an LLM.
-      <cite>— Taotao Agent, May 2026</cite>
+    </div>
+  </div>
+</section>
+
+<!-- ============== Roadmap ============== -->
+<section class="section" id="path" style="padding-top: 0;">
+  <div class="container">
+    <div class="section-head">
+      <div class="sec-eyebrow">📍 Learning Path</div>
+      <h2>5 阶段 <em>10-15 周</em> 完整路径</h2>
+      <p class="sec-lede">从 0 到能投 senior agent engineer · 每阶段独立可学</p>
     </div>
 
-    <footer class="colophon">
-      <div class="row">
-        <span>© 2026 · Taotao Agent · MIT</span>
-        <a href="https://github.com/doraemonlyz-jpg/taotao-agent">github.com/doraemonlyz-jpg/taotao-agent ↗</a>
+    <div class="roadmap">
+      <h3>📅 推荐学习节奏</h3>
+      <div class="roadmap-bar">
+        <div class="roadmap-step rs-1">Phase 1 · 入门<span class="rs-time">1-2 周</span></div>
+        <div class="roadmap-step rs-2">Phase 2 · 核心<span class="rs-time">3-5 周</span></div>
+        <div class="roadmap-step rs-3">Phase 3 · 工程<span class="rs-time">2-3 周</span></div>
+        <div class="roadmap-step rs-4">Phase 4 · 面试<span class="rs-time">1-2 周</span></div>
+        <div class="roadmap-step rs-5">Phase 5 · 进阶<span class="rs-time">按需</span></div>
       </div>
-      <div class="row">
-        <span>Set in Fraunces, Spectral &amp; JetBrains Mono · single-file HTML, no build</span>
-        <span>Field guide v1 · written 2026-05</span>
+      <div class="roadmap-labels">
+        <div><strong>2 本书</strong>建立认知 + 看 demo</div>
+        <div><strong>4 大支柱</strong>Framework / RAG / Memory / Tool</div>
+        <div><strong>3 本书</strong>Eval / Debug / Enterprise</div>
+        <div><strong>2 本书</strong>System Design + Live Coding</div>
+        <div><strong>专项</strong>AI Infra · 按方向选</div>
       </div>
-    </footer>
+    </div>
 
-  </main>
-</div>
+    <!-- ============== Phase 1 ============== -->
+    <div class="phase" id="phase-1">
+      <div class="phase-head">
+        <div class="phase-num">01</div>
+        <div class="phase-meta">
+          <h3>入门 · <em>建立全局认知</em></h3>
+          <div class="phase-sub"><strong>目标</strong>：能讲清楚 agent 是什么 / 怎么工作 / 跟 LangChain 区别 · 看完整代码长什么样</div>
+        </div>
+        <span class="phase-time">⏱ 1-2 周</span>
+      </div>
+      <div class="book-grid">
+        <a href="learn.html" class="book-card featured bare">
+          <div class="bk-row"><span class="bk-emoji">🟢</span><span class="bk-num">Book 01</span></div>
+          <h4>应用 · 从 0 到面试</h4>
+          <div class="bk-eng">From Zero to Interview · 13 章入门书</div>
+          <p class="bk-desc">最适合新手——从 "agent 是什么" 讲到面试题。13 章 · 包含 benchmark / reasoning / async / agentic RAG / vibe coding / security 进阶专题 · 每节附公开教程 + GitHub demo URL。</p>
+          <div class="bk-meta">
+            <span><strong>13</strong> 章</span><span><strong>110</strong> 词</span><span><strong>60</strong> 题</span><span><strong>8</strong> 周路线</span>
+          </div>
+          <span class="bk-link">开始读</span>
+        </a>
+        <a href="implementation.html" class="book-card bare">
+          <div class="bk-row"><span class="bk-emoji">🔵</span><span class="bk-num">Book 02</span></div>
+          <h4>Implementation Field Guide</h4>
+          <div class="bk-eng">从节点到 LLM 的实现详解</div>
+          <p class="bk-desc">配套 <code>taotao-agent</code> 项目逐节点详解——LangGraph 怎么搭 · supervisor 怎么写 · 前端怎么 stream · memory 怎么实现 · tool 怎么注册。学完能复刻一个完整生产级 agent。</p>
+          <div class="bk-meta">
+            <span><strong>17</strong> 章</span><span><strong>2270+</strong> 行</span><span><strong>带源码</strong></span>
+          </div>
+          <span class="bk-link">看实现</span>
+        </a>
+      </div>
+    </div>
 
-<script>
-/* tiny TOC active-link highlighter — IntersectionObserver */
-(function(){
-  const links = [...document.querySelectorAll('.toc a[href^="#part-"], .toc ul a[href^="#"]')];
-  const map = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
-  const opts = { rootMargin: '-30% 0px -60% 0px', threshold: 0 };
-  const obs = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-      if (!e.isIntersecting) return;
-      const id = e.target.id;
-      const a = map.get(id);
-      if (!a) return;
-      links.forEach(l => l.classList.remove('active'));
-      a.classList.add('active');
-    });
-  }, opts);
-  document.querySelectorAll('main.book section, main.book h3[id]').forEach(s => obs.observe(s));
-})();
-</script>
+    <!-- ============== Phase 2 ============== -->
+    <div class="phase" id="phase-2">
+      <div class="phase-head">
+        <div class="phase-num">02</div>
+        <div class="phase-meta">
+          <h3>核心技能 · <em>4 大支柱</em></h3>
+          <div class="phase-sub"><strong>目标</strong>：掌握 senior 必修的 4 大技术——框架内部 · 知识增强 · 记忆 · 工具。每本独立可学 · 顺序按你的项目方向选</div>
+        </div>
+        <span class="phase-time">⏱ 3-5 周</span>
+      </div>
+      <div class="book-grid">
+        <a href="langgraph-internals.html" class="book-card bare">
+          <div class="bk-row"><span class="bk-emoji">🟤</span><span class="bk-num">Book 03</span></div>
+          <h4>LangGraph 内部 + 5 框架对比</h4>
+          <div class="bk-eng">Pregel 源码 · State/Channels/Send 深挖</div>
+          <p class="bk-desc">6 大原语深讲（State/Reducer · Channels · Checkpointer · Interrupt · Send · Subgraph）+ 跟 CrewAI / AutoGen / OpenAI Agents SDK / PydanticAI / Mastra 横评 + Pregel 源码导读 · 把 LangGraph 吃透到源码层。</p>
+          <div class="bk-meta">
+            <span><strong>10</strong> 章</span><span><strong>15</strong> 题</span><span><strong>60</strong> 词</span>
+          </div>
+          <span class="bk-link">深入框架</span>
+        </a>
+        <a href="rag-production.html" class="book-card bare">
+          <div class="bk-row"><span class="bk-emoji">🟧</span><span class="bk-num">Book 04</span></div>
+          <h4>RAG 生产级深讲</h4>
+          <div class="bk-eng">chunking / rerank / Agentic RAG / GraphRAG</div>
+          <p class="bk-desc">11 章覆盖 RAG 全谱——6 chunking 策略 · 5 embedding 家族 · 6 vector DB 横评 · hybrid + rerank · HyDE / CRAG / Self-RAG / Adaptive / Agentic / GraphRAG / Multi-modal · Ragas eval · 8 大生产坑。</p>
+          <div class="bk-meta">
+            <span><strong>11</strong> 章</span><span><strong>15</strong> 题</span><span><strong>80</strong> 词</span>
+          </div>
+          <span class="bk-link">学 RAG</span>
+        </a>
+        <a href="memory-context.html" class="book-card bare">
+          <div class="bk-row"><span class="bk-emoji">💜</span><span class="bk-num">Book 05</span></div>
+          <h4>Memory &amp; Context Engineering</h4>
+          <div class="bk-eng">Mem0 / Zep / Letta · 1M context</div>
+          <p class="bk-desc">5 类 memory 分类（认知科学）· short/long-term 全谱 · Mem0/Zep/Letta/Cognee 4 框架横评 · forgetting + consolidation · multi-user · 1M/2M context engineering + prompt caching · 5 真翻车复盘。</p>
+          <div class="bk-meta">
+            <span><strong>10</strong> 章</span><span><strong>15</strong> 题</span><span><strong>70</strong> 词</span>
+          </div>
+          <span class="bk-link">设计 memory</span>
+        </a>
+        <a href="tool-design.html" class="book-card bare">
+          <div class="bk-row"><span class="bk-emoji">🟫</span><span class="bk-num">Book 06</span></div>
+          <h4>Tool Design + Function Calling</h4>
+          <div class="bk-eng">100+ tools · MCP · Structured Output</div>
+          <p class="bk-desc">tool 5 元素解剖 + 100+ tool 4 选择算法（hierarchical / RAG-over-tools / progressive）+ OpenAI strict + Outlines/Instructor/BAML/xgrammar + parallel + MCP server 设计 + 4 层 security。</p>
+          <div class="bk-meta">
+            <span><strong>10</strong> 章</span><span><strong>15</strong> 题</span><span><strong>60</strong> 词</span>
+          </div>
+          <span class="bk-link">设计 tool</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- ============== Phase 3 ============== -->
+    <div class="phase" id="phase-3">
+      <div class="phase-head">
+        <div class="phase-num">03</div>
+        <div class="phase-meta">
+          <h3>工程实战 · <em>能上得了生产</em></h3>
+          <div class="phase-sub"><strong>目标</strong>：能 ship 而不是只能 demo——会 eval / 会修 bug / 会写 spec 走完整交付流程</div>
+        </div>
+        <span class="phase-time">⏱ 2-3 周</span>
+      </div>
+      <div class="book-grid">
+        <a href="eval-observability.html" class="book-card bare">
+          <div class="bk-row"><span class="bk-emoji">🟦</span><span class="bk-num">Book 07</span></div>
+          <h4>Eval &amp; Observability</h4>
+          <div class="bk-eng">5 层 eval 金字塔 · LLM-as-judge 校准</div>
+          <p class="bk-desc">5 层 eval 金字塔 + LLM-as-judge 4 大偏差 + 校准方法 + 5 工具横评（LangSmith / Langfuse / W&amp;B Weave / Phoenix / Promptfoo）+ 生产 SLO + A/B + shadow + canary + CI gate。</p>
+          <div class="bk-meta">
+            <span><strong>10</strong> 章</span><span><strong>15</strong> 题</span><span><strong>70</strong> 词</span>
+          </div>
+          <span class="bk-link">学 eval</span>
+        </a>
+        <a href="agent-debugging.html" class="book-card bare">
+          <div class="bk-row"><span class="bk-emoji">⚫</span><span class="bk-num">Book 08</span></div>
+          <h4>Debugging Playbook</h4>
+          <div class="bk-eng">30 failure mode + 5 真 incident</div>
+          <p class="bk-desc">5 步通用 agent debug 流程 + 30 个 failure mode（loop / tool / memory / output / production）每个含 symptom / root cause / fix / prevention + LangSmith/Langfuse trace 阅读法 + 5 个真生产 incident 复盘。</p>
+          <div class="bk-meta">
+            <span><strong>4</strong> 章</span><span><strong>30</strong> failure</span><span><strong>40</strong> 词</span>
+          </div>
+          <span class="bk-link">学 debug</span>
+        </a>
+        <a href="enterprise.html" class="book-card bare">
+          <div class="bk-row"><span class="bk-emoji">🟠</span><span class="bk-num">Book 09</span></div>
+          <h4>企业级交付手册</h4>
+          <div class="bk-eng">spec / 上线 / 运维 全套</div>
+          <p class="bk-desc">10 章完整交付流程 + 5 份 spec 模板（PRD / Tech Design / Eval Plan / Risk Assessment / Runbook）+ 12 层技术栈选型 + RACI + 5 翻车复盘 + 50 道企业级面试题 + 50 项上线 checklist。</p>
+          <div class="bk-meta">
+            <span><strong>10</strong> 章</span><span><strong>50</strong> 题</span><span><strong>50</strong> checklist</span>
+          </div>
+          <span class="bk-link">学交付</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- ============== Phase 4 ============== -->
+    <div class="phase" id="phase-4">
+      <div class="phase-head">
+        <div class="phase-num">04</div>
+        <div class="phase-meta">
+          <h3>面试冲刺 · <em>临考前突击</em></h3>
+          <div class="phase-sub"><strong>目标</strong>：把前 3 阶段知识结构化成"答题模板" · 系统设计 + Live Coding 两大题型一周练完</div>
+        </div>
+        <span class="phase-time">⏱ 1-2 周</span>
+      </div>
+      <div class="book-grid">
+        <a href="agent-design.html" class="book-card bare">
+          <div class="bk-row"><span class="bk-emoji">🟣</span><span class="bk-num">Book 10</span></div>
+          <h4>Agent System Design</h4>
+          <div class="bk-eng">7 案例反编译 · 12 设计模式 · 20 题</div>
+          <p class="bk-desc">6 步通用答题框架 + 7 大产品反编译（Cursor / Claude Code / Devin / Perplexity / Computer Use / v0 / 企业 multi-agent）+ 12 个 design pattern + 20 道 senior 设计题答题模板 + 80 词术语。</p>
+          <div class="bk-meta">
+            <span><strong>10</strong> 章</span><span><strong>20</strong> 题</span><span><strong>80</strong> 词</span>
+          </div>
+          <span class="bk-link">练设计题</span>
+        </a>
+        <a href="agent-coding.html" class="book-card bare">
+          <div class="bk-row"><span class="bk-emoji">🟡</span><span class="bk-num">Book 11</span></div>
+          <h4>Live Coding 实战题册</h4>
+          <div class="bk-eng">8 真题 + 完整答案 + 评分点</div>
+          <p class="bk-desc">8 道 senior live coding / take-home：ReAct from scratch · LangGraph HITL · RAG research take-home · debug 4 hidden bug · multi-agent · streaming · eval harness · 实现 Reflexion paper · 22 个 anti-pattern · 7 条提交 tips。</p>
+          <div class="bk-meta">
+            <span><strong>8</strong> 真题</span><span><strong>22</strong> anti-pattern</span><span><strong>带答案</strong></span>
+          </div>
+          <span class="bk-link">刷题</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- ============== Phase 5 ============== -->
+    <div class="phase" id="phase-5">
+      <div class="phase-head">
+        <div class="phase-num">05</div>
+        <div class="phase-meta">
+          <h3>专项进阶 · <em>按方向选</em></h3>
+          <div class="phase-sub"><strong>目标</strong>：通用 agent eng 之外的特化方向——这一阶段按你目标岗位选 · 不是必修</div>
+        </div>
+        <span class="phase-time">⏱ 按需</span>
+      </div>
+      <div class="book-grid">
+        <a href="infra.html" class="book-card bare">
+          <div class="bk-row"><span class="bk-emoji">🔴</span><span class="bk-num">Book 12</span></div>
+          <h4>AI Infra · 从硬件到面试</h4>
+          <div class="bk-eng">GPU / 推理 / 训练 / 平台 · 80 题</div>
+          <p class="bk-desc">面 AI Infra / Platform / 大模型推理岗的人专修。13 章覆盖：GPU 架构 · 推理引擎内部 · 量化 · 分布式训练并行 · 算子优化 · MoE · MLOps 平台 · 向量库 · 性能 metric · profiling 工具。</p>
+          <div class="bk-meta">
+            <span><strong>13</strong> 章</span><span><strong>80</strong> 题</span><span><strong>100</strong> 词</span><span><strong>25</strong> 论文</span>
+          </div>
+          <span class="bk-link">深入 Infra</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== Books overview list ============== -->
+<section class="section" id="books" style="background: var(--paper-2); padding-top: 4rem;">
+  <div class="container">
+    <div class="section-head">
+      <div class="sec-eyebrow">📚 All 12 Books</div>
+      <h2>12 本书 <em>一览表</em></h2>
+      <p class="sec-lede">不按学习顺序 · 按主题快速扫</p>
+    </div>
+    <div class="book-grid">
+      <a href="learn.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🟢</span><span class="bk-num">01</span></div><h4>应用 · 从 0 到面试</h4><p class="bk-desc">入门 + 全谱 · 13 章 / 110 词 / 60 题 / 8 周路线</p><span class="bk-link">读</span></a>
+      <a href="implementation.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🔵</span><span class="bk-num">02</span></div><h4>Implementation Field Guide</h4><p class="bk-desc">配套项目逐节点详解 · 17 章带源码</p><span class="bk-link">读</span></a>
+      <a href="langgraph-internals.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🟤</span><span class="bk-num">03</span></div><h4>LangGraph 内部 + 5 框架</h4><p class="bk-desc">6 原语深挖 + 框架横评 + Pregel 源码</p><span class="bk-link">读</span></a>
+      <a href="rag-production.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🟧</span><span class="bk-num">04</span></div><h4>RAG 生产级</h4><p class="bk-desc">chunking / rerank / Agentic / GraphRAG · 11 章</p><span class="bk-link">读</span></a>
+      <a href="memory-context.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">💜</span><span class="bk-num">05</span></div><h4>Memory &amp; Context</h4><p class="bk-desc">Mem0/Zep/Letta · 1M context · prompt cache</p><span class="bk-link">读</span></a>
+      <a href="tool-design.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🟫</span><span class="bk-num">06</span></div><h4>Tool Design + MCP</h4><p class="bk-desc">100+ tools · structured output · security</p><span class="bk-link">读</span></a>
+      <a href="eval-observability.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🟦</span><span class="bk-num">07</span></div><h4>Eval &amp; Observability</h4><p class="bk-desc">5 层 eval · LLM-as-judge · 5 工具横评</p><span class="bk-link">读</span></a>
+      <a href="agent-debugging.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">⚫</span><span class="bk-num">08</span></div><h4>Debugging Playbook</h4><p class="bk-desc">30 failure mode · 5 真 incident</p><span class="bk-link">读</span></a>
+      <a href="enterprise.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🟠</span><span class="bk-num">09</span></div><h4>企业级交付手册</h4><p class="bk-desc">spec 模板 · 12 层栈 · 50 题 · 50 checklist</p><span class="bk-link">读</span></a>
+      <a href="agent-design.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🟣</span><span class="bk-num">10</span></div><h4>Agent System Design</h4><p class="bk-desc">7 案例反编译 · 12 模式 · 20 题</p><span class="bk-link">读</span></a>
+      <a href="agent-coding.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🟡</span><span class="bk-num">11</span></div><h4>Live Coding 实战</h4><p class="bk-desc">8 真题 + 答案 + 22 anti-pattern</p><span class="bk-link">读</span></a>
+      <a href="infra.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🔴</span><span class="bk-num">12</span></div><h4>AI Infra · 从硬件到面试</h4><p class="bk-desc">GPU / 推理 / 训练 · 80 题 · 25 论文</p><span class="bk-link">读</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- ============== Coverage matrix ============== -->
+<section class="section coverage" id="coverage">
+  <div class="container">
+    <div class="section-head">
+      <div class="sec-eyebrow">🎯 Interview Coverage</div>
+      <h2>每本书 <em>对应</em> 哪些面试题型</h2>
+      <p class="sec-lede">看你目标岗位 · 反查该重点读哪几本</p>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align:left;">书</th>
+          <th>概念</th>
+          <th>系统设计</th>
+          <th>Live Coding</th>
+          <th>Debug</th>
+          <th>生产 Ops</th>
+          <th>Infra</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>🟢 应用入门</td><td class="x">●</td><td>○</td><td>○</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td></tr>
+        <tr><td>🔵 Implementation</td><td class="x">●</td><td class="dim">·</td><td class="x">●</td><td>○</td><td class="dim">·</td><td class="dim">·</td></tr>
+        <tr><td>🟤 LangGraph 内部</td><td class="x">●</td><td class="x">●</td><td class="x">●</td><td>○</td><td class="dim">·</td><td class="dim">·</td></tr>
+        <tr><td>🟧 RAG 生产级</td><td class="x">●</td><td class="x">●</td><td>○</td><td>○</td><td>○</td><td class="dim">·</td></tr>
+        <tr><td>💜 Memory &amp; Context</td><td class="x">●</td><td class="x">●</td><td>○</td><td>○</td><td>○</td><td class="dim">·</td></tr>
+        <tr><td>🟫 Tool Design</td><td class="x">●</td><td>○</td><td class="x">●</td><td>○</td><td>○</td><td class="dim">·</td></tr>
+        <tr><td>🟦 Eval &amp; Obs</td><td>○</td><td>○</td><td>○</td><td class="x">●</td><td class="x">●</td><td class="dim">·</td></tr>
+        <tr><td>⚫ Debugging</td><td class="dim">·</td><td class="dim">·</td><td>○</td><td class="x">●</td><td class="x">●</td><td class="dim">·</td></tr>
+        <tr><td>🟠 企业交付</td><td>○</td><td class="x">●</td><td class="dim">·</td><td>○</td><td class="x">●</td><td class="dim">·</td></tr>
+        <tr><td>🟣 System Design</td><td class="x">●</td><td class="x">●</td><td>○</td><td>○</td><td>○</td><td class="dim">·</td></tr>
+        <tr><td>🟡 Live Coding</td><td>○</td><td class="dim">·</td><td class="x">●</td><td class="x">●</td><td class="dim">·</td><td class="dim">·</td></tr>
+        <tr><td>🔴 AI Infra</td><td class="dim">·</td><td>○</td><td class="dim">·</td><td class="dim">·</td><td>○</td><td class="x">●</td></tr>
+      </tbody>
+    </table>
+    <p style="text-align:center;font-size:0.78rem;color:var(--ink-mute);font-family:var(--font-sans);margin-top:1rem;">
+      <strong style="color:var(--rust);">●</strong> 直接覆盖 · <strong>○</strong> 部分相关 · <strong style="color:var(--rule);">·</strong> 弱相关
+    </p>
+  </div>
+</section>
+
+<!-- ============== About ============== -->
+<section class="section" id="about" style="background: var(--paper-2);">
+  <div class="container">
+    <div class="section-head">
+      <div class="sec-eyebrow">ℹ️ About</div>
+      <h2>关于这套手册</h2>
+    </div>
+    <div style="max-width: 42em; margin: 0 auto;">
+      <p>这套 12 本手册是为 <strong>2026 年 senior agent engineer 面试</strong>系统化整理的——不是教程合集 · 是按 "从 0 到能上岗" 路径设计的<em>完整体系</em>。</p>
+
+      <h4 style="font-family:var(--font-display);font-weight:500;font-size:1.3rem;margin:2rem 0 0.6rem;color:var(--ink);">📐 设计原则</h4>
+      <ol>
+        <li><strong>面试导向</strong>——每本配 15 道 senior 面试题 + 答题模板 · 不是 "了解一下" 而是 "能上场答"</li>
+        <li><strong>互不重复</strong>——12 本各有独立主题 · 但内部 cross-link 把相关概念串起</li>
+        <li><strong>真坑 vs 玄学</strong>——每本都有 "翻车复盘" 章节 · 别人用真血换的经验</li>
+        <li><strong>引用一手资料</strong>——官方文档 / 源码 / paper · 不抄博客抄博客</li>
+      </ol>
+
+      <h4 style="font-family:var(--font-display);font-weight:500;font-size:1.3rem;margin:2rem 0 0.6rem;color:var(--ink);">🛠 配套项目</h4>
+      <p><a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/doraemonlyz-jpg/taotao-agent</a> ——一个完整的生产级 agent demo · LangGraph + supervisor + sub-agent + HITL + memory + tool + eval · 跟 Book 02 (Implementation Field Guide) 配套读 · 直接 clone 跑得起。</p>
+
+      <h4 style="font-family:var(--font-display);font-weight:500;font-size:1.3rem;margin:2rem 0 0.6rem;color:var(--ink);">📊 数据</h4>
+      <table style="width:100%;border-collapse:collapse;margin-top:0.8rem;font-size:0.92rem;background:var(--paper-card);border:1px solid var(--rule);border-radius:6px;overflow:hidden;">
+        <tr><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);">总行数</td><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>~22,300</strong></td></tr>
+        <tr><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);">章节</td><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>~130</strong></td></tr>
+        <tr><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);">面试题</td><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>280+</strong></td></tr>
+        <tr><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);">术语词</td><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>700+</strong></td></tr>
+        <tr><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);">SVG 图</td><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>35+</strong></td></tr>
+        <tr><td style="padding:0.5rem 0.8rem;">Failure mode / 翻车</td><td style="padding:0.5rem 0.8rem;text-align:right;font-family:var(--font-mono);"><strong>50+</strong></td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============== Final CTA ============== -->
+<section class="final-cta">
+  <div class="container">
+    <h2>准备好开始 <em>从 0 到 senior</em> 了吗？</h2>
+    <p class="lede">推荐顺序：先读 <strong>Book 01 (应用入门)</strong> · 30 分钟建立认知 · 然后看 <strong>Book 02 (实现详解)</strong> 跟 demo 跑一遍 · 之后按 Phase 2 选你最缺的支柱。</p>
+    <div class="cta-row">
+      <a href="learn.html" class="btn bare">📖 从 Book 01 开始</a>
+      <a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank" class="btn bare">⭐ Star 项目</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============== Footer ============== -->
+<footer class="foot">
+  <div class="container">
+    <div class="row">
+      <span><strong>桃桃 Agent</strong> · Senior Agent Engineer Manual · v1.0 · 2026-05</span>
+      <span><a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/doraemonlyz-jpg/taotao-agent</a></span>
+    </div>
+    <div class="row" style="margin-top:0.6rem;">
+      <span>Set in Fraunces · Lora · Outfit · JetBrains Mono</span>
+      <span>12 books · 22300 lines · 280+ Qs · 700+ terms</span>
+    </div>
+  </div>
+</footer>
+
 </body>
 </html>

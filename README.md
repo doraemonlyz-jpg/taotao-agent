@@ -22,7 +22,9 @@ Built on **LangGraph 0.6** (orchestration backbone) + **FastAPI** (SSE streaming
 > - 💜 **Memory & Context 工程** → [`docs/memory-context.html`](docs/memory-context.html) — 《Memory &amp; Context》5 类 memory 分类 + short/long-term 全谱 + Mem0/Zep/Letta/Cognee 4 框架横评 + write/read pipeline + forgetting + multi-user + 1M/2M context 工程 + prompt caching + 5 翻车复盘 + 70 词术语
 > - 🟫 **Tool Design / Function Calling** → [`docs/tool-design.html`](docs/tool-design.html) — 《Tool Design》tool 5 元素 + 100+ tool 4 选择算法 + OpenAI strict + Pydantic + LLM-readable error + 4 structured output 流派（Outlines/Instructor/BAML/xgrammar）+ parallel + result 管理 + MCP server 设计 + 4 层 security + 3 翻车 + 60 词
 > - 🔴 **要面试 AI Infra** → [`docs/infra.html`](docs/infra.html) — 《AI Infra · 从硬件到面试》13 章 (GPU / 推理引擎 / 量化 / 分布式训练 / 算子 / MoE / 平台 / 向量库) + 80 道面试题 + 12 周学习路线 + 25 篇必读论文 + 100 词术语表
-> - 🔵 **想看实现** → [`docs/index.html`](docs/index.html) — 《Implementation Field Guide》17 章逐节点详解
+> - 🔵 **想看实现** → [`docs/implementation.html`](docs/implementation.html) — 《Implementation Field Guide》17 章逐节点详解
+>
+> **🌐 全部 12 本书入口** → [`docs/index.html`](docs/index.html) — 按 5 阶段学习路径分类的 landing page
 >
 > 四本互补：learn 建心智 → enterprise 学交付 → infra 钻底层 → index 看代码。
 
