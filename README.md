@@ -10,9 +10,12 @@ Built on **LangGraph 0.6** (orchestration backbone) + **FastAPI** (SSE streaming
 ![stack](https://img.shields.io/badge/backend-LangGraph%200.6%20%2B%20FastAPI-black)
 ![ui](https://img.shields.io/badge/frontend-React%2019%20%2B%20Vite-blue)
 
-> **📚 学习路径 · 四本书覆盖 agent 应用 + AI infra 全栈**
+> **📚 学习路径 · 七本书覆盖 agent engineer 全方位面试**
 > - 🟢 **完全新手** → [`docs/learn.html`](docs/learn.html) — 《从 0 到面试》13 章 + 110 词术语表 + 60 道面试题 + 8 周路线 + 进阶专题（benchmark / reasoning / async / agentic RAG / vibe coding / security）+ 每节附公开教程 / GitHub demo URL
 > - 🟠 **要做企业级项目** → [`docs/enterprise.html`](docs/enterprise.html) — 《企业级交付手册》10 章 + 5 份 spec 模板（PRD / Tech Design / Eval Plan / Risk Assessment / Runbook）+ 12 层技术栈选型 + 6 大工程能力 + RACI + 5 个翻车复盘 + 50 道企业级面试题 + 50 项上线 checklist
+> - 🟣 **agent system design 面试** → [`docs/agent-design.html`](docs/agent-design.html) — 《Agent System Design · Senior》6 步答题框架 + 7 大产品反编译（Cursor / Claude Code / Devin / Perplexity / Operator / v0 / 企业 multi-agent）+ 12 个 design pattern + 20 道 senior 设计题 + 80 词术语表
+> - 🟡 **live coding / take-home** → [`docs/agent-coding.html`](docs/agent-coding.html) — 《Live Coding · 8 真题》ReAct from scratch + LangGraph HITL + RAG research take-home + debug 4 hidden bug + multi-agent + streaming + eval harness + paper 实现 + 22 个 anti-pattern + 7 条提交 tips
+> - ⚫ **生产 agent 排障** → [`docs/agent-debugging.html`](docs/agent-debugging.html) — 《Debugging Playbook》5 步通用诊断流程 + 30 个 failure mode（loop / tool / memory / output / production）+ LangSmith trace 阅读法 + 5 个真实 incident 复盘 + 40 词术语表
 > - 🔴 **要面试 AI Infra** → [`docs/infra.html`](docs/infra.html) — 《AI Infra · 从硬件到面试》13 章 (GPU / 推理引擎 / 量化 / 分布式训练 / 算子 / MoE / 平台 / 向量库) + 80 道面试题 + 12 周学习路线 + 25 篇必读论文 + 100 词术语表
 > - 🔵 **想看实现** → [`docs/index.html`](docs/index.html) — 《Implementation Field Guide》17 章逐节点详解
 >

@@ -1,0 +1,1637 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Live Coding · 8 道真题 + 答案 + 评分点 · senior 实战题册</title>
+<meta name="description" content="给 senior Agent Engineer 的 live coding / take-home 实战题册。8 道真题：从 0 写 ReAct、LangGraph HITL、研究 agent take-home、debug 4 隐藏 bug、multi-agent、streaming/中断/恢复、eval harness、从论文实现。每题给完整代码 + 评分点 + anti-pattern。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #fbf5e8; --paper-2: #f4ecd6; --paper-card: #ffffff;
+  --ink: #1d1a14; --ink-soft: #3a3327; --ink-mute: #756c5c;
+  --rule: #d8cdb0; --rule-soft: #e8debc;
+  --leaf: #4a8a4a; --leaf-soft: #ebf3e7;
+  --rust: #c44d2a; --rust-soft: #fae6dc;
+  --sky:  #2c6ca8; --sky-soft:  #e2edf5;
+  --plum: #864c8e; --plum-soft: #f1e6f2;
+  --gold: #b8881e; --gold-soft: #f7eccd;
+  --code-bg: #fdf9ed; --code-fg: #2a2620; --code-key: #c44d2a;
+  --code-str: #4a8a4a; --code-cmt: #998a6c; --code-fn: #864c8e;
+  --font-display: "Fraunces", "Times New Roman", serif;
+  --font-body: "Lora", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  --font-zh: "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: radial-gradient(ellipse at top left, rgba(196, 178, 144, 0.12), transparent 50%), radial-gradient(ellipse at bottom right, rgba(74, 138, 74, 0.08), transparent 50%), var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.75; -webkit-font-smoothing: antialiased; }
+:lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
+.book-body p, .book-body li { color: var(--ink-soft); }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(196, 77, 42, 0.4); }
+a:hover { background: rgba(196, 77, 42, 0.08); }
+em { font-style: italic; color: var(--leaf); font-weight: 500; }
+strong { font-weight: 600; color: var(--ink); }
+
+.layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); max-width: 1400px; margin: 0 auto; padding: 0 2rem; gap: 3rem; }
+@media (max-width: 980px) { .layout { grid-template-columns: 1fr; gap: 0; padding: 0 1.2rem; } .toc { position: static !important; max-height: none !important; } .toc-inner { display: none; } .toc.open .toc-inner { display: block; } .toc-toggle { display: inline-flex !important; } }
+
+.toc { position: sticky; top: 0; align-self: start; height: 100vh; max-height: 100vh; overflow: auto; padding: 2rem 0.4rem 4rem 0; border-right: 1px dashed var(--rule); font-family: var(--font-sans); font-size: 0.85rem; }
+.toc-toggle { display: none; margin: 1rem 0; padding: 0.4rem 0.8rem; background: var(--paper-card); border: 1px solid var(--rule); border-radius: 999px; font-family: var(--font-sans); font-size: 0.78rem; cursor: pointer; }
+.toc-brand { padding: 0 0.7rem 1.1rem; border-bottom: 1px dashed var(--rule); margin-bottom: 1rem; }
+.toc-brand .mark { font-family: var(--font-display); font-style: italic; font-weight: 500; font-size: 1.4rem; color: var(--ink); display: block; line-height: 1.1; }
+.toc-brand .mark .dot { color: var(--rust); font-style: normal; }
+.toc-brand .sub { font-family: var(--font-sans); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--ink-mute); margin-top: 0.4rem; display: block; line-height: 1.4; }
+.toc-brand .sub strong { color: var(--rust); font-weight: 700; }
+.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: tocch; }
+.toc > .toc-inner > ol > li { counter-increment: tocch; margin: 0.05rem 0; }
+.toc a { display: flex; gap: 0.6rem; align-items: baseline; padding: 0.34rem 0.6rem; border: none; color: var(--ink-soft); font-weight: 500; border-radius: 6px; transition: background 0.12s, color 0.12s; line-height: 1.35; }
+.toc > .toc-inner > ol > li > a::before { content: "Q" counter(tocch, decimal-leading-zero); font-family: var(--font-mono); font-size: 0.65rem; color: var(--rust); width: 3.4em; flex-shrink: 0; font-weight: 500; letter-spacing: 0.02em; }
+.toc a:hover { background: var(--paper-2); color: var(--ink); }
+.toc a.active { background: var(--rust-soft); color: var(--rust); }
+.toc-foot { margin-top: 2rem; padding: 1rem 0.7rem 0; border-top: 1px dashed var(--rule); font-family: var(--font-sans); font-size: 0.74rem; color: var(--ink-mute); line-height: 1.6; }
+.toc-foot a { color: var(--ink-mute); border-bottom-color: rgba(117, 108, 92, 0.3); }
+.toc-foot a:hover { color: var(--rust); }
+
+.book-body { padding: 2rem 0 6rem; max-width: 800px; }
+.book-body section { margin: 0 0 5rem; scroll-margin-top: 1rem; }
+
+.cover { margin-bottom: 4.5rem; padding-bottom: 2.5rem; border-bottom: 1px solid var(--ink); position: relative; }
+.cover::after { content: ""; position: absolute; left: 0; bottom: -5px; width: 80px; height: 3px; background: var(--rust); }
+.cover .eyebrow { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.06em; color: var(--rust); margin-bottom: 1.4rem; font-weight: 600; text-transform: uppercase; }
+.cover .eyebrow .sep { color: var(--rule); margin: 0 0.6rem; font-weight: 400; }
+.cover h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(2.4rem, 4.8vw, 4rem); line-height: 1.08; letter-spacing: -0.015em; margin: 0 0 1.4rem; color: var(--ink); }
+.cover h1 em { color: var(--rust); font-style: italic; font-weight: 500; }
+.cover .lede { font-size: 1.18rem; color: var(--ink-soft); max-width: 36em; margin: 0 0 2rem; line-height: 1.65; }
+.cover .who { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; padding: 1.4rem 1.6rem; margin-top: 2rem; font-size: 0.96rem; }
+.cover .who h4 { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--rust); margin: 0 0 0.6rem; }
+.cover .who ul { margin: 0; padding-left: 1.2rem; }
+.cover .who li { margin: 0.15rem 0; }
+
+.ch-head { margin: 0 0 2rem; }
+.ch-head .badge { display: inline-block; font-family: var(--font-sans); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--rust); background: var(--rust-soft); padding: 0.25rem 0.7rem; border-radius: 999px; margin-bottom: 1rem; }
+.ch-head h2 { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.9rem, 3.2vw, 2.7rem); line-height: 1.12; margin: 0 0 0.6rem; color: var(--ink); letter-spacing: -0.01em; }
+.ch-head .lede { font-style: italic; color: var(--ink-mute); font-size: 1.05rem; font-family: var(--font-display); margin: 0; }
+h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.5rem; letter-spacing: -0.005em; margin: 2.8rem 0 0.8rem; color: var(--ink); scroll-margin-top: 1rem; }
+h3 .num { font-family: var(--font-mono); font-size: 0.7rem; color: var(--rust); font-weight: 500; margin-right: 0.5rem; font-style: normal; letter-spacing: 0.04em; }
+h4 { font-family: var(--font-sans); font-weight: 600; font-size: 1.05rem; letter-spacing: -0.005em; margin: 1.8rem 0 0.4rem; color: var(--ink); }
+h5 { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-mute); margin: 1.2rem 0 0.4rem; }
+p { margin: 0 0 1rem; }
+ol, ul { padding-left: 1.4rem; margin: 0.4rem 0 1.2rem; }
+li { margin: 0.25rem 0; }
+
+code { font-family: var(--font-mono); font-size: 0.86em; background: var(--sky-soft); padding: 0.05rem 0.4rem; border-radius: 4px; color: var(--sky); font-weight: 500; }
+strong code { color: var(--ink); }
+pre { font-family: var(--font-mono); background: var(--code-bg); color: var(--code-fg); padding: 1.1rem 1.3rem; border-radius: 8px; border: 1px solid var(--rule-soft); border-left: 3px solid var(--sky); overflow-x: auto; font-size: 0.81rem; line-height: 1.6; margin: 1rem 0 1.4rem; }
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; font-weight: 400; }
+pre .k { color: var(--code-key); font-weight: 500; }
+pre .s { color: var(--code-str); }
+pre .c { color: var(--code-cmt); font-style: italic; }
+pre .f { color: var(--code-fn); font-weight: 500; }
+
+.box { margin: 1.5rem 0; padding: 1.2rem 1.4rem; border-radius: 10px; border-left: 4px solid; position: relative; }
+.box .box-label { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
+.box .box-label::before { font-size: 1rem; font-weight: normal; }
+.box p:last-child { margin-bottom: 0; }
+.box ol, .box ul { margin-bottom: 0.4rem; }
+.box.concept { background: var(--leaf-soft); border-color: var(--leaf); }
+.box.concept .box-label { color: var(--leaf); }
+.box.concept .box-label::before { content: "📖"; }
+.box.tip { background: var(--rust-soft); border-color: var(--rust); }
+.box.tip .box-label { color: var(--rust); }
+.box.tip .box-label::before { content: "💡"; }
+.box.warn { background: #fff4e0; border-color: #d49414; }
+.box.warn .box-label { color: #b87a0a; }
+.box.warn .box-label::before { content: "⚠️"; }
+.box.bug { background: #fae6dc; border-color: var(--rust); }
+.box.bug .box-label { color: var(--rust); }
+.box.bug .box-label::before { content: "🐛"; }
+.box.fix { background: var(--leaf-soft); border-color: var(--leaf); }
+.box.fix .box-label { color: var(--leaf); }
+.box.fix .box-label::before { content: "✓"; font-weight: 700; }
+
+/* Question header card */
+.qcard {
+  background: var(--paper-card); border: 1px solid var(--rule); border-radius: 12px;
+  padding: 1.4rem 1.6rem; margin: 0 0 1.8rem;
+  box-shadow: 0 1px 3px rgba(29, 26, 20, 0.04);
+}
+.qcard .meta {
+  display: flex; flex-wrap: wrap; gap: 1rem;
+  font-family: var(--font-sans); font-size: 0.78rem;
+  color: var(--ink-mute); margin-bottom: 0.8rem;
+  padding-bottom: 0.8rem; border-bottom: 1px dashed var(--rule);
+}
+.qcard .meta span strong { color: var(--rust); font-weight: 700; margin-right: 0.4rem; }
+.qcard .prompt {
+  font-family: var(--font-display); font-style: italic;
+  font-size: 1.08rem; color: var(--ink); margin: 0;
+  line-height: 1.5;
+}
+.qcard .prompt::before { content: "▸ "; color: var(--rust); font-style: normal; font-weight: 700; }
+
+/* rubric */
+.rubric {
+  background: var(--gold-soft); border: 1px solid var(--gold);
+  border-radius: 8px; padding: 1rem 1.3rem; margin: 1.2rem 0;
+}
+.rubric h5 { color: var(--gold); margin-top: 0; }
+.rubric ol { margin: 0; padding-left: 1.4rem; }
+.rubric li { font-size: 0.92rem; margin: 0.3rem 0; }
+.rubric li strong { color: var(--gold); }
+
+table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.6rem; font-size: 0.9rem; background: var(--paper-card); border-radius: 6px; overflow: hidden; border: 1px solid var(--rule); }
+th, td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+th { font-family: var(--font-sans); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink); font-weight: 600; background: var(--paper-2); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(196, 178, 144, 0.13); }
+
+.pull { margin: 3rem 0; padding: 1.8rem 2rem; font-family: var(--font-display); font-style: italic; font-size: 1.5rem; line-height: 1.4; color: var(--ink); border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); position: relative; text-align: center; }
+.pull::before { content: "“"; position: absolute; top: -0.2rem; left: 1.2rem; font-family: var(--font-display); font-size: 4.5rem; color: var(--rust); line-height: 1; }
+.pull cite { display: block; margin-top: 0.6rem; font-style: normal; font-family: var(--font-sans); font-size: 0.78rem; color: var(--ink-mute); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500; }
+
+footer.colophon { margin-top: 5rem; padding-top: 2.5rem; border-top: 2px solid var(--ink); font-family: var(--font-sans); font-size: 0.85rem; color: var(--ink-mute); }
+footer.colophon .row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.6rem; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <aside class="toc" id="toc">
+    <div class="toc-brand">
+      <span class="mark">Agent Live Coding <span class="dot">·</span> 8 真题</span>
+      <span class="sub">Take-home + onsite + debug · senior 实战<br><strong>8 题 · 完整答案 · 评分点 · anti-pattern</strong></span>
+    </div>
+    <button class="toc-toggle" onclick="document.getElementById('toc').classList.toggle('open')">≡ 目录</button>
+    <nav class="toc-inner">
+      <ol>
+        <li><a href="#q-1">从 0 写一个 ReAct agent (无框架 · 90min)</a></li>
+        <li><a href="#q-2">用 LangGraph 写带 HITL 的工单 agent (2h)</a></li>
+        <li><a href="#q-3">RAG + tool calling 的研究 agent (4h take-home)</a></li>
+        <li><a href="#q-4">Debug 一个有 4 个隐藏 bug 的 agent (1h)</a></li>
+        <li><a href="#q-5">Multi-agent 系统 + 解释 routing (1h)</a></li>
+        <li><a href="#q-6">把现有 agent 加上 streaming + 中断 + 恢复 (2h)</a></li>
+        <li><a href="#q-7">写一个 agent 的 eval harness (1h)</a></li>
+        <li><a href="#q-8">从公开 paper 实现一个 agent 算法 (开放)</a></li>
+        <li><a href="#anti">Anti-patterns · 22 个不该做的事</a></li>
+        <li><a href="#tips">Take-home 提交 7 条 tips</a></li>
+      </ol>
+    </nav>
+    <div class="toc-foot">
+      配套：<br>
+      <a href="agent-design.html">→ Agent System Design</a><br>
+      <a href="agent-debugging.html">→ Debugging Playbook</a><br>
+      <a href="learn.html">→ 应用 · 从 0 到面试</a><br>
+      <a href="enterprise.html">→ 企业级交付</a><br>
+      <a href="infra.html">→ AI Infra</a><br>
+      <a href="index.html">→ 实现详解</a><br><br>
+      <a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/.../taotao-agent ↗</a>
+    </div>
+  </aside>
+
+  <main class="book-body">
+
+    <!-- ============== Cover ============== -->
+    <header class="cover">
+      <div class="eyebrow">
+        Senior Agent Engineer
+        <span class="sep">·</span> Live Coding · Take-home
+        <span class="sep">·</span> 2026
+      </div>
+      <h1>
+        8 道真题 · 完整答案 · 评分点 · 让你<em>下次面试不慌</em>。
+      </h1>
+      <p class="lede">
+        Senior / staff Agent Engineer 面试 25% 时间在 live coding / take-home，
+        但市面上几乎没有"真题 + 标准答案 + senior 评分点"的整理。
+        这本把 2025-2026 年字节 / 阿里 / Anthropic / OpenAI / Replit / 创业公司面 senior 实际出过的 8 道题
+        ——含<strong>题面 / 限时 / 完整可跑代码 / 评分维度 / 至少 3 个常见 anti-pattern</strong>——一次给你。
+      </p>
+
+      <div class="who">
+        <h4>📌 怎么用这本</h4>
+        <ul>
+          <li><strong>限时自测</strong>：先关掉答案、按规定时间做完，再对答案找差距</li>
+          <li><strong>看评分点</strong>：senior 评分跟 mid 不一样——不是 "能跑就行"，是 trade-off 讲清 + edge case 处理 + observability</li>
+          <li><strong>读 anti-pattern</strong>：每题都列 3-5 个"看似合理实际扣分"的写法</li>
+          <li><strong>面前 3 天</strong>：把 8 道全过一遍 + 跟朋友模拟一次</li>
+          <li><strong>面后</strong>：把面试官追问的点回来加进对应题的"自己版本"</li>
+        </ul>
+      </div>
+    </header>
+
+    <!-- ============== Q1 — ReAct from scratch ============== -->
+    <section id="q-1">
+      <header class="ch-head">
+        <span class="badge">Question 1 · live coding</span>
+        <h2>从 0 写一个 ReAct agent · 不用框架</h2>
+        <p class="lede">最常考的开场题 · 用来验证你"是真懂 agent loop 不是只会调 LangChain"</p>
+      </header>
+
+      <div class="qcard">
+        <div class="meta">
+          <span><strong>难度</strong> mid</span>
+          <span><strong>限时</strong> 60-90 min</span>
+          <span><strong>形式</strong> live coding · 共享屏幕</span>
+          <span><strong>面方</strong> 字节 / 阿里 / 创业公司常见</span>
+        </div>
+        <p class="prompt">用 Python 实现一个最小 ReAct agent（不用 LangChain / LangGraph）。给定 2 个 tool（<code>search</code> 和 <code>calculator</code>），让它能回答 <em>"What is the population of the country whose capital is Tokyo, divided by 1000?"</em> 这种 multi-hop 问题。</p>
+      </div>
+
+      <h3 id="s-1-1"><span class="num">§1.1</span>参考实现 (~120 行 · 30 min 写完)</h3>
+
+      <pre><code><span class="c"># react_agent.py</span>
+<span class="k">import</span> json
+<span class="k">from</span> openai <span class="k">import</span> OpenAI
+<span class="k">from</span> typing <span class="k">import</span> Callable
+
+client = OpenAI()
+
+<span class="c"># ---------------- tools ----------------</span>
+<span class="k">def</span> <span class="f">search</span>(query: str) -&gt; str:
+    <span class="s">"""Mock web search."""</span>
+    fake_db = {
+        <span class="s">"capital of japan"</span>: <span class="s">"Tokyo"</span>,
+        <span class="s">"population of japan"</span>: <span class="s">"125,000,000"</span>,
+        <span class="s">"capital of france"</span>: <span class="s">"Paris"</span>,
+        <span class="s">"population of france"</span>: <span class="s">"68,000,000"</span>,
+    }
+    <span class="k">for</span> k, v <span class="k">in</span> fake_db.items():
+        <span class="k">if</span> k <span class="k">in</span> query.lower():
+            <span class="k">return</span> v
+    <span class="k">return</span> <span class="s">"no result"</span>
+
+<span class="k">def</span> <span class="f">calculator</span>(expression: str) -&gt; str:
+    <span class="s">"""Eval a math expression like '125000000 / 1000'."""</span>
+    <span class="k">try</span>:
+        <span class="k">return</span> str(eval(expression, {<span class="s">"__builtins__"</span>: {}}, {}))
+    <span class="k">except</span> Exception <span class="k">as</span> e:
+        <span class="k">return</span> f<span class="s">"error: {e}"</span>
+
+TOOLS: dict[str, Callable] = {<span class="s">"search"</span>: search, <span class="s">"calculator"</span>: calculator}
+
+<span class="c"># ---------------- prompt ----------------</span>
+SYSTEM = <span class="s">"""You are a research agent. Reason step-by-step (ReAct).
+At each step output exactly ONE of:
+
+  Thought: &lt;your reasoning&gt;
+  Action: &lt;tool_name&gt;
+  Action Input: &lt;input&gt;
+
+OR when done:
+
+  Thought: &lt;your reasoning&gt;
+  Final Answer: &lt;final answer&gt;
+
+Available tools:
+- search(query): web search returning a string
+- calculator(expression): eval a python math expression
+
+Always start with 'Thought:'. Never combine multiple actions in one turn.
+"""</span>
+
+<span class="c"># ---------------- parser ----------------</span>
+<span class="k">def</span> <span class="f">parse_step</span>(text: str) -&gt; dict:
+    <span class="s">"""Parse LLM output into {thought, action, action_input} or {thought, final}."""</span>
+    lines = [l.strip() <span class="k">for</span> l <span class="k">in</span> text.strip().split(<span class="s">"\n"</span>) <span class="k">if</span> l.strip()]
+    out = {}
+    <span class="k">for</span> line <span class="k">in</span> lines:
+        <span class="k">if</span> line.startswith(<span class="s">"Thought:"</span>):
+            out[<span class="s">"thought"</span>] = line[len(<span class="s">"Thought:"</span>):].strip()
+        <span class="k">elif</span> line.startswith(<span class="s">"Action:"</span>):
+            out[<span class="s">"action"</span>] = line[len(<span class="s">"Action:"</span>):].strip()
+        <span class="k">elif</span> line.startswith(<span class="s">"Action Input:"</span>):
+            out[<span class="s">"action_input"</span>] = line[len(<span class="s">"Action Input:"</span>):].strip()
+        <span class="k">elif</span> line.startswith(<span class="s">"Final Answer:"</span>):
+            out[<span class="s">"final"</span>] = line[len(<span class="s">"Final Answer:"</span>):].strip()
+    <span class="k">return</span> out
+
+<span class="c"># ---------------- agent loop ----------------</span>
+<span class="k">def</span> <span class="f">run_agent</span>(question: str, max_steps: int = <span class="s">10</span>) -&gt; str:
+    history = SYSTEM + <span class="s">"\n\nQuestion: "</span> + question + <span class="s">"\n"</span>
+    seen_actions = set()  <span class="c"># bug防护: 重复 action 检测</span>
+
+    <span class="k">for</span> step <span class="k">in</span> range(max_steps):
+        resp = client.chat.completions.create(
+            model=<span class="s">"gpt-4o-mini"</span>,
+            messages=[{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: history}],
+            stop=[<span class="s">"\nObservation:"</span>],  <span class="c"># 关键: 让 LLM 在 Action Input 后停</span>
+            temperature=<span class="s">0</span>,
+        )
+        text = resp.choices[<span class="s">0</span>].message.content
+        history += text + <span class="s">"\n"</span>
+        parsed = parse_step(text)
+
+        <span class="k">if</span> <span class="s">"final"</span> <span class="k">in</span> parsed:
+            <span class="k">return</span> parsed[<span class="s">"final"</span>]
+
+        action = parsed.get(<span class="s">"action"</span>)
+        action_input = parsed.get(<span class="s">"action_input"</span>, <span class="s">""</span>)
+        <span class="k">if</span> <span class="k">not</span> action:
+            history += <span class="s">"Observation: malformed step. Use 'Action:' or 'Final Answer:'.\n"</span>
+            <span class="k">continue</span>
+
+        <span class="c"># bug防护: 同一 action+input 重复 3 次直接终止</span>
+        sig = (action, action_input)
+        <span class="k">if</span> sig <span class="k">in</span> seen_actions:
+            history += <span class="s">"Observation: you already tried this. Try something different or finalize.\n"</span>
+        seen_actions.add(sig)
+
+        <span class="k">if</span> action <span class="k">not</span> <span class="k">in</span> TOOLS:
+            obs = f<span class="s">"unknown tool '{action}'. Available: {list(TOOLS)}"</span>
+        <span class="k">else</span>:
+            <span class="k">try</span>:
+                obs = TOOLS[action](action_input)
+            <span class="k">except</span> Exception <span class="k">as</span> e:
+                obs = f<span class="s">"tool error: {e}"</span>
+
+        history += f<span class="s">"Observation: {obs}\n"</span>
+
+    <span class="k">return</span> <span class="s">"max_steps reached without final answer"</span>
+
+<span class="k">if</span> __name__ == <span class="s">"__main__"</span>:
+    q = <span class="s">"What is the population of the country whose capital is Tokyo, divided by 1000?"</span>
+    print(run_agent(q))
+</code></pre>
+
+      <h3 id="s-1-2"><span class="num">§1.2</span>评分维度 · senior 看的不是"能跑"</h3>
+
+      <div class="rubric">
+        <h5>评分点 · 100 分制</h5>
+        <ol>
+          <li><strong>20 分 · 基本能跑</strong>——loop / parse / tool dispatch 都对，能给出 final answer</li>
+          <li><strong>15 分 · 安全边界</strong>——max_steps 限制 + tool 异常 try/except + 未知 tool 处理 + 重复 action 检测</li>
+          <li><strong>15 分 · prompt 质量</strong>——明确格式约束 + Final Answer / Action 互斥 + tool 描述清楚</li>
+          <li><strong>10 分 · stop sequence</strong>——用 <code>stop=["\nObservation:"]</code> 防 LLM 自己幻觉 observation（关键加分点）</li>
+          <li><strong>10 分 · history 累积</strong>——所有历史正确传给 LLM · 不丢 step</li>
+          <li><strong>10 分 · 代码组织</strong>——tool 是 dict 而非 if-elif 串 · 容易加新 tool</li>
+          <li><strong>10 分 · 主动讲限制</strong>——告诉面试官"我这版还有什么 limitation 在生产要补"（streaming / parallel tool / structured output / observability）</li>
+          <li><strong>10 分 · 演化路径</strong>——能讲"如果给我 2 小时我会再加 X / Y / Z"</li>
+        </ol>
+      </div>
+
+      <h3 id="s-1-3"><span class="num">§1.3</span>常见 anti-pattern · 这些写法会扣分</h3>
+
+      <div class="box bug">
+        <div class="box-label">Anti-pattern 1 · 没有 stop sequence</div>
+        <p>没设 <code>stop=["\nObservation:"]</code> → LLM 经常自己幻觉 observation 内容继续编。<em>面试官故意用 multi-hop 题就是钓你这个</em>。</p>
+      </div>
+
+      <div class="box bug">
+        <div class="box-label">Anti-pattern 2 · max_steps 默认无限</div>
+        <p>不设上限 → 死循环时调爆 API。<strong>必须 hard limit</strong>。</p>
+      </div>
+
+      <div class="box bug">
+        <div class="box-label">Anti-pattern 3 · tool 异常直接 raise</div>
+        <p><code>obs = TOOLS[action](action_input)</code> 不 try/except → tool 报错整个 agent 崩。<strong>必须包 try 把 error 转成 observation 让 LLM 自己想办法</strong>。</p>
+      </div>
+
+      <div class="box bug">
+        <div class="box-label">Anti-pattern 4 · history 用 messages 数组而非纯文本</div>
+        <p>很多人习惯 <code>messages=[{role, content}]</code> 反复 append。这本身没错，但<strong>ReAct 经典实现用 single-message history</strong>更易调试 + parse · live coding 选简的。</p>
+      </div>
+
+      <div class="box bug">
+        <div class="box-label">Anti-pattern 5 · 重复 action 不检测</div>
+        <p>LLM 经常陷入"再 search 一遍同样 query"。代码里加 <code>seen_actions</code> set + 命中后给 LLM 一句 "you already tried this"——5 行代码救一堆面试。</p>
+      </div>
+
+      <h3 id="s-1-4"><span class="num">§1.4</span>面试官追问 · 5 个标准动作</h3>
+
+      <ol>
+        <li><strong>"为什么不用 OpenAI function calling 协议"</strong> → 答："function calling 是<em>更现代的同类 idea</em>。我可以 5 分钟改写。但 ReAct 的 text 格式有 2 个优势：跨 model 通用 (open model 也能跑) + thought 显式可读 / 易 trace。生产我会用 function calling 因为 schema 强 + parse 不会错"</li>
+        <li><strong>"max_steps 怎么定"</strong> → "看 task 复杂度，简单 5 难 25。但单 limit 不够，<em>还要加 cost cap (token 累计) + time budget (墙时)</em>"</li>
+        <li><strong>"如果 tool 是个慢 API 怎么办"</strong> → 答 async / parallel tool call / timeout / cache</li>
+        <li><strong>"怎么 eval 这个 agent"</strong> → 100 道 multi-hop golden set + LLM-as-judge + 人审 sample</li>
+        <li><strong>"上 prod 还差什么"</strong> → 列：observability (LangSmith trace) / structured logging / streaming output / prompt versioning / cost tracking / safety guardrail / multi-provider fallback</li>
+      </ol>
+
+      <div class="box tip">
+        <div class="box-label">senior 收尾金句</div>
+        <p>"<em>这版 120 行能跑通，但生产 agent 至少还要 4 件事：observability (LangSmith / Langfuse) · prompt versioning (能 rollback) · cost cap per session · structured output (用 function calling 替代 text parse)。如果给我 3 天时间我会先做这 4 个</em>"</p>
+      </div>
+    </section>
+
+    <!-- ============== Q2 — LangGraph + HITL ============== -->
+    <section id="q-2">
+      <header class="ch-head">
+        <span class="badge">Question 2 · live coding</span>
+        <h2>用 LangGraph 写一个带 HITL 的工单 agent</h2>
+        <p class="lede">考你 LangGraph 内部理解 + interrupt 机制 · 字节 / 创业 SaaS 常见</p>
+      </header>
+
+      <div class="qcard">
+        <div class="meta">
+          <span><strong>难度</strong> senior</span>
+          <span><strong>限时</strong> 90-120 min</span>
+          <span><strong>形式</strong> live coding · 给 LangGraph 文档</span>
+          <span><strong>面方</strong> 用 LangGraph 的中后端 / SaaS 团队</span>
+        </div>
+        <p class="prompt">用 LangGraph 实现一个 IT 工单 agent。它能：① 解析用户工单 ② 决定 action（查 KB / 重启服务 / 重置密码 / 升级人工）③ <em>"重启服务"和"重置密码"必须先让人类 approve 才执行</em>。Approve 后 agent 继续；reject 则告诉用户原因。要支持 resume——用户 approve 后整个 graph 不重跑前面步骤。</p>
+      </div>
+
+      <h3 id="s-2-1"><span class="num">§2.1</span>参考实现 · 用 LangGraph interrupt</h3>
+
+      <pre><code><span class="c"># ticket_agent.py</span>
+<span class="k">from</span> typing <span class="k">import</span> Literal, TypedDict, Annotated
+<span class="k">from</span> operator <span class="k">import</span> add
+<span class="k">from</span> langgraph.graph <span class="k">import</span> StateGraph, END, START
+<span class="k">from</span> langgraph.checkpoint.memory <span class="k">import</span> MemorySaver
+<span class="k">from</span> langgraph.types <span class="k">import</span> interrupt, Command
+<span class="k">from</span> langchain_openai <span class="k">import</span> ChatOpenAI
+<span class="k">from</span> langchain_core.messages <span class="k">import</span> HumanMessage, AIMessage, BaseMessage
+<span class="k">from</span> pydantic <span class="k">import</span> BaseModel, Field
+
+llm = ChatOpenAI(model=<span class="s">"gpt-4o-mini"</span>, temperature=<span class="s">0</span>)
+
+<span class="c"># ---------- state ----------</span>
+<span class="k">class</span> <span class="f">State</span>(TypedDict):
+    ticket: str
+    messages: Annotated[list[BaseMessage], add]
+    decision: str | None       <span class="c"># "kb" | "restart" | "reset_pwd" | "human"</span>
+    decision_reason: str | None
+    result: str | None
+    approved: bool | None      <span class="c"># 由 HITL 写入</span>
+
+<span class="c"># ---------- structured output for routing ----------</span>
+<span class="k">class</span> <span class="f">Decision</span>(BaseModel):
+    action: Literal[<span class="s">"kb"</span>, <span class="s">"restart"</span>, <span class="s">"reset_pwd"</span>, <span class="s">"human"</span>] = Field(...)
+    reason: str = Field(...)
+
+<span class="c"># ---------- nodes ----------</span>
+<span class="k">def</span> <span class="f">classify</span>(state: State):
+    <span class="s">"""LLM 决定走哪条路."""</span>
+    msg = (
+        <span class="s">"Classify this IT ticket into one of: kb (faq lookup), "</span>
+        <span class="s">"restart (restart user's service), reset_pwd (reset password), "</span>
+        <span class="s">"human (escalate). Output structured.\n\n"</span>
+        f<span class="s">"Ticket: {state['ticket']}"</span>
+    )
+    out = llm.with_structured_output(Decision).invoke(msg)
+    <span class="k">return</span> {<span class="s">"decision"</span>: out.action, <span class="s">"decision_reason"</span>: out.reason}
+
+<span class="k">def</span> <span class="f">human_gate</span>(state: State):
+    <span class="s">"""高危 action 必须 HITL."""</span>
+    user_resp = interrupt({
+        <span class="s">"action_pending"</span>: state[<span class="s">"decision"</span>],
+        <span class="s">"reason"</span>: state[<span class="s">"decision_reason"</span>],
+        <span class="s">"ticket"</span>: state[<span class="s">"ticket"</span>],
+        <span class="s">"prompt"</span>: <span class="s">"approve or reject this action"</span>,
+    })
+    <span class="c"># interrupt 等用户 resume Command(resume={"approved": True/False})</span>
+    <span class="k">return</span> {<span class="s">"approved"</span>: user_resp.get(<span class="s">"approved"</span>, False)}
+
+<span class="k">def</span> <span class="f">do_restart</span>(state: State):
+    <span class="k">if</span> <span class="k">not</span> state.get(<span class="s">"approved"</span>):
+        <span class="k">return</span> {<span class="s">"result"</span>: <span class="s">"REJECTED · told user we won't restart"</span>}
+    <span class="c"># 调真 ops API · 这里 mock</span>
+    <span class="k">return</span> {<span class="s">"result"</span>: <span class="s">"service restarted successfully"</span>}
+
+<span class="k">def</span> <span class="f">do_reset_pwd</span>(state: State):
+    <span class="k">if</span> <span class="k">not</span> state.get(<span class="s">"approved"</span>):
+        <span class="k">return</span> {<span class="s">"result"</span>: <span class="s">"REJECTED · told user we won't reset password"</span>}
+    <span class="k">return</span> {<span class="s">"result"</span>: <span class="s">"password reset · sent reset email"</span>}
+
+<span class="k">def</span> <span class="f">do_kb</span>(state: State):
+    <span class="c"># mock KB lookup</span>
+    <span class="k">return</span> {<span class="s">"result"</span>: f<span class="s">"KB answer for: {state['ticket'][:60]}"</span>}
+
+<span class="k">def</span> <span class="f">do_human</span>(state: State):
+    <span class="k">return</span> {<span class="s">"result"</span>: <span class="s">"escalated to human agent · ticket queued"</span>}
+
+<span class="c"># ---------- routing ----------</span>
+<span class="k">def</span> <span class="f">route_after_classify</span>(state: State) -&gt; str:
+    decision = state[<span class="s">"decision"</span>]
+    <span class="k">if</span> decision <span class="k">in</span> (<span class="s">"restart"</span>, <span class="s">"reset_pwd"</span>):
+        <span class="k">return</span> <span class="s">"human_gate"</span>
+    <span class="k">if</span> decision == <span class="s">"kb"</span>:
+        <span class="k">return</span> <span class="s">"do_kb"</span>
+    <span class="k">return</span> <span class="s">"do_human"</span>
+
+<span class="k">def</span> <span class="f">route_after_gate</span>(state: State) -&gt; str:
+    <span class="k">return</span> f<span class="s">"do_{state['decision']}"</span>
+
+<span class="c"># ---------- graph ----------</span>
+g = StateGraph(State)
+g.add_node(<span class="s">"classify"</span>, classify)
+g.add_node(<span class="s">"human_gate"</span>, human_gate)
+g.add_node(<span class="s">"do_kb"</span>, do_kb)
+g.add_node(<span class="s">"do_restart"</span>, do_restart)
+g.add_node(<span class="s">"do_reset_pwd"</span>, do_reset_pwd)
+g.add_node(<span class="s">"do_human"</span>, do_human)
+
+g.add_edge(START, <span class="s">"classify"</span>)
+g.add_conditional_edges(<span class="s">"classify"</span>, route_after_classify,
+    [<span class="s">"human_gate"</span>, <span class="s">"do_kb"</span>, <span class="s">"do_human"</span>])
+g.add_conditional_edges(<span class="s">"human_gate"</span>, route_after_gate,
+    [<span class="s">"do_restart"</span>, <span class="s">"do_reset_pwd"</span>])
+<span class="k">for</span> n <span class="k">in</span> [<span class="s">"do_kb"</span>, <span class="s">"do_restart"</span>, <span class="s">"do_reset_pwd"</span>, <span class="s">"do_human"</span>]:
+    g.add_edge(n, END)
+
+<span class="c"># 关键: checkpointer 让 interrupt 后能 resume</span>
+checkpointer = MemorySaver()
+graph = g.compile(checkpointer=checkpointer)
+
+<span class="c"># ---------- usage ----------</span>
+<span class="k">if</span> __name__ == <span class="s">"__main__"</span>:
+    cfg = {<span class="s">"configurable"</span>: {<span class="s">"thread_id"</span>: <span class="s">"ticket-001"</span>}}
+    initial = {<span class="s">"ticket"</span>: <span class="s">"My VPN service is down, please restart it"</span>, <span class="s">"messages"</span>: []}
+
+    <span class="c"># 第一次跑 · 应该停在 human_gate</span>
+    out = graph.invoke(initial, config=cfg)
+    print(<span class="s">"--- after first invoke ---"</span>)
+    print(out)  <span class="c"># 看 __interrupt__ payload</span>
+
+    <span class="c"># 模拟人类 approve · resume</span>
+    out2 = graph.invoke(Command(resume={<span class="s">"approved"</span>: True}), config=cfg)
+    print(<span class="s">"--- after approve ---"</span>)
+    print(out2[<span class="s">"result"</span>])
+</code></pre>
+
+      <h3 id="s-2-2"><span class="num">§2.2</span>评分点</h3>
+
+      <div class="rubric">
+        <h5>评分点 · 100 分制</h5>
+        <ol>
+          <li><strong>20 分 · State 设计</strong>——TypedDict + Annotated reducer · 知道 messages 用 add reducer 不会被覆盖</li>
+          <li><strong>20 分 · interrupt 用对</strong>——用了 <code>interrupt()</code> 而不是自造一个 if-blocking · 配 checkpointer · 知道 resume 用 Command</li>
+          <li><strong>15 分 · structured output</strong>——routing 用 <code>with_structured_output</code> 而不是 prompt 让 LLM "请输出 JSON"</li>
+          <li><strong>10 分 · routing 边界</strong>——conditional_edges 加 path list 让 graph 验证可达性</li>
+          <li><strong>10 分 · 高危 action 隔离</strong>——只 restart / reset_pwd 走 HITL · kb 不浪费用户时间</li>
+          <li><strong>10 分 · checkpoint 持久化</strong>——MemorySaver 是 demo，能讲生产用 PostgresSaver / RedisSaver</li>
+          <li><strong>10 分 · reject 路径</strong>——人 reject 不能默默不做，要回 user "为什么没做"</li>
+          <li><strong>5 分 · thread_id 概念</strong>——能讲多用户 multi-tenant 场景 thread_id 怎么生成</li>
+        </ol>
+      </div>
+
+      <h3 id="s-2-3"><span class="num">§2.3</span>常见 anti-pattern</h3>
+
+      <div class="box bug">
+        <div class="box-label">Anti-pattern 1 · 没用 interrupt · 自己 raise</div>
+        <p>有人写 <code>raise NeedHumanApproval(...)</code> 然后外面 try-catch 弹 UI · resume 时整个重跑。<strong>错</strong>——没用 LangGraph 提供的能力。<code>interrupt()</code> 是设计好的，会自动持久化 state、resume 时只跑 interrupt 之后的节点。</p>
+      </div>
+
+      <div class="box bug">
+        <div class="box-label">Anti-pattern 2 · 把 routing 逻辑塞进 LLM prompt</div>
+        <p>"LLM 你看着输出 JSON 我自己 parse" → schema 偶尔出错。用 <code>with_structured_output(Pydantic)</code>—— LangChain 帮你 validate + retry。</p>
+      </div>
+
+      <div class="box bug">
+        <div class="box-label">Anti-pattern 3 · MemorySaver 当生产用</div>
+        <p>MemorySaver 是 in-process · 服务重启 state 全丢。生产<strong>必须 PostgresSaver / RedisSaver</strong>。面试时用 MemorySaver 但要主动声明"生产换 X"。</p>
+      </div>
+
+      <div class="box bug">
+        <div class="box-label">Anti-pattern 4 · approve 后才检查 approved</div>
+        <p>有人在 do_restart 里没检查 <code>state["approved"]</code> 直接执行——<strong>这违背 HITL 全部目的</strong>。每个 destructive node 必须 verify approved。</p>
+      </div>
+
+      <div class="box bug">
+        <div class="box-label">Anti-pattern 5 · thread_id 全局共享</div>
+        <p>所有用户同 thread_id → 后面用户看到前面的 state。<strong>thread_id 必须 per session / per user</strong>，通常 <code>f"{user_id}:{ticket_id}"</code>。</p>
+      </div>
+
+      <h3 id="s-2-4"><span class="num">§2.4</span>面试官追问</h3>
+      <ol>
+        <li><strong>"如果 user 半小时不 approve 怎么办"</strong> → 设 timeout · 超时 default behavior（escalate human / cancel） · LangGraph 的 interrupt 不带 timeout 你要自己加 cron 检查 stale thread</li>
+        <li><strong>"如果 service restart 失败怎么办"</strong> → tool 异常 catch · 写到 result · 提示用户 + log incident · 不要 silently fail</li>
+        <li><strong>"扩到 1000 QPS · MemorySaver 不行了"</strong> → PostgresSaver + read replica · checkpoint 大表设 TTL · 监控 checkpoint write latency</li>
+        <li><strong>"approve 用什么 UI"</strong> → push notification · Slack interactive button · UI banner with approve/reject button + reason input</li>
+        <li><strong>"audit log 怎么存"</strong> → 每次 interrupt + resume 都 emit event 到 audit table（who / when / approved / reason）</li>
+      </ol>
+    </section>
+
+    <!-- ============== Q3 — Research agent take-home ============== -->
+    <section id="q-3">
+      <header class="ch-head">
+        <span class="badge">Question 3 · take-home</span>
+        <h2>RAG + tool calling 的研究 agent · 4h take-home</h2>
+        <p class="lede">最常见的 take-home 形式 · 给你一个 dataset 和接口 · 让你交一个 GitHub repo</p>
+      </header>
+
+      <div class="qcard">
+        <div class="meta">
+          <span><strong>难度</strong> senior</span>
+          <span><strong>限时</strong> 4-8h take-home (1 周内交)</span>
+          <span><strong>形式</strong> GitHub repo + README + demo video (可选)</span>
+          <span><strong>面方</strong> Anthropic / OpenAI / 字节 forward deployed / 多家创业</span>
+        </div>
+        <p class="prompt">给你一个本地 markdown 文档库（500 个内部 tech blog 文件）。实现一个 agent 能回答 <em>"我们公司去年 Q3 推出的 X 产品用了什么技术栈"</em> 这种 multi-hop 问题。要求：① RAG over 本地 doc ② 必要时调 web search 补充 external info ③ 给 inline citation ④ 提供 eval script 跑 20 道 sample 问题输出 success rate ⑤ README 讲清架构选型 + trade-off + 已知 limitation。</p>
+      </div>
+
+      <h3 id="s-3-1"><span class="num">§3.1</span>建议项目结构 (~600 行 · 2-3h 写完)</h3>
+
+      <pre><code><span class="c"># 推荐目录</span>
+research-agent/
+├── README.md            <span class="c"># 关键 · 决定 senior 评分</span>
+├── requirements.txt
+├── src/
+│   ├── ingest.py        <span class="c"># 把 markdown 切块 + embed 到 vector store</span>
+│   ├── retrieve.py      <span class="c"># hybrid search (BM25 + dense) + rerank</span>
+│   ├── tools.py         <span class="c"># search_kb · search_web · fetch_url</span>
+│   ├── agent.py         <span class="c"># LangGraph + ReAct loop</span>
+│   ├── eval.py          <span class="c"># 跑 sample.jsonl 输出 metric</span>
+│   └── prompts.py       <span class="c"># 单独管理 prompt</span>
+├── data/
+│   └── docs/            <span class="c"># 题目给的 500 md</span>
+├── eval/
+│   ├── sample.jsonl     <span class="c"># 20 道 + ground truth</span>
+│   └── results.json     <span class="c"># 跑出的成绩</span>
+└── tests/
+    └── test_retrieve.py
+</code></pre>
+
+      <h3 id="s-3-2"><span class="num">§3.2</span>Agent 主体 (LangGraph 版)</h3>
+
+      <pre><code><span class="c"># src/agent.py</span>
+<span class="k">from</span> langgraph.graph <span class="k">import</span> StateGraph, END, START
+<span class="k">from</span> langchain_openai <span class="k">import</span> ChatOpenAI
+<span class="k">from</span> langchain_core.messages <span class="k">import</span> HumanMessage, ToolMessage, SystemMessage
+<span class="k">from</span> .tools import TOOLS, TOOL_SCHEMAS
+<span class="k">from</span> .prompts import SYSTEM_PROMPT
+
+llm = ChatOpenAI(model=<span class="s">"gpt-4o"</span>, temperature=<span class="s">0</span>).bind_tools(TOOL_SCHEMAS)
+
+<span class="k">def</span> <span class="f">agent_node</span>(state):
+    msgs = [SystemMessage(content=SYSTEM_PROMPT)] + state[<span class="s">"messages"</span>]
+    resp = llm.invoke(msgs)
+    <span class="k">return</span> {<span class="s">"messages"</span>: [resp]}
+
+<span class="k">def</span> <span class="f">tool_node</span>(state):
+    last = state[<span class="s">"messages"</span>][-1]
+    out = []
+    <span class="k">for</span> tc <span class="k">in</span> last.tool_calls:
+        name = tc[<span class="s">"name"</span>]
+        <span class="k">try</span>:
+            result = TOOLS[name](**tc[<span class="s">"args"</span>])
+        <span class="k">except</span> Exception <span class="k">as</span> e:
+            result = f<span class="s">"tool error: {e}"</span>
+        out.append(ToolMessage(content=str(result), tool_call_id=tc[<span class="s">"id"</span>]))
+    <span class="k">return</span> {<span class="s">"messages"</span>: out}
+
+<span class="k">def</span> <span class="f">should_continue</span>(state) -&gt; str:
+    last = state[<span class="s">"messages"</span>][-1]
+    <span class="k">if</span> last.tool_calls:
+        <span class="k">return</span> <span class="s">"tools"</span>
+    <span class="k">return</span> END
+
+g = StateGraph(dict)
+g.add_node(<span class="s">"agent"</span>, agent_node)
+g.add_node(<span class="s">"tools"</span>, tool_node)
+g.add_edge(START, <span class="s">"agent"</span>)
+g.add_conditional_edges(<span class="s">"agent"</span>, should_continue, [<span class="s">"tools"</span>, END])
+g.add_edge(<span class="s">"tools"</span>, <span class="s">"agent"</span>)
+
+<span class="c"># 关键 · recursion_limit + checkpointer 都要</span>
+agent = g.compile()
+
+<span class="k">def</span> <span class="f">run</span>(question: str, max_iters: int = <span class="s">15</span>) -&gt; dict:
+    init = {<span class="s">"messages"</span>: [HumanMessage(content=question)]}
+    out = agent.invoke(init, {<span class="s">"recursion_limit"</span>: max_iters})
+    final = out[<span class="s">"messages"</span>][-1].content
+    <span class="c"># 提取 trace · 给 eval 用</span>
+    tool_calls = [m <span class="k">for</span> m <span class="k">in</span> out[<span class="s">"messages"</span>] <span class="k">if</span> hasattr(m, <span class="s">"tool_calls"</span>) <span class="k">and</span> m.tool_calls]
+    <span class="k">return</span> {<span class="s">"answer"</span>: final, <span class="s">"trace"</span>: out[<span class="s">"messages"</span>], <span class="s">"tool_calls"</span>: len(tool_calls)}
+</code></pre>
+
+      <h3 id="s-3-3"><span class="num">§3.3</span>Hybrid Retrieval (高加分)</h3>
+
+      <pre><code><span class="c"># src/retrieve.py</span>
+<span class="k">from</span> rank_bm25 <span class="k">import</span> BM25Okapi
+<span class="k">import</span> chromadb
+<span class="k">from</span> sentence_transformers <span class="k">import</span> CrossEncoder
+
+<span class="k">class</span> <span class="f">HybridRetriever</span>:
+    <span class="k">def</span> __init__(self, chunks):
+        self.chunks = chunks
+        <span class="c"># BM25</span>
+        self.bm25 = BM25Okapi([c[<span class="s">"text"</span>].split() <span class="k">for</span> c <span class="k">in</span> chunks])
+        <span class="c"># Vector</span>
+        self.client = chromadb.Client()
+        self.col = self.client.create_collection(<span class="s">"docs"</span>)
+        self.col.add(
+            documents=[c[<span class="s">"text"</span>] <span class="k">for</span> c <span class="k">in</span> chunks],
+            ids=[c[<span class="s">"id"</span>] <span class="k">for</span> c <span class="k">in</span> chunks],
+            metadatas=[{<span class="s">"file"</span>: c[<span class="s">"file"</span>]} <span class="k">for</span> c <span class="k">in</span> chunks],
+        )
+        <span class="c"># Reranker</span>
+        self.reranker = CrossEncoder(<span class="s">"BAAI/bge-reranker-base"</span>)
+
+    <span class="k">def</span> <span class="f">search</span>(self, query: str, k: int = <span class="s">10</span>) -&gt; list[dict]:
+        <span class="c"># BM25 top 30</span>
+        bm25_scores = self.bm25.get_scores(query.split())
+        bm25_top = sorted(range(len(bm25_scores)), key=<span class="k">lambda</span> i: -bm25_scores[i])[:<span class="s">30</span>]
+        <span class="c"># Vector top 30</span>
+        vec_results = self.col.query(query_texts=[query], n_results=<span class="s">30</span>)
+        vec_top = [int(i) <span class="k">for</span> i <span class="k">in</span> vec_results[<span class="s">"ids"</span>][<span class="s">0</span>]]
+        <span class="c"># Union</span>
+        candidate_ids = list(set(bm25_top + vec_top))
+        <span class="c"># Rerank</span>
+        pairs = [[query, self.chunks[i][<span class="s">"text"</span>]] <span class="k">for</span> i <span class="k">in</span> candidate_ids]
+        scores = self.reranker.predict(pairs)
+        ranked = sorted(zip(candidate_ids, scores), key=<span class="k">lambda</span> x: -x[<span class="s">1</span>])[:k]
+        <span class="k">return</span> [self.chunks[i] <span class="k">for</span> i, _ <span class="k">in</span> ranked]
+</code></pre>
+
+      <h3 id="s-3-4"><span class="num">§3.4</span>Eval script (必须给)</h3>
+
+      <pre><code><span class="c"># src/eval.py</span>
+<span class="k">import</span> json
+<span class="k">from</span> .agent import run
+
+<span class="k">def</span> <span class="f">judge</span>(predicted: str, ground_truth: str, question: str) -&gt; bool:
+    <span class="s">"""LLM-as-judge · 看预测是否含 ground truth 关键 fact."""</span>
+    <span class="k">from</span> openai import OpenAI
+    client = OpenAI()
+    msg = f<span class="s">"""Question: {question}
+Ground truth: {ground_truth}
+Predicted answer: {predicted}
+
+Does the predicted answer contain the key facts from ground truth? Reply only 'YES' or 'NO'."""</span>
+    resp = client.chat.completions.create(model=<span class="s">"gpt-4o-mini"</span>,
+        messages=[{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: msg}], temperature=<span class="s">0</span>)
+    <span class="k">return</span> <span class="s">"YES"</span> <span class="k">in</span> resp.choices[<span class="s">0</span>].message.content.upper()
+
+<span class="k">def</span> <span class="f">main</span>():
+    samples = [json.loads(l) <span class="k">for</span> l <span class="k">in</span> open(<span class="s">"eval/sample.jsonl"</span>)]
+    results = []
+    <span class="k">for</span> s <span class="k">in</span> samples:
+        out = run(s[<span class="s">"question"</span>])
+        passed = judge(out[<span class="s">"answer"</span>], s[<span class="s">"answer"</span>], s[<span class="s">"question"</span>])
+        results.append({**s, <span class="s">"predicted"</span>: out[<span class="s">"answer"</span>],
+                       <span class="s">"passed"</span>: passed, <span class="s">"tool_calls"</span>: out[<span class="s">"tool_calls"</span>]})
+    success = sum(<span class="s">1</span> <span class="k">for</span> r <span class="k">in</span> results <span class="k">if</span> r[<span class="s">"passed"</span>]) / len(results)
+    print(f<span class="s">"Success rate: {success:.1%} ({sum(1 for r in results if r['passed'])}/{len(results)})"</span>)
+    json.dump(results, open(<span class="s">"eval/results.json"</span>, <span class="s">"w"</span>), indent=<span class="s">2</span>)
+
+<span class="k">if</span> __name__ == <span class="s">"__main__"</span>: main()
+</code></pre>
+
+      <h3 id="s-3-5"><span class="num">§3.5</span>README 模板 · senior 评分大头</h3>
+
+      <pre><code><span class="c"># 这部分占 take-home 评分 30-40%</span>
+<span class="c"># README 必有 7 节</span>
+
+# Research Agent
+
+## 1. Quickstart
+&grave;&grave;&grave;bash
+pip install -r requirements.txt
+python -m src.ingest data/docs/  # build index
+python -m src.eval               # run 20 sample qs
+&grave;&grave;&grave;
+
+## 2. Architecture
+[画一张架构图 · 用 mermaid 或 ascii]
+- LangGraph ReAct loop
+- Tools: search_kb (hybrid BM25+dense+rerank) / search_web / fetch_url
+- LLM: gpt-4o-mini for cost · 关键 step 升级 gpt-4o
+- Recursion limit 15 防死循环
+
+## 3. Design decisions &amp; trade-offs
+- **Hybrid search vs pure dense** &mdash; 内部 doc 含大量缩写/产品名 &middot; BM25 召回这类 fact 比 dense 强 &middot; rerank 收尾
+- **gpt-4o-mini default** &mdash; 90% query 不需 frontier &middot; cost 0.1x
+- **No long-term memory** &mdash; question 是 stateless &middot; 不引入复杂度
+- **Recursion 15** &mdash; eval set P95 是 7 步 &middot; 留 buffer 不浪费 token
+
+## 4. Eval results
+- 20 道 sample &middot; success rate 17/20 = 85%
+- 失败 case: 2 个跨多 doc 的复杂综合, 1 个 web search 没召回到 source
+- Avg cost/query: $0.012, avg latency 4.2s, avg tool calls 3.4
+
+## 5. Known limitations
+- 不支持 follow-up question (无 multi-turn)
+- 没做 prompt cache · 长 system prompt 每次都计费
+- 没区分 trusted/untrusted source &middot; web result 可能含 prompt injection
+
+## 6. What I'd do with more time
+1. Add LangSmith trace + per-tool latency dashboard
+2. Add semantic cache (similar query 不重算)
+3. Add structured citation validation (post-check [n] 真存在)
+4. Multi-turn support (state via checkpointer)
+5. Async parallel tool calls
+
+## 7. Time spent: ~5h
+</code></pre>
+
+      <h3 id="s-3-6"><span class="num">§3.6</span>评分点</h3>
+
+      <div class="rubric">
+        <h5>评分点 · 100 分制 (take-home senior 标准)</h5>
+        <ol>
+          <li><strong>15 分 · 能跑</strong>——pip install + 一条命令能复现 · 不缺依赖</li>
+          <li><strong>20 分 · 架构合理</strong>——选 LangGraph 不自造 · structured tool calling 不 text parse · 模块化清晰</li>
+          <li><strong>15 分 · Retrieval 质量</strong>——hybrid search 而非纯 dense · 至少有 reranker</li>
+          <li><strong>15 分 · Eval script + 真有结果</strong>——LLM-as-judge + 跑出 success rate · 失败 case 有分析</li>
+          <li><strong>15 分 · README 完整</strong>——7 节齐 · 写出 trade-off · 写出 limitation</li>
+          <li><strong>10 分 · Citation</strong>——回答带来源（"based on doc X.md line Y"）</li>
+          <li><strong>5 分 · Cost / latency 数字</strong>——README 有真实测量数字</li>
+          <li><strong>5 分 · "what I'd do with more time"</strong>——senior 必有这一节·展示成熟度</li>
+        </ol>
+      </div>
+
+      <div class="box tip">
+        <div class="box-label">take-home 时间分配建议（5h）</div>
+        <ol>
+          <li><strong>30min</strong>——读题 + 划范围 + 列 todo</li>
+          <li><strong>1h</strong>——ingest + retrieval (hybrid + rerank)</li>
+          <li><strong>1h</strong>——agent (LangGraph + tools + structured)</li>
+          <li><strong>1h</strong>——eval script + 跑 + debug</li>
+          <li><strong>30min</strong>——写 sample.jsonl 20 道（这个不能省）</li>
+          <li><strong>1h</strong>——README + push GitHub + 自测一遍 fresh clone</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============== Q4 — Debug 4 hidden bugs ============== -->
+    <section id="q-4">
+      <header class="ch-head">
+        <span class="badge">Question 4 · live debug</span>
+        <h2>Debug 一个有 4 个隐藏 bug 的 agent · 1h</h2>
+        <p class="lede">最 senior 的题型 · 不写新代码 · 看你能多快定位 bug</p>
+      </header>
+
+      <div class="qcard">
+        <div class="meta">
+          <span><strong>难度</strong> senior / staff</span>
+          <span><strong>限时</strong> 60 min</span>
+          <span><strong>形式</strong> 给一个能跑但行为奇怪的 repo · 让你 debug</span>
+          <span><strong>面方</strong> Anthropic / OpenAI / 字节 staff 级</span>
+        </div>
+        <p class="prompt">这是同事写的一个 SQL agent。<em>它能跑但 4 类 query 行为不对</em>：① 复杂 query 经常死循环 ② 偶尔答非所问 ③ 写操作有时直接执行没人审 ④ memory 串号（用户 A 看到用户 B 的历史）。给你 60 分钟找出 bug 并修复。</p>
+      </div>
+
+      <h3 id="s-4-1"><span class="num">§4.1</span>"题目" agent 代码（有 4 个 bug · 你能找出几个？）</h3>
+
+      <pre><code><span class="c"># bug_agent.py · 这是面试给你的 starter code</span>
+<span class="k">from</span> langgraph.graph <span class="k">import</span> StateGraph, END, START
+<span class="k">from</span> langgraph.checkpoint.memory <span class="k">import</span> MemorySaver
+<span class="k">from</span> langchain_openai <span class="k">import</span> ChatOpenAI
+<span class="k">from</span> langchain_core.messages <span class="k">import</span> HumanMessage, AIMessage
+
+llm = ChatOpenAI(model=<span class="s">"gpt-4o"</span>, temperature=<span class="s">0.7</span>)
+
+<span class="k">def</span> <span class="f">classify</span>(state):
+    msg = f<span class="s">"Is this a SELECT or WRITE query? '{state['question']}'. Output 'select' or 'write'."</span>
+    out = llm.invoke(msg).content.lower()
+    <span class="k">return</span> {<span class="s">"qtype"</span>: out}
+
+<span class="k">def</span> <span class="f">gen_sql</span>(state):
+    history = state.get(<span class="s">"history"</span>, <span class="s">""</span>)
+    msg = history + f<span class="s">"\nQuestion: {state['question']}\nGenerate SQL:"</span>
+    sql = llm.invoke(msg).content
+    <span class="k">return</span> {<span class="s">"sql"</span>: sql, <span class="s">"history"</span>: history + msg + sql}
+
+<span class="k">def</span> <span class="f">execute</span>(state):
+    <span class="c"># mock executor</span>
+    print(f<span class="s">"Executing: {state['sql']}"</span>)
+    <span class="k">return</span> {<span class="s">"result"</span>: <span class="s">"some rows"</span>}
+
+<span class="k">def</span> <span class="f">interpret</span>(state):
+    msg = f<span class="s">"Question: {state['question']}\nSQL: {state['sql']}\nResult: {state['result']}\nAnswer in natural language:"</span>
+    <span class="k">return</span> {<span class="s">"answer"</span>: llm.invoke(msg).content}
+
+<span class="k">def</span> <span class="f">route</span>(state) -&gt; str:
+    <span class="k">if</span> <span class="s">"select"</span> <span class="k">in</span> state[<span class="s">"qtype"</span>]:
+        <span class="k">return</span> <span class="s">"execute"</span>
+    <span class="k">return</span> <span class="s">"execute"</span>  <span class="c"># write 也直接执行</span>
+
+g = StateGraph(dict)
+g.add_node(<span class="s">"classify"</span>, classify)
+g.add_node(<span class="s">"gen_sql"</span>, gen_sql)
+g.add_node(<span class="s">"execute"</span>, execute)
+g.add_node(<span class="s">"interpret"</span>, interpret)
+
+g.add_edge(START, <span class="s">"classify"</span>)
+g.add_edge(<span class="s">"classify"</span>, <span class="s">"gen_sql"</span>)
+g.add_conditional_edges(<span class="s">"gen_sql"</span>, route, [<span class="s">"execute"</span>])
+g.add_edge(<span class="s">"execute"</span>, <span class="s">"interpret"</span>)
+g.add_edge(<span class="s">"interpret"</span>, END)
+
+checkpointer = MemorySaver()
+graph = g.compile(checkpointer=checkpointer)
+
+<span class="c"># 全局共享一个 thread_id</span>
+THREAD = {<span class="s">"configurable"</span>: {<span class="s">"thread_id"</span>: <span class="s">"sql-agent"</span>}}
+
+<span class="k">def</span> <span class="f">ask</span>(question: str) -&gt; str:
+    out = graph.invoke({<span class="s">"question"</span>: question}, THREAD)
+    <span class="k">return</span> out[<span class="s">"answer"</span>]
+</code></pre>
+
+      <h3 id="s-4-2"><span class="num">§4.2</span>4 个 bug 的位置和修复</h3>
+
+      <div class="box bug">
+        <div class="box-label">Bug 1 · 死循环 · "复杂 query 跑不停"</div>
+        <p><strong>位置</strong>：根本没看出来——题目说"死循环"是<em>陷阱</em>。这个 graph 是 DAG 没循环根本死不了。
+        <strong>真因</strong>：是 <em>execute 步骤被外部 service 卡住</em>，没 timeout。<strong>但还有更隐蔽的</strong>：<code>temperature=0.7</code> 让 SQL gen 不稳定 + 没 retry → 用户重复问 = 跑很多遍 = 看起来"死循环"。</p>
+        <p><strong>修复</strong>：</p>
+        <ul>
+          <li><code>temperature=0</code> 让 SQL 确定性</li>
+          <li>execute 加 timeout (e.g. 30s)</li>
+          <li>recursion_limit + 复杂 query 拒绝（dry-run cost 估计）</li>
+        </ul>
+      </div>
+
+      <div class="box bug">
+        <div class="box-label">Bug 2 · 答非所问 · "偶尔结果跟问题不对"</div>
+        <p><strong>位置</strong>：<code>gen_sql</code> 节点 · <code>history</code> 累积所有 prompt 文本 + LLM 输出 · <em>越来越长 + 把过去的 question 和 SQL 都混进 prompt</em>。LLM 经常被旧 question 影响生成<em>跟当前 question 不匹配</em>的 SQL。
+        <strong>这是 senior 必看出来的 bug</strong>——history 累积错地方。</p>
+        <p><strong>修复</strong>：</p>
+        <ul>
+          <li>不要把 history 拼成大 string · 用 messages 数组让 LLM 知道哪是 user 哪是 assistant</li>
+          <li>每个 question 是新的 invocation · 不带 history（除非真要 multi-turn）</li>
+          <li>如果要 multi-turn，用 LangGraph state 的 messages reducer 而不是手动拼字符串</li>
+        </ul>
+      </div>
+
+      <div class="box bug">
+        <div class="box-label">Bug 3 · 写操作直接执行 · 没 HITL</div>
+        <p><strong>位置</strong>：<code>route</code> 函数 · 看似有 if-else 但<em>两个 branch 都返回 "execute"</em>——写 SQL 跟读 SQL 走同条路。<em>注释 "write 也直接执行" 是凶手</em>。</p>
+        <p><strong>修复</strong>：</p>
+        <pre style="margin: 0.4rem 0;"><code><span class="k">def</span> <span class="f">route</span>(state) -&gt; str:
+    <span class="k">if</span> <span class="s">"select"</span> <span class="k">in</span> state[<span class="s">"qtype"</span>]:
+        <span class="k">return</span> <span class="s">"execute"</span>
+    <span class="k">return</span> <span class="s">"human_gate"</span>  <span class="c"># write 走 HITL</span></code></pre>
+        <p>加 <code>human_gate</code> 节点用 <code>interrupt()</code> · approved 才进 execute · 否则告诉用户 reason。</p>
+      </div>
+
+      <div class="box bug">
+        <div class="box-label">Bug 4 · memory 串号 · "用户 A 看到用户 B 的历史"</div>
+        <p><strong>位置</strong>：模块底部 <code>THREAD = {"configurable": {"thread_id": "sql-agent"}}</code>——<em>所有用户共享同一 thread_id</em>。配 MemorySaver 后 state 持久跨用户混。</p>
+        <p><strong>修复</strong>：</p>
+        <pre style="margin: 0.4rem 0;"><code><span class="k">def</span> <span class="f">ask</span>(question: str, user_id: str, session_id: str) -&gt; str:
+    cfg = {<span class="s">"configurable"</span>: {<span class="s">"thread_id"</span>: f<span class="s">"{user_id}:{session_id}"</span>}}
+    out = graph.invoke({<span class="s">"question"</span>: question}, cfg)
+    <span class="k">return</span> out[<span class="s">"answer"</span>]</code></pre>
+      </div>
+
+      <div class="box tip">
+        <div class="box-label">senior 思路 · debug 5 步法</div>
+        <ol>
+          <li><strong>读 trace</strong>——不要先看代码！让它跑一遍 print 出每个 node 的 input/output</li>
+          <li><strong>按症状分类</strong>——4 个症状很可能 4 个不同地方的 bug</li>
+          <li><strong>定位最可疑</strong>——symptom 4 (memory 串号) 一看就是 thread_id 问题，几行代码定位</li>
+          <li><strong>分而治之</strong>——每修一个就重测一类症状 · 别一次改 4 处</li>
+          <li><strong>讲</strong>——边修边讲思路 · 让面试官看到你的 reasoning · 比对错关键</li>
+        </ol>
+      </div>
+
+      <p><strong>这题 60min 能找 4 个全 = staff 级</strong>。找 3 个 = senior。找 2 个 + 思路清晰 = mid+。&lt; 2 个 = mid。</p>
+    </section>
+
+    <!-- ============== Q5 — Multi-agent ============== -->
+    <section id="q-5">
+      <header class="ch-head">
+        <span class="badge">Question 5 · live coding</span>
+        <h2>写一个 multi-agent 系统并解释 routing</h2>
+        <p class="lede">考你 supervisor pattern + state 共享 + handoff 机制</p>
+      </header>
+
+      <div class="qcard">
+        <div class="meta">
+          <span><strong>难度</strong> senior</span>
+          <span><strong>限时</strong> 60-90 min</span>
+          <span><strong>形式</strong> live coding · 写 + 解释 routing 决策</span>
+        </div>
+        <p class="prompt">实现一个 supervisor + 3 个 specialist agent 的系统：① <code>research_agent</code>（web search）② <code>code_agent</code>（写代码）③ <code>writer_agent</code>（最终输出）。Supervisor 根据 state 决定下一步调谁，所有 agent 共享 message history。给我跑一个 demo："写一篇 200 字的 'PagedAttention 是什么' 短文配代码示例"。</p>
+      </div>
+
+      <h3 id="s-5-1"><span class="num">§5.1</span>参考实现</h3>
+
+      <pre><code><span class="c"># multi_agent.py</span>
+<span class="k">from</span> typing <span class="k">import</span> Literal, Annotated, TypedDict
+<span class="k">from</span> operator <span class="k">import</span> add
+<span class="k">from</span> langgraph.graph <span class="k">import</span> StateGraph, END, START
+<span class="k">from</span> langchain_openai <span class="k">import</span> ChatOpenAI
+<span class="k">from</span> langchain_core.messages <span class="k">import</span> BaseMessage, HumanMessage, AIMessage, SystemMessage
+<span class="k">from</span> pydantic <span class="k">import</span> BaseModel, Field
+
+llm = ChatOpenAI(model=<span class="s">"gpt-4o-mini"</span>, temperature=<span class="s">0</span>)
+
+<span class="k">class</span> <span class="f">State</span>(TypedDict):
+    messages: Annotated[list[BaseMessage], add]
+    research_done: bool
+    code_done: bool
+    writer_done: bool
+    iterations: int  <span class="c"># 防死循环</span>
+
+<span class="k">class</span> <span class="f">RouterDecision</span>(BaseModel):
+    next_agent: Literal[<span class="s">"research_agent"</span>, <span class="s">"code_agent"</span>, <span class="s">"writer_agent"</span>, <span class="s">"FINISH"</span>]
+    reason: str
+
+SUPERVISOR_PROMPT = <span class="s">"""You are the supervisor of 3 specialist agents.
+- research_agent: gathers web info
+- code_agent: writes code examples
+- writer_agent: produces the final user-facing output
+
+Decide next agent based on state. FINISH when writer_agent has produced output.
+Don't repeat agents unless their work was inadequate."""</span>
+
+<span class="k">def</span> <span class="f">supervisor</span>(state: State):
+    <span class="c"># 关键 · 显式跟踪每 agent 是否做过</span>
+    status = (
+        f<span class="s">"research_done={state.get('research_done', False)}, "</span>
+        f<span class="s">"code_done={state.get('code_done', False)}, "</span>
+        f<span class="s">"writer_done={state.get('writer_done', False)}"</span>
+    )
+    msg = SUPERVISOR_PROMPT + f<span class="s">"\n\nCurrent status: {status}\nMessages so far: {len(state['messages'])}"</span>
+    out = llm.with_structured_output(RouterDecision).invoke(
+        [SystemMessage(content=msg), *state[<span class="s">"messages"</span>][-<span class="s">5</span>:]]
+    )
+    print(f<span class="s">"[supervisor] → {out.next_agent} · {out.reason}"</span>)
+    <span class="k">return</span> {<span class="s">"messages"</span>: [AIMessage(content=f<span class="s">"[supervisor]: route to {out.next_agent} ({out.reason})"</span>,
+                                       name=<span class="s">"supervisor"</span>)],
+            <span class="s">"iterations"</span>: state.get(<span class="s">"iterations"</span>, <span class="s">0</span>) + <span class="s">1</span>}
+
+<span class="k">def</span> <span class="f">research_agent</span>(state: State):
+    msg = (<span class="s">"You are a researcher. Read the user request and provide 3-5 key facts. "</span>
+           <span class="s">"Mock web search · pretend you searched."</span>)
+    out = llm.invoke([SystemMessage(content=msg), *state[<span class="s">"messages"</span>]])
+    out.name = <span class="s">"research_agent"</span>
+    <span class="k">return</span> {<span class="s">"messages"</span>: [out], <span class="s">"research_done"</span>: True}
+
+<span class="k">def</span> <span class="f">code_agent</span>(state: State):
+    msg = <span class="s">"You write code examples. Use the research findings if available."</span>
+    out = llm.invoke([SystemMessage(content=msg), *state[<span class="s">"messages"</span>]])
+    out.name = <span class="s">"code_agent"</span>
+    <span class="k">return</span> {<span class="s">"messages"</span>: [out], <span class="s">"code_done"</span>: True}
+
+<span class="k">def</span> <span class="f">writer_agent</span>(state: State):
+    msg = <span class="s">"You produce the FINAL user-facing answer. Combine research + code into a clean response."</span>
+    out = llm.invoke([SystemMessage(content=msg), *state[<span class="s">"messages"</span>]])
+    out.name = <span class="s">"writer_agent"</span>
+    <span class="k">return</span> {<span class="s">"messages"</span>: [out], <span class="s">"writer_done"</span>: True}
+
+<span class="k">def</span> <span class="f">route_supervisor</span>(state: State) -&gt; str:
+    <span class="c"># 防死循环</span>
+    <span class="k">if</span> state.get(<span class="s">"iterations"</span>, <span class="s">0</span>) &gt;= <span class="s">8</span>:
+        <span class="k">return</span> END
+    last = state[<span class="s">"messages"</span>][-<span class="s">1</span>]
+    text = last.content
+    <span class="k">if</span> <span class="s">"FINISH"</span> <span class="k">in</span> text:
+        <span class="k">return</span> END
+    <span class="k">if</span> <span class="s">"research_agent"</span> <span class="k">in</span> text:
+        <span class="k">return</span> <span class="s">"research_agent"</span>
+    <span class="k">if</span> <span class="s">"code_agent"</span> <span class="k">in</span> text:
+        <span class="k">return</span> <span class="s">"code_agent"</span>
+    <span class="k">if</span> <span class="s">"writer_agent"</span> <span class="k">in</span> text:
+        <span class="k">return</span> <span class="s">"writer_agent"</span>
+    <span class="k">return</span> END
+
+g = StateGraph(State)
+g.add_node(<span class="s">"supervisor"</span>, supervisor)
+g.add_node(<span class="s">"research_agent"</span>, research_agent)
+g.add_node(<span class="s">"code_agent"</span>, code_agent)
+g.add_node(<span class="s">"writer_agent"</span>, writer_agent)
+g.add_edge(START, <span class="s">"supervisor"</span>)
+g.add_conditional_edges(<span class="s">"supervisor"</span>, route_supervisor,
+    [<span class="s">"research_agent"</span>, <span class="s">"code_agent"</span>, <span class="s">"writer_agent"</span>, END])
+<span class="c"># 每个 specialist 跑完回 supervisor</span>
+<span class="k">for</span> n <span class="k">in</span> [<span class="s">"research_agent"</span>, <span class="s">"code_agent"</span>, <span class="s">"writer_agent"</span>]:
+    g.add_edge(n, <span class="s">"supervisor"</span>)
+
+graph = g.compile()
+
+<span class="k">if</span> __name__ == <span class="s">"__main__"</span>:
+    out = graph.invoke({<span class="s">"messages"</span>: [HumanMessage(
+        content=<span class="s">"Write a 200-word explanation of PagedAttention with a code example"</span>)],
+        <span class="s">"iterations"</span>: <span class="s">0</span>}, {<span class="s">"recursion_limit"</span>: <span class="s">20</span>})
+    print(<span class="s">"\n\nFINAL:\n"</span>, out[<span class="s">"messages"</span>][-<span class="s">1</span>].content)
+</code></pre>
+
+      <h3 id="s-5-2"><span class="num">§5.2</span>评分点</h3>
+      <div class="rubric">
+        <h5>评分点</h5>
+        <ol>
+          <li><strong>20 分</strong>——supervisor 用 structured output 决定 next agent (不是 text parse)</li>
+          <li><strong>20 分</strong>——显式跟踪每 agent 是否做过 (避免 supervisor 循环调同一个)</li>
+          <li><strong>15 分</strong>——iterations 计数防死循环 + recursion_limit 双保险</li>
+          <li><strong>15 分</strong>——所有 agent 共享 messages（用 add reducer）</li>
+          <li><strong>10 分</strong>——message 带 name 字段标谁说的（debug 关键）</li>
+          <li><strong>10 分</strong>——能讲为什么不用 sequential pipeline (research → code → writer 直接连) — 答："因为现实可能 writer 写完发现需求没满足要回 research 再补"</li>
+          <li><strong>10 分</strong>——能讲什么时候<em>不</em>用 multi-agent (引用 §C1 trade-off)</li>
+        </ol>
+      </div>
+
+      <div class="box tip">
+        <div class="box-label">senior signal</div>
+        <p>主动讲："<em>这种简单 task 单 ReAct + 3 个 tool 也能做 · multi-agent 是为了演示 supervisor pattern · 真生产我会先 single 再 multi-evolve · 而且 supervisor 容易陷死循环必须显式状态跟踪</em>"——这一句把 multi-agent trade-off 讲明白</p>
+      </div>
+    </section>
+
+    <!-- ============== Q6 — Streaming + interrupt + resume ============== -->
+    <section id="q-6">
+      <header class="ch-head">
+        <span class="badge">Question 6 · live coding</span>
+        <h2>把现有 agent 加上 streaming + 中断 + 恢复</h2>
+        <p class="lede">考生产化能力 · streaming 响应 + 用户随时打断 + crash 后能 resume</p>
+      </header>
+
+      <div class="qcard">
+        <div class="meta">
+          <span><strong>难度</strong> senior</span>
+          <span><strong>限时</strong> 90-120 min</span>
+          <span><strong>形式</strong> live coding · 给一个能跑的非 streaming agent · 改</span>
+        </div>
+        <p class="prompt">给你一个能跑的 LangGraph agent（synchronous, blocking）。改造它：① stream output token-by-token 到 client ② 用户能在中途按"stop"打断 ③ 服务重启后能从上次 checkpoint 继续。用 FastAPI 暴露 SSE endpoint。</p>
+      </div>
+
+      <h3 id="s-6-1"><span class="num">§6.1</span>关键改造点</h3>
+
+      <pre><code><span class="c"># app.py · FastAPI + LangGraph streaming</span>
+<span class="k">from</span> fastapi <span class="k">import</span> FastAPI, Request
+<span class="k">from</span> sse_starlette.sse <span class="k">import</span> EventSourceResponse
+<span class="k">import</span> asyncio
+<span class="k">from</span> langgraph.checkpoint.postgres <span class="k">import</span> PostgresSaver  <span class="c"># 生产用 Postgres 不 Memory</span>
+<span class="k">from</span> langchain_core.messages <span class="k">import</span> HumanMessage
+<span class="k">from</span> .agent_graph <span class="k">import</span> g  <span class="c"># 已有的 graph</span>
+
+app = FastAPI()
+checkpointer = PostgresSaver.from_conn_string(<span class="s">"postgresql://..."</span>)
+checkpointer.setup()
+agent = g.compile(checkpointer=checkpointer)
+
+<span class="c"># 全局取消管理</span>
+ACTIVE_RUNS: dict[str, asyncio.Event] = {}  <span class="c"># thread_id → cancel event</span>
+
+<span class="f">@app.post("/chat")</span>
+<span class="k">async</span> <span class="k">def</span> <span class="f">chat</span>(req: Request, body: dict):
+    user_id = body[<span class="s">"user_id"</span>]
+    session_id = body[<span class="s">"session_id"</span>]
+    question = body[<span class="s">"question"</span>]
+    thread_id = f<span class="s">"{user_id}:{session_id}"</span>
+
+    cancel = asyncio.Event()
+    ACTIVE_RUNS[thread_id] = cancel
+
+    cfg = {<span class="s">"configurable"</span>: {<span class="s">"thread_id"</span>: thread_id}}
+
+    <span class="k">async</span> <span class="k">def</span> <span class="f">event_gen</span>():
+        <span class="k">try</span>:
+            <span class="c"># 关键 1: astream_events 拿 LLM token 级 stream</span>
+            <span class="k">async</span> <span class="k">for</span> event <span class="k">in</span> agent.astream_events(
+                {<span class="s">"messages"</span>: [HumanMessage(content=question)]},
+                cfg, version=<span class="s">"v2"</span>
+            ):
+                <span class="c"># 关键 2: 检查取消信号</span>
+                <span class="k">if</span> cancel.is_set():
+                    <span class="k">yield</span> {<span class="s">"event"</span>: <span class="s">"cancelled"</span>, <span class="s">"data"</span>: <span class="s">"user stopped"</span>}
+                    <span class="k">return</span>
+
+                <span class="c"># 关键 3: 选 token-level event · 不是 node-level</span>
+                <span class="k">if</span> event[<span class="s">"event"</span>] == <span class="s">"on_chat_model_stream"</span>:
+                    chunk = event[<span class="s">"data"</span>][<span class="s">"chunk"</span>]
+                    <span class="k">if</span> chunk.content:
+                        <span class="k">yield</span> {<span class="s">"event"</span>: <span class="s">"token"</span>, <span class="s">"data"</span>: chunk.content}
+
+                <span class="k">elif</span> event[<span class="s">"event"</span>] == <span class="s">"on_chain_end"</span> <span class="k">and</span> event[<span class="s">"name"</span>] == <span class="s">"LangGraph"</span>:
+                    <span class="k">yield</span> {<span class="s">"event"</span>: <span class="s">"done"</span>, <span class="s">"data"</span>: <span class="s">""</span>}
+        <span class="k">finally</span>:
+            ACTIVE_RUNS.pop(thread_id, None)
+
+    <span class="k">return</span> EventSourceResponse(event_gen())
+
+<span class="f">@app.post("/stop")</span>
+<span class="k">async</span> <span class="k">def</span> <span class="f">stop</span>(body: dict):
+    thread_id = f<span class="s">"{body['user_id']}:{body['session_id']}"</span>
+    <span class="k">if</span> thread_id <span class="k">in</span> ACTIVE_RUNS:
+        ACTIVE_RUNS[thread_id].set()
+        <span class="k">return</span> {<span class="s">"stopped"</span>: True}
+    <span class="k">return</span> {<span class="s">"stopped"</span>: False}
+
+<span class="f">@app.post("/resume")</span>
+<span class="k">async</span> <span class="k">def</span> <span class="f">resume</span>(body: dict):
+    <span class="s">"""服务重启 · 用户继续聊 · checkpointer 自动恢复 state."""</span>
+    thread_id = f<span class="s">"{body['user_id']}:{body['session_id']}"</span>
+    cfg = {<span class="s">"configurable"</span>: {<span class="s">"thread_id"</span>: thread_id}}
+    state = agent.get_state(cfg)
+    <span class="k">return</span> {<span class="s">"last_messages"</span>: [m.content <span class="k">for</span> m <span class="k">in</span> state.values[<span class="s">"messages"</span>][-<span class="s">3</span>:]],
+            <span class="s">"can_resume"</span>: state.next != ()}
+</code></pre>
+
+      <h3 id="s-6-2"><span class="num">§6.2</span>评分点</h3>
+      <div class="rubric">
+        <h5>评分点</h5>
+        <ol>
+          <li><strong>20 分</strong>——用 <code>astream_events</code> 拿 token 级（不是 <code>astream</code> 拿 node 级 chunk · 那是 node 完才 emit）</li>
+          <li><strong>15 分</strong>——SSE / WebSocket 真 streaming（不是攒一坨再发）</li>
+          <li><strong>15 分</strong>——cancel event 机制让 stop 能立即生效（不是等 LLM 跑完）</li>
+          <li><strong>15 分</strong>——PostgresSaver / RedisSaver 不是 MemorySaver（生产 must）</li>
+          <li><strong>10 分</strong>——thread_id = user:session 隔离</li>
+          <li><strong>10 分</strong>——/resume 用 <code>get_state</code> 复活上次 state</li>
+          <li><strong>10 分</strong>——能讲 streaming 失败/中断时 partial response 怎么处理</li>
+          <li><strong>5 分</strong>——主动讲 backpressure / connection drop / token cost mid-stream 等 edge case</li>
+        </ol>
+      </div>
+
+      <div class="box bug">
+        <div class="box-label">最常错 · stream 错对象</div>
+        <p>很多人用 <code>agent.astream(state)</code> 以为是 token streaming —— 错！那是 <strong>node-level streaming</strong>（每 node 跑完 emit 一次）。
+        <em>token-level 必须用 <code>astream_events(version="v2")</code> + filter <code>on_chat_model_stream</code></em>。</p>
+      </div>
+    </section>
+
+    <!-- ============== Q7 — Eval harness ============== -->
+    <section id="q-7">
+      <header class="ch-head">
+        <span class="badge">Question 7 · live coding</span>
+        <h2>写一个 agent 的 eval harness</h2>
+        <p class="lede">考你 eval 设计能力 · senior 必会</p>
+      </header>
+
+      <div class="qcard">
+        <div class="meta">
+          <span><strong>难度</strong> senior / staff</span>
+          <span><strong>限时</strong> 60-90 min</span>
+          <span><strong>形式</strong> 给一个能跑的 agent · 让你写 eval</span>
+        </div>
+        <p class="prompt">给你一个客服 agent。写一个 eval harness：① 跑 100 道 golden set ② 算 task completion rate / faithfulness / latency P95 / cost / tool call 次数 ③ failed case 自动分类（hallucination / wrong tool / no answer / timeout） ④ HTML report ⑤ 支持 regression detection（跟上次 baseline 对比）。</p>
+      </div>
+
+      <h3 id="s-7-1"><span class="num">§7.1</span>参考实现</h3>
+
+      <pre><code><span class="c"># eval_harness.py</span>
+<span class="k">import</span> json, time, asyncio, statistics
+<span class="k">from</span> dataclasses <span class="k">import</span> dataclass, asdict
+<span class="k">from</span> typing <span class="k">import</span> Literal
+<span class="k">from</span> openai <span class="k">import</span> OpenAI
+<span class="k">from</span> .agent <span class="k">import</span> run_agent  <span class="c"># 给定的 agent</span>
+
+judge_llm = OpenAI()
+
+<span class="f">@dataclass</span>
+<span class="k">class</span> <span class="f">EvalCase</span>:
+    id: str
+    question: str
+    expected: str
+    category: str  <span class="c"># "billing" | "technical" | ...</span>
+
+<span class="f">@dataclass</span>
+<span class="k">class</span> <span class="f">EvalResult</span>:
+    case_id: str
+    answer: str
+    passed: bool
+    failure_kind: str | None  <span class="c"># "halluc" | "wrong_tool" | "no_answer" | "timeout" | None</span>
+    latency_ms: int
+    cost_usd: float
+    tool_calls: int
+
+<span class="k">def</span> <span class="f">classify_failure</span>(case: EvalCase, result: dict) -&gt; str:
+    <span class="k">if</span> result.get(<span class="s">"timeout"</span>): <span class="k">return</span> <span class="s">"timeout"</span>
+    <span class="k">if</span> <span class="k">not</span> result.get(<span class="s">"answer"</span>): <span class="k">return</span> <span class="s">"no_answer"</span>
+    <span class="c"># LLM judge 失败原因</span>
+    msg = f<span class="s">"""Question: {case.question}
+Expected: {case.expected}
+Actual: {result['answer']}
+Tool calls: {result.get('tool_calls', [])}
+
+Why did this fail? Reply only one of: halluc / wrong_tool / no_answer / partial / other"""</span>
+    out = judge_llm.chat.completions.create(model=<span class="s">"gpt-4o-mini"</span>,
+        messages=[{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: msg}], temperature=<span class="s">0</span>)
+    <span class="k">return</span> out.choices[<span class="s">0</span>].message.content.strip().split()[<span class="s">0</span>]
+
+<span class="k">def</span> <span class="f">judge_pass</span>(case: EvalCase, answer: str) -&gt; bool:
+    <span class="c"># LLM-as-judge with rubric</span>
+    msg = f<span class="s">"""Question: {case.question}
+Expected key facts: {case.expected}
+Actual answer: {answer}
+
+Does the actual answer cover the expected key facts? Reply YES or NO only."""</span>
+    out = judge_llm.chat.completions.create(model=<span class="s">"gpt-4o-mini"</span>,
+        messages=[{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: msg}], temperature=<span class="s">0</span>)
+    <span class="k">return</span> <span class="s">"YES"</span> <span class="k">in</span> out.choices[<span class="s">0</span>].message.content.upper()
+
+<span class="k">def</span> <span class="f">run_one</span>(case: EvalCase) -&gt; EvalResult:
+    t0 = time.time()
+    <span class="k">try</span>:
+        result = run_agent(case.question, timeout=<span class="s">30</span>)
+    <span class="k">except</span> TimeoutError:
+        result = {<span class="s">"answer"</span>: <span class="s">""</span>, <span class="s">"timeout"</span>: True, <span class="s">"cost"</span>: <span class="s">0</span>, <span class="s">"tool_calls"</span>: []}
+    latency = int((time.time() - t0) * <span class="s">1000</span>)
+    answer = result.get(<span class="s">"answer"</span>, <span class="s">""</span>)
+    passed = answer <span class="k">and</span> judge_pass(case, answer)
+    failure = None <span class="k">if</span> passed <span class="k">else</span> classify_failure(case, result)
+    <span class="k">return</span> EvalResult(case.id, answer, passed, failure, latency,
+                      result.get(<span class="s">"cost"</span>, <span class="s">0</span>), len(result.get(<span class="s">"tool_calls"</span>, [])))
+
+<span class="k">def</span> <span class="f">main</span>(golden_path: str = <span class="s">"eval/golden.jsonl"</span>, baseline_path: str | None = None):
+    cases = [EvalCase(**json.loads(l)) <span class="k">for</span> l <span class="k">in</span> open(golden_path)]
+    results = [run_one(c) <span class="k">for</span> c <span class="k">in</span> cases]
+
+    n = len(results)
+    summary = {
+        <span class="s">"total"</span>: n,
+        <span class="s">"pass_rate"</span>: sum(<span class="s">1</span> <span class="k">for</span> r <span class="k">in</span> results <span class="k">if</span> r.passed) / n,
+        <span class="s">"latency_p50"</span>: statistics.median(r.latency_ms <span class="k">for</span> r <span class="k">in</span> results),
+        <span class="s">"latency_p95"</span>: statistics.quantiles([r.latency_ms <span class="k">for</span> r <span class="k">in</span> results], n=<span class="s">20</span>)[-<span class="s">1</span>],
+        <span class="s">"avg_cost"</span>: sum(r.cost_usd <span class="k">for</span> r <span class="k">in</span> results) / n,
+        <span class="s">"avg_tool_calls"</span>: sum(r.tool_calls <span class="k">for</span> r <span class="k">in</span> results) / n,
+    }
+
+    <span class="c"># failure 分类</span>
+    failures = [r <span class="k">for</span> r <span class="k">in</span> results <span class="k">if</span> <span class="k">not</span> r.passed]
+    by_kind: dict[str, int] = {}
+    <span class="k">for</span> r <span class="k">in</span> failures:
+        by_kind[r.failure_kind <span class="k">or</span> <span class="s">"unknown"</span>] = by_kind.get(r.failure_kind <span class="k">or</span> <span class="s">"unknown"</span>, <span class="s">0</span>) + <span class="s">1</span>
+    summary[<span class="s">"failure_breakdown"</span>] = by_kind
+
+    <span class="c"># Regression check</span>
+    <span class="k">if</span> baseline_path:
+        baseline = json.load(open(baseline_path))
+        regression = {
+            <span class="s">"pass_rate_delta"</span>: summary[<span class="s">"pass_rate"</span>] - baseline[<span class="s">"pass_rate"</span>],
+            <span class="s">"latency_p95_delta"</span>: summary[<span class="s">"latency_p95"</span>] - baseline[<span class="s">"latency_p95"</span>],
+            <span class="s">"cost_delta"</span>: summary[<span class="s">"avg_cost"</span>] - baseline[<span class="s">"avg_cost"</span>],
+        }
+        summary[<span class="s">"regression"</span>] = regression
+        <span class="c"># Fail CI if regression bad</span>
+        <span class="k">if</span> regression[<span class="s">"pass_rate_delta"</span>] &lt; -<span class="s">0.05</span>:
+            print(<span class="s">"❌ REGRESSION: pass rate dropped &gt; 5%"</span>)
+            exit(<span class="s">1</span>)
+
+    json.dump(summary, open(<span class="s">"eval/summary.json"</span>, <span class="s">"w"</span>), indent=<span class="s">2</span>)
+    json.dump([asdict(r) <span class="k">for</span> r <span class="k">in</span> results], open(<span class="s">"eval/results.json"</span>, <span class="s">"w"</span>), indent=<span class="s">2</span>)
+
+    render_html(summary, results)
+    print(json.dumps(summary, indent=<span class="s">2</span>))
+
+<span class="k">def</span> <span class="f">render_html</span>(summary, results):
+    <span class="c"># 简单 HTML report · 实战可用 jinja2 · 这里 inline</span>
+    rows = <span class="s">""</span>.join(
+        f<span class="s">'&lt;tr class="{("p" if r.passed else "f")}"&gt;'</span>
+        f<span class="s">"&lt;td&gt;{r.case_id}&lt;/td&gt;&lt;td&gt;{r.passed}&lt;/td&gt;"</span>
+        f<span class="s">"&lt;td&gt;{r.failure_kind or '-'}&lt;/td&gt;&lt;td&gt;{r.latency_ms}ms&lt;/td&gt;"</span>
+        f<span class="s">"&lt;td&gt;${r.cost_usd:.4f}&lt;/td&gt;&lt;td&gt;{r.answer[:80]}&lt;/td&gt;&lt;/tr&gt;"</span>
+        <span class="k">for</span> r <span class="k">in</span> results
+    )
+    html = f<span class="s">"""&lt;html&gt;&lt;style&gt;.p{{background:#dfd}}.f{{background:#fdd}}td{{padding:4px 8px}}&lt;/style&gt;
+&lt;h1&gt;Eval Report&lt;/h1&gt;&lt;pre&gt;{json.dumps(summary, indent=2)}&lt;/pre&gt;
+&lt;table&gt;&lt;tr&gt;&lt;th&gt;ID&lt;/th&gt;&lt;th&gt;Pass&lt;/th&gt;&lt;th&gt;Failure&lt;/th&gt;&lt;th&gt;Latency&lt;/th&gt;&lt;th&gt;Cost&lt;/th&gt;&lt;th&gt;Answer&lt;/th&gt;&lt;/tr&gt;
+{rows}&lt;/table&gt;&lt;/html&gt;"</span><span class="s">""</span>
+    open(<span class="s">"eval/report.html"</span>, <span class="s">"w"</span>).write(html)
+
+<span class="k">if</span> __name__ == <span class="s">"__main__"</span>:
+    main(baseline_path=<span class="s">"eval/baseline.json"</span>)
+</code></pre>
+
+      <h3 id="s-7-2"><span class="num">§7.2</span>评分点</h3>
+      <div class="rubric">
+        <h5>评分点</h5>
+        <ol>
+          <li><strong>20 分</strong>——LLM-as-judge 用 rubric prompt（不只问 "对吗" · 给 expected key facts）</li>
+          <li><strong>15 分</strong>——failure 分类机制（不只是 pass/fail）</li>
+          <li><strong>15 分</strong>——含 latency p95 / cost / tool calls 多维 metric</li>
+          <li><strong>15 分</strong>——regression detection 跟 baseline 对比 + CI fail 机制</li>
+          <li><strong>10 分</strong>——HTML report 可读</li>
+          <li><strong>10 分</strong>——主动讲 LLM judge 局限：建议 5-10% 人审 calibrate 一次</li>
+          <li><strong>10 分</strong>——能讲 trajectory eval（不只 final answer，看 reasoning 路径）</li>
+          <li><strong>5 分</strong>——异步并发跑加速（asyncio.gather）</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============== Q8 — Implement from paper ============== -->
+    <section id="q-8">
+      <header class="ch-head">
+        <span class="badge">Question 8 · open-ended</span>
+        <h2>从公开 paper 实现一个 agent 算法</h2>
+        <p class="lede">staff 级开放题 · 看你的 paper-to-code 能力</p>
+      </header>
+
+      <div class="qcard">
+        <div class="meta">
+          <span><strong>难度</strong> staff</span>
+          <span><strong>限时</strong> 60-90 min · 或 take-home 1 周</span>
+          <span><strong>形式</strong> 选 paper · 实现核心 idea · 跑 demo</span>
+          <span><strong>面方</strong> Anthropic / OpenAI / 高 bar 创业</span>
+        </div>
+        <p class="prompt">从 Reflexion / Self-Discover / Tree of Thoughts / Voyager / CRAG 中选一篇，用 ~200-400 行实现核心 idea。要求：① 有 baseline 对照 ② 至少 1 个 task 跑出 paper claim 的方向性效果（不需要 SOTA） ③ README 讲清你做了什么 / 简化了什么 / 为什么。</p>
+      </div>
+
+      <h3 id="s-8-1"><span class="num">§8.1</span>怎么选 paper · 4 个挑选标准</h3>
+      <ol>
+        <li><strong>核心 idea 简单</strong>——一段话能讲清的。Reflexion / Self-Discover 都很合适</li>
+        <li><strong>不要 GPU 训练</strong>——只用 LLM API 能复现的（不要选要 fine-tune 的）</li>
+        <li><strong>有公开 task</strong>——能用 HumanEval / GSM8K / HotpotQA 这种现成 benchmark</li>
+        <li><strong>有 reference impl</strong>——读他们 GitHub 帮你少踩坑（不是抄）</li>
+      </ol>
+
+      <p><strong>推荐选 Reflexion</strong>——核心 idea 一段话能讲清、能在 1h 内 demo 出方向性效果、HumanEval 上能看到提升。</p>
+
+      <h3 id="s-8-2"><span class="num">§8.2</span>Reflexion 简化实现 (~150 行)</h3>
+
+      <pre><code><span class="c"># reflexion.py · 简化版</span>
+<span class="k">from</span> openai <span class="k">import</span> OpenAI
+<span class="k">from</span> dataclasses <span class="k">import</span> dataclass, field
+<span class="k">import</span> subprocess, tempfile, os
+
+llm = OpenAI()
+
+<span class="f">@dataclass</span>
+<span class="k">class</span> <span class="f">Trial</span>:
+    code: str
+    test_output: str
+    passed: bool
+    reflection: str = <span class="s">""</span>
+
+<span class="k">def</span> <span class="f">generate_code</span>(prompt: str, reflections: list[str]) -&gt; str:
+    refl_text = <span class="s">""</span>
+    <span class="k">if</span> reflections:
+        refl_text = <span class="s">"\n\nLessons from previous failed attempts:\n- "</span> + <span class="s">"\n- "</span>.join(reflections)
+
+    msg = f<span class="s">"""Write Python code to solve:
+{prompt}
+
+{refl_text}
+
+Output ONLY the function body, no explanation."""</span>
+    out = llm.chat.completions.create(model=<span class="s">"gpt-4o-mini"</span>, temperature=<span class="s">0.2</span>,
+        messages=[{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: msg}])
+    <span class="k">return</span> out.choices[<span class="s">0</span>].message.content
+
+<span class="k">def</span> <span class="f">run_tests</span>(code: str, tests: str) -&gt; tuple[bool, str]:
+    full = code + <span class="s">"\n\n"</span> + tests
+    <span class="k">with</span> tempfile.NamedTemporaryFile(mode=<span class="s">"w"</span>, suffix=<span class="s">".py"</span>, delete=False) <span class="k">as</span> f:
+        f.write(full)
+        path = f.name
+    <span class="k">try</span>:
+        proc = subprocess.run([<span class="s">"python"</span>, path], capture_output=True, text=True, timeout=<span class="s">10</span>)
+        passed = proc.returncode == <span class="s">0</span> <span class="k">and</span> <span class="s">"FAIL"</span> <span class="k">not</span> <span class="k">in</span> proc.stdout
+        <span class="k">return</span> passed, proc.stdout + proc.stderr
+    <span class="k">finally</span>:
+        os.unlink(path)
+
+<span class="k">def</span> <span class="f">reflect</span>(prompt: str, code: str, error: str) -&gt; str:
+    <span class="s">"""核心 · 把失败转成下一次的 lesson."""</span>
+    msg = f<span class="s">"""Task: {prompt}
+Your code:
+{code}
+
+It failed with:
+{error[:500]}
+
+Write ONE concrete lesson in 1 sentence (e.g. "Remember to handle empty list edge case")."""</span>
+    out = llm.chat.completions.create(model=<span class="s">"gpt-4o-mini"</span>, temperature=<span class="s">0.5</span>,
+        messages=[{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: msg}])
+    <span class="k">return</span> out.choices[<span class="s">0</span>].message.content.strip()
+
+<span class="k">def</span> <span class="f">solve</span>(prompt: str, tests: str, max_trials: int = <span class="s">3</span>) -&gt; tuple[bool, list[Trial]]:
+    reflections: list[str] = []
+    trials: list[Trial] = []
+    <span class="k">for</span> i <span class="k">in</span> range(max_trials):
+        code = generate_code(prompt, reflections)
+        passed, output = run_tests(code, tests)
+        trial = Trial(code=code, test_output=output, passed=passed)
+        <span class="k">if</span> passed:
+            trials.append(trial)
+            <span class="k">return</span> True, trials
+        <span class="c"># 失败 · reflect</span>
+        lesson = reflect(prompt, code, output)
+        trial.reflection = lesson
+        trials.append(trial)
+        reflections.append(lesson)
+    <span class="k">return</span> False, trials
+
+<span class="c"># --- Demo on a HumanEval-style problem ---</span>
+<span class="k">if</span> __name__ == <span class="s">"__main__"</span>:
+    prompt = <span class="s">"Write a function `def has_close_pair(nums, threshold)` returning True if any two distinct elements are within threshold of each other."</span>
+    tests = <span class="s">"""
+assert has_close_pair([1.0, 2.0, 3.0], 0.5) == False
+assert has_close_pair([1.0, 2.8, 3.0, 4.0], 0.3) == True
+assert has_close_pair([], 1.0) == False
+assert has_close_pair([1.0], 1.0) == False
+print("PASS")
+"""</span>
+
+    <span class="c"># Baseline: 单次生成</span>
+    bl_code = generate_code(prompt, [])
+    bl_passed, bl_out = run_tests(bl_code, tests)
+    print(f<span class="s">"Baseline (1 try): {'PASS' if bl_passed else 'FAIL'}"</span>)
+
+    <span class="c"># Reflexion: 多 trial 带 reflection</span>
+    rfl_passed, trials = solve(prompt, tests, max_trials=<span class="s">3</span>)
+    print(f<span class="s">"Reflexion: {'PASS' if rfl_passed else 'FAIL'} after {len(trials)} trials"</span>)
+    <span class="k">for</span> i, t <span class="k">in</span> enumerate(trials):
+        print(f<span class="s">"  Trial {i+1}: {'pass' if t.passed else 'fail'} · lesson: {t.reflection}"</span>)
+</code></pre>
+
+      <h3 id="s-8-3"><span class="num">§8.3</span>评分点 (staff 级)</h3>
+      <div class="rubric">
+        <h5>评分点</h5>
+        <ol>
+          <li><strong>25 分</strong>——核心 idea 准确（reflection 真改进了下次生成 · 不只是无脑 retry）</li>
+          <li><strong>20 分</strong>——baseline 对比（不只是跑 reflection · 让看到提升）</li>
+          <li><strong>15 分</strong>——能讲 paper 简化了什么 / 跟 paper 区别（你不是抄）</li>
+          <li><strong>15 分</strong>——demo task 选得合理（HumanEval / GSM8K 都比自造 task 严谨）</li>
+          <li><strong>10 分</strong>——README 写清 trade-off + limitation</li>
+          <li><strong>10 分</strong>——能讲生产化 path（"如果上 prod 我会 X / Y / Z"）</li>
+          <li><strong>5 分</strong>——主动讲为什么选这篇 paper（看你的口味 + 判断）</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============== Anti-patterns ============== -->
+    <section id="anti">
+      <header class="ch-head">
+        <span class="badge">附录 A · 反例</span>
+        <h2>22 个 senior 面试 anti-pattern · 这些写法直接扣分</h2>
+        <p class="lede">前面每题都列了具体 anti · 这里再 cross-cut 总结</p>
+      </header>
+
+      <h3>架构层 (8)</h3>
+      <ol>
+        <li><strong>上来就 LangGraph</strong>——简单题 100 行能写完，硬上框架显得不会基本功</li>
+        <li><strong>无脑 multi-agent</strong>——能 single 就 single · multi-agent 必须能讲为什么不能 single</li>
+        <li><strong>同步阻塞调 LLM</strong>——senior 默认 async·至少要能讲 streaming + parallel tool</li>
+        <li><strong>没 max_iterations / recursion_limit</strong>——agent 必须有上限</li>
+        <li><strong>tool 是 if-elif 串</strong>——tool 应该是 dict / registry · 易扩展</li>
+        <li><strong>所有 tool 串行调</strong>——独立 tool 必须 parallel</li>
+        <li><strong>memory 拼成大 string</strong>——用 messages 数组 · LLM 才知道角色</li>
+        <li><strong>routing 用 text parse</strong>——用 structured output (Pydantic / function calling)</li>
+      </ol>
+
+      <h3>正确性层 (7)</h3>
+      <ol start="9">
+        <li><strong>tool 异常不 catch</strong>——agent 直接崩 · 应转成 observation 让 LLM 处理</li>
+        <li><strong>没 stop sequence</strong>——LLM 自己幻觉 observation 继续编</li>
+        <li><strong>temperature 默认 0.7</strong>——agent 推理任务用 0 · routing 必须 0</li>
+        <li><strong>system prompt 没说 "Final Answer 唯一"</strong>——LLM 经常多个 final 同时给</li>
+        <li><strong>HITL 用 raise 实现</strong>——用框架的 interrupt · 才能 resume 不重跑</li>
+        <li><strong>thread_id 全局共享</strong>——必须 per-user / per-session</li>
+        <li><strong>writer 写完不验证</strong>——final output 该 LLM-as-judge 一道</li>
+      </ol>
+
+      <h3>生产层 (7)</h3>
+      <ol start="16">
+        <li><strong>MemorySaver 当生产</strong>——必须 Postgres / Redis</li>
+        <li><strong>没 cost cap</strong>——一个 abuse user 能花你 $1000+</li>
+        <li><strong>没 timeout</strong>——tool / LLM call 都要 timeout</li>
+        <li><strong>没 trace / metric</strong>——上线后 debug 全靠 print log</li>
+        <li><strong>prompt 写死代码里</strong>——应该 versioned · 能 rollback · 关联 eval</li>
+        <li><strong>没 multi-provider fallback</strong>——OpenAI 挂 30min 你的服务也挂 30min</li>
+        <li><strong>没 eval baseline</strong>——改 prompt 后不知道是变好还是变坏</li>
+      </ol>
+    </section>
+
+    <!-- ============== Tips ============== -->
+    <section id="tips">
+      <header class="ch-head">
+        <span class="badge">附录 B · 提交</span>
+        <h2>Take-home 提交 7 条 tips</h2>
+        <p class="lede">技术做对一半 · 提交呈现做对另一半</p>
+      </header>
+
+      <ol>
+        <li><strong>README 是评分大头</strong>——技术 60% / README 40%。一定要写"trade-off + limitation + what I'd do with more time"</li>
+        <li><strong>fresh-clone 自测</strong>——push 完去新机器 git clone 跑一遍 · 缺依赖 / hardcode path 直接零分</li>
+        <li><strong>带 .env.example</strong>——告诉 reviewer 要哪些 env var · 不要让对方猜</li>
+        <li><strong>带 sample eval results</strong>——eval/results.json 要包含真实跑出的数字 · 别空文件</li>
+        <li><strong>git history 干净</strong>——commit 有意义 message · 不是 "wip" "fix" "stuff" 这种</li>
+        <li><strong>不要 over-engineer</strong>——4h take-home 就别上 K8s + multi-agent + Mem0 全堆——简单清晰 &gt; 复杂炫技</li>
+        <li><strong>主动声明用了 AI</strong>——2026 已经默认你用 Cursor / Copilot · 但要在 README 写清 "我用 Cursor 写了 X · review + 改了 Y"。<em>装作纯手写反而扣分</em></li>
+      </ol>
+
+      <div class="pull">
+        Senior live coding = <strong>能跑 + 能讲 trade-off + 能讲 limitation + 能讲 next step</strong>。
+        4 件齐了你就过。
+        <cite>—— 这本手册</cite>
+      </div>
+    </section>
+
+    <footer class="colophon">
+      <div class="row"><span><strong>Agent Live Coding · 8 真题</strong> · v1.0 · 2026-05</span><span>8 questions · 22 anti-patterns · 7 submission tips</span></div>
+      <div class="row">
+        <span>姊妹手册：→ <a href="agent-design.html">System Design</a> · <a href="agent-debugging.html">Debugging</a> · <a href="learn.html">应用</a> · <a href="enterprise.html">企业级</a> · <a href="infra.html">AI Infra</a> · <a href="index.html">实现详解</a></span>
+        <span><a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/.../taotao-agent</a></span>
+      </div>
+      <div class="row"><span>Set in Fraunces · Lora · Outfit · JetBrains Mono</span><span>构建 / 写于 2026 春</span></div>
+    </footer>
+
+  </main>
+</div>
+
+<script>
+  (function() {
+    var links = document.querySelectorAll('.toc a[href^="#"]');
+    var sections = Array.prototype.map.call(links, function(a) {
+      var el = document.querySelector(a.getAttribute('href'));
+      return { link: a, el: el };
+    }).filter(function(x) { return x.el; });
+    function onScroll() {
+      var y = window.scrollY + 80;
+      var current = sections[0];
+      sections.forEach(function(s) { if (s.el.offsetTop <= y) current = s; });
+      sections.forEach(function(s) { s.link.classList.toggle('active', s === current); });
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+</body>
+</html>
