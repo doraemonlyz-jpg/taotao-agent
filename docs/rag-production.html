@@ -1,0 +1,900 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAG 生产级深讲 · chunking / rerank / Agentic RAG / GraphRAG · senior 必修</title>
+<meta name="description" content="RAG vs long context vs fine-tune 决策 · 6 种 chunking 策略 · 5 大 embedding model 对比 · 6 大 vector DB 横评 · hybrid search · rerank · HyDE / CRAG / Self-RAG / Adaptive RAG / GraphRAG / Multi-modal · Ragas eval · 生产 8 大坑 · 15 道 senior 题">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #fbf5e8; --paper-2: #f4ecd6; --paper-card: #ffffff;
+  --ink: #1d1a14; --ink-soft: #3a3327; --ink-mute: #756c5c;
+  --rule: #d8cdb0; --rule-soft: #e8debc;
+  --leaf: #4a8a4a; --leaf-soft: #ebf3e7;
+  --rust: #c44d2a; --rust-soft: #fae6dc;
+  --sky:  #2c6ca8; --sky-soft:  #e2edf5;
+  --plum: #864c8e; --plum-soft: #f1e6f2;
+  --gold: #b8881e; --gold-soft: #f7eccd;
+  --code-bg: #fdf9ed; --code-fg: #2a2620; --code-key: #c44d2a;
+  --code-str: #4a8a4a; --code-cmt: #998a6c; --code-fn: #864c8e;
+  --font-display: "Fraunces", "Times New Roman", serif;
+  --font-body: "Lora", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  --font-zh: "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: radial-gradient(ellipse at top left, rgba(196,178,144,.12), transparent 50%), radial-gradient(ellipse at bottom right, rgba(74,138,74,.08), transparent 50%), var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.75; }
+:lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
+.book-body p, .book-body li { color: var(--ink-soft); }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(196,77,42,.4); }
+a:hover { background: rgba(196,77,42,.08); }
+em { font-style: italic; color: var(--leaf); font-weight: 500; }
+strong { font-weight: 600; color: var(--ink); }
+.layout { display: grid; grid-template-columns: 290px minmax(0,1fr); max-width: 1400px; margin: 0 auto; padding: 0 2rem; gap: 3rem; }
+@media (max-width: 980px) { .layout { grid-template-columns: 1fr; gap: 0; padding: 0 1.2rem; } .toc { position: static !important; max-height: none !important; } .toc-inner { display: none; } .toc.open .toc-inner { display: block; } .toc-toggle { display: inline-flex !important; } }
+.toc { position: sticky; top: 0; align-self: start; height: 100vh; max-height: 100vh; overflow: auto; padding: 2rem 0.4rem 4rem 0; border-right: 1px dashed var(--rule); font-family: var(--font-sans); font-size: 0.85rem; }
+.toc-toggle { display: none; margin: 1rem 0; padding: 0.4rem 0.8rem; background: var(--paper-card); border: 1px solid var(--rule); border-radius: 999px; cursor: pointer; }
+.toc-brand { padding: 0 0.7rem 1.1rem; border-bottom: 1px dashed var(--rule); margin-bottom: 1rem; }
+.toc-brand .mark { font-family: var(--font-display); font-style: italic; font-weight: 500; font-size: 1.4rem; color: var(--ink); display: block; line-height: 1.1; }
+.toc-brand .mark .dot { color: var(--rust); }
+.toc-brand .sub { font-family: var(--font-sans); font-size: 0.72rem; color: var(--ink-mute); margin-top: 0.4rem; display: block; line-height: 1.4; }
+.toc-brand .sub strong { color: var(--rust); font-weight: 700; }
+.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: tocch; }
+.toc > .toc-inner > ol > li { counter-increment: tocch; margin: 0.05rem 0; }
+.toc a { display: flex; gap: 0.6rem; align-items: baseline; padding: 0.34rem 0.6rem; border: none; color: var(--ink-soft); font-weight: 500; border-radius: 6px; line-height: 1.35; }
+.toc > .toc-inner > ol > li > a::before { content: "Ch " counter(tocch, decimal-leading-zero); font-family: var(--font-mono); font-size: 0.65rem; color: var(--rust); width: 3.4em; flex-shrink: 0; font-weight: 500; }
+.toc a:hover { background: var(--paper-2); color: var(--ink); }
+.toc a.active { background: var(--rust-soft); color: var(--rust); }
+.toc-foot { margin-top: 2rem; padding: 1rem 0.7rem 0; border-top: 1px dashed var(--rule); font-family: var(--font-sans); font-size: 0.74rem; color: var(--ink-mute); line-height: 1.6; }
+.toc-foot a { color: var(--ink-mute); border-bottom-color: rgba(117,108,92,.3); }
+.toc-foot a:hover { color: var(--rust); }
+.book-body { padding: 2rem 0 6rem; max-width: 800px; }
+.book-body section { margin: 0 0 5rem; scroll-margin-top: 1rem; }
+.cover { margin-bottom: 4.5rem; padding-bottom: 2.5rem; border-bottom: 1px solid var(--ink); position: relative; }
+.cover::after { content: ""; position: absolute; left: 0; bottom: -5px; width: 80px; height: 3px; background: var(--rust); }
+.cover .eyebrow { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.06em; color: var(--rust); margin-bottom: 1.4rem; font-weight: 600; text-transform: uppercase; }
+.cover .eyebrow .sep { color: var(--rule); margin: 0 0.6rem; font-weight: 400; }
+.cover h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(2.4rem, 4.8vw, 4rem); line-height: 1.08; letter-spacing: -0.015em; margin: 0 0 1.4rem; color: var(--ink); }
+.cover h1 em { color: var(--rust); font-style: italic; }
+.cover .lede { font-size: 1.18rem; color: var(--ink-soft); max-width: 36em; margin: 0 0 2rem; line-height: 1.65; }
+.cover .who { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; padding: 1.4rem 1.6rem; margin-top: 2rem; font-size: 0.96rem; }
+.cover .who h4 { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--rust); margin: 0 0 0.6rem; }
+.cover .who ul { margin: 0; padding-left: 1.2rem; }
+.cover .who li { margin: 0.15rem 0; }
+.ch-head { margin: 0 0 2rem; }
+.ch-head .badge { display: inline-block; font-family: var(--font-sans); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--rust); background: var(--rust-soft); padding: 0.25rem 0.7rem; border-radius: 999px; margin-bottom: 1rem; }
+.ch-head h2 { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.9rem, 3.2vw, 2.7rem); line-height: 1.12; margin: 0 0 0.6rem; color: var(--ink); letter-spacing: -0.01em; }
+.ch-head .lede { font-style: italic; color: var(--ink-mute); font-size: 1.05rem; font-family: var(--font-display); margin: 0; }
+h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.5rem; margin: 2.8rem 0 0.8rem; color: var(--ink); scroll-margin-top: 1rem; }
+h3 .num { font-family: var(--font-mono); font-size: 0.7rem; color: var(--rust); font-weight: 500; margin-right: 0.5rem; }
+h4 { font-family: var(--font-sans); font-weight: 600; font-size: 1.05rem; margin: 1.8rem 0 0.4rem; color: var(--ink); }
+h5 { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-mute); margin: 1.2rem 0 0.4rem; }
+p { margin: 0 0 1rem; }
+ol, ul { padding-left: 1.4rem; margin: 0.4rem 0 1.2rem; }
+li { margin: 0.25rem 0; }
+code { font-family: var(--font-mono); font-size: 0.86em; background: var(--sky-soft); padding: 0.05rem 0.4rem; border-radius: 4px; color: var(--sky); font-weight: 500; }
+strong code { color: var(--ink); }
+pre { font-family: var(--font-mono); background: var(--code-bg); color: var(--code-fg); padding: 1.1rem 1.3rem; border-radius: 8px; border: 1px solid var(--rule-soft); border-left: 3px solid var(--sky); overflow-x: auto; font-size: 0.81rem; line-height: 1.6; margin: 1rem 0 1.4rem; }
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; font-weight: 400; }
+pre .k { color: var(--code-key); font-weight: 500; }
+pre .s { color: var(--code-str); }
+pre .c { color: var(--code-cmt); font-style: italic; }
+pre .f { color: var(--code-fn); font-weight: 500; }
+.box { margin: 1.5rem 0; padding: 1.2rem 1.4rem; border-radius: 10px; border-left: 4px solid; }
+.box .box-label { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
+.box .box-label::before { font-size: 1rem; }
+.box p:last-child { margin-bottom: 0; }
+.box.concept { background: var(--leaf-soft); border-color: var(--leaf); }
+.box.concept .box-label { color: var(--leaf); }
+.box.concept .box-label::before { content: "📖"; }
+.box.tip { background: var(--rust-soft); border-color: var(--rust); }
+.box.tip .box-label { color: var(--rust); }
+.box.tip .box-label::before { content: "💡"; }
+.box.warn { background: #fff4e0; border-color: #d49414; }
+.box.warn .box-label { color: #b87a0a; }
+.box.warn .box-label::before { content: "⚠️"; }
+.box.deep { background: var(--plum-soft); border-color: var(--plum); }
+.box.deep .box-label { color: var(--plum); }
+.box.deep .box-label::before { content: "✦"; font-weight: 600; }
+.box.interview { background: var(--gold-soft); border-color: var(--gold); }
+.box.interview .box-label { color: var(--gold); }
+.box.interview .box-label::before { content: "🎯"; }
+.box.reading { background: var(--sky-soft); border-color: var(--sky); }
+.box.reading .box-label { color: var(--sky); }
+.box.reading .box-label::before { content: "📚"; }
+table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.6rem; font-size: 0.9rem; background: var(--paper-card); border-radius: 6px; overflow: hidden; border: 1px solid var(--rule); }
+th, td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+th { font-family: var(--font-sans); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink); font-weight: 600; background: var(--paper-2); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(196,178,144,.13); }
+table code { font-size: 0.82em; }
+.figure { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 12px; padding: 1.6rem 1.4rem 1.2rem; margin: 1.4rem 0 1.8rem; box-shadow: 0 1px 3px rgba(29,26,20,.04); }
+.figure svg { display: block; width: 100%; height: auto; max-width: 760px; margin: 0 auto; }
+.figure figcaption { text-align: center; font-family: var(--font-sans); font-size: 0.82rem; letter-spacing: 0.05em; color: var(--ink-mute); text-transform: uppercase; margin-top: 0.9rem; }
+.figure figcaption strong { color: var(--ink-soft); font-weight: 600; text-transform: none; letter-spacing: 0; }
+.fig-box { fill: var(--paper-card); stroke: var(--ink-soft); stroke-width: 1.5; }
+.fig-box-soft { fill: #fdf9ed; stroke: var(--rule); stroke-width: 1.2; }
+.fig-box-leaf { fill: var(--leaf-soft); stroke: var(--leaf); stroke-width: 1.5; }
+.fig-box-rust { fill: var(--rust-soft); stroke: var(--rust); stroke-width: 1.5; }
+.fig-box-sky { fill: var(--sky-soft); stroke: var(--sky); stroke-width: 1.5; }
+.fig-box-plum { fill: var(--plum-soft); stroke: var(--plum); stroke-width: 1.5; }
+.fig-box-gold { fill: var(--gold-soft); stroke: var(--gold); stroke-width: 1.5; }
+.fig-line { fill: none; stroke: var(--ink-mute); stroke-width: 1.4; }
+.fig-line-rust { fill: none; stroke: var(--rust); stroke-width: 1.6; }
+.fig-line-leaf { fill: none; stroke: var(--leaf); stroke-width: 1.6; }
+.fig-dash { fill: none; stroke: var(--ink-mute); stroke-width: 1.2; stroke-dasharray: 4 3; }
+.fig-t { font-family: var(--font-sans); font-size: 13px; fill: var(--ink); font-weight: 500; }
+.fig-t-lg { font-family: var(--font-display); font-size: 15px; fill: var(--ink); font-weight: 600; font-style: italic; }
+.fig-t-sm { font-family: var(--font-sans); font-size: 11px; fill: var(--ink-mute); }
+.fig-t-mono { font-family: var(--font-mono); font-size: 11px; fill: var(--ink-soft); }
+.fig-t-label { font-family: var(--font-sans); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.fig-t-leaf { fill: var(--leaf); }
+.fig-t-rust { fill: var(--rust); }
+.fig-t-sky { fill: var(--sky); }
+.fig-t-plum { fill: var(--plum); }
+.fig-t-mute { fill: var(--ink-mute); }
+.pull { margin: 3rem 0; padding: 1.8rem 2rem; font-family: var(--font-display); font-style: italic; font-size: 1.5rem; line-height: 1.4; color: var(--ink); border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); position: relative; text-align: center; }
+.pull::before { content: "“"; position: absolute; top: -0.2rem; left: 1.2rem; font-family: var(--font-display); font-size: 4.5rem; color: var(--rust); line-height: 1; }
+.pull cite { display: block; margin-top: 0.6rem; font-style: normal; font-family: var(--font-sans); font-size: 0.78rem; color: var(--ink-mute); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500; }
+footer.colophon { margin-top: 5rem; padding-top: 2.5rem; border-top: 2px solid var(--ink); font-family: var(--font-sans); font-size: 0.85rem; color: var(--ink-mute); }
+footer.colophon .row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.6rem; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="toc" id="toc">
+    <div class="toc-brand">
+      <span class="mark">RAG 生产级深讲 <span class="dot">·</span></span>
+      <span class="sub">chunking / rerank / Agentic RAG / GraphRAG / Multi-modal<br><strong>11 章 · 15 道 senior 题 · 80 词术语</strong></span>
+    </div>
+    <button class="toc-toggle" onclick="document.getElementById('toc').classList.toggle('open')">≡ 目录</button>
+    <nav class="toc-inner">
+      <ol>
+        <li><a href="#ch-1">RAG vs Long Context vs Fine-tune · 决策树</a></li>
+        <li><a href="#ch-2">Ingestion · parsing + 6 种 chunking 策略</a></li>
+        <li><a href="#ch-3">Embedding 模型 · 5 大家族横评</a></li>
+        <li><a href="#ch-4">Vector DB · 6 大横评 + 选型</a></li>
+        <li><a href="#ch-5">Retrieval · dense / sparse / hybrid / multi-vector</a></li>
+        <li><a href="#ch-6">Reranking · 3 流派对比</a></li>
+        <li><a href="#ch-7">Advanced · HyDE / CRAG / Self-RAG / Adaptive RAG</a></li>
+        <li><a href="#ch-8">Agentic RAG · iterative / multi-hop · 跟传统 RAG 区别</a></li>
+        <li><a href="#ch-9">GraphRAG / Multi-modal RAG / SQL RAG</a></li>
+        <li><a href="#ch-10">Eval · Ragas / TruLens / DeepEval</a></li>
+        <li><a href="#ch-11">生产 8 大坑 + 真实复盘</a></li>
+        <li><a href="#qa">15 道 senior 面试题</a></li>
+        <li><a href="#glossary">术语表 (80 词)</a></li>
+      </ol>
+    </nav>
+    <div class="toc-foot">
+      配套：<br>
+      <a href="learn.html">→ 应用</a><br>
+      <a href="enterprise.html">→ 企业级</a><br>
+      <a href="agent-design.html">→ 系统设计</a><br>
+      <a href="agent-coding.html">→ Live Coding</a><br>
+      <a href="agent-debugging.html">→ Debug</a><br>
+      <a href="langgraph-internals.html">→ LangGraph</a><br>
+      <a href="eval-observability.html">→ Eval &amp; Obs</a><br>
+      <a href="memory-context.html">→ Memory</a><br>
+      <a href="tool-design.html">→ Tool Design</a><br>
+      <a href="infra.html">→ Infra</a><br>
+      <a href="index.html">→ 实现</a><br><br>
+      <a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/.../taotao-agent ↗</a>
+    </div>
+  </aside>
+
+  <main class="book-body">
+    <header class="cover">
+      <div class="eyebrow">Senior Agent Engineer<span class="sep">·</span>RAG Production<span class="sep">·</span>2026</div>
+      <h1>"RAG 已死" <em>是错的</em>。<br>真死的是 <em>naive RAG</em>。</h1>
+      <p class="lede">
+        2024 末喊 "long context kills RAG" · 2025 现实：80% 生产 agent 还在用 RAG · 但<em>形式从 naive 进化到 agentic</em>。这本把 RAG 整条流水线讲透——chunking 6 种策略 · embedding 5 家族横评 · vector DB 6 选 · hybrid + rerank · CRAG/Self-RAG/Adaptive/Agentic/GraphRAG 全 covered · Ragas eval 实战 · 8 个生产真实坑。让你面试不只能说 "我用 LangChain 接 Pinecone"。
+      </p>
+      <div class="who">
+        <h4>📌 学完你能</h4>
+        <ul>
+          <li>讲清 RAG vs long context vs fine-tune 三选一的决策框架（从成本 / latency / 准确性 / 时效性 4 维）</li>
+          <li>选对 chunking 策略 (fixed / recursive / semantic / structural / context-aware / parent-child)</li>
+          <li>选对 embedding model (OpenAI / Voyage / Cohere / BGE / Jina) · 知道 MTEB 排行的局限</li>
+          <li>选对 vector DB (pgvector / Pinecone / Weaviate / Qdrant / Milvus / Chroma) 给场景</li>
+          <li>设计 hybrid search (BM25 + dense) + RRF 融合</li>
+          <li>正确加 rerank（Cohere / Jina / cross-encoder）· 知道什么时候不该 rerank</li>
+          <li>讲清 CRAG / Self-RAG / Adaptive RAG / Agentic RAG 各自机制 + 何时用</li>
+          <li>用 Ragas 4 大 metric (faithfulness / context recall / answer relevance / context precision) eval</li>
+          <li>避开 8 个生产坑（chunk overlap 错 / metadata 没用 / rerank 放错位 / 没监控 retrieval recall ...）</li>
+        </ul>
+      </div>
+    </header>
+
+    <!-- ============== Chapter 1 ============== -->
+    <section id="ch-1">
+      <header class="ch-head">
+        <span class="badge">Chapter 1 · 立场</span>
+        <h2>RAG vs Long Context vs Fine-tune · 决策树</h2>
+        <p class="lede">面试官第一问 · 答错就掉档</p>
+      </header>
+
+      <h3 id="s-1-1"><span class="num">§1.1</span>3 选 1 · 4 维度对比</h3>
+      <table>
+        <thead><tr><th>维度</th><th>RAG</th><th>Long Context (1M+)</th><th>Fine-tune</th></tr></thead>
+        <tbody>
+          <tr><td>知识时效</td><td>★★★★★ 实时</td><td>★★★★ 每次塞</td><td>★ 训练时定格</td></tr>
+          <tr><td>知识规模</td><td>★★★★★ TB+</td><td>★★ &lt; 1M token</td><td>★★ 受 train data 限</td></tr>
+          <tr><td>per-query 成本</td><td>$ 中等 (embed + search)</td><td>$$$ 暴贵 (1M 都是 input)</td><td>$ 便宜 (没 retrieval)</td></tr>
+          <tr><td>latency</td><td>+ 200-500ms</td><td>+ 10-30s (1M context)</td><td>0</td></tr>
+          <tr><td>准确性</td><td>★★★★ (chunk OK 时)</td><td>★★★ ("lost in middle")</td><td>★★★★★ (训过的)</td></tr>
+          <tr><td>更新成本</td><td>低 (重 embed)</td><td>0 (改 prompt)</td><td>$$$ (重训)</td></tr>
+          <tr><td>可解释性</td><td>★★★★★ (引用)</td><td>★★ (黑盒)</td><td>★ (黑盒)</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-1-2"><span class="num">§1.2</span>决策树</h3>
+      <ul>
+        <li><strong>知识 &gt; 1M token</strong> · 必 RAG</li>
+        <li><strong>知识 ≤ 1M 但要省钱 / 低 latency</strong> · RAG</li>
+        <li><strong>知识 ≤ 200k · 一次性 query · 要最高准确度</strong> · long context</li>
+        <li><strong>样式 / 风格 / 行为模式</strong>（不是事实知识）· fine-tune</li>
+        <li><strong>领域专有词汇 + behavior + 知识</strong>三合一 · fine-tune (LoRA) + RAG 混合</li>
+      </ul>
+
+      <h3 id="s-1-3"><span class="num">§1.3</span>"Lost in the middle" · long context 致命弱点</h3>
+      <p>Stanford 2023 paper 发现：在 long context 中 · LLM 对开头和结尾召回率高 · 中间召回率<em>显著下降</em>。即使是 GPT-4-Turbo 128k · 中间 30% 位置准确率掉 30%+。</p>
+      <figure class="figure">
+        <svg viewBox="0 0 760 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Lost in middle">
+          <line class="fig-line" x1="60" y1="160" x2="720" y2="160"/>
+          <line class="fig-line" x1="60" y1="160" x2="60" y2="30"/>
+          <text class="fig-t-sm" x="55" y="35" text-anchor="end">100%</text>
+          <text class="fig-t-sm" x="55" y="160" text-anchor="end">0%</text>
+          <text class="fig-t-sm fig-t-mute" x="390" y="185" text-anchor="middle">关键信息所在位置 (开头 → 结尾)</text>
+          <path d="M 100 50 L 200 70 L 300 100 L 400 130 L 500 110 L 600 80 L 700 55" class="fig-line-rust" fill="none" stroke-width="2.4"/>
+          <circle cx="100" cy="50" r="4" fill="#c44d2a"/>
+          <circle cx="400" cy="130" r="4" fill="#c44d2a"/>
+          <circle cx="700" cy="55" r="4" fill="#c44d2a"/>
+          <text class="fig-t-sm fig-t-rust" x="100" y="40" text-anchor="middle">开头 ~95%</text>
+          <text class="fig-t-sm fig-t-rust" x="400" y="150" text-anchor="middle">中间 ~55%</text>
+          <text class="fig-t-sm fig-t-rust" x="700" y="45" text-anchor="middle">结尾 ~88%</text>
+        </svg>
+        <figcaption><strong>Figure 1.3</strong> · "lost in the middle" · 长 context recall 呈 U 型</figcaption>
+      </figure>
+      <p><em>结论</em>：long context 不是 RAG 完美替代品 · 关键信息塞中间 = 模型不认。</p>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 1</div>
+        <ul>
+          <li><a href="https://arxiv.org/abs/2307.03172" target="_blank">Lost in the Middle (Stanford 2023)</a></li>
+          <li><a href="https://arxiv.org/abs/2407.01219" target="_blank">RAG vs Long Context: A Comprehensive Study (Microsoft 2024)</a></li>
+          <li><a href="https://www.anthropic.com/news/contextual-retrieval" target="_blank">Anthropic · Contextual Retrieval (2024)</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 2 ============== -->
+    <section id="ch-2">
+      <header class="ch-head">
+        <span class="badge">Chapter 2 · Ingestion</span>
+        <h2>Ingestion · parsing + 6 种 chunking 策略</h2>
+        <p class="lede">RAG 50% 质量在 chunking · 改好 chunking 比换 embedding 收益更大</p>
+      </header>
+
+      <h3 id="s-2-1"><span class="num">§2.1</span>Parsing · 5 大工具</h3>
+      <table>
+        <thead><tr><th>工具</th><th>强项</th><th>弱项</th><th>价格</th></tr></thead>
+        <tbody>
+          <tr><td><a href="https://unstructured.io/" target="_blank">Unstructured</a></td><td>支持 25+ 格式 · OSS 友好</td><td>复杂 PDF table 不准</td><td>OSS / SaaS</td></tr>
+          <tr><td><a href="https://docs.cloud.llamaindex.ai/llamaparse/" target="_blank">LlamaParse</a></td><td>复杂 PDF / table / chart 最强</td><td>SaaS only · 慢 · 贵</td><td>$$ per page</td></tr>
+          <tr><td><a href="https://github.com/VikParuchuri/marker" target="_blank">Marker</a></td><td>OSS · 准确度仅次于 Llamaparse · GPU</td><td>需 GPU · OCR 弱</td><td>OSS</td></tr>
+          <tr><td>PyMuPDF / pdfplumber</td><td>纯 text 提取快</td><td>table / image / 多栏不行</td><td>OSS</td></tr>
+          <tr><td>Azure Doc Intelligence</td><td>企业文档 · table 强</td><td>vendor lock</td><td>$$ Azure</td></tr>
+        </tbody>
+      </table>
+      <p>实战 default：<strong>Unstructured 或 Marker</strong> · 复杂表格的 PDF 退到 LlamaParse。</p>
+
+      <h3 id="s-2-2"><span class="num">§2.2</span>6 种 chunking 策略</h3>
+
+      <h4>1. Fixed-size · 最简单 (不推荐生产)</h4>
+      <p>按 token / char 数硬切。优势：快。劣势：<em>切断句子 / 段落 / 表格 · retrieval 召回质量差</em>。</p>
+
+      <h4>2. Recursive (LangChain default · 改良版)</h4>
+      <pre><code><span class="k">from</span> langchain_text_splitters <span class="k">import</span> RecursiveCharacterTextSplitter
+
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=<span class="s">500</span>,
+    chunk_overlap=<span class="s">50</span>,
+    separators=[<span class="s">"\n\n"</span>, <span class="s">"\n"</span>, <span class="s">"。"</span>, <span class="s">"."</span>, <span class="s">" "</span>, <span class="s">""</span>],  <span class="c"># 优先级</span>
+)
+</code></pre>
+      <p>优先按段落切 · 段落太长退化按句子 · 还长按词。<strong>大多数场景 default</strong>。</p>
+
+      <h4>3. Semantic (按语义边界)</h4>
+      <p>用 embedding 算句子相邻相似度 · 相似度突降处切。优势：chunk 内语义内聚。劣势：embedding 慢 · 大文档跑 1 小时。</p>
+
+      <h4>4. Structural (按文档结构)</h4>
+      <p>按 markdown header / HTML tag / PDF outline 切。<strong>技术文档 / API 文档最佳</strong>。</p>
+
+      <h4>5. Context-aware (Anthropic Contextual Retrieval)</h4>
+      <p>2024 末 Anthropic 提：每个 chunk 前<em>用 LLM 加 50-100 字 context</em>（"这段在第 3 章 · 讲 X 服务的 API"）· 嵌入 + 检索都包含 context · failure rate -49% · prompt caching 让 cost 控制住。</p>
+      <pre><code>CONTEXT_PROMPT = <span class="s">"""
+&lt;document&gt;{whole_doc}&lt;/document&gt;
+&lt;chunk&gt;{this_chunk}&lt;/chunk&gt;
+
+请用 50-100 字描述 chunk 在 document 中的位置 / 上下文 · 帮助检索。直接给描述 · 不加任何前缀。
+"""</span>
+context = anthropic.messages.create(
+    model=<span class="s">"claude-3-5-haiku"</span>,
+    extra_headers={<span class="s">"prompt-cache"</span>: <span class="s">"on"</span>},   <span class="c"># 关键 · whole_doc cache</span>
+    ...
+).content[<span class="s">0</span>].text
+
+augmented_chunk = context + <span class="s">"\n\n"</span> + this_chunk  <span class="c"># 嵌这个</span>
+</code></pre>
+
+      <h4>6. Parent-child / Small-to-Big</h4>
+      <p>嵌入<em>小 chunk</em>（句子级）但检索后<em>返回大 chunk</em>（段落 / 章节）给 LLM。优势：检索精确 + LLM context 丰富。LangChain 有 <code>ParentDocumentRetriever</code>。</p>
+
+      <h3 id="s-2-3"><span class="num">§2.3</span>chunk size + overlap · 经验值</h3>
+      <table>
+        <thead><tr><th>场景</th><th>chunk size</th><th>overlap</th></tr></thead>
+        <tbody>
+          <tr><td>FAQ / 短文档</td><td>200-400 token</td><td>0-30</td></tr>
+          <tr><td>技术文档</td><td>500-800</td><td>50-100</td></tr>
+          <tr><td>书 / 长文 / 法律</td><td>800-1500</td><td>100-200</td></tr>
+          <tr><td>code</td><td>按 function 切 · 不切函数中间</td><td>0</td></tr>
+        </tbody>
+      </table>
+
+      <div class="box warn">
+        <div class="box-label">最常踩坑</div>
+        <p>overlap 太大（&gt; 30%）→ vector store 膨胀 + 同一信息检索重复出现 · 浪费 LLM context。overlap 0 → 跨 chunk 信息断开。<strong>10-15% chunk_size 是甜区</strong>。</p>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 3 ============== -->
+    <section id="ch-3">
+      <header class="ch-head">
+        <span class="badge">Chapter 3 · Embedding</span>
+        <h2>Embedding 模型 · 5 大家族横评</h2>
+        <p class="lede">不要无脑跟 MTEB 排行榜 · 排行第一不一定适合你</p>
+      </header>
+
+      <h3 id="s-3-1"><span class="num">§3.1</span>5 大家族</h3>
+      <table>
+        <thead><tr><th>家族</th><th>代表</th><th>维度</th><th>特点</th><th>价</th></tr></thead>
+        <tbody>
+          <tr><td>OpenAI</td><td>text-embedding-3-large/small</td><td>3072 / 1536</td><td>稳 · 通用 · API 简单</td><td>$0.13/1M</td></tr>
+          <tr><td>Voyage</td><td>voyage-3 · voyage-3-large · voyage-code-3</td><td>1024</td><td>RAG 专精 · 法律/代码/finance domain 模型</td><td>$0.06-0.18/1M</td></tr>
+          <tr><td>Cohere</td><td>embed-v3-english · embed-multilingual-v3</td><td>1024</td><td>多语言强 · 量化 (int8 / binary) 支持好</td><td>$0.10/1M</td></tr>
+          <tr><td>BGE (北京智源)</td><td>bge-m3 · bge-large-en-v1.5</td><td>1024</td><td>OSS 第一档 · 中英双强</td><td>OSS</td></tr>
+          <tr><td>Jina</td><td>jina-embeddings-v3</td><td>1024</td><td>OSS · 8k context · 多任务 LoRA</td><td>OSS / SaaS</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-3-2"><span class="num">§3.2</span>选型 · 5 个判定</h3>
+      <ol>
+        <li><strong>语种</strong>——纯英文 → OpenAI / Voyage；多语 → Cohere multilingual / BGE-M3</li>
+        <li><strong>领域</strong>——法律 / finance / code → Voyage 有专精模型 + 微调</li>
+        <li><strong>OSS 强制</strong>（数据合规 / on-prem）→ BGE-M3 / Jina v3</li>
+        <li><strong>cost 极度敏感</strong>——Cohere 有 binary embedding (32x 压缩) · 适合 100M+ chunk</li>
+        <li><strong>上下文长</strong>（要 embed 整段 chapter）→ Jina v3 (8k) / BGE-M3 (8k)</li>
+      </ol>
+
+      <h3 id="s-3-3"><span class="num">§3.3</span>MTEB 排行的 3 个局限</h3>
+      <ul>
+        <li><strong>分布偏差</strong>——MTEB 重学术语料 · 你的客服 / 法律 / 内部 wiki 分布完全不同</li>
+        <li><strong>language bias</strong>——很多任务英文为主 · 中文任务少且偏新闻</li>
+        <li><strong>train leakage</strong>——开源模型可能训过 MTEB · 排行虚高</li>
+      </ul>
+      <p><strong>正确做法</strong>：用<em>你自己的 200-500 条 golden query-doc pair</em> 跑 recall@10 / NDCG@10 · 决定哪个 embedding 模型。</p>
+
+      <h3 id="s-3-4"><span class="num">§3.4</span>Matryoshka embedding · 2024 流行</h3>
+      <p>OpenAI text-embedding-3 + voyage-3 + Cohere v3 都支持 <strong>truncate dim</strong>——3072 维裁到 256 维 · 准确率仅掉 5% · 但 vector DB 体积 / 检索速度 12x。</p>
+      <pre><code><span class="c"># OpenAI 直接支持</span>
+emb = client.embeddings.create(model=<span class="s">"text-embedding-3-large"</span>,
+                                input=texts, dimensions=<span class="s">256</span>).data
+<span class="c"># 256 维 · 占用 1/12 · 召回掉 ~3-5%</span>
+</code></pre>
+    </section>
+
+    <!-- ============== Chapter 4 ============== -->
+    <section id="ch-4">
+      <header class="ch-head">
+        <span class="badge">Chapter 4 · Vector DB</span>
+        <h2>Vector DB · 6 大横评 + 选型</h2>
+        <p class="lede">"用 Pinecone 就完了" — 错了 80% 的场景</p>
+      </header>
+
+      <table>
+        <thead><tr><th>DB</th><th>类型</th><th>规模</th><th>特点</th><th>价</th></tr></thead>
+        <tbody>
+          <tr><td><strong>pgvector</strong> (Postgres 扩展)</td><td>SQL + vector</td><td>10M-100M</td><td>已有 PG 直接加 · ACID · join 查询牛</td><td>免费 · DB 自托管</td></tr>
+          <tr><td><strong>Pinecone</strong></td><td>SaaS-only</td><td>10M-1B+</td><td>SaaS 第一 · 维护 0 · serverless</td><td>$$$</td></tr>
+          <tr><td><strong>Weaviate</strong></td><td>开源 + cloud</td><td>10M-1B</td><td>GraphQL · 多模态 · BM25 内建</td><td>OSS / SaaS</td></tr>
+          <tr><td><strong>Qdrant</strong></td><td>开源 (Rust)</td><td>10M-1B</td><td>性能猛 · payload filter 强 · BM25 内建</td><td>OSS / SaaS</td></tr>
+          <tr><td><strong>Milvus</strong></td><td>开源 (云原生)</td><td>1B+</td><td>K8s native · 大规模优化</td><td>OSS / Zilliz SaaS</td></tr>
+          <tr><td><strong>Chroma</strong></td><td>开源</td><td>&lt; 10M</td><td>POC / 本地 · 极简 API</td><td>OSS</td></tr>
+          <tr><td><strong>LanceDB</strong></td><td>OSS · 文件</td><td>&lt; 100M</td><td>serverless · 跑 lambda · 文件存 S3</td><td>OSS</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-4-1"><span class="num">§4.1</span>6 步选型决策</h3>
+      <ol>
+        <li><strong>已经用 Postgres? </strong>→ <strong>pgvector</strong> first（少一个服务 · 多花一行 SQL · 80% 场景够）</li>
+        <li><strong>SaaS · 0 维护 · 不在意贵</strong> → Pinecone</li>
+        <li><strong>OSS + 高性能 + 复杂 metadata filter</strong> → Qdrant</li>
+        <li><strong>OSS + GraphQL + multi-modal</strong> → Weaviate</li>
+        <li><strong>10 亿+ 规模 · K8s 团队</strong> → Milvus</li>
+        <li><strong>POC / 单机 / serverless</strong> → Chroma / LanceDB</li>
+      </ol>
+
+      <h3 id="s-4-2"><span class="num">§4.2</span>HNSW vs IVF · 索引选型</h3>
+      <ul>
+        <li><strong>HNSW</strong>（默认）——召回准 · 内存大 · build 慢；适合 &lt; 100M chunk · 优先选</li>
+        <li><strong>IVF + PQ</strong>——内存小 · 召回略低；适合 100M+ · 内存有限</li>
+        <li><strong>DiskANN</strong>（Microsoft）——磁盘存 · 内存极少；适合 1B+ · 单机省内存</li>
+      </ul>
+
+      <h3 id="s-4-3"><span class="num">§4.3</span>Metadata filter · 别忽视</h3>
+      <p>典型例：用户只能搜<em>自己 tenant</em> 的文档 · 必须先 filter <code>tenant_id=X</code> 再 ANN。
+      <strong>错</strong>：先 ANN top-100 再 filter（filter 后可能 0 个 · recall 暴跌）。
+      <strong>对</strong>：用 vector DB 的 <em>pre-filter</em> 能力（Qdrant / Weaviate / Milvus 都强 · pgvector 也支持但慢）。</p>
+
+      <h3 id="s-4-4"><span class="num">§4.4</span>用 quantization · 内存省 4-32x</h3>
+      <ul>
+        <li><strong>scalar (int8)</strong>——4x 压缩 · 召回 -1%；首选</li>
+        <li><strong>binary</strong>——32x 压缩 · 召回 -5-10%；超大规模 + 配 rerank</li>
+        <li><strong>matryoshka</strong>——见 §3.4</li>
+      </ul>
+    </section>
+
+    <!-- ============== Chapter 5 ============== -->
+    <section id="ch-5">
+      <header class="ch-head">
+        <span class="badge">Chapter 5 · Retrieval</span>
+        <h2>Retrieval · dense / sparse / hybrid / multi-vector</h2>
+        <p class="lede">单 dense 在 2026 已过时 · hybrid 是 default</p>
+      </header>
+
+      <h3 id="s-5-1"><span class="num">§5.1</span>4 种检索方式</h3>
+      <table>
+        <thead><tr><th>方式</th><th>原理</th><th>强项</th><th>弱项</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Dense</strong> (vector)</td><td>embedding cosine</td><td>语义相似 · 同义词强</td><td>精确关键词 / 数字 / 名字弱</td></tr>
+          <tr><td><strong>Sparse</strong> (BM25)</td><td>词频 + IDF</td><td>关键词精确 · 数字 / SKU / 人名</td><td>同义词 / 概念查询差</td></tr>
+          <tr><td><strong>Hybrid</strong></td><td>dense + sparse 融合</td><td>两边优势叠加</td><td>稍贵 · 需要 RRF 融合</td></tr>
+          <tr><td><strong>Multi-vector</strong> (ColBERT)</td><td>每 token 一个 vector · MaxSim 聚合</td><td>召回最高</td><td>存储 · 计算贵 5-10x</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-5-2"><span class="num">§5.2</span>Hybrid · 用 RRF 融合 (Reciprocal Rank Fusion)</h3>
+      <pre><code><span class="k">def</span> <span class="f">rrf</span>(rank_lists, k=<span class="s">60</span>):
+    <span class="s">"""
+    rank_lists: [[doc1, doc2, ...], [...]]  来自不同 retriever
+    返回融合后排序
+    """</span>
+    scores = {}
+    <span class="k">for</span> rl <span class="k">in</span> rank_lists:
+        <span class="k">for</span> rank, doc <span class="k">in</span> enumerate(rl, <span class="s">1</span>):
+            scores[doc.id] = scores.get(doc.id, <span class="s">0</span>) + <span class="s">1</span> / (k + rank)
+    <span class="k">return</span> sorted(scores, key=scores.get, reverse=<span class="k">True</span>)
+
+dense_top   = vector_db.search(emb_q, k=<span class="s">50</span>)
+sparse_top  = bm25_search(q, k=<span class="s">50</span>)
+final = rrf([dense_top, sparse_top])[:<span class="s">10</span>]   <span class="c"># top 10 给 LLM</span>
+</code></pre>
+
+      <h3 id="s-5-3"><span class="num">§5.3</span>Multi-vector · ColBERT 是啥</h3>
+      <p>传统 dense：1 doc → 1 vector。ColBERT：1 doc → N 个 token-level vector · query 跟 doc 算 max-sim 矩阵。<strong>召回准确度高 5-15%</strong> · 但存储是 N 倍 · 计算贵 5-10x。</p>
+      <p>2025 实战：<strong>ColBERTv2 / PLAID / answer.ai 的 ColBERT-small</strong> · 已经 production-ready · 配 Vespa / RAGatouille 库。</p>
+
+      <h3 id="s-5-4"><span class="num">§5.4</span>Top-k 怎么定</h3>
+      <p>常见错误：top_k = 5 喂 LLM 完事。正确：</p>
+      <ol>
+        <li>retrieve top 50（dense + sparse 各 50）</li>
+        <li>RRF 融合 → top 50</li>
+        <li>rerank → top 5-10</li>
+        <li>给 LLM</li>
+      </ol>
+      <p>1 步 retrieve top 5 vs 多步 50 → 5 → recall 差 30%+。</p>
+    </section>
+
+    <!-- ============== Chapter 6 ============== -->
+    <section id="ch-6">
+      <header class="ch-head">
+        <span class="badge">Chapter 6 · Rerank</span>
+        <h2>Reranking · 3 流派对比</h2>
+        <p class="lede">不加 rerank 的 RAG · top-k 准确率掉 20-40%</p>
+      </header>
+
+      <h3 id="s-6-1"><span class="num">§6.1</span>Why rerank</h3>
+      <p>embedding 召回是<em>近似</em>·top-50 里有 5-15 个真相关 · 但顺序往往不对。rerank = <strong>用更贵但更准的 model 给 top-50 重新打分</strong>。</p>
+
+      <h3 id="s-6-2"><span class="num">§6.2</span>3 流派</h3>
+      <table>
+        <thead><tr><th>流派</th><th>代表</th><th>原理</th><th>delay</th><th>价</th></tr></thead>
+        <tbody>
+          <tr><td>API rerank</td><td>Cohere Rerank · Voyage Rerank · Jina Rerank</td><td>SaaS · 给 query+50doc 返打分</td><td>~200ms</td><td>$1-2/1k req</td></tr>
+          <tr><td>Cross-encoder</td><td>BAAI/bge-reranker-large · ms-marco-MiniLM</td><td>本地 · query+doc 拼接进 BERT 二分类</td><td>~50-200ms (GPU)</td><td>OSS · 自托管</td></tr>
+          <tr><td>LLM rerank</td><td>RankGPT · GPT-4 / Claude 排</td><td>LLM 输出 ranking</td><td>1-3s</td><td>$$ · 慢但准</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-6-3"><span class="num">§6.3</span>Cohere Rerank 实战</h3>
+      <pre><code><span class="k">import</span> cohere
+co = cohere.Client(api_key=...)
+
+results = co.rerank(
+    model=<span class="s">"rerank-english-v3.0"</span>,
+    query=user_q,
+    documents=[d.page_content <span class="k">for</span> d <span class="k">in</span> top_50],
+    top_n=<span class="s">8</span>,
+).results
+
+reranked = [top_50[r.index] <span class="k">for</span> r <span class="k">in</span> results]
+</code></pre>
+
+      <h3 id="s-6-4"><span class="num">§6.4</span>什么时候<em>不</em>该 rerank</h3>
+      <ul>
+        <li>top-k ≤ 5 · 文档很短——rerank 收益 &lt; 5% · 不值 latency</li>
+        <li>用户对 latency 敏感（语音 / Realtime）—— rerank 加 200-2000ms</li>
+        <li>retriever 已经召回精准（精确关键词 + filter 后只剩 5 条）</li>
+      </ul>
+    </section>
+
+    <!-- ============== Chapter 7 ============== -->
+    <section id="ch-7">
+      <header class="ch-head">
+        <span class="badge">Chapter 7 · 高级</span>
+        <h2>Advanced · HyDE / CRAG / Self-RAG / Adaptive RAG</h2>
+        <p class="lede">naive RAG 的 4 个升级方向 · senior 必懂</p>
+      </header>
+
+      <h3 id="s-7-1"><span class="num">§7.1</span>HyDE (Hypothetical Document Embeddings)</h3>
+      <p><strong>问题</strong>：query "如何配置 SSL?" 跟 doc "用 OpenSSL 工具创建证书 · 配置 nginx ssl_certificate ..." 在 embedding 上未必近——query 短 / 抽象 · doc 长 / 具体。</p>
+      <p><strong>方案</strong>：让 LLM 先<em>假装</em>写一段答案 · 用<em>假答案</em>的 embedding 去查。</p>
+      <pre><code>hypo = llm.invoke(f<span class="s">"假装回答这个问题（即使不确定也写）：{q}"</span>).content
+hypo_emb = embed(hypo)
+docs = vector_db.search(hypo_emb, k=<span class="s">10</span>)
+</code></pre>
+      <p>RAG benchmarks 上召回 +5-15%。<em>劣势</em>：每 query 多一次 LLM 调用。</p>
+
+      <h3 id="s-7-2"><span class="num">§7.2</span>CRAG (Corrective RAG)</h3>
+      <p>2024 paper · 核心：<em>retrieval 后先评估质量 · 不好就 fallback web search</em>。</p>
+      <ol>
+        <li>retrieve → top-10</li>
+        <li>用 lightweight evaluator (微调小 model) 给每 doc 打 relevance（high / mid / low）</li>
+        <li>都 high → 直接给 LLM</li>
+        <li>有 low → 触发 web search 补</li>
+        <li>都 low → 完全靠 web search</li>
+      </ol>
+      <p>这是<em>第一个引入"质量自评"的 RAG 模式</em> · agentic RAG 雏形。</p>
+
+      <h3 id="s-7-3"><span class="num">§7.3</span>Self-RAG</h3>
+      <p>UW 2023 paper · <strong>把 RAG 决策本身交给 LLM</strong>——用特殊 token：</p>
+      <ul>
+        <li><code>[Retrieve]</code>——LLM 决定要不要 retrieve</li>
+        <li><code>[IsRel]</code>——retrieve 后 LLM 评估 relevance</li>
+        <li><code>[IsSup]</code>——LLM 评估 output 是否被 retrieved 支持</li>
+        <li><code>[IsUse]</code>——LLM 评估 output 对用户有用</li>
+      </ul>
+      <p>需要<em>微调</em>一个会输出这些 token 的 LLM。生产用得少 · 概念被 Adaptive RAG / Agentic RAG 继承。</p>
+
+      <h3 id="s-7-4"><span class="num">§7.4</span>Adaptive RAG</h3>
+      <p>2024 paper · 一个 router 先分类 query 的"难度"：</p>
+      <ul>
+        <li>简单事实 → no retrieval · 直接 LLM</li>
+        <li>单跳 retrieval → 标准 RAG</li>
+        <li>多跳 / 复杂 → multi-step RAG (iterate)</li>
+      </ul>
+      <p>意思是<em>不是每个 query 都该走 RAG</em>。生产实战：用 LangGraph router node + LLM 分类 + 3 条不同 path。</p>
+    </section>
+
+    <!-- ============== Chapter 8 ============== -->
+    <section id="ch-8">
+      <header class="ch-head">
+        <span class="badge">Chapter 8 · Agentic</span>
+        <h2>Agentic RAG · iterative / multi-hop · 跟传统 RAG 区别</h2>
+        <p class="lede">2025-2026 主流形态 · "RAG 已死" 死的是 naive · 复活的是这个</p>
+      </header>
+
+      <h3 id="s-8-1"><span class="num">§8.1</span>4 种区别</h3>
+      <table>
+        <thead><tr><th></th><th>Naive RAG</th><th>Agentic RAG</th></tr></thead>
+        <tbody>
+          <tr><td>retrieval 次数</td><td>1 次</td><td>多次 · LLM 决定</td></tr>
+          <tr><td>query 改写</td><td>无</td><td>LLM 把 user query 拆 / 改写成多个 sub-query</td></tr>
+          <tr><td>retrieval 失败处理</td><td>硬塞 LLM</td><td>LLM 看到不够 → 改 query 再 retrieve</td></tr>
+          <tr><td>多源整合</td><td>1 个 vector DB</td><td>vector + SQL + web + API · 用 tool 调</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-8-2"><span class="num">§8.2</span>Agentic RAG 实现 · LangGraph 模板</h3>
+      <pre><code><span class="k">from</span> langgraph.graph <span class="k">import</span> StateGraph, START, END
+<span class="k">from</span> langgraph.prebuilt <span class="k">import</span> ToolNode
+
+<span class="f">@tool</span>
+<span class="k">def</span> <span class="f">vector_search</span>(query: str) -&gt; list[str]:
+    <span class="k">return</span> vector_db.search(query, k=<span class="s">8</span>)
+
+<span class="f">@tool</span>
+<span class="k">def</span> <span class="f">web_search</span>(query: str) -&gt; list[str]:
+    <span class="k">return</span> tavily.search(query, k=<span class="s">5</span>)
+
+<span class="f">@tool</span>
+<span class="k">def</span> <span class="f">sql_search</span>(question: str) -&gt; str:
+    sql = nl2sql(question)
+    <span class="k">return</span> str(db.execute(sql).fetchall())
+
+agent_llm = llm.bind_tools([vector_search, web_search, sql_search])
+
+<span class="k">def</span> <span class="f">agent_node</span>(state):
+    <span class="k">return</span> {<span class="s">"messages"</span>: [agent_llm.invoke(state[<span class="s">"messages"</span>])]}
+
+<span class="k">def</span> <span class="f">should_continue</span>(state):
+    <span class="k">return</span> <span class="s">"tools"</span> <span class="k">if</span> state[<span class="s">"messages"</span>][-<span class="s">1</span>].tool_calls <span class="k">else</span> END
+
+g = StateGraph(...)
+g.add_node(<span class="s">"agent"</span>, agent_node)
+g.add_node(<span class="s">"tools"</span>, ToolNode([vector_search, web_search, sql_search]))
+g.add_conditional_edges(<span class="s">"agent"</span>, should_continue, [<span class="s">"tools"</span>, END])
+g.add_edge(<span class="s">"tools"</span>, <span class="s">"agent"</span>)
+g.add_edge(START, <span class="s">"agent"</span>)
+</code></pre>
+      <p>LLM 看到 query → 决定调哪个 tool · 看 result → 决定够不够 · 不够再调。这就是 Agentic RAG。</p>
+
+      <h3 id="s-8-3"><span class="num">§8.3</span>Multi-hop RAG · 真复杂查询</h3>
+      <p>例：<em>"小米成立时 CEO 现在在哪家公司"</em> 需要：</p>
+      <ol>
+        <li>查"小米成立年份" → 2010</li>
+        <li>查"2010 小米 CEO" → 雷军</li>
+        <li>查"雷军 现任公司" → 仍小米</li>
+      </ol>
+      <p>naive RAG 一步 retrieve 完全答不出。Agentic RAG 自然多次 retrieve。</p>
+    </section>
+
+    <!-- ============== Chapter 9 ============== -->
+    <section id="ch-9">
+      <header class="ch-head">
+        <span class="badge">Chapter 9 · 变体</span>
+        <h2>GraphRAG / Multi-modal RAG / SQL RAG</h2>
+        <p class="lede">3 个高频场景的特化 RAG · 面试经常被追问</p>
+      </header>
+
+      <h3 id="s-9-1"><span class="num">§9.1</span>GraphRAG (Microsoft 2024)</h3>
+      <p><strong>问题</strong>：传统 RAG 不能回答<em>summary 类 / global 类</em> query · "这本书的整体主题是什么"。</p>
+      <p><strong>方案</strong>：</p>
+      <ol>
+        <li>indexing 时用 LLM 抽<em>实体 + 关系</em> → 建知识图</li>
+        <li>对图做<em>community detection</em>（Leiden algorithm）· 每社区用 LLM 生成 summary</li>
+        <li>query 时检索 community summaries · 回答 global question</li>
+        <li>local question 仍用传统 vector retrieval</li>
+      </ol>
+      <p>开源：<a href="https://github.com/microsoft/graphrag" target="_blank">microsoft/graphrag</a> + <a href="https://github.com/HKUDS/LightRAG" target="_blank">LightRAG</a> (轻量替代)。</p>
+      <p><em>劣势</em>：indexing 贵（~$10-50/100k 字）· 主要用在 long doc 集合 / 内部 wiki / 法律。</p>
+
+      <h3 id="s-9-2"><span class="num">§9.2</span>Multi-modal RAG</h3>
+      <p>文档含图 / table / chart 怎么办？</p>
+      <ul>
+        <li><strong>方案 A · Caption + text</strong>——LLM (GPT-4V) 给图生 caption · 把 caption 当 text 走传统 RAG。简单 · 准确度中。</li>
+        <li><strong>方案 B · Multi-modal embedding</strong>——CLIP / SigLIP / Cohere embed v3 多模态 · 文本 + 图同空间 embed。统一空间 · 准确度高。</li>
+        <li><strong>方案 C · ColPali / ColQwen</strong>——直接 embed PDF 页面图（不 OCR）· "把 PDF 当图"。2024 末新方案 · 视觉重的文档（PPT / 报告 / 论文）效果最好。</li>
+      </ul>
+
+      <h3 id="s-9-3"><span class="num">§9.3</span>SQL RAG (Text2SQL with retrieval)</h3>
+      <p><strong>问题</strong>：query "上月 GMV 增长多少" · 数据在 1000+ 表 schema 中。</p>
+      <p><strong>方案</strong>：</p>
+      <ol>
+        <li>所有 table schema + column desc + 例 query embed 入 vector DB</li>
+        <li>query → retrieve top-K 相关 table schema</li>
+        <li>LLM 看相关 schema + query → 生成 SQL</li>
+        <li>execute SQL · 把结果 + SQL 回 LLM 生最终 answer</li>
+      </ol>
+      <p>开源：<a href="https://github.com/vanna-ai/vanna" target="_blank">Vanna AI</a> · <a href="https://github.com/eosphoros-ai/DB-GPT" target="_blank">DB-GPT</a>。</p>
+    </section>
+
+    <!-- ============== Chapter 10 ============== -->
+    <section id="ch-10">
+      <header class="ch-head">
+        <span class="badge">Chapter 10 · Eval</span>
+        <h2>Eval · Ragas / TruLens / DeepEval</h2>
+        <p class="lede">RAG eval 4 大 metric 必懂 · 面试必问</p>
+      </header>
+
+      <h3 id="s-10-1"><span class="num">§10.1</span>RAG 4 大核心 metric (Ragas 框架)</h3>
+      <table>
+        <thead><tr><th>Metric</th><th>评什么</th><th>怎么算</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Faithfulness</strong></td><td>answer 是否忠于 retrieved context · 没幻觉</td><td>LLM 抽 answer 中 claims · 验每个 claim 是否在 context 中</td></tr>
+          <tr><td><strong>Answer Relevance</strong></td><td>answer 是否回答了 question</td><td>LLM 反向给 answer 生 N 个 question · 算跟原 question 相似度</td></tr>
+          <tr><td><strong>Context Precision</strong></td><td>retrieved chunk 中真有用的比例</td><td>LLM 评每 chunk 是否对 answer 有贡献</td></tr>
+          <tr><td><strong>Context Recall</strong></td><td>需要的信息是否被 retrieved</td><td>需要 ground truth · LLM 评 GT 中 statement 是否在 context 中</td></tr>
+        </tbody>
+      </table>
+      <p>这 4 个把 RAG pipeline 拆开评——retrieval 锅 vs LLM 锅一目了然。</p>
+
+      <h3 id="s-10-2"><span class="num">§10.2</span>Ragas 实战</h3>
+      <pre><code><span class="k">from</span> ragas <span class="k">import</span> evaluate
+<span class="k">from</span> ragas.metrics <span class="k">import</span> faithfulness, answer_relevancy, context_precision, context_recall
+
+dataset = Dataset.from_dict({
+    <span class="s">"question"</span>:        [<span class="s">"如何配置 SSL?"</span>, ...],
+    <span class="s">"answer"</span>:          [agent_outputs, ...],
+    <span class="s">"contexts"</span>:        [[chunk1, chunk2, ...], ...],
+    <span class="s">"ground_truth"</span>:    [<span class="s">"用 OpenSSL 创建..."</span>, ...],
+})
+
+result = evaluate(dataset, metrics=[faithfulness, answer_relevancy,
+                                     context_precision, context_recall])
+print(result.to_pandas())
+</code></pre>
+
+      <h3 id="s-10-3"><span class="num">§10.3</span>retriever 单独评 · recall@k / NDCG@k</h3>
+      <p>不要等到 RAG end-to-end 才发现 retrieval 烂。<strong>独立 eval retriever</strong>：</p>
+      <ul>
+        <li>50-200 query + ground-truth doc id</li>
+        <li>retrieve top-k · 算 hit rate / recall@k / MRR / NDCG@k</li>
+        <li>recall@10 &lt; 0.8 → 不要谈 LLM · 先修 retrieval</li>
+      </ul>
+    </section>
+
+    <!-- ============== Chapter 11 ============== -->
+    <section id="ch-11">
+      <header class="ch-head">
+        <span class="badge">Chapter 11 · 翻车</span>
+        <h2>生产 8 大坑 + 真实复盘</h2>
+        <p class="lede">这章是别人血换的</p>
+      </header>
+
+      <ol>
+        <li><strong>chunk overlap 太大 → vector DB 膨胀 + LLM context 重复</strong>——10-15% 是甜区</li>
+        <li><strong>没用 metadata pre-filter → tenant 串号 / 检索很慢</strong>——必须 vector DB 原生 filter</li>
+        <li><strong>rerank 放在错误位置</strong>——应该 retrieve 50 → rerank → 5；不是 retrieve 5 → rerank（rerank 5 个收益微）</li>
+        <li><strong>没监控 retriever recall · 只盯 E2E</strong>——retrieval 烂 LLM 再强没用 · 必须独立 SLO</li>
+        <li><strong>embedding 模型升级没重 embed</strong>——新旧 embedding 不可比 · 必须全库重 embed (灰度)</li>
+        <li><strong>prompt 没引用 source · LLM 编</strong>——必须强制 LLM "Citation: [chunk_id]" · post-hoc 验证</li>
+        <li><strong>数据更新不增量 / 全量重 embed 太贵</strong>——按 doc_id 增量 + soft delete · 用 ETL 调度</li>
+        <li><strong>对长文档没 parent-child · LLM context 碎</strong>——小 chunk embed · 大 chunk feed</li>
+      </ol>
+
+      <h3 id="s-11-1"><span class="num">§11.1</span>真实复盘 · 法律检索 RAG · 引用错位</h3>
+      <p><strong>背景</strong>：法律 RAG · 律师查 "合同条款类似案例" · 用户反馈 "你给的案例 ID 是真的 · 但案件描述跟引用合不上"。</p>
+      <p><strong>挖根因</strong>：parent-child 模式 · child chunk 携带的 metadata 是<em>错的 parent_id</em>——chunking 时 parent_id 用了文件名 · 后来文件改名 metadata 没更。LLM 引用的是 child 的 metadata · UI 跳转拉的是新文件 · 内容对不上。</p>
+      <p><strong>fix</strong>：</p>
+      <ol>
+        <li>parent_id 用 hash(content) 不用文件名</li>
+        <li>每次 ingest 校验 parent-child 链路完整</li>
+        <li>UI 引用跳转时<em>显示 chunk 内容</em> · 用户能立刻发现错位</li>
+      </ol>
+      <p><strong>教训</strong>：metadata 设计跟稳定 ID 一样要 careful · 用 immutable hash 不用易变字段</p>
+    </section>
+
+    <!-- ============== Interview Q ============== -->
+    <section id="qa">
+      <header class="ch-head"><span class="badge">附录 A</span><h2>15 道 senior RAG 面试题</h2></header>
+      <div class="box interview"><div class="box-label">决策 (5)</div><ol>
+        <li><strong>RAG vs long context vs fine-tune 怎么选</strong>——4 维表 + 5 条决策（§1）</li>
+        <li><strong>chunk size 怎么定</strong>——按场景 200-1500 · overlap 10-15%</li>
+        <li><strong>embedding model 怎么选</strong>——别看 MTEB · 用自己 200 query golden eval</li>
+        <li><strong>vector DB 怎么选</strong>——已有 PG → pgvector · OSS 高性能 → Qdrant · SaaS 0 运维 → Pinecone</li>
+        <li><strong>什么时候不该 rerank</strong>——top-k ≤ 5 · 极端 latency 敏感 · retriever 已精</li>
+      </ol></div>
+      <div class="box interview"><div class="box-label">技术 (5)</div><ol start="6">
+        <li><strong>HyDE 原理</strong>——LLM 假装写答案 · embed 假答案搜真 doc</li>
+        <li><strong>RRF 是什么</strong>——Reciprocal Rank Fusion · 1/(k+rank) 加和 · k=60 经验</li>
+        <li><strong>ColBERT vs dense embedding 区别</strong>——多 vector + MaxSim · 召回 +5-15% 但贵 5-10x</li>
+        <li><strong>Anthropic Contextual Retrieval 干啥</strong>——chunk 前用 LLM 加 50-100 字 context · failure rate -49%</li>
+        <li><strong>GraphRAG 解决什么问题</strong>——传统 RAG 不能答 summary / global question · 用 KG + community summary 解</li>
+      </ol></div>
+      <div class="box interview"><div class="box-label">生产 (5)</div><ol start="11">
+        <li><strong>RAG 4 大 eval metric</strong>——faithfulness / answer relevance / context precision / context recall</li>
+        <li><strong>retrieval 单独怎么 eval</strong>——recall@k / NDCG@k / MRR · &lt; 0.8 先修 retrieval</li>
+        <li><strong>多 tenant 数据怎么隔离</strong>——vector DB pre-filter (Qdrant / Weaviate / pgvector partial index)</li>
+        <li><strong>embedding 模型升级怎么 migrate</strong>——双 embed 灰度 · 不能单切（新旧 embedding 不可比）</li>
+        <li><strong>RAG vs Agentic RAG 区别</strong>——单次 retrieve vs LLM 决定多次 · Agentic 是 2025 主流</li>
+      </ol></div>
+    </section>
+
+    <!-- ============== Glossary ============== -->
+    <section id="glossary">
+      <header class="ch-head"><span class="badge">附录 B</span><h2>80 词术语速查</h2></header>
+      <table>
+        <thead><tr><th>术语</th><th>含义</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Adaptive RAG</strong></td><td>router 决定 query 走哪条 path（no-retr / single / multi）</td></tr>
+          <tr><td><strong>Agentic RAG</strong></td><td>LLM 决定何时 / 多少次 retrieve · 用 tool call</td></tr>
+          <tr><td><strong>ANN</strong></td><td>Approximate Nearest Neighbor · vector 近似搜索</td></tr>
+          <tr><td><strong>BM25</strong></td><td>稀疏检索经典算法 · 词频 + IDF</td></tr>
+          <tr><td><strong>BGE</strong></td><td>北京智源开源 embedding (BAAI General Embedding)</td></tr>
+          <tr><td><strong>Binary embedding</strong></td><td>32x 压缩 · Cohere v3 支持 · 配 rerank 用</td></tr>
+          <tr><td><strong>Caption + text</strong></td><td>多模态 RAG 简化方案 · LLM 给图生描述</td></tr>
+          <tr><td><strong>Chroma</strong></td><td>OSS 轻量 vector DB · POC / 单机</td></tr>
+          <tr><td><strong>Chunk overlap</strong></td><td>chunk 间重叠字数 · 10-15% 甜区</td></tr>
+          <tr><td><strong>Chunking</strong></td><td>doc 切片为 chunk · 6 种策略</td></tr>
+          <tr><td><strong>ColBERT</strong></td><td>multi-vector retrieval · token 级 vector + MaxSim</td></tr>
+          <tr><td><strong>ColPali</strong></td><td>"PDF 当图" embed · 不 OCR · 视觉重的文档强</td></tr>
+          <tr><td><strong>Cohere Rerank</strong></td><td>SaaS rerank API · 行业标杆</td></tr>
+          <tr><td><strong>Context-aware chunking</strong></td><td>Anthropic Contextual Retrieval · 每 chunk 前加 LLM 生 context</td></tr>
+          <tr><td><strong>Context precision</strong></td><td>retrieved chunk 中真有用的比例 (Ragas)</td></tr>
+          <tr><td><strong>Context recall</strong></td><td>需要的信息是否在 retrieved 中 (Ragas)</td></tr>
+          <tr><td><strong>CRAG</strong></td><td>Corrective RAG · retrieval 后评估 · 不好 fallback web search</td></tr>
+          <tr><td><strong>Cross-encoder</strong></td><td>rerank 流派 · query+doc 拼接进 BERT 二分类</td></tr>
+          <tr><td><strong>Dense retrieval</strong></td><td>embedding 向量检索 · cosine 相似</td></tr>
+          <tr><td><strong>DiskANN</strong></td><td>磁盘 ANN 索引 · Microsoft · 10 亿+规模省内存</td></tr>
+          <tr><td><strong>Document parsing</strong></td><td>从 PDF / docx / html 抽 text + 结构</td></tr>
+          <tr><td><strong>E5</strong></td><td>Microsoft OSS embedding family</td></tr>
+          <tr><td><strong>Embedding</strong></td><td>文本 → 高维向量</td></tr>
+          <tr><td><strong>Faithfulness</strong></td><td>answer 是否忠于 context · 没幻觉</td></tr>
+          <tr><td><strong>Fixed-size chunking</strong></td><td>按 token / char 数硬切</td></tr>
+          <tr><td><strong>Fine-tune</strong></td><td>用领域数据训 LLM · 适合 behavior / style</td></tr>
+          <tr><td><strong>GraphRAG</strong></td><td>KG + community summary · 答 global question</td></tr>
+          <tr><td><strong>Ground truth</strong></td><td>标准答案 / 标准 doc set</td></tr>
+          <tr><td><strong>Hit rate</strong></td><td>retriever metric · top-k 含 relevant 的比例</td></tr>
+          <tr><td><strong>HNSW</strong></td><td>Hierarchical Navigable Small World · ANN 主流索引</td></tr>
+          <tr><td><strong>Hybrid search</strong></td><td>dense + sparse 融合 · 用 RRF</td></tr>
+          <tr><td><strong>HyDE</strong></td><td>Hypothetical Document Embedding · LLM 假写答案 embed 检索</td></tr>
+          <tr><td><strong>Indexing</strong></td><td>doc → chunk → embed → vector DB</td></tr>
+          <tr><td><strong>IVF</strong></td><td>Inverted File · ANN 索引 · 配 PQ 省内存</td></tr>
+          <tr><td><strong>Jina embeddings</strong></td><td>OSS · 8k context · multi-task LoRA</td></tr>
+          <tr><td><strong>LanceDB</strong></td><td>OSS file-based vector DB · serverless 友好</td></tr>
+          <tr><td><strong>LightRAG</strong></td><td>HKU GraphRAG 轻量替代</td></tr>
+          <tr><td><strong>LlamaParse</strong></td><td>SaaS PDF/table parser · 准确度高</td></tr>
+          <tr><td><strong>Long context</strong></td><td>1M+ token 一次塞 · "lost in middle"</td></tr>
+          <tr><td><strong>Lost in the middle</strong></td><td>long context recall U 型 · 中间最差</td></tr>
+          <tr><td><strong>Marker</strong></td><td>OSS PDF parser · GPU · 接近 LlamaParse</td></tr>
+          <tr><td><strong>Matryoshka embedding</strong></td><td>支持 truncate dim · OpenAI v3 / Voyage / Cohere v3</td></tr>
+          <tr><td><strong>Metadata filter</strong></td><td>vector DB 按 metadata 过滤 · 必须 pre-filter</td></tr>
+          <tr><td><strong>Milvus</strong></td><td>OSS K8s native vector DB · 1B+</td></tr>
+          <tr><td><strong>MMR</strong></td><td>Maximal Marginal Relevance · 检索结果多样化</td></tr>
+          <tr><td><strong>MRR</strong></td><td>Mean Reciprocal Rank · ranking metric</td></tr>
+          <tr><td><strong>MTEB</strong></td><td>embedding benchmark · 别盲信</td></tr>
+          <tr><td><strong>Multi-hop RAG</strong></td><td>需多步 retrieve 才能答的 query</td></tr>
+          <tr><td><strong>Multi-modal RAG</strong></td><td>支持图 / table / chart 的 RAG</td></tr>
+          <tr><td><strong>Multi-vector</strong></td><td>1 doc N vector · ColBERT 风</td></tr>
+          <tr><td><strong>Naive RAG</strong></td><td>1 次 retrieve + 1 次 LLM · 已被 Agentic RAG 替代</td></tr>
+          <tr><td><strong>NDCG</strong></td><td>Normalized Discounted Cumulative Gain · ranking metric</td></tr>
+          <tr><td><strong>Parent-child / Small-to-Big</strong></td><td>嵌小 chunk 返大 chunk</td></tr>
+          <tr><td><strong>Pgvector</strong></td><td>Postgres extension · vector 入 PG · 80% 场景够</td></tr>
+          <tr><td><strong>Pinecone</strong></td><td>SaaS-only vector DB · 0 运维</td></tr>
+          <tr><td><strong>PQ</strong></td><td>Product Quantization · 向量压缩</td></tr>
+          <tr><td><strong>Qdrant</strong></td><td>Rust OSS vector DB · payload filter 强</td></tr>
+          <tr><td><strong>Query expansion</strong></td><td>把 query 改写成多个变体后 retrieve</td></tr>
+          <tr><td><strong>Ragas</strong></td><td>RAG eval 库 · 4 大 metric</td></tr>
+          <tr><td><strong>RAGatouille</strong></td><td>ColBERT 易用封装库</td></tr>
+          <tr><td><strong>RankGPT</strong></td><td>用 LLM 当 reranker · 慢但准</td></tr>
+          <tr><td><strong>Recall@k</strong></td><td>top-k 中相关 doc 的比例</td></tr>
+          <tr><td><strong>Recursive chunking</strong></td><td>LangChain default · 按 separator 优先级递归切</td></tr>
+          <tr><td><strong>Rerank</strong></td><td>用更准 model 给 top-50 重排 · top-5 给 LLM</td></tr>
+          <tr><td><strong>RRF</strong></td><td>Reciprocal Rank Fusion · 1/(k+rank) · hybrid 融合</td></tr>
+          <tr><td><strong>Scalar quantization</strong></td><td>int8 压缩 · 4x · 召回 -1%</td></tr>
+          <tr><td><strong>Self-RAG</strong></td><td>UW · LLM 输出特殊 token 决定 retrieve / 评估</td></tr>
+          <tr><td><strong>Semantic chunking</strong></td><td>按 embedding 相邻相似度切</td></tr>
+          <tr><td><strong>Sparse retrieval</strong></td><td>BM25 / SPLADE · 词频 / IDF</td></tr>
+          <tr><td><strong>SPLADE</strong></td><td>Learned sparse retrieval · BERT 输出稀疏 token weight</td></tr>
+          <tr><td><strong>SQL RAG / Text2SQL</strong></td><td>retrieve table schema · LLM 生 SQL</td></tr>
+          <tr><td><strong>Structural chunking</strong></td><td>按 markdown / HTML / outline 切</td></tr>
+          <tr><td><strong>TruLens</strong></td><td>RAG eval 框架 · "feedback functions"</td></tr>
+          <tr><td><strong>Unstructured</strong></td><td>OSS 25+ 格式 parser</td></tr>
+          <tr><td><strong>Vanna AI</strong></td><td>OSS Text2SQL with retrieval</td></tr>
+          <tr><td><strong>Vector DB</strong></td><td>存 + 索引 + 检索 vector 的 DB</td></tr>
+          <tr><td><strong>Vespa</strong></td><td>Yahoo 开源搜索引擎 · ColBERT 部署主选</td></tr>
+          <tr><td><strong>Voyage embeddings</strong></td><td>RAG 专精 embedding · 法律/code/finance domain</td></tr>
+          <tr><td><strong>Weaviate</strong></td><td>OSS GraphQL vector DB · multi-modal</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer class="colophon">
+      <div class="row"><span><strong>RAG 生产级深讲</strong> · v1.0 · 2026-05</span><span>11 章 · 6 chunking · 6 vector DB · 15 题 · 80 词</span></div>
+      <div class="row">
+        <span>姊妹 · → <a href="learn.html">学习</a> · <a href="enterprise.html">企业级</a> · <a href="agent-design.html">设计</a> · <a href="agent-coding.html">Coding</a> · <a href="agent-debugging.html">Debug</a> · <a href="langgraph-internals.html">LangGraph</a> · <a href="eval-observability.html">Eval</a> · <a href="memory-context.html">Memory</a> · <a href="tool-design.html">Tool</a> · <a href="infra.html">Infra</a> · <a href="index.html">实现</a></span>
+      </div>
+    </footer>
+  </main>
+</div>
+<script>
+(function(){var l=document.querySelectorAll('.toc a[href^="#"]');var s=Array.prototype.map.call(l,function(a){var e=document.querySelector(a.getAttribute('href'));return{link:a,el:e};}).filter(function(x){return x.el;});function o(){var y=window.scrollY+80;var c=s[0];s.forEach(function(x){if(x.el.offsetTop<=y)c=x;});s.forEach(function(x){x.link.classList.toggle('active',x===c);});}window.addEventListener('scroll',o,{passive:true});o();})();
+</script>
+</body>
+</html>

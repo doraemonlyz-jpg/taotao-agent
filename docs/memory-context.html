@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memory & Context Engineering · Mem0/Zep/Letta 横评 · 2026 趋势 · senior 必修</title>
+<meta name="description" content="agent memory 5 类（working/episodic/semantic/procedural）· short-term 3 策略 · long-term 3 架构 · Mem0/Zep/Letta/Cognee 横评 · context window engineering（1M/2M context）· prompt caching · KV cache reuse · forgetting/consolidation · multi-user · 15 道 senior 题">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root { --paper:#fbf5e8;--paper-2:#f4ecd6;--paper-card:#fff;--ink:#1d1a14;--ink-soft:#3a3327;--ink-mute:#756c5c;--rule:#d8cdb0;--rule-soft:#e8debc;--leaf:#4a8a4a;--leaf-soft:#ebf3e7;--rust:#c44d2a;--rust-soft:#fae6dc;--sky:#2c6ca8;--sky-soft:#e2edf5;--plum:#864c8e;--plum-soft:#f1e6f2;--gold:#b8881e;--gold-soft:#f7eccd;--code-bg:#fdf9ed;--code-fg:#2a2620;--code-key:#c44d2a;--code-str:#4a8a4a;--code-cmt:#998a6c;--code-fn:#864c8e;--font-display:"Fraunces","Times New Roman",serif;--font-body:"Lora","Iowan Old Style",Georgia,serif;--font-sans:"Outfit",system-ui,-apple-system,sans-serif;--font-mono:"JetBrains Mono","SF Mono",Menlo,monospace;--font-zh:"Songti SC","Source Han Serif SC","Noto Serif CJK SC",serif;}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at top left,rgba(196,178,144,.12),transparent 50%),radial-gradient(ellipse at bottom right,rgba(74,138,74,.08),transparent 50%),var(--paper);color:var(--ink);font-family:var(--font-body);font-size:17px;line-height:1.75}:lang(zh){font-family:var(--font-zh);line-height:1.85}.book-body p,.book-body li{color:var(--ink-soft)}a{color:var(--rust);text-decoration:none;border-bottom:1px solid rgba(196,77,42,.4)}a:hover{background:rgba(196,77,42,.08)}em{font-style:italic;color:var(--leaf);font-weight:500}strong{font-weight:600;color:var(--ink)}
+.layout{display:grid;grid-template-columns:290px minmax(0,1fr);max-width:1400px;margin:0 auto;padding:0 2rem;gap:3rem}@media (max-width:980px){.layout{grid-template-columns:1fr;gap:0;padding:0 1.2rem}.toc{position:static!important;max-height:none!important}.toc-inner{display:none}.toc.open .toc-inner{display:block}.toc-toggle{display:inline-flex!important}}
+.toc{position:sticky;top:0;align-self:start;height:100vh;max-height:100vh;overflow:auto;padding:2rem .4rem 4rem 0;border-right:1px dashed var(--rule);font-family:var(--font-sans);font-size:.85rem}.toc-toggle{display:none;margin:1rem 0;padding:.4rem .8rem;background:var(--paper-card);border:1px solid var(--rule);border-radius:999px;cursor:pointer}.toc-brand{padding:0 .7rem 1.1rem;border-bottom:1px dashed var(--rule);margin-bottom:1rem}.toc-brand .mark{font-family:var(--font-display);font-style:italic;font-weight:500;font-size:1.4rem;color:var(--ink);display:block;line-height:1.1}.toc-brand .mark .dot{color:var(--rust)}.toc-brand .sub{font-family:var(--font-sans);font-size:.72rem;color:var(--ink-mute);margin-top:.4rem;display:block;line-height:1.4}.toc-brand .sub strong{color:var(--rust);font-weight:700}.toc ol{list-style:none;margin:0;padding:0;counter-reset:tocch}.toc>.toc-inner>ol>li{counter-increment:tocch;margin:.05rem 0}.toc a{display:flex;gap:.6rem;align-items:baseline;padding:.34rem .6rem;border:none;color:var(--ink-soft);font-weight:500;border-radius:6px;line-height:1.35}.toc>.toc-inner>ol>li>a::before{content:"Ch " counter(tocch,decimal-leading-zero);font-family:var(--font-mono);font-size:.65rem;color:var(--rust);width:3.4em;flex-shrink:0;font-weight:500}.toc a:hover{background:var(--paper-2);color:var(--ink)}.toc a.active{background:var(--rust-soft);color:var(--rust)}.toc-foot{margin-top:2rem;padding:1rem .7rem 0;border-top:1px dashed var(--rule);font-family:var(--font-sans);font-size:.74rem;color:var(--ink-mute);line-height:1.6}.toc-foot a{color:var(--ink-mute);border-bottom-color:rgba(117,108,92,.3)}.toc-foot a:hover{color:var(--rust)}
+.book-body{padding:2rem 0 6rem;max-width:800px}.book-body section{margin:0 0 5rem;scroll-margin-top:1rem}
+.cover{margin-bottom:4.5rem;padding-bottom:2.5rem;border-bottom:1px solid var(--ink);position:relative}.cover::after{content:"";position:absolute;left:0;bottom:-5px;width:80px;height:3px;background:var(--rust)}.cover .eyebrow{font-family:var(--font-sans);font-size:.78rem;letter-spacing:.06em;color:var(--rust);margin-bottom:1.4rem;font-weight:600;text-transform:uppercase}.cover .eyebrow .sep{color:var(--rule);margin:0 .6rem;font-weight:400}.cover h1{font-family:var(--font-display);font-weight:500;font-size:clamp(2.4rem,4.8vw,4rem);line-height:1.08;letter-spacing:-.015em;margin:0 0 1.4rem;color:var(--ink)}.cover h1 em{color:var(--rust);font-style:italic}.cover .lede{font-size:1.18rem;color:var(--ink-soft);max-width:36em;margin:0 0 2rem;line-height:1.65}.cover .who{background:var(--paper-card);border:1px solid var(--rule);border-radius:10px;padding:1.4rem 1.6rem;margin-top:2rem;font-size:.96rem}.cover .who h4{font-family:var(--font-sans);font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--rust);margin:0 0 .6rem}.cover .who ul{margin:0;padding-left:1.2rem}.cover .who li{margin:.15rem 0}
+.ch-head{margin:0 0 2rem}.ch-head .badge{display:inline-block;font-family:var(--font-sans);font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--rust);background:var(--rust-soft);padding:.25rem .7rem;border-radius:999px;margin-bottom:1rem}.ch-head h2{font-family:var(--font-display);font-weight:500;font-size:clamp(1.9rem,3.2vw,2.7rem);line-height:1.12;margin:0 0 .6rem;color:var(--ink);letter-spacing:-.01em}.ch-head .lede{font-style:italic;color:var(--ink-mute);font-size:1.05rem;font-family:var(--font-display);margin:0}h3{font-family:var(--font-display);font-weight:500;font-size:1.5rem;margin:2.8rem 0 .8rem;color:var(--ink);scroll-margin-top:1rem}h3 .num{font-family:var(--font-mono);font-size:.7rem;color:var(--rust);font-weight:500;margin-right:.5rem}h4{font-family:var(--font-sans);font-weight:600;font-size:1.05rem;margin:1.8rem 0 .4rem;color:var(--ink)}h5{font-family:var(--font-sans);font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-mute);margin:1.2rem 0 .4rem}p{margin:0 0 1rem}ol,ul{padding-left:1.4rem;margin:.4rem 0 1.2rem}li{margin:.25rem 0}
+code{font-family:var(--font-mono);font-size:.86em;background:var(--sky-soft);padding:.05rem .4rem;border-radius:4px;color:var(--sky);font-weight:500}strong code{color:var(--ink)}pre{font-family:var(--font-mono);background:var(--code-bg);color:var(--code-fg);padding:1.1rem 1.3rem;border-radius:8px;border:1px solid var(--rule-soft);border-left:3px solid var(--sky);overflow-x:auto;font-size:.81rem;line-height:1.6;margin:1rem 0 1.4rem}pre code{background:none;padding:0;color:inherit;font-size:inherit;font-weight:400}pre .k{color:var(--code-key);font-weight:500}pre .s{color:var(--code-str)}pre .c{color:var(--code-cmt);font-style:italic}pre .f{color:var(--code-fn);font-weight:500}
+.box{margin:1.5rem 0;padding:1.2rem 1.4rem;border-radius:10px;border-left:4px solid}.box .box-label{font-family:var(--font-sans);font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem}.box .box-label::before{font-size:1rem}.box p:last-child{margin-bottom:0}.box.concept{background:var(--leaf-soft);border-color:var(--leaf)}.box.concept .box-label{color:var(--leaf)}.box.concept .box-label::before{content:"📖"}.box.tip{background:var(--rust-soft);border-color:var(--rust)}.box.tip .box-label{color:var(--rust)}.box.tip .box-label::before{content:"💡"}.box.warn{background:#fff4e0;border-color:#d49414}.box.warn .box-label{color:#b87a0a}.box.warn .box-label::before{content:"⚠️"}.box.deep{background:var(--plum-soft);border-color:var(--plum)}.box.deep .box-label{color:var(--plum)}.box.deep .box-label::before{content:"✦";font-weight:600}.box.interview{background:var(--gold-soft);border-color:var(--gold)}.box.interview .box-label{color:var(--gold)}.box.interview .box-label::before{content:"🎯"}.box.reading{background:var(--sky-soft);border-color:var(--sky)}.box.reading .box-label{color:var(--sky)}.box.reading .box-label::before{content:"📚"}
+table{width:100%;border-collapse:collapse;margin:1rem 0 1.6rem;font-size:.9rem;background:var(--paper-card);border-radius:6px;overflow:hidden;border:1px solid var(--rule)}th,td{text-align:left;padding:.6rem .8rem;border-bottom:1px solid var(--rule-soft);vertical-align:top}th{font-family:var(--font-sans);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink);font-weight:600;background:var(--paper-2)}tr:last-child td{border-bottom:none}tr:hover td{background:rgba(196,178,144,.13)}table code{font-size:.82em}
+.figure{background:var(--paper-card);border:1px solid var(--rule);border-radius:12px;padding:1.6rem 1.4rem 1.2rem;margin:1.4rem 0 1.8rem;box-shadow:0 1px 3px rgba(29,26,20,.04)}.figure svg{display:block;width:100%;height:auto;max-width:760px;margin:0 auto}.figure figcaption{text-align:center;font-family:var(--font-sans);font-size:.82rem;letter-spacing:.05em;color:var(--ink-mute);text-transform:uppercase;margin-top:.9rem}.figure figcaption strong{color:var(--ink-soft);font-weight:600;text-transform:none;letter-spacing:0}
+.fig-box{fill:var(--paper-card);stroke:var(--ink-soft);stroke-width:1.5}.fig-box-soft{fill:#fdf9ed;stroke:var(--rule);stroke-width:1.2}.fig-box-leaf{fill:var(--leaf-soft);stroke:var(--leaf);stroke-width:1.5}.fig-box-rust{fill:var(--rust-soft);stroke:var(--rust);stroke-width:1.5}.fig-box-sky{fill:var(--sky-soft);stroke:var(--sky);stroke-width:1.5}.fig-box-plum{fill:var(--plum-soft);stroke:var(--plum);stroke-width:1.5}.fig-box-gold{fill:var(--gold-soft);stroke:var(--gold);stroke-width:1.5}.fig-line{fill:none;stroke:var(--ink-mute);stroke-width:1.4}.fig-line-rust{fill:none;stroke:var(--rust);stroke-width:1.6}.fig-line-leaf{fill:none;stroke:var(--leaf);stroke-width:1.6}.fig-dash{fill:none;stroke:var(--ink-mute);stroke-width:1.2;stroke-dasharray:4 3}.fig-t{font-family:var(--font-sans);font-size:13px;fill:var(--ink);font-weight:500}.fig-t-lg{font-family:var(--font-display);font-size:15px;fill:var(--ink);font-weight:600;font-style:italic}.fig-t-sm{font-family:var(--font-sans);font-size:11px;fill:var(--ink-mute)}.fig-t-mono{font-family:var(--font-mono);font-size:11px;fill:var(--ink-soft)}.fig-t-label{font-family:var(--font-sans);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}.fig-t-leaf{fill:var(--leaf)}.fig-t-rust{fill:var(--rust)}.fig-t-sky{fill:var(--sky)}.fig-t-plum{fill:var(--plum)}.fig-t-mute{fill:var(--ink-mute)}
+.pull{margin:3rem 0;padding:1.8rem 2rem;font-family:var(--font-display);font-style:italic;font-size:1.5rem;line-height:1.4;color:var(--ink);border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);position:relative;text-align:center}.pull::before{content:"“";position:absolute;top:-.2rem;left:1.2rem;font-family:var(--font-display);font-size:4.5rem;color:var(--rust);line-height:1}.pull cite{display:block;margin-top:.6rem;font-style:normal;font-family:var(--font-sans);font-size:.78rem;color:var(--ink-mute);letter-spacing:.06em;text-transform:uppercase;font-weight:500}
+footer.colophon{margin-top:5rem;padding-top:2.5rem;border-top:2px solid var(--ink);font-family:var(--font-sans);font-size:.85rem;color:var(--ink-mute)}footer.colophon .row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:.6rem}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="toc" id="toc">
+    <div class="toc-brand">
+      <span class="mark">Memory &amp; Context <span class="dot">·</span></span>
+      <span class="sub">5 类 memory · short/long-term 全谱 · Mem0/Zep/Letta 横评 · 1M context 工程<br><strong>10 章 · 15 道 senior 题 · 70 词术语</strong></span>
+    </div>
+    <button class="toc-toggle" onclick="document.getElementById('toc').classList.toggle('open')">≡ 目录</button>
+    <nav class="toc-inner">
+      <ol>
+        <li><a href="#ch-1">Memory 5 类 · 借认知科学的分类</a></li>
+        <li><a href="#ch-2">Short-term · 3 种压缩策略</a></li>
+        <li><a href="#ch-3">Long-term · vector / graph / hybrid 3 架构</a></li>
+        <li><a href="#ch-4">Mem0 / Zep / Letta / Cognee · 4 框架横评</a></li>
+        <li><a href="#ch-5">Memory write · 抽取 / 评分 / dedup</a></li>
+        <li><a href="#ch-6">Memory read · 检索 / 排序 / 注入</a></li>
+        <li><a href="#ch-7">Forgetting / consolidation / TTL</a></li>
+        <li><a href="#ch-8">Multi-user / multi-session 隔离</a></li>
+        <li><a href="#ch-9">Context window engineering · 1M/2M 实战 + prompt caching</a></li>
+        <li><a href="#ch-10">Memory eval + 真实复盘</a></li>
+        <li><a href="#qa">15 道 senior 面试题</a></li>
+        <li><a href="#glossary">术语表 (70 词)</a></li>
+      </ol>
+    </nav>
+    <div class="toc-foot">
+      配套：<br>
+      <a href="learn.html">→ 学习</a><br>
+      <a href="enterprise.html">→ 企业级</a><br>
+      <a href="agent-design.html">→ 设计</a><br>
+      <a href="agent-coding.html">→ Coding</a><br>
+      <a href="agent-debugging.html">→ Debug</a><br>
+      <a href="langgraph-internals.html">→ LangGraph</a><br>
+      <a href="eval-observability.html">→ Eval</a><br>
+      <a href="rag-production.html">→ RAG</a><br>
+      <a href="tool-design.html">→ Tool</a><br>
+      <a href="infra.html">→ Infra</a><br>
+      <a href="index.html">→ 实现</a><br><br>
+      <a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/.../taotao-agent ↗</a>
+    </div>
+  </aside>
+
+  <main class="book-body">
+    <header class="cover">
+      <div class="eyebrow">Senior Agent Engineer<span class="sep">·</span>Memory &amp; Context<span class="sep">·</span>2026</div>
+      <h1>Agent 没 memory <em>不是 agent</em>，<br>是 stateless function。</h1>
+      <p class="lede">
+        2025 - 2026 最被低估的 senior 题 · "你的 agent memory 怎么做"。80% 候选人答 "塞 conversation history"——直接掉档。这本把 memory 从认知科学分类讲到 4 个生产框架横评 · short/long-term 写入读取策略 · forgetting 算法 · multi-user 隔离 · 1M/2M context engineering 实战 · prompt caching · 真实翻车复盘——让你能<em>讲清自己设计的 memory 架构</em>而不是说 "用 Mem0"。
+      </p>
+      <div class="who">
+        <h4>📌 学完你能</h4>
+        <ul>
+          <li>用认知科学分类（working / episodic / semantic / procedural）讲清你 memory 系统每一层做啥</li>
+          <li>选对 short-term 策略（sliding window / summary / hierarchical）+ 知道每种 limit</li>
+          <li>设计 long-term 架构（vector 单存 / graph 关系 / hybrid）· 知道选型权衡</li>
+          <li>横评 Mem0 / Zep / Letta / Cognee · 给场景选对工具</li>
+          <li>设计 memory write pipeline（LLM 抽取 + 评分 + dedup + consolidation）</li>
+          <li>设计 memory read pipeline（query → 检索 → 排序 → 注入位置）</li>
+          <li>设计 forgetting 策略（TTL / decay / importance / consolidation）</li>
+          <li>讲清 multi-user 隔离 · namespace 设计</li>
+          <li>1M/2M context 实战 · prompt caching · KV cache reuse</li>
+          <li>避开 5 个真实 memory 翻车坑（重复 / 串号 / drift / cost 暴涨 / privacy leak）</li>
+        </ul>
+      </div>
+    </header>
+
+    <!-- ============== Chapter 1 ============== -->
+    <section id="ch-1">
+      <header class="ch-head">
+        <span class="badge">Chapter 1 · 框架</span>
+        <h2>Memory 5 类 · 借认知科学的分类</h2>
+        <p class="lede">面试官追问 "你 memory 怎么分层" → 答这个分类</p>
+      </header>
+
+      <p>认知科学把人类记忆分 5 类——agent memory 设计直接借这个 taxonomy · senior 答题立刻区分自己跟 mid。</p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Memory taxonomy">
+          <rect class="fig-box-rust" x="280" y="20" width="200" height="40" rx="6"/>
+          <text class="fig-t" x="380" y="44" text-anchor="middle">Agent Memory</text>
+          <line class="fig-line" x1="380" y1="60" x2="380" y2="80"/>
+          <line class="fig-line" x1="180" y1="80" x2="580" y2="80"/>
+          <line class="fig-line" x1="180" y1="80" x2="180" y2="100"/>
+          <line class="fig-line" x1="580" y1="80" x2="580" y2="100"/>
+          <rect class="fig-box-leaf" x="100" y="100" width="160" height="50" rx="6"/>
+          <text class="fig-t" x="180" y="120" text-anchor="middle">Short-term</text>
+          <text class="fig-t-sm" x="180" y="136" text-anchor="middle">working memory · ctx window</text>
+          <rect class="fig-box-sky" x="500" y="100" width="160" height="50" rx="6"/>
+          <text class="fig-t" x="580" y="120" text-anchor="middle">Long-term</text>
+          <text class="fig-t-sm" x="580" y="136" text-anchor="middle">外部存储 · 跨 session</text>
+          <line class="fig-line" x1="580" y1="150" x2="580" y2="170"/>
+          <line class="fig-line" x1="380" y1="170" x2="780" y2="170" transform="translate(-200,0)"/>
+          <line class="fig-line" x1="430" y1="170" x2="430" y2="190"/>
+          <line class="fig-line" x1="580" y1="170" x2="580" y2="190"/>
+          <line class="fig-line" x1="730" y1="170" x2="730" y2="190" transform="translate(-50,0)"/>
+          <rect class="fig-box-plum" x="350" y="190" width="160" height="50" rx="6"/>
+          <text class="fig-t" x="430" y="210" text-anchor="middle">Episodic</text>
+          <text class="fig-t-sm" x="430" y="226" text-anchor="middle">"上次 X 时 Y 发生"</text>
+          <rect class="fig-box-plum" x="500" y="190" width="160" height="50" rx="6"/>
+          <text class="fig-t" x="580" y="210" text-anchor="middle">Semantic</text>
+          <text class="fig-t-sm" x="580" y="226" text-anchor="middle">事实 · "用户偏好深色"</text>
+          <rect class="fig-box-plum" x="600" y="190" width="160" height="50" rx="6" transform="translate(-30,0)"/>
+          <text class="fig-t" x="650" y="210" text-anchor="middle" transform="translate(20,0)">Procedural</text>
+          <text class="fig-t-sm" x="650" y="226" text-anchor="middle" transform="translate(20,0)">流程 · 操作技能</text>
+          <text class="fig-t-sm fig-t-mute" x="380" y="270" text-anchor="middle" font-style="italic">借认知科学分类 · 每层独立存储 + 独立读写策略</text>
+        </svg>
+        <figcaption><strong>Figure 1.0</strong> · 5 类 memory 树状分类 · senior 标准答题框架</figcaption>
+      </figure>
+
+      <table>
+        <thead><tr><th>类</th><th>例</th><th>典型存</th><th>typical TTL</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Working</strong> (短期)</td><td>当前 conversation messages</td><td>ctx window / Redis</td><td>1 session</td></tr>
+          <tr><td><strong>Episodic</strong> (情景)</td><td>"用户上周买了 Macbook · 不满意 RAM"</td><td>vector DB · 时间戳索引</td><td>weeks-months</td></tr>
+          <tr><td><strong>Semantic</strong> (语义)</td><td>"用户喜欢深色 UI · 偏好简洁"</td><td>KV / vector / graph</td><td>permanent</td></tr>
+          <tr><td><strong>Procedural</strong> (程序)</td><td>"用户每月 1 号查发票"</td><td>规则库 / 流程图</td><td>permanent</td></tr>
+          <tr><td><strong>Tool / API</strong> (扩展)</td><td>用过哪些 tool · 平均耗时</td><td>SQL / metric DB</td><td>infinite</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-1-1"><span class="num">§1.1</span>面试金句</h3>
+      <div class="box deep">
+        <div class="box-label">senior 标准答法</div>
+        <p><em>"我把 agent memory 按认知科学分 5 类：working / episodic / semantic / procedural / tool。每层独立设计——working 在 LangGraph state · 用 sliding window + summary；episodic 在 vector DB · 时间戳索引 + decay；semantic 在 KV (高频) + vector (低频)；procedural 提取后存规则库 · 触发时模板化。每层独立的 write pipeline + read pipeline + TTL · 不混在一起 · 否则 retrieval 噪声大"</em></p>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 2 ============== -->
+    <section id="ch-2">
+      <header class="ch-head">
+        <span class="badge">Chapter 2 · 短期</span>
+        <h2>Short-term · 3 种压缩策略</h2>
+        <p class="lede">conversation 长了塞不下 ctx 怎么办</p>
+      </header>
+
+      <h3 id="s-2-1"><span class="num">§2.1</span>3 种主流策略</h3>
+      <table>
+        <thead><tr><th>策略</th><th>原理</th><th>优势</th><th>劣势</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Sliding window</strong></td><td>只留最近 N 轮</td><td>简单 · 0 LLM 成本</td><td>丢早期重要信息</td></tr>
+          <tr><td><strong>Summary</strong></td><td>用 LLM 把老 message 压成摘要</td><td>保留关键 · ctx 节省</td><td>每 N 轮一次 LLM 调用 · 摘要可能丢细节</td></tr>
+          <tr><td><strong>Hierarchical</strong></td><td>recent N 原文 + 中段摘要 + 远期 1 句话总结</td><td>综合最优 · 平衡成本/保真</td><td>实现稍复杂</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-2-2"><span class="num">§2.2</span>Hierarchical 实战</h3>
+      <pre><code><span class="k">def</span> <span class="f">hierarchical_compress</span>(messages, llm):
+    <span class="k">if</span> len(messages) &lt; <span class="s">20</span>:
+        <span class="k">return</span> messages   <span class="c"># 短不压</span>
+
+    recent     = messages[-<span class="s">10</span>:]                   <span class="c"># 最近 10 条原文</span>
+    mid        = messages[-<span class="s">30</span>:-<span class="s">10</span>]                <span class="c"># 中段</span>
+    old        = messages[:-<span class="s">30</span>]                    <span class="c"># 远期</span>
+
+    mid_summary = llm.invoke(f<span class="s">"用 200 字摘要这段对话，保留事实和决定：\n{mid}"</span>)
+    old_summary = llm.invoke(f<span class="s">"用 50 字总结这段早期对话主旨：\n{old}"</span>)
+
+    <span class="k">return</span> [
+        SystemMessage(f<span class="s">"早期对话回顾：{old_summary}"</span>),
+        SystemMessage(f<span class="s">"中段对话摘要：{mid_summary}"</span>),
+        *recent,
+    ]
+</code></pre>
+
+      <h3 id="s-2-3"><span class="num">§2.3</span>什么时候压 · 阈值</h3>
+      <ul>
+        <li><strong>token 计数</strong>——超过 ctx window 60% 触发压缩 · 留 buffer 给生成</li>
+        <li><strong>turn 计数</strong>——满 20 turn 压一次（避免每 turn 都跑 LLM）</li>
+        <li><strong>cost 计数</strong>——单次 input token &gt; X · 触发</li>
+      </ul>
+
+      <h3 id="s-2-4"><span class="num">§2.4</span>LangGraph 集成</h3>
+      <pre><code><span class="k">from</span> langgraph.graph <span class="k">import</span> StateGraph
+<span class="k">from</span> langgraph.graph.message <span class="k">import</span> add_messages
+<span class="k">from</span> langchain_core.messages <span class="k">import</span> RemoveMessage
+
+<span class="k">class</span> <span class="f">State</span>(TypedDict):
+    messages: Annotated[list, add_messages]
+    summary: str   <span class="c"># 累积摘要</span>
+
+<span class="k">def</span> <span class="f">compact_node</span>(state):
+    <span class="k">if</span> len(state[<span class="s">"messages"</span>]) &lt; <span class="s">20</span>:
+        <span class="k">return</span> {}
+    old_msgs = state[<span class="s">"messages"</span>][:-<span class="s">10</span>]
+    new_summary = llm.invoke(f<span class="s">"老 summary: {state['summary']}\n新 messages: {old_msgs}\n更新 summary："</span>)
+    <span class="k">return</span> {
+        <span class="s">"summary"</span>: new_summary.content,
+        <span class="s">"messages"</span>: [RemoveMessage(id=m.id) <span class="k">for</span> m <span class="k">in</span> old_msgs],
+    }
+</code></pre>
+    </section>
+
+    <!-- ============== Chapter 3 ============== -->
+    <section id="ch-3">
+      <header class="ch-head">
+        <span class="badge">Chapter 3 · 长期</span>
+        <h2>Long-term · vector / graph / hybrid 3 架构</h2>
+        <p class="lede">跨 session 记忆怎么存怎么取</p>
+      </header>
+
+      <h3 id="s-3-1"><span class="num">§3.1</span>3 大架构对比</h3>
+      <table>
+        <thead><tr><th>架构</th><th>存什么</th><th>读怎么</th><th>强项</th><th>弱项</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Vector-only</strong></td><td>memory 句子 → embed</td><td>query → ANN top-k</td><td>简单 · 召回快</td><td>事实关联弱 · 难推理</td></tr>
+          <tr><td><strong>Graph (KG)</strong></td><td>(entity, relation, entity)</td><td>cypher / 子图遍历</td><td>关联推理强 · 可解释</td><td>抽取贵 · schema 设计难</td></tr>
+          <tr><td><strong>Hybrid</strong> (主流)</td><td>vector + graph + KV</td><td>多源 retrieve + 融合</td><td>综合最优</td><td>复杂 · 三套存储</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-3-2"><span class="num">§3.2</span>Vector-only · 最简实现</h3>
+      <pre><code><span class="k">def</span> <span class="f">save_memory</span>(text, user_id, metadata={}):
+    emb = embed(text)
+    vector_db.upsert({
+        <span class="s">"id"</span>: uuid.uuid4().hex,
+        <span class="s">"vector"</span>: emb,
+        <span class="s">"text"</span>: text,
+        <span class="s">"user_id"</span>: user_id,
+        <span class="s">"created_at"</span>: now(),
+        **metadata,
+    })
+
+<span class="k">def</span> <span class="f">retrieve_memory</span>(query, user_id, k=<span class="s">5</span>):
+    emb = embed(query)
+    <span class="k">return</span> vector_db.search(emb, k=k,
+        filter={<span class="s">"user_id"</span>: user_id})  <span class="c"># pre-filter 必须</span>
+</code></pre>
+
+      <h3 id="s-3-3"><span class="num">§3.3</span>Graph (KG) 架构 · Zep / Mem0 graph mode</h3>
+      <p>把 memory 抽成 (subject, predicate, object) triples · 存 Neo4j / Memgraph：</p>
+      <pre><code><span class="c"># 用 LLM 抽 triple</span>
+EXTRACT_PROMPT = <span class="s">"""
+从这段 conversation 抽实体和关系，输出 JSON list：
+[{"subject": "...", "predicate": "likes", "object": "..."}]
+只抽<em>稳定事实</em>，不抽临时情绪。
+
+Conversation: {text}
+"""</span>
+
+triples = llm.with_structured_output(...).invoke(EXTRACT_PROMPT.format(text=conv))
+<span class="k">for</span> t <span class="k">in</span> triples:
+    neo4j.run(<span class="s">"""
+        MERGE (s {name: $sub})
+        MERGE (o {name: $obj})
+        MERGE (s)-[:RELATES {type: $pred, ts: $ts}]->(o)
+    """</span>, sub=t.subject, obj=t.object, pred=t.predicate, ts=now())
+
+<span class="c"># 检索时 graph traversal</span>
+results = neo4j.run(<span class="s">"""
+    MATCH (u {name: 'alice'})-[r]->(things)
+    RETURN things, r ORDER BY r.ts DESC LIMIT 20
+"""</span>)
+</code></pre>
+
+      <h3 id="s-3-4"><span class="num">§3.4</span>Hybrid 架构 · 当前主流</h3>
+      <p>3 种存储互补：</p>
+      <ul>
+        <li><strong>KV</strong> (Redis)——核心 profile（name / lang / theme）· O(1) 查询</li>
+        <li><strong>Vector</strong> (Qdrant)——情景 + 杂项 · 语义检索</li>
+        <li><strong>Graph</strong> (Neo4j)——实体关系 · 推理 / 多跳</li>
+      </ul>
+      <p>read 时<em>并行</em>查 3 处 · LLM 看融合后的 context。</p>
+    </section>
+
+    <!-- ============== Chapter 4 ============== -->
+    <section id="ch-4">
+      <header class="ch-head">
+        <span class="badge">Chapter 4 · 框架</span>
+        <h2>Mem0 / Zep / Letta / Cognee · 4 框架横评</h2>
+        <p class="lede">不是用谁的问题 · 是知道每个的设计哲学</p>
+      </header>
+
+      <table>
+        <thead><tr><th></th><th>Mem0</th><th>Zep</th><th>Letta (MemGPT)</th><th>Cognee</th></tr></thead>
+        <tbody>
+          <tr><td>开源</td><td>Apache 2</td><td>Apache 2</td><td>Apache 2</td><td>MIT</td></tr>
+          <tr><td>核心架构</td><td>vector + graph (V2)</td><td>knowledge graph + temporal</td><td>OS-style memory hierarchy</td><td>知识图 + multi-store</td></tr>
+          <tr><td>fact extraction</td><td>✓ LLM 抽</td><td>✓ Graphiti 框架</td><td>archival memory</td><td>✓ ECL pipeline</td></tr>
+          <tr><td>temporal awareness</td><td>有 ts</td><td>★★★★★ Bi-temporal</td><td>有 ts</td><td>有 ts</td></tr>
+          <tr><td>conflict resolution</td><td>upsert by content</td><td>★★★ 显式</td><td>archival 不冲突</td><td>graph reconciliation</td></tr>
+          <tr><td>HITL friendly</td><td>★★★</td><td>★★★</td><td>★★★★</td><td>★★</td></tr>
+          <tr><td>SDK 语言</td><td>Python · TS</td><td>Python · TS · Go</td><td>Python</td><td>Python</td></tr>
+          <tr><td>self-host</td><td>✓ docker</td><td>✓ docker</td><td>✓</td><td>✓</td></tr>
+          <tr><td>典型用</td><td>chat agent · 通用</td><td>需复杂 temporal · enterprise</td><td>research / long-horizon</td><td>RAG + memory 综合</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-4-1"><span class="num">§4.1</span>Mem0 · 最常用 · API 最简</h3>
+      <pre><code><span class="k">from</span> mem0 <span class="k">import</span> Memory
+
+m = Memory()
+m.add(<span class="s">"我喜欢深色 UI"</span>, user_id=<span class="s">"alice"</span>)
+m.add(<span class="s">"我对香菜过敏"</span>, user_id=<span class="s">"alice"</span>)
+
+results = m.search(<span class="s">"用户口味"</span>, user_id=<span class="s">"alice"</span>, limit=<span class="s">5</span>)
+<span class="c"># [{"memory": "我对香菜过敏", "score": 0.91, ...}]</span>
+
+<span class="c"># 内部：LLM 抽 fact + embed + 去重 + 存 vector DB</span>
+</code></pre>
+
+      <h3 id="s-4-2"><span class="num">§4.2</span>Zep · temporal-first · enterprise 偏好</h3>
+      <p>核心创新：<strong>bi-temporal</strong>——同时记 "事实何时发生" + "我何时学到" · 解决 "用户去年说喜欢咖啡 · 今年说不喝了" 这种 conflict。</p>
+      <pre><code><span class="k">from</span> zep_python <span class="k">import</span> ZepClient
+
+zep = ZepClient(...)
+zep.memory.add(session_id=<span class="s">"alice"</span>, messages=[...])
+<span class="c"># Graphiti 自动抽 entity + edges + valid_at / invalid_at</span>
+
+ctx = zep.memory.get(session_id=<span class="s">"alice"</span>, query=<span class="s">"用户偏好"</span>)
+<span class="c"># 返当前 valid 的 facts</span>
+</code></pre>
+
+      <h3 id="s-4-3"><span class="num">§4.3</span>Letta (MemGPT) · OS-style hierarchy</h3>
+      <p>论文级创新（UC Berkeley）——把 memory 当 OS 内存层级管：</p>
+      <ul>
+        <li><strong>main context</strong> (RAM)——LLM 实时看到的</li>
+        <li><strong>recall storage</strong> (page cache)——上下文外但快查</li>
+        <li><strong>archival storage</strong> (disk)——所有历史 · vector DB · 按需 page in</li>
+      </ul>
+      <p>LLM 用<em>tool call</em> 主动 page memory · 不是被动注入。research 友好 · 工程稍重。</p>
+
+      <h3 id="s-4-4"><span class="num">§4.4</span>选型决策</h3>
+      <ul>
+        <li><strong>简单 chat agent · 想 1 周 ship</strong> → Mem0</li>
+        <li><strong>客户事实经常变 · 需要时间维度</strong> → Zep</li>
+        <li><strong>research / long-horizon agent · 想 LLM 主动管</strong> → Letta</li>
+        <li><strong>已有 RAG 想加 memory</strong> → Cognee（结构 RAG + memory）</li>
+      </ul>
+    </section>
+
+    <!-- ============== Chapter 5 ============== -->
+    <section id="ch-5">
+      <header class="ch-head">
+        <span class="badge">Chapter 5 · 写</span>
+        <h2>Memory write · 抽取 / 评分 / dedup</h2>
+        <p class="lede">乱写的 memory = 越用越蠢</p>
+      </header>
+
+      <h3 id="s-5-1"><span class="num">§5.1</span>4 步 write pipeline</h3>
+      <ol>
+        <li><strong>Extract</strong>——LLM 从 conversation 抽<em>稳定事实</em>（不抽情绪 / 临时上下文）</li>
+        <li><strong>Score</strong>——每条 fact 评 importance（1-5）· filter &lt; 3 的</li>
+        <li><strong>Dedup</strong>——查现有 memory · 相似度 &gt; 0.85 → 合并 / 跳过</li>
+        <li><strong>Conflict resolve</strong>——新 fact 跟旧 fact 冲突 → mark 旧 invalid + 存新</li>
+      </ol>
+
+      <h3 id="s-5-2"><span class="num">§5.2</span>Extraction prompt 模板</h3>
+      <pre><code>EXTRACT = <span class="s">"""
+你是 memory 抽取员。从下面 conversation 中抽<em>值得长期记住</em>的事实。
+
+只抽：
+✓ 用户的稳定偏好 (品味 / 习惯 / 价值观)
+✓ 用户的事实属性 (年龄 / 职业 / 地点 / 关系)
+✓ 用户做过的<em>重要</em>决定
+
+不抽：
+✗ 情绪变化 (今天心情)
+✗ 临时上下文 ("现在在开会")
+✗ 已经被新对话推翻的旧信息
+
+输出 JSON list:
+[{"fact": "...", "importance": 1-5, "category": "preference|attribute|decision"}]
+
+Conversation:
+{conv}
+"""</span>
+</code></pre>
+
+      <h3 id="s-5-3"><span class="num">§5.3</span>Dedup · semantic + LLM 二选一</h3>
+      <pre><code><span class="k">def</span> <span class="f">dedup_or_merge</span>(new_fact, user_id):
+    similar = vector_db.search(embed(new_fact), filter={<span class="s">"user_id"</span>: user_id}, k=<span class="s">3</span>)
+    <span class="k">for</span> s <span class="k">in</span> similar:
+        <span class="k">if</span> s.score &gt; <span class="s">0.92</span>:
+            <span class="k">return</span> <span class="s">"skip"</span>   <span class="c"># 太像 · 跳</span>
+        <span class="k">if</span> s.score &gt; <span class="s">0.78</span>:
+            <span class="c"># 中等 · 让 LLM 决定 merge / replace / keep both</span>
+            decision = llm.with_structured_output(MergeDecision).invoke(
+                f<span class="s">"old: {s.text}\nnew: {new_fact}\n应该 merge / replace / both?"</span>
+            )
+            <span class="k">if</span> decision.action == <span class="s">"merge"</span>:
+                merged = llm.invoke(f<span class="s">"合并 fact: {s.text} + {new_fact}"</span>).content
+                vector_db.upsert(id=s.id, text=merged, vector=embed(merged))
+                <span class="k">return</span> <span class="s">"merged"</span>
+            <span class="k">elif</span> decision.action == <span class="s">"replace"</span>:
+                vector_db.upsert(id=s.id, text=new_fact, vector=embed(new_fact))
+                <span class="k">return</span> <span class="s">"replaced"</span>
+    save_memory(new_fact, user_id)
+    <span class="k">return</span> <span class="s">"added"</span>
+</code></pre>
+
+      <div class="box warn">
+        <div class="box-label">最常踩坑 · 不 dedup</div>
+        <p>用户连续 5 次说 "我喜欢咖啡" → 5 条几乎一样的 memory · retrieve 时全占 top-k · 其他重要信息被挤出。<strong>必须 dedup · 用 0.85+ 相似度阈值</strong>。</p>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 6 ============== -->
+    <section id="ch-6">
+      <header class="ch-head">
+        <span class="badge">Chapter 6 · 读</span>
+        <h2>Memory read · 检索 / 排序 / 注入</h2>
+        <p class="lede">read 错了比没 memory 还糟</p>
+      </header>
+
+      <h3 id="s-6-1"><span class="num">§6.1</span>3 阶段 read pipeline</h3>
+      <ol>
+        <li><strong>Retrieve</strong>——多源召回（vector / KV / graph）top-N each</li>
+        <li><strong>Rank</strong>——按 (similarity + recency + importance) 综合排</li>
+        <li><strong>Inject</strong>——选 top-K 注入 prompt · 决定<em>放哪个位置</em></li>
+      </ol>
+
+      <h3 id="s-6-2"><span class="num">§6.2</span>综合 score · 不只看 similarity</h3>
+      <pre><code><span class="k">def</span> <span class="f">memory_score</span>(memory, query, now):
+    sim = cosine(embed(query), memory.vector)
+    age_days = (now - memory.created_at).days
+    recency = math.exp(-age_days / <span class="s">30</span>)         <span class="c"># 30 天半衰</span>
+    importance = memory.importance / <span class="s">5</span>
+    <span class="k">return</span> <span class="s">0.6</span> * sim + <span class="s">0.2</span> * recency + <span class="s">0.2</span> * importance
+</code></pre>
+      <p>权重按场景调——客服重 recency · 偏好重 importance · 事实查询重 sim。</p>
+
+      <h3 id="s-6-3"><span class="num">§6.3</span>注入位置 · 别塞 system prompt 头</h3>
+      <p>常见错误：把 memory 塞 system prompt 最前面。<em>问题</em>：</p>
+      <ul>
+        <li>system prompt 一改 prompt cache miss · 成本翻倍</li>
+        <li>"lost in middle" · LLM 容易忽略</li>
+      </ul>
+      <p><strong>正确</strong>：</p>
+      <pre><code>messages = [
+    SystemMessage(stable_system_prompt),     <span class="c"># 不变 · 全 cache</span>
+    SystemMessage(f<span class="s">"用户档案：\n{memory_block}"</span>),  <span class="c"># 变 · 但单独 message</span>
+    *conversation_history,
+    HumanMessage(current_query),
+]
+</code></pre>
+    </section>
+
+    <!-- ============== Chapter 7 ============== -->
+    <section id="ch-7">
+      <header class="ch-head">
+        <span class="badge">Chapter 7 · 遗忘</span>
+        <h2>Forgetting / consolidation / TTL</h2>
+        <p class="lede">永不忘 = memory 越来越脏</p>
+      </header>
+
+      <h3 id="s-7-1"><span class="num">§7.1</span>4 种 forgetting 策略</h3>
+      <table>
+        <thead><tr><th>策略</th><th>原理</th><th>用</th></tr></thead>
+        <tbody>
+          <tr><td><strong>TTL</strong></td><td>固定过期时间</td><td>临时上下文 · session 数据</td></tr>
+          <tr><td><strong>Recency decay</strong></td><td>score 按时间衰减 · 老的自然降权</td><td>大多数 episodic</td></tr>
+          <tr><td><strong>Importance threshold</strong></td><td>importance &lt; X 直接不存 / 定期清</td><td>noise 控制</td></tr>
+          <tr><td><strong>Consolidation</strong></td><td>多 similar memory 合并成 1 个 abstract</td><td>降低存储 + 提升泛化</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-7-2"><span class="num">§7.2</span>Consolidation · 像人睡觉合并记忆</h3>
+      <pre><code><span class="c"># cron 每周跑</span>
+<span class="k">def</span> <span class="f">consolidate</span>(user_id):
+    <span class="c"># 1. cluster 相似 memory</span>
+    memories = vector_db.fetch_all(filter={<span class="s">"user_id"</span>: user_id})
+    clusters = kmeans(memories, k=<span class="s">20</span>)
+
+    <span class="k">for</span> cluster <span class="k">in</span> clusters:
+        <span class="k">if</span> len(cluster) &lt; <span class="s">3</span>: <span class="k">continue</span>
+        <span class="c"># 2. LLM 抽象成 1 条更高层 fact</span>
+        abstract = llm.invoke(f<span class="s">"把这些 memory 合并成 1 条更通用的事实：\n{cluster}"</span>)
+        save_memory(abstract.content, user_id, importance=<span class="s">5</span>)
+        <span class="c"># 3. 老的降 importance（不删 · 留作 reference）</span>
+        <span class="k">for</span> m <span class="k">in</span> cluster:
+            update_importance(m.id, m.importance - <span class="s">1</span>)
+</code></pre>
+
+      <h3 id="s-7-3"><span class="num">§7.3</span>软删 vs 硬删</h3>
+      <p>面试常问。<strong>建议软删</strong>：</p>
+      <ul>
+        <li>加 <code>deleted_at</code> 字段 · retrieve 时 filter</li>
+        <li>定期归档（&gt; 1 年）到冷存储 · 不立刻物理删</li>
+        <li>合规要求 (GDPR) → 用户主动 request 时<em>真</em>删</li>
+      </ul>
+    </section>
+
+    <!-- ============== Chapter 8 ============== -->
+    <section id="ch-8">
+      <header class="ch-head">
+        <span class="badge">Chapter 8 · 多用户</span>
+        <h2>Multi-user / multi-session 隔离</h2>
+        <p class="lede">memory 串号 = P0 安全事件 · 必须设计期解决</p>
+      </header>
+
+      <h3 id="s-8-1"><span class="num">§8.1</span>3 层 namespace</h3>
+      <p>memory key 至少 3 层：</p>
+      <pre><code>org_id  / user_id / session_id  /  memory_id
+"acme"  / "alice" / "s-2026-05" / "mem-abc..."
+</code></pre>
+      <p>retrieve 时 <strong>必须三层都 filter</strong>——少一层就是潜在串号风险。</p>
+
+      <h3 id="s-8-2"><span class="num">§8.2</span>Cross-session vs Per-session memory</h3>
+      <ul>
+        <li><strong>Per-session</strong>——working memory · 不跨 session 保留</li>
+        <li><strong>Cross-session per-user</strong>——大多数 long-term memory · 用户级</li>
+        <li><strong>Cross-user per-org</strong>——shared knowledge / FAQ · org 级（注意 PII）</li>
+      </ul>
+
+      <h3 id="s-8-3"><span class="num">§8.3</span>权限矩阵 · 真实例</h3>
+      <table>
+        <thead><tr><th>memory 类</th><th>read</th><th>write</th><th>delete</th></tr></thead>
+        <tbody>
+          <tr><td>个人 preference</td><td>用户自己</td><td>用户 + agent</td><td>用户 + admin</td></tr>
+          <tr><td>conversation history</td><td>用户自己 + admin (audit)</td><td>系统</td><td>用户 (GDPR)</td></tr>
+          <tr><td>org knowledge</td><td>同 org 用户</td><td>admin / curator</td><td>admin</td></tr>
+          <tr><td>共享 FAQ</td><td>所有</td><td>admin</td><td>admin</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ============== Chapter 9 ============== -->
+    <section id="ch-9">
+      <header class="ch-head">
+        <span class="badge">Chapter 9 · Context</span>
+        <h2>Context window engineering · 1M/2M 实战 + prompt caching</h2>
+        <p class="lede">long context ≠ 无脑塞 · 工程才让它可用</p>
+      </header>
+
+      <h3 id="s-9-1"><span class="num">§9.1</span>2026 主流 model context window</h3>
+      <table>
+        <thead><tr><th>Model</th><th>Context</th><th>caching</th></tr></thead>
+        <tbody>
+          <tr><td>Claude Sonnet 4.x</td><td>200k</td><td>✓ 1h cache · 90% 折扣</td></tr>
+          <tr><td>Claude Sonnet 4.x · 1M beta</td><td>1M</td><td>✓ enterprise</td></tr>
+          <tr><td>GPT-5 / 5-mini</td><td>400k</td><td>✓ 50% 折扣 · 自动</td></tr>
+          <tr><td>Gemini 2.5 Pro</td><td>2M</td><td>✓ explicit / implicit</td></tr>
+          <tr><td>Llama 4 / DeepSeek V3</td><td>128k-1M</td><td>vendor-specific</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-9-2"><span class="num">§9.2</span>Prompt caching · 用对省 50-90%</h3>
+      <p>Anthropic / OpenAI / Gemini 都支持——<strong>把不变的 prefix 标 cacheable</strong>·下次相同 prefix 命中 cache · input 价格 1/10。</p>
+
+      <pre><code><span class="c"># Anthropic prompt caching · 显式</span>
+client.messages.create(
+    model=<span class="s">"claude-sonnet-4-5"</span>,
+    system=[
+        {<span class="s">"type"</span>: <span class="s">"text"</span>, <span class="s">"text"</span>: SYSTEM_PROMPT, <span class="s">"cache_control"</span>: {<span class="s">"type"</span>: <span class="s">"ephemeral"</span>}},
+        {<span class="s">"type"</span>: <span class="s">"text"</span>, <span class="s">"text"</span>: USER_MEMORY, <span class="s">"cache_control"</span>: {<span class="s">"type"</span>: <span class="s">"ephemeral"</span>}},
+    ],
+    messages=[{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: query}],
+)
+<span class="c"># 第二次同 SYSTEM + 同 USER_MEMORY → 90% 折扣 · TTL 5min (default) / 1h</span>
+</code></pre>
+
+      <h3 id="s-9-3"><span class="num">§9.3</span>Context 设计 · 4 区块顺序</h3>
+      <p>顺序<em>很重要</em>·影响 cache 命中率：</p>
+      <ol>
+        <li><strong>Stable system prompt</strong>（最稳）—— mark cacheable</li>
+        <li><strong>User profile / memory</strong>（per-user 稳）—— mark cacheable</li>
+        <li><strong>Conversation history</strong>（增长）—— 部分可 cache</li>
+        <li><strong>Current query</strong>（每次新）—— 不 cache</li>
+      </ol>
+      <p>原则：<strong>稳定的在前 · 变化的在后</strong> · cache hit 最大化。</p>
+
+      <h3 id="s-9-4"><span class="num">§9.4</span>1M context · 何时该用</h3>
+      <ul>
+        <li>✓ 代码库整库分析（Cursor / Devin）</li>
+        <li>✓ 整本书 / 整本论文 QA</li>
+        <li>✓ 长视频 transcript 分析</li>
+        <li>✗ 客服对话——RAG 更合适 + 成本低</li>
+        <li>✗ 高频 ChatGPT 风——latency 30s 不可用</li>
+      </ul>
+
+      <h3 id="s-9-5"><span class="num">§9.5</span>Hybrid · long context + RAG 不矛盾</h3>
+      <p>2025-2026 实战：</p>
+      <ul>
+        <li>RAG retrieve top-50 chunk</li>
+        <li>不 rerank · 全塞 1M context（省 rerank 调用）</li>
+        <li>LLM 自己在 1M 里挑相关</li>
+      </ul>
+      <p>条件：retrieval 后总 token &lt; 500k · 否则 lost-in-middle 还是会咬人。</p>
+    </section>
+
+    <!-- ============== Chapter 10 ============== -->
+    <section id="ch-10">
+      <header class="ch-head">
+        <span class="badge">Chapter 10 · Eval &amp; 翻车</span>
+        <h2>Memory eval + 真实复盘</h2>
+        <p class="lede">memory 怎么 eval · 5 个真翻车看明白</p>
+      </header>
+
+      <h3 id="s-10-1"><span class="num">§10.1</span>Memory eval · 4 类指标</h3>
+      <ul>
+        <li><strong>Recall</strong>——给个 query · top-K 是否含 ground-truth memory</li>
+        <li><strong>Precision</strong>——top-K 中真有用的比例</li>
+        <li><strong>Consistency</strong>——同 query · LLM 多次 retrieve 一致吗</li>
+        <li><strong>Forgetting accuracy</strong>——该忘的忘了吗 · 不该忘的没忘</li>
+      </ul>
+
+      <h3 id="s-10-2"><span class="num">§10.2</span>翻车 1 · memory 串号</h3>
+      <p><strong>背景</strong>：客服 agent · alice 的偏好出现在 bob 对话里。</p>
+      <p><strong>根因</strong>：memory write 时漏了 user_id filter · vector DB 全局检索。</p>
+      <p><strong>fix</strong>：codereview 强制 memory API 必传 user_id · pre-commit hook 静态检查。</p>
+
+      <h3 id="s-10-3"><span class="num">§10.3</span>翻车 2 · memory drift</h3>
+      <p><strong>背景</strong>：用户 6 个月前说 "现在住北京" · 后来搬上海 · agent 仍说 "你在北京 · 推荐附近的..."</p>
+      <p><strong>根因</strong>：旧 memory 没 invalidate · 新 memory 也存了 · retrieve 时按 sim 拿到旧的。</p>
+      <p><strong>fix</strong>：</p>
+      <ol>
+        <li>属性类 memory 用 KV (per-key 1 个 value) 不用 vector (多 value)</li>
+        <li>vector memory 加 recency decay 让新的优先</li>
+        <li>Zep 的 bi-temporal model 自动 invalidate</li>
+      </ol>
+
+      <h3 id="s-10-4"><span class="num">§10.4</span>翻车 3 · cost 暴涨</h3>
+      <p><strong>背景</strong>：上线 3 个月 LLM cost 涨 5x。</p>
+      <p><strong>根因</strong>：每条 memory 都加 system prompt · prompt cache 失效（system 一改全 miss）· 所有用户全价。</p>
+      <p><strong>fix</strong>：memory 单独 message · 不混 system prompt · cache hit rate 从 3% 升到 65%。</p>
+
+      <h3 id="s-10-5"><span class="num">§10.5</span>翻车 4 · privacy leak</h3>
+      <p><strong>背景</strong>：内部 agent 共享 org-level memory · 客户机密 prompt 出现在另一客户 conversation。</p>
+      <p><strong>根因</strong>：org-level memory 没 PII scrub · 直接把 raw conversation 入了 shared store。</p>
+      <p><strong>fix</strong>：</p>
+      <ol>
+        <li>org-level memory 必须 LLM 抽<em>抽象 fact</em> 不是原文</li>
+        <li>Presidio 兜底 PII 检测</li>
+        <li>access control 强制 audit log</li>
+      </ol>
+
+      <h3 id="s-10-6"><span class="num">§10.6</span>翻车 5 · memory 越用越多 · retrieve 噪声大</h3>
+      <p><strong>背景</strong>：上线 2 年 · 老用户每人有 10000+ memory · top-5 经常完全无关。</p>
+      <p><strong>根因</strong>：没 forgetting · 没 consolidation · 重复 memory 占满 top-K。</p>
+      <p><strong>fix</strong>：</p>
+      <ol>
+        <li>每周 cron 跑 consolidation（§7.2）</li>
+        <li>importance &lt; 2 的 90 天硬删</li>
+        <li>retrieve top-30 → LLM rerank → top-5（多一步过滤）</li>
+      </ol>
+    </section>
+
+    <!-- ============== Interview Q ============== -->
+    <section id="qa">
+      <header class="ch-head"><span class="badge">附录 A</span><h2>15 道 senior memory 面试题</h2></header>
+      <div class="box interview"><div class="box-label">概念 (5)</div><ol>
+        <li><strong>memory 怎么分类</strong>——working / episodic / semantic / procedural / tool · 借认知科学</li>
+        <li><strong>short vs long-term 区别</strong>——short 在 ctx · long 在外部存 · 跨 session 与否</li>
+        <li><strong>vector vs graph memory 怎么选</strong>——简单语义 vector · 复杂关系推理 graph · 大多数 hybrid</li>
+        <li><strong>什么是 bi-temporal</strong>——同时存 "事实何时发生" + "我何时学到" · Zep 核心</li>
+        <li><strong>MemGPT 跟普通 memory 区别</strong>——OS 层级（main/recall/archival）+ LLM 主动 page</li>
+      </ol></div>
+      <div class="box interview"><div class="box-label">设计 (5)</div><ol start="6">
+        <li><strong>设计 long-term memory write pipeline</strong>——extract → score → dedup → conflict resolve 4 步</li>
+        <li><strong>retrieve 怎么排序</strong>——sim + recency + importance 综合 score · 权重按场景</li>
+        <li><strong>memory 注入 prompt 哪个位置</strong>——单独 message 不混 system · 保 cache 命中</li>
+        <li><strong>怎么 forget</strong>——TTL / recency decay / importance / consolidation 4 招</li>
+        <li><strong>multi-user 怎么隔离</strong>——3 层 namespace + 强制 filter · code review hook</li>
+      </ol></div>
+      <div class="box interview"><div class="box-label">生产 (5)</div><ol start="11">
+        <li><strong>memory 怎么 eval</strong>——recall / precision / consistency / forgetting accuracy 4 类</li>
+        <li><strong>conflict 怎么处理</strong>——属性类用 KV 单值 · vector 加 decay · Zep bi-temporal</li>
+        <li><strong>cost 怎么控</strong>——稳定前缀 cacheable · memory 单独 message · 别每次重塞 system</li>
+        <li><strong>1M context 何时该用</strong>——代码库 / 整书 / 视频；不该用：客服 / 高频 chat</li>
+        <li><strong>4 框架横评</strong>——Mem0 简 · Zep 时间强 · Letta OS-style · Cognee RAG+memory</li>
+      </ol></div>
+    </section>
+
+    <!-- ============== Glossary ============== -->
+    <section id="glossary">
+      <header class="ch-head"><span class="badge">附录 B</span><h2>70 词术语速查</h2></header>
+      <table>
+        <thead><tr><th>术语</th><th>含义</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Archival storage</strong></td><td>MemGPT · 类比 disk · vector DB 全历史</td></tr>
+          <tr><td><strong>Bi-temporal</strong></td><td>同存 valid_at + recorded_at · Zep 核心</td></tr>
+          <tr><td><strong>Cache control</strong></td><td>Anthropic API · 标 prefix cacheable</td></tr>
+          <tr><td><strong>Cognee</strong></td><td>OSS · ECL pipeline · RAG + memory 综合</td></tr>
+          <tr><td><strong>Conflict resolution</strong></td><td>新 fact 跟旧冲突时的策略 (replace / merge / keep)</td></tr>
+          <tr><td><strong>Consolidation</strong></td><td>多 similar memory 合 1 抽象 · 类似睡眠记忆固化</td></tr>
+          <tr><td><strong>Context window</strong></td><td>LLM 一次能看的 token 上限</td></tr>
+          <tr><td><strong>Cross-session memory</strong></td><td>跨多个 session 共享 · per-user</td></tr>
+          <tr><td><strong>Decay</strong></td><td>memory 重要性按时间衰减</td></tr>
+          <tr><td><strong>Dedup</strong></td><td>重复 memory 去重 · 相似度 0.85+ 阈值</td></tr>
+          <tr><td><strong>Drift</strong></td><td>memory 跟实际现实漂移 (用户搬家但 memory 没更)</td></tr>
+          <tr><td><strong>ECL</strong></td><td>Cognee · Extract-Cognify-Load pipeline</td></tr>
+          <tr><td><strong>Embed</strong></td><td>memory 文本 → 向量</td></tr>
+          <tr><td><strong>Entity</strong></td><td>知识图节点 · "alice" / "Macbook"</td></tr>
+          <tr><td><strong>Episodic memory</strong></td><td>"事件 + 时间" 类记忆</td></tr>
+          <tr><td><strong>Extraction</strong></td><td>LLM 从对话抽 fact</td></tr>
+          <tr><td><strong>Fact</strong></td><td>可独立验证的陈述 · memory 原子</td></tr>
+          <tr><td><strong>FIFO eviction</strong></td><td>最早 memory 先删</td></tr>
+          <tr><td><strong>Forgetting</strong></td><td>主动删 / 降权 memory</td></tr>
+          <tr><td><strong>GDPR</strong></td><td>欧盟数据法规 · 用户有权要求删 memory</td></tr>
+          <tr><td><strong>Graph memory</strong></td><td>用 KG 存关系 · Neo4j / Memgraph</td></tr>
+          <tr><td><strong>Graphiti</strong></td><td>Zep 的 KG 抽取框架</td></tr>
+          <tr><td><strong>Hierarchical compression</strong></td><td>recent 原文 + mid summary + old 1 句</td></tr>
+          <tr><td><strong>HITL</strong></td><td>memory 写入前可让用户确认 (sensitive)</td></tr>
+          <tr><td><strong>Hybrid storage</strong></td><td>KV + vector + graph 三套</td></tr>
+          <tr><td><strong>Importance</strong></td><td>memory 重要性评分 (1-5)</td></tr>
+          <tr><td><strong>Importance threshold</strong></td><td>低 importance 不存 / 定期清</td></tr>
+          <tr><td><strong>Inject position</strong></td><td>memory 在 prompt 中放哪 · 影响 cache</td></tr>
+          <tr><td><strong>Invalidate</strong></td><td>标 memory 不再有效 · 软删</td></tr>
+          <tr><td><strong>Keypoint</strong></td><td>memory 中的核心信息片段</td></tr>
+          <tr><td><strong>KV memory</strong></td><td>用 Redis / dict · per-key 1 value · 适合稳定属性</td></tr>
+          <tr><td><strong>Letta</strong></td><td>MemGPT 商品化 · OS-style memory</td></tr>
+          <tr><td><strong>Long-term memory</strong></td><td>跨 session · 外部存储</td></tr>
+          <tr><td><strong>Lost in the middle</strong></td><td>long context 中间 recall 差</td></tr>
+          <tr><td><strong>Main context</strong></td><td>MemGPT · 类比 RAM · LLM 实时看到</td></tr>
+          <tr><td><strong>MemGPT</strong></td><td>UC Berkeley · OS-style memory paper</td></tr>
+          <tr><td><strong>Mem0</strong></td><td>OSS · 最常用 · 简单 API</td></tr>
+          <tr><td><strong>Memory block</strong></td><td>注入 prompt 的 memory 段</td></tr>
+          <tr><td><strong>Multi-store</strong></td><td>多种存储混用</td></tr>
+          <tr><td><strong>Namespace</strong></td><td>memory 隔离层 (org/user/session)</td></tr>
+          <tr><td><strong>Page in / out</strong></td><td>MemGPT · LLM 主动加载 / 卸载 memory</td></tr>
+          <tr><td><strong>Per-session memory</strong></td><td>不跨 session · session 结束清</td></tr>
+          <tr><td><strong>PII scrub</strong></td><td>memory 入库前去敏</td></tr>
+          <tr><td><strong>Privacy leak</strong></td><td>memory 越权访问 / org 串号</td></tr>
+          <tr><td><strong>Procedural memory</strong></td><td>流程 / 操作技能记忆</td></tr>
+          <tr><td><strong>Profile</strong></td><td>用户核心属性集合</td></tr>
+          <tr><td><strong>Prompt caching</strong></td><td>稳定 prefix cache · Anthropic / OpenAI / Gemini 都支持</td></tr>
+          <tr><td><strong>Recall</strong></td><td>memory 检索 metric · 找回所需</td></tr>
+          <tr><td><strong>Recall storage</strong></td><td>MemGPT · 类比 page cache · 上下文外但快查</td></tr>
+          <tr><td><strong>Recency</strong></td><td>新近度 · 影响 retrieve score</td></tr>
+          <tr><td><strong>Relation</strong></td><td>KG 中实体间边</td></tr>
+          <tr><td><strong>RemoveMessage</strong></td><td>LangGraph · 显式删 message</td></tr>
+          <tr><td><strong>Retrieve</strong></td><td>从 memory store 召回相关</td></tr>
+          <tr><td><strong>Score weighting</strong></td><td>sim/recency/importance 权重</td></tr>
+          <tr><td><strong>Semantic memory</strong></td><td>事实 / 概念类记忆</td></tr>
+          <tr><td><strong>Session</strong></td><td>1 个用户的 1 次连续对话</td></tr>
+          <tr><td><strong>Sliding window</strong></td><td>只留最近 N 条 message</td></tr>
+          <tr><td><strong>Soft delete</strong></td><td>加 deleted_at · retrieve filter · 不物理删</td></tr>
+          <tr><td><strong>Summary</strong></td><td>把老 message 压成简述</td></tr>
+          <tr><td><strong>System prompt</strong></td><td>稳定指令 · 该 cacheable</td></tr>
+          <tr><td><strong>Tool memory</strong></td><td>用过的 tool · 平均耗时 · success rate</td></tr>
+          <tr><td><strong>Triple</strong></td><td>(sub, pred, obj) · KG 原子</td></tr>
+          <tr><td><strong>TTL</strong></td><td>Time-to-live · memory 自动过期</td></tr>
+          <tr><td><strong>Upsert</strong></td><td>insert or update · 按 id 合并</td></tr>
+          <tr><td><strong>User profile</strong></td><td>per-user 稳定 KV 集合</td></tr>
+          <tr><td><strong>Vector memory</strong></td><td>memory 文本 embed 入 vector DB</td></tr>
+          <tr><td><strong>Working memory</strong></td><td>短期 · ctx window 内</td></tr>
+          <tr><td><strong>Zep</strong></td><td>OSS · bi-temporal KG · enterprise 偏好</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer class="colophon">
+      <div class="row"><span><strong>Memory &amp; Context</strong> · v1.0 · 2026-05</span><span>10 章 · 4 框架横评 · 15 题 · 70 词</span></div>
+      <div class="row">
+        <span>姊妹 · → <a href="learn.html">学习</a> · <a href="enterprise.html">企业级</a> · <a href="agent-design.html">设计</a> · <a href="agent-coding.html">Coding</a> · <a href="agent-debugging.html">Debug</a> · <a href="langgraph-internals.html">LangGraph</a> · <a href="eval-observability.html">Eval</a> · <a href="rag-production.html">RAG</a> · <a href="tool-design.html">Tool</a> · <a href="infra.html">Infra</a> · <a href="index.html">实现</a></span>
+      </div>
+    </footer>
+  </main>
+</div>
+<script>
+(function(){var l=document.querySelectorAll('.toc a[href^="#"]');var s=Array.prototype.map.call(l,function(a){var e=document.querySelector(a.getAttribute('href'));return{link:a,el:e};}).filter(function(x){return x.el;});function o(){var y=window.scrollY+80;var c=s[0];s.forEach(function(x){if(x.el.offsetTop<=y)c=x;});s.forEach(function(x){x.link.classList.toggle('active',x===c);});}window.addEventListener('scroll',o,{passive:true});o();})();
+</script>
+</body>
+</html>

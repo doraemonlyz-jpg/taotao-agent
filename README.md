@@ -10,13 +10,17 @@ Built on **LangGraph 0.6** (orchestration backbone) + **FastAPI** (SSE streaming
 ![stack](https://img.shields.io/badge/backend-LangGraph%200.6%20%2B%20FastAPI-black)
 ![ui](https://img.shields.io/badge/frontend-React%2019%20%2B%20Vite-blue)
 
-> **📚 学习路径 · 八本书覆盖 agent engineer 全方位面试**
+> **📚 学习路径 · 十二本书覆盖 agent engineer 全方位面试**
 > - 🟢 **完全新手** → [`docs/learn.html`](docs/learn.html) — 《从 0 到面试》13 章 + 110 词术语表 + 60 道面试题 + 8 周路线 + 进阶专题（benchmark / reasoning / async / agentic RAG / vibe coding / security）+ 每节附公开教程 / GitHub demo URL
 > - 🟠 **要做企业级项目** → [`docs/enterprise.html`](docs/enterprise.html) — 《企业级交付手册》10 章 + 5 份 spec 模板（PRD / Tech Design / Eval Plan / Risk Assessment / Runbook）+ 12 层技术栈选型 + 6 大工程能力 + RACI + 5 个翻车复盘 + 50 道企业级面试题 + 50 项上线 checklist
 > - 🟣 **agent system design 面试** → [`docs/agent-design.html`](docs/agent-design.html) — 《Agent System Design · Senior》6 步答题框架 + 7 大产品反编译（Cursor / Claude Code / Devin / Perplexity / Operator / v0 / 企业 multi-agent）+ 12 个 design pattern + 20 道 senior 设计题 + 80 词术语表
 > - 🟡 **live coding / take-home** → [`docs/agent-coding.html`](docs/agent-coding.html) — 《Live Coding · 8 真题》ReAct from scratch + LangGraph HITL + RAG research take-home + debug 4 hidden bug + multi-agent + streaming + eval harness + paper 实现 + 22 个 anti-pattern + 7 条提交 tips
 > - ⚫ **生产 agent 排障** → [`docs/agent-debugging.html`](docs/agent-debugging.html) — 《Debugging Playbook》5 步通用诊断流程 + 30 个 failure mode（loop / tool / memory / output / production）+ LangSmith trace 阅读法 + 5 个真实 incident 复盘 + 40 词术语表
 > - 🟤 **LangGraph 深讲 + 框架选型** → [`docs/langgraph-internals.html`](docs/langgraph-internals.html) — 《LangGraph 内部 + 5 框架对比》6 大原语深挖（State/Reducer · Channels · Checkpointer · Interrupt · Send · Subgraph）+ 5 框架横评（CrewAI / AutoGen / OpenAI Agents SDK / PydanticAI / Mastra）+ 5 场景决策树 + Pregel 源码导读 + 15 道 senior 题 + 60 词术语
+> - 🟦 **eval / 生产观测** → [`docs/eval-observability.html`](docs/eval-observability.html) — 《Eval &amp; Observability》5 层 eval 金字塔 + LLM-as-judge 4 大偏差 + 校准 + 5 工具横评（LangSmith / Langfuse / W&amp;B Weave / Phoenix / Promptfoo）+ 生产 SLO + A/B + CI gate + 3 真实 eval 翻车 + 70 词术语
+> - 🟧 **RAG 生产级** → [`docs/rag-production.html`](docs/rag-production.html) — 《RAG 生产级深讲》11 章 · 6 chunking 策略 + 5 embedding 家族 + 6 vector DB 横评 + hybrid + rerank + HyDE/CRAG/Self-RAG/Adaptive/Agentic/GraphRAG/Multi-modal/SQL RAG + Ragas eval + 8 大坑 + 80 词术语
+> - 💜 **Memory & Context 工程** → [`docs/memory-context.html`](docs/memory-context.html) — 《Memory &amp; Context》5 类 memory 分类 + short/long-term 全谱 + Mem0/Zep/Letta/Cognee 4 框架横评 + write/read pipeline + forgetting + multi-user + 1M/2M context 工程 + prompt caching + 5 翻车复盘 + 70 词术语
+> - 🟫 **Tool Design / Function Calling** → [`docs/tool-design.html`](docs/tool-design.html) — 《Tool Design》tool 5 元素 + 100+ tool 4 选择算法 + OpenAI strict + Pydantic + LLM-readable error + 4 structured output 流派（Outlines/Instructor/BAML/xgrammar）+ parallel + result 管理 + MCP server 设计 + 4 层 security + 3 翻车 + 60 词
 > - 🔴 **要面试 AI Infra** → [`docs/infra.html`](docs/infra.html) — 《AI Infra · 从硬件到面试》13 章 (GPU / 推理引擎 / 量化 / 分布式训练 / 算子 / MoE / 平台 / 向量库) + 80 道面试题 + 12 周学习路线 + 25 篇必读论文 + 100 词术语表
 > - 🔵 **想看实现** → [`docs/index.html`](docs/index.html) — 《Implementation Field Guide》17 章逐节点详解
 >

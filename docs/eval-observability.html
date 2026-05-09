@@ -1,0 +1,1017 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Eval & Observability · 5 工具横评 · LLM-as-Judge 深讲 · senior 必修</title>
+<meta name="description" content="agent eval 5 层金字塔 · 4 类 dataset 构造 · 5 类 metric · LLM-as-judge 偏差与校准 · LangSmith / Langfuse / W&B Weave / Phoenix / Promptfoo 横评 · 生产 SLO/alert · 在线 A/B · CI eval-driven dev · 15 道 senior 题。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #fbf5e8; --paper-2: #f4ecd6; --paper-card: #ffffff;
+  --ink: #1d1a14; --ink-soft: #3a3327; --ink-mute: #756c5c;
+  --rule: #d8cdb0; --rule-soft: #e8debc;
+  --leaf: #4a8a4a; --leaf-soft: #ebf3e7;
+  --rust: #c44d2a; --rust-soft: #fae6dc;
+  --sky:  #2c6ca8; --sky-soft:  #e2edf5;
+  --plum: #864c8e; --plum-soft: #f1e6f2;
+  --gold: #b8881e; --gold-soft: #f7eccd;
+  --code-bg: #fdf9ed; --code-fg: #2a2620; --code-key: #c44d2a;
+  --code-str: #4a8a4a; --code-cmt: #998a6c; --code-fn: #864c8e;
+  --font-display: "Fraunces", "Times New Roman", serif;
+  --font-body: "Lora", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  --font-zh: "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: radial-gradient(ellipse at top left, rgba(196,178,144,.12), transparent 50%), radial-gradient(ellipse at bottom right, rgba(74,138,74,.08), transparent 50%), var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.75; }
+:lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
+.book-body p, .book-body li { color: var(--ink-soft); }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(196,77,42,.4); }
+a:hover { background: rgba(196,77,42,.08); }
+em { font-style: italic; color: var(--leaf); font-weight: 500; }
+strong { font-weight: 600; color: var(--ink); }
+.layout { display: grid; grid-template-columns: 290px minmax(0,1fr); max-width: 1400px; margin: 0 auto; padding: 0 2rem; gap: 3rem; }
+@media (max-width: 980px) { .layout { grid-template-columns: 1fr; gap: 0; padding: 0 1.2rem; } .toc { position: static !important; max-height: none !important; } .toc-inner { display: none; } .toc.open .toc-inner { display: block; } .toc-toggle { display: inline-flex !important; } }
+.toc { position: sticky; top: 0; align-self: start; height: 100vh; max-height: 100vh; overflow: auto; padding: 2rem 0.4rem 4rem 0; border-right: 1px dashed var(--rule); font-family: var(--font-sans); font-size: 0.85rem; }
+.toc-toggle { display: none; margin: 1rem 0; padding: 0.4rem 0.8rem; background: var(--paper-card); border: 1px solid var(--rule); border-radius: 999px; cursor: pointer; }
+.toc-brand { padding: 0 0.7rem 1.1rem; border-bottom: 1px dashed var(--rule); margin-bottom: 1rem; }
+.toc-brand .mark { font-family: var(--font-display); font-style: italic; font-weight: 500; font-size: 1.4rem; color: var(--ink); display: block; line-height: 1.1; }
+.toc-brand .mark .dot { color: var(--rust); }
+.toc-brand .sub { font-family: var(--font-sans); font-size: 0.72rem; color: var(--ink-mute); margin-top: 0.4rem; display: block; line-height: 1.4; }
+.toc-brand .sub strong { color: var(--rust); font-weight: 700; }
+.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: tocch; }
+.toc > .toc-inner > ol > li { counter-increment: tocch; margin: 0.05rem 0; }
+.toc a { display: flex; gap: 0.6rem; align-items: baseline; padding: 0.34rem 0.6rem; border: none; color: var(--ink-soft); font-weight: 500; border-radius: 6px; line-height: 1.35; }
+.toc > .toc-inner > ol > li > a::before { content: "Ch " counter(tocch, decimal-leading-zero); font-family: var(--font-mono); font-size: 0.65rem; color: var(--rust); width: 3.4em; flex-shrink: 0; font-weight: 500; }
+.toc a:hover { background: var(--paper-2); color: var(--ink); }
+.toc a.active { background: var(--rust-soft); color: var(--rust); }
+.toc-foot { margin-top: 2rem; padding: 1rem 0.7rem 0; border-top: 1px dashed var(--rule); font-family: var(--font-sans); font-size: 0.74rem; color: var(--ink-mute); line-height: 1.6; }
+.toc-foot a { color: var(--ink-mute); border-bottom-color: rgba(117,108,92,.3); }
+.toc-foot a:hover { color: var(--rust); }
+.book-body { padding: 2rem 0 6rem; max-width: 800px; }
+.book-body section { margin: 0 0 5rem; scroll-margin-top: 1rem; }
+.cover { margin-bottom: 4.5rem; padding-bottom: 2.5rem; border-bottom: 1px solid var(--ink); position: relative; }
+.cover::after { content: ""; position: absolute; left: 0; bottom: -5px; width: 80px; height: 3px; background: var(--rust); }
+.cover .eyebrow { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.06em; color: var(--rust); margin-bottom: 1.4rem; font-weight: 600; text-transform: uppercase; }
+.cover .eyebrow .sep { color: var(--rule); margin: 0 0.6rem; font-weight: 400; }
+.cover h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(2.4rem, 4.8vw, 4rem); line-height: 1.08; letter-spacing: -0.015em; margin: 0 0 1.4rem; color: var(--ink); }
+.cover h1 em { color: var(--rust); font-style: italic; }
+.cover .lede { font-size: 1.18rem; color: var(--ink-soft); max-width: 36em; margin: 0 0 2rem; line-height: 1.65; }
+.cover .who { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; padding: 1.4rem 1.6rem; margin-top: 2rem; font-size: 0.96rem; }
+.cover .who h4 { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--rust); margin: 0 0 0.6rem; }
+.cover .who ul { margin: 0; padding-left: 1.2rem; }
+.cover .who li { margin: 0.15rem 0; }
+.ch-head { margin: 0 0 2rem; }
+.ch-head .badge { display: inline-block; font-family: var(--font-sans); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--rust); background: var(--rust-soft); padding: 0.25rem 0.7rem; border-radius: 999px; margin-bottom: 1rem; }
+.ch-head h2 { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.9rem, 3.2vw, 2.7rem); line-height: 1.12; margin: 0 0 0.6rem; color: var(--ink); letter-spacing: -0.01em; }
+.ch-head .lede { font-style: italic; color: var(--ink-mute); font-size: 1.05rem; font-family: var(--font-display); margin: 0; }
+h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.5rem; margin: 2.8rem 0 0.8rem; color: var(--ink); scroll-margin-top: 1rem; }
+h3 .num { font-family: var(--font-mono); font-size: 0.7rem; color: var(--rust); font-weight: 500; margin-right: 0.5rem; }
+h4 { font-family: var(--font-sans); font-weight: 600; font-size: 1.05rem; margin: 1.8rem 0 0.4rem; color: var(--ink); }
+h5 { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-mute); margin: 1.2rem 0 0.4rem; }
+p { margin: 0 0 1rem; }
+ol, ul { padding-left: 1.4rem; margin: 0.4rem 0 1.2rem; }
+li { margin: 0.25rem 0; }
+code { font-family: var(--font-mono); font-size: 0.86em; background: var(--sky-soft); padding: 0.05rem 0.4rem; border-radius: 4px; color: var(--sky); font-weight: 500; }
+strong code { color: var(--ink); }
+pre { font-family: var(--font-mono); background: var(--code-bg); color: var(--code-fg); padding: 1.1rem 1.3rem; border-radius: 8px; border: 1px solid var(--rule-soft); border-left: 3px solid var(--sky); overflow-x: auto; font-size: 0.81rem; line-height: 1.6; margin: 1rem 0 1.4rem; }
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; font-weight: 400; }
+pre .k { color: var(--code-key); font-weight: 500; }
+pre .s { color: var(--code-str); }
+pre .c { color: var(--code-cmt); font-style: italic; }
+pre .f { color: var(--code-fn); font-weight: 500; }
+.box { margin: 1.5rem 0; padding: 1.2rem 1.4rem; border-radius: 10px; border-left: 4px solid; }
+.box .box-label { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
+.box .box-label::before { font-size: 1rem; }
+.box p:last-child { margin-bottom: 0; }
+.box.concept { background: var(--leaf-soft); border-color: var(--leaf); }
+.box.concept .box-label { color: var(--leaf); }
+.box.concept .box-label::before { content: "📖"; }
+.box.tip { background: var(--rust-soft); border-color: var(--rust); }
+.box.tip .box-label { color: var(--rust); }
+.box.tip .box-label::before { content: "💡"; }
+.box.warn { background: #fff4e0; border-color: #d49414; }
+.box.warn .box-label { color: #b87a0a; }
+.box.warn .box-label::before { content: "⚠️"; }
+.box.deep { background: var(--plum-soft); border-color: var(--plum); }
+.box.deep .box-label { color: var(--plum); }
+.box.deep .box-label::before { content: "✦"; font-weight: 600; }
+.box.interview { background: var(--gold-soft); border-color: var(--gold); }
+.box.interview .box-label { color: var(--gold); }
+.box.interview .box-label::before { content: "🎯"; }
+.box.reading { background: var(--sky-soft); border-color: var(--sky); }
+.box.reading .box-label { color: var(--sky); }
+.box.reading .box-label::before { content: "📚"; }
+table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.6rem; font-size: 0.9rem; background: var(--paper-card); border-radius: 6px; overflow: hidden; border: 1px solid var(--rule); }
+th, td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+th { font-family: var(--font-sans); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink); font-weight: 600; background: var(--paper-2); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(196,178,144,.13); }
+table code { font-size: 0.82em; }
+.figure { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 12px; padding: 1.6rem 1.4rem 1.2rem; margin: 1.4rem 0 1.8rem; box-shadow: 0 1px 3px rgba(29,26,20,.04); }
+.figure svg { display: block; width: 100%; height: auto; max-width: 760px; margin: 0 auto; }
+.figure figcaption { text-align: center; font-family: var(--font-sans); font-size: 0.82rem; letter-spacing: 0.05em; color: var(--ink-mute); text-transform: uppercase; margin-top: 0.9rem; }
+.figure figcaption strong { color: var(--ink-soft); font-weight: 600; text-transform: none; letter-spacing: 0; }
+.fig-box { fill: var(--paper-card); stroke: var(--ink-soft); stroke-width: 1.5; }
+.fig-box-soft { fill: #fdf9ed; stroke: var(--rule); stroke-width: 1.2; }
+.fig-box-leaf { fill: var(--leaf-soft); stroke: var(--leaf); stroke-width: 1.5; }
+.fig-box-rust { fill: var(--rust-soft); stroke: var(--rust); stroke-width: 1.5; }
+.fig-box-sky { fill: var(--sky-soft); stroke: var(--sky); stroke-width: 1.5; }
+.fig-box-plum { fill: var(--plum-soft); stroke: var(--plum); stroke-width: 1.5; }
+.fig-box-gold { fill: var(--gold-soft); stroke: var(--gold); stroke-width: 1.5; }
+.fig-line { fill: none; stroke: var(--ink-mute); stroke-width: 1.4; }
+.fig-line-rust { fill: none; stroke: var(--rust); stroke-width: 1.6; }
+.fig-line-leaf { fill: none; stroke: var(--leaf); stroke-width: 1.6; }
+.fig-dash { fill: none; stroke: var(--ink-mute); stroke-width: 1.2; stroke-dasharray: 4 3; }
+.fig-t { font-family: var(--font-sans); font-size: 13px; fill: var(--ink); font-weight: 500; }
+.fig-t-lg { font-family: var(--font-display); font-size: 15px; fill: var(--ink); font-weight: 600; font-style: italic; }
+.fig-t-sm { font-family: var(--font-sans); font-size: 11px; fill: var(--ink-mute); }
+.fig-t-mono { font-family: var(--font-mono); font-size: 11px; fill: var(--ink-soft); }
+.fig-t-label { font-family: var(--font-sans); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.fig-t-leaf { fill: var(--leaf); }
+.fig-t-rust { fill: var(--rust); }
+.fig-t-sky { fill: var(--sky); }
+.fig-t-plum { fill: var(--plum); }
+.fig-t-mute { fill: var(--ink-mute); }
+.pull { margin: 3rem 0; padding: 1.8rem 2rem; font-family: var(--font-display); font-style: italic; font-size: 1.5rem; line-height: 1.4; color: var(--ink); border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); position: relative; text-align: center; }
+.pull::before { content: "“"; position: absolute; top: -0.2rem; left: 1.2rem; font-family: var(--font-display); font-size: 4.5rem; color: var(--rust); line-height: 1; }
+.pull cite { display: block; margin-top: 0.6rem; font-style: normal; font-family: var(--font-sans); font-size: 0.78rem; color: var(--ink-mute); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500; }
+footer.colophon { margin-top: 5rem; padding-top: 2.5rem; border-top: 2px solid var(--ink); font-family: var(--font-sans); font-size: 0.85rem; color: var(--ink-mute); }
+footer.colophon .row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.6rem; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="toc" id="toc">
+    <div class="toc-brand">
+      <span class="mark">Eval &amp; Observability <span class="dot">·</span></span>
+      <span class="sub">5 层 eval 金字塔 · LLM-as-judge 校准 · 5 工具横评 · 生产 SLO<br><strong>10 章 · 15 道 senior 题 · 70 词术语</strong></span>
+    </div>
+    <button class="toc-toggle" onclick="document.getElementById('toc').classList.toggle('open')">≡ 目录</button>
+    <nav class="toc-inner">
+      <ol>
+        <li><a href="#ch-1">为什么 agent eval 难 · 跟传统 ML eval 的本质差异</a></li>
+        <li><a href="#ch-2">5 层 eval 金字塔 · 从 unit 到 red team</a></li>
+        <li><a href="#ch-3">Dataset 构造 · 4 类来源 + 维护策略</a></li>
+        <li><a href="#ch-4">Metrics 全谱 · 5 类指标怎么选</a></li>
+        <li><a href="#ch-5">LLM-as-Judge 深讲 · 4 大偏差 + 校准</a></li>
+        <li><a href="#ch-6">5 工具横评 · LangSmith / Langfuse / W&amp;B Weave / Phoenix / Promptfoo</a></li>
+        <li><a href="#ch-7">生产 observability · SLO + dashboard + alert + incident</a></li>
+        <li><a href="#ch-8">在线 eval · A/B + shadow + canary + champion-challenger</a></li>
+        <li><a href="#ch-9">Eval-driven dev · CI 集成 + pre-merge gate</a></li>
+        <li><a href="#ch-10">3 个真实 eval 案例 · 完整复盘</a></li>
+        <li><a href="#qa">15 道 senior 面试题</a></li>
+        <li><a href="#glossary">术语表 (70 词)</a></li>
+      </ol>
+    </nav>
+    <div class="toc-foot">
+      配套：<br>
+      <a href="learn.html">→ 应用 · 从 0 到面试</a><br>
+      <a href="enterprise.html">→ 企业级交付</a><br>
+      <a href="agent-design.html">→ Agent System Design</a><br>
+      <a href="agent-coding.html">→ Live Coding 实战</a><br>
+      <a href="agent-debugging.html">→ Debugging Playbook</a><br>
+      <a href="langgraph-internals.html">→ LangGraph 内部</a><br>
+      <a href="rag-production.html">→ RAG 生产级</a><br>
+      <a href="memory-context.html">→ Memory &amp; Context</a><br>
+      <a href="tool-design.html">→ Tool Design</a><br>
+      <a href="infra.html">→ AI Infra</a><br>
+      <a href="index.html">→ 实现详解</a><br><br>
+      <a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/.../taotao-agent ↗</a>
+    </div>
+  </aside>
+
+  <main class="book-body">
+    <header class="cover">
+      <div class="eyebrow">Senior Agent Engineer<span class="sep">·</span>Eval &amp; Observability<span class="sep">·</span>2026</div>
+      <h1>没有 eval 的 agent <em>不是</em> agent，<br>是<em>玄学</em>。</h1>
+      <p class="lede">
+        每个 senior 面试都问 <em>"你怎么 eval agent"</em> · 80% 候选人答 "用 LangSmith 看 trace" 直接掉档。这本把 eval 从<em>数学到工程到组织</em>讲透：5 层金字塔模型 · LLM-as-judge 4 大偏差 + 校准方法 · 5 个主流工具横评 · 生产 SLO/alert/A/B 框架 · 真实 eval 翻车复盘——让你 30 分钟答清楚 senior 面试官想听的全部维度。
+      </p>
+      <div class="who">
+        <h4>📌 学完你能</h4>
+        <ul>
+          <li>讲清 agent eval 跟 LLM eval / 传统 ML eval 的本质区别（compounding · non-determinism · no ground truth · trajectory matters）</li>
+          <li>面 "怎么 eval 你这个 agent" → 5 层金字塔 + 每层 metric + dataset 来源全答</li>
+          <li>解释 LLM-as-judge 4 大偏差（position / verbosity / self-enhancement / style）+ 校准方法</li>
+          <li>横评 LangSmith / Langfuse / W&amp;B Weave / Phoenix / Promptfoo · 给场景选型决策</li>
+          <li>设计生产 SLO（success rate / TTFT / cost / hallucination rate）+ alert 阈值</li>
+          <li>设计 A/B / shadow / canary deploy · 量化新版本是否真好</li>
+          <li>把 eval 集成进 CI · pre-merge gate 设计</li>
+          <li>避开 5 个真实生产 eval 翻车坑</li>
+        </ul>
+      </div>
+    </header>
+
+    <!-- ============== Chapter 1 ============== -->
+    <section id="ch-1">
+      <header class="ch-head">
+        <span class="badge">Chapter 1 · 立场</span>
+        <h2>为什么 agent eval 难 · 跟传统 ML 的本质差异</h2>
+        <p class="lede">不是 "accuracy 难算" · 是<em>从根上不一样</em></p>
+      </header>
+
+      <p>面试问 "agent 怎么 eval" 第一句答 "我用 accuracy / F1" 立刻挂——传统 ML eval 的<em>所有假设在 agent 场景全坍塌</em>。</p>
+
+      <h3 id="s-1-1"><span class="num">§1.1</span>4 个根本困难</h3>
+      <table>
+        <thead><tr><th>困难</th><th>传统 ML</th><th>Agent</th></tr></thead>
+        <tbody>
+          <tr><td>Ground truth</td><td>每条样本 1 个标签</td><td>正确答案有<em>多种合法表述</em> · 还可能没有"标准答案"</td></tr>
+          <tr><td>确定性</td><td>同输入同输出</td><td>LLM temperature &gt; 0 · 同输入<em>每次结果不同</em></td></tr>
+          <tr><td>误差</td><td>独立 (per sample)</td><td><em>compounding</em> · 第 1 步 90% 对 · 10 步 = 0.9¹⁰ ≈ 35% 对</td></tr>
+          <tr><td>评估对象</td><td>最终 prediction</td><td>不只看结果 · <em>trajectory（思考过程 / tool 调用顺序）也要 eval</em></td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-1-2"><span class="num">§1.2</span>compounding error · 一张图吓你</h3>
+      <figure class="figure">
+        <svg viewBox="0 0 760 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Compounding error">
+          <line class="fig-line" x1="60" y1="180" x2="720" y2="180"/>
+          <line class="fig-line" x1="60" y1="180" x2="60" y2="30"/>
+          <text class="fig-t-sm" x="55" y="35" text-anchor="end">100%</text>
+          <text class="fig-t-sm" x="55" y="115" text-anchor="end">50%</text>
+          <text class="fig-t-sm" x="55" y="180" text-anchor="end">0%</text>
+          <text class="fig-t-sm fig-t-mute" x="390" y="210" text-anchor="middle">step 数 (1 → 15)</text>
+          <text class="fig-t-sm fig-t-mute" x="20" y="105" text-anchor="middle" transform="rotate(-90 20 105)">success rate</text>
+          <polyline points="100,40 144,48 188,57 232,67 276,79 320,93 364,108 408,124 452,140 496,153 540,162 584,168 628,173 672,176 716,178" class="fig-line-rust" fill="none" stroke-width="2.2"/>
+          <polyline points="100,30 144,33 188,37 232,42 276,48 320,55 364,63 408,72 452,82 496,93 540,104 584,116 628,128 672,140 716,152" class="fig-line-leaf" fill="none" stroke-width="2.2"/>
+          <text class="fig-t-sm fig-t-rust" x="730" y="178" text-anchor="end">每步 90% → 15 步 21%</text>
+          <text class="fig-t-sm fig-t-leaf" x="730" y="152" text-anchor="end">每步 95% → 15 步 46%</text>
+          <text class="fig-t-sm fig-t-mute" x="390" y="20" text-anchor="middle" font-style="italic">单步 5% 提升 · long-horizon 翻倍</text>
+        </svg>
+        <figcaption><strong>Figure 1.2</strong> · long-horizon agent 的 compounding error · 单步 90% 不够好</figcaption>
+      </figure>
+      <p><strong>面试答法</strong>：<em>"我每步 95% 听着很高 · 15 步 task 只剩 46% · 这就是为什么 agent eval 不能只看 'output 对不对' · 必须 eval 每个 intermediate step + 整体 trajectory"</em></p>
+
+      <h3 id="s-1-3"><span class="num">§1.3</span>同一 input 跑 5 次 · 都不同 → 怎么算 accuracy</h3>
+      <p><strong>解法 3 选 1</strong>：</p>
+      <ol>
+        <li><strong>采样多次取平均</strong>——每条 input 跑 N=5 · pass@k 风格指标</li>
+        <li><strong>固定 seed + temperature=0</strong>——能 reproducible 但<em>不反映线上行为</em></li>
+        <li><strong>按区间 / 分布报告</strong>——不报"准确率 87%" · 报 "85% [82-89] 95% CI"</li>
+      </ol>
+      <p>生产推荐：dev 用 <strong>2</strong>（快速迭代）+ release gate 用 <strong>1</strong>（反映真实 variance）+ 报告用 <strong>3</strong>（不忽悠 stakeholder）。</p>
+
+      <h3 id="s-1-4"><span class="num">§1.4</span>没有 ground truth 怎么办</h3>
+      <p>典型场景："写一封 marketing email" "总结这份 PDF" "回答客户咨询"——<em>没有标准答案</em>。3 种 fallback：</p>
+      <ul>
+        <li><strong>LLM-as-judge</strong>（最常用 · 第 5 章详讲）——用更强 LLM 当裁判 + rubric</li>
+        <li><strong>pairwise comparison</strong>——比较 A 跟 B 哪个更好（人类标 + Bradley-Terry / Elo）</li>
+        <li><strong>process metrics</strong>——eval 不评最终 output · 评中间过程（用了正确 tool 吗 / 检索召回相关吗）</li>
+      </ul>
+
+      <div class="box deep">
+        <div class="box-label">面试金句</div>
+        <p><em>"Agent eval 难在 4 个地方：(1) 同输入 non-deterministic · 必须采样多次报区间；(2) 错误 compounding · 单步 95% 长 task 只剩 46% · 必须 eval 每步；(3) 经常没 ground truth · 用 LLM-as-judge 或 pairwise；(4) trajectory 也是评估对象 · 不只看 final output。这 4 点决定了我设计 eval pipeline 时不像传统 ML 一个 accuracy 完事 · 是 5 层金字塔——unit / component / E2E / production / regression"</em></p>
+      </div>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 1</div>
+        <ul>
+          <li><a href="https://hamel.dev/blog/posts/evals/" target="_blank">Hamel Husain · Your AI Product Needs Evals</a> ——必读 · 行业引用最多的入门文</li>
+          <li><a href="https://eugeneyan.com/writing/llm-evaluators/" target="_blank">Eugene Yan · LLM evaluators 全谱</a></li>
+          <li><a href="https://huyenchip.com/2024/07/25/genai-platform.html" target="_blank">Chip Huyen · Building GenAI Platform</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 2 ============== -->
+    <section id="ch-2">
+      <header class="ch-head">
+        <span class="badge">Chapter 2 · 框架</span>
+        <h2>5 层 eval 金字塔 · 从 unit 到 red team</h2>
+        <p class="lede">面试官问 "你怎么 eval" → 答这一张图就赢一半</p>
+      </header>
+
+      <figure class="figure">
+        <svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="5-layer eval pyramid">
+          <polygon class="fig-box-rust" points="380,30 480,80 280,80"/>
+          <text class="fig-t" x="380" y="65" text-anchor="middle">5. Red team</text>
+          <polygon class="fig-box-plum" points="280,80 480,80 530,130 230,130"/>
+          <text class="fig-t" x="380" y="115" text-anchor="middle">4. Production / online</text>
+          <polygon class="fig-box-sky" points="230,130 530,130 580,180 180,180"/>
+          <text class="fig-t" x="380" y="165" text-anchor="middle">3. End-to-end (offline)</text>
+          <polygon class="fig-box-leaf" points="180,180 580,180 630,230 130,230"/>
+          <text class="fig-t" x="380" y="215" text-anchor="middle">2. Component</text>
+          <polygon class="fig-box-soft" points="130,230 630,230 680,280 80,280"/>
+          <text class="fig-t" x="380" y="265" text-anchor="middle">1. Unit / assertion (deterministic)</text>
+          <text class="fig-t-sm fig-t-mute" x="710" y="65" text-anchor="end">最少 · 高级</text>
+          <text class="fig-t-sm fig-t-mute" x="710" y="265" text-anchor="end">最多 · 基础</text>
+          <text class="fig-t-sm fig-t-mute" x="380" y="305" text-anchor="middle" font-style="italic">基座宽 · 越往上越窄越关键 · 别只做顶层</text>
+        </svg>
+        <figcaption><strong>Figure 2.0</strong> · 5 层金字塔 · 每层有自己的 dataset / metric / 触发时机</figcaption>
+      </figure>
+
+      <h3 id="s-2-1"><span class="num">§2.1</span>L1 · Unit / assertion · 永不挂的底</h3>
+      <p>纯<strong>规则 + 确定性</strong>检查 · 不调 LLM。例：</p>
+      <ul>
+        <li>输出是 valid JSON 吗</li>
+        <li>API response 包含必填字段吗</li>
+        <li>generated SQL 能解析吗（用 sqlparse）</li>
+        <li>生成的 code 能 import 吗（exec 一遍）</li>
+        <li>response 长度在 50-500 字之间吗</li>
+        <li>没出现禁词吗</li>
+      </ul>
+      <p>触发：<strong>每个 commit · 必跑 · 100ms 内</strong>。这层是 CI 第一关 · pass 才进 L2。</p>
+
+      <h3 id="s-2-2"><span class="num">§2.2</span>L2 · Component eval · 每个 node 单独评</h3>
+      <p>把 agent 拆 node · <strong>每个 node 独立 eval</strong>：</p>
+      <ul>
+        <li>retriever 节点——recall@k / NDCG@k / hit rate</li>
+        <li>router 节点——分类准确率（是否选对 sub-agent）</li>
+        <li>tool 选择节点——是否选了正确 tool（vs ground truth tool name）</li>
+        <li>summarizer 节点——LLM-as-judge rouge-like rubric</li>
+      </ul>
+      <p>触发：<strong>每次该 node 改动 · 跑 50-200 条 dataset</strong>。</p>
+
+      <h3 id="s-2-3"><span class="num">§2.3</span>L3 · End-to-end · 整链路评</h3>
+      <p>给 agent 完整 input · 评 final output + trajectory：</p>
+      <ul>
+        <li><strong>output quality</strong>——LLM-as-judge rubric / pairwise vs baseline</li>
+        <li><strong>trajectory correctness</strong>——是否走了合理路径（不 5 次 retry / 不绕弯）</li>
+        <li><strong>cost / latency</strong>——P50 / P95 token + ms</li>
+        <li><strong>safety</strong>——是否 leak PII / 是否触发 jailbreak</li>
+      </ul>
+      <p>触发：<strong>release gate · 跑 100-500 条核心 dataset · 5-30 分钟</strong>。</p>
+
+      <h3 id="s-2-4"><span class="num">§2.4</span>L4 · Production / online · 生产真用户</h3>
+      <p>线上跑 · sample 一定比例做 eval：</p>
+      <ul>
+        <li><strong>implicit feedback</strong>——👍/👎 按钮 · 用户编辑 output 的 diff · 重问率</li>
+        <li><strong>shadow eval</strong>——线上请求 mirror 一份给 LLM-as-judge 实时打分</li>
+        <li><strong>regression detection</strong>——24h 滑窗看 success rate 是否突降</li>
+        <li><strong>A/B test</strong>——新 prompt / 新 model 跑 10% 流量看 lift</li>
+      </ul>
+
+      <h3 id="s-2-5"><span class="num">§2.5</span>L5 · Red team · 主动找漏</h3>
+      <p>专人 / 工具<em>主动攻击</em>：</p>
+      <ul>
+        <li>prompt injection / jailbreak attempts</li>
+        <li>边界 input（超长 / 空 / unicode 攻击 / 多语言混杂）</li>
+        <li>对抗 user persona（恶意用户 / 钓鱼）</li>
+        <li>工具：PyRIT (MS) / Promptfoo red team / Garak / Lakera Test</li>
+      </ul>
+      <p>触发：<strong>major release 前 · 季度 audit · 跑 1000+ 攻击向量</strong>。</p>
+
+      <h3 id="s-2-6"><span class="num">§2.6</span>5 层全表</h3>
+      <table>
+        <thead><tr><th>层</th><th>评什么</th><th>dataset 大小</th><th>触发</th><th>耗时</th></tr></thead>
+        <tbody>
+          <tr><td>L1 unit</td><td>schema/格式/规则</td><td>20-50 case</td><td>每 commit</td><td>&lt; 1 min</td></tr>
+          <tr><td>L2 component</td><td>每 node 单独</td><td>50-200/node</td><td>node 改动</td><td>2-5 min</td></tr>
+          <tr><td>L3 E2E</td><td>整链路 + trajectory</td><td>100-500</td><td>release gate</td><td>5-30 min</td></tr>
+          <tr><td>L4 production</td><td>真用户行为</td><td>100% 线上</td><td>持续</td><td>实时</td></tr>
+          <tr><td>L5 red team</td><td>对抗 / 安全</td><td>1000+</td><td>quarterly</td><td>1-4h</td></tr>
+        </tbody>
+      </table>
+
+      <div class="box deep">
+        <div class="box-label">面试金句</div>
+        <p><em>"我把 eval 当金字塔 5 层做。L1 unit 是 schema/规则 · 每 commit 跑 · 1 分钟内；L2 component 把 agent 拆 node 各自评 · retriever 看 recall@k · router 看分类准确率；L3 E2E 评 final output + trajectory + cost · 用 LLM-as-judge 跑 100-500 条 · 是 release gate；L4 production 实时收 👍/👎 + shadow LLM-judge · 24h 滑窗看 regression；L5 red team 季度跑 prompt injection / jailbreak 攻击向量。每层 dataset / metric / 触发时机都不一样 · 缺一不可"</em></p>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 3 ============== -->
+    <section id="ch-3">
+      <header class="ch-head">
+        <span class="badge">Chapter 3 · Dataset</span>
+        <h2>Dataset 构造 · 4 类来源 + 维护策略</h2>
+        <p class="lede">"我没数据"是借口 · 4 个来源任你拼</p>
+      </header>
+
+      <h3 id="s-3-1"><span class="num">§3.1</span>4 类 dataset 来源</h3>
+      <table>
+        <thead><tr><th>来源</th><th>怎么拿</th><th>优势</th><th>劣势</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Golden</strong> (人工标)</td><td>领域专家手写 + 标准答案</td><td>最高质量 · trust 度高</td><td>慢 · 贵 · 50-200 条到顶</td></tr>
+          <tr><td><strong>Synthetic</strong> (LLM 生成)</td><td>用 GPT-4 给 seed 例生成 N 个变体</td><td>快 · 便宜 · 量大</td><td>有 LLM bias · 真实分布偏</td></tr>
+          <tr><td><strong>Production</strong> (线上挖)</td><td>线上请求采样 + 人工标</td><td>真实分布 · 反映真问题</td><td>需要先有线上 · PII 风险</td></tr>
+          <tr><td><strong>Shadow</strong> (failure 库)</td><td>线上失败 case 自动入库</td><td>focus 在弱点</td><td>需要 obs 体系先建好</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-3-2"><span class="num">§3.2</span>Golden dataset · 5 步流程</h3>
+      <ol>
+        <li><strong>定义任务边界</strong>——写 1 段 task description（feed 给标注员 / 用户）</li>
+        <li><strong>列 input 类别</strong>——典型 / 边界 / 异常 / 多语言 / 多模态 各类各 10-20 条</li>
+        <li><strong>双人标注</strong>——2 个标注员独立标 · 算 inter-annotator agreement (Cohen kappa &gt; 0.7)</li>
+        <li><strong>第三人 adjudicate</strong>——不一致的请专家裁定</li>
+        <li><strong>versioned commit</strong>——存 git LFS / 平台 dataset · 永远可 rollback</li>
+      </ol>
+
+      <h3 id="s-3-3"><span class="num">§3.3</span>Synthetic dataset · 用 LLM 造</h3>
+      <pre><code><span class="c"># 用 strong LLM 给 seed 扩量</span>
+<span class="k">from</span> openai <span class="k">import</span> OpenAI
+
+prompt = <span class="s">"""
+我有一个客服 agent · 你帮我生成 20 条<em>多样性</em>的用户 query · 覆盖：
+- 典型咨询 (退货 / 物流 / 优惠)
+- 情绪化 (生气 / 抱怨)
+- 模糊不清 (信息缺失)
+- 攻击性 (祖父奶奶套路 / 越狱尝试)
+- 多语言混杂
+
+每条输出 JSON: {"query": "...", "category": "...", "expected_intent": "..."}
+"""</span>
+out = client.chat.completions.create(model=<span class="s">"gpt-4o"</span>, messages=[...])
+</code></pre>
+      <p><strong>避坑</strong>：</p>
+      <ul>
+        <li>用<em>不同模型</em>生成（GPT + Claude + Gemini）防 LLM 风格 bias</li>
+        <li><strong>抽样人审 10%</strong>——synthetic 数据如果不审就当真 → eval 结果都假</li>
+        <li>给 seed example——zero-shot 生成的差太多</li>
+      </ul>
+
+      <h3 id="s-3-4"><span class="num">§3.4</span>Production mining · 怎么从线上挖</h3>
+      <ol>
+        <li><strong>random sample</strong> 1-5% trace 进 review queue</li>
+        <li><strong>uncertainty sample</strong>——LLM 自评 confidence &lt; 0.7 的优先标</li>
+        <li><strong>edge sample</strong>——超长 / 超短 / 失败 / 用户编辑过 output 的</li>
+        <li><strong>diversity sample</strong>——按 cluster 抽（embedding K-means · 每 cluster 抽几条）</li>
+      </ol>
+      <p>关键：<strong>scrub PII 再入库</strong>（用 Presidio / 自建正则 + LLM 兜底）。</p>
+
+      <h3 id="s-3-5"><span class="num">§3.5</span>Dataset 维护 · 不是一次性</h3>
+      <p>常见错误：dataset 标完一年没动 · 模型早进化了。维护节奏：</p>
+      <ul>
+        <li><strong>weekly</strong>——production failure 自动入 shadow set</li>
+        <li><strong>monthly</strong>——50 条新 production sample 加进 golden（人工 review 后）</li>
+        <li><strong>quarterly</strong>——版本化 release dataset_v2 · 算跟 v1 的 drift</li>
+        <li><strong>annually</strong>——重新审 task description / rubric · 看是否还反映需求</li>
+      </ul>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 3</div>
+        <ul>
+          <li><a href="https://github.com/openai/evals" target="_blank">OpenAI Evals · 公开 dataset 模板</a></li>
+          <li><a href="https://github.com/microsoft/presidio" target="_blank">Microsoft Presidio · PII scrub</a></li>
+          <li><a href="https://docs.smith.langchain.com/evaluation/concepts" target="_blank">LangSmith · Eval dataset 概念</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 4 ============== -->
+    <section id="ch-4">
+      <header class="ch-head">
+        <span class="badge">Chapter 4 · Metrics</span>
+        <h2>Metrics 全谱 · 5 类指标怎么选</h2>
+        <p class="lede">面试官追问 "用什么 metric" 必须秒答</p>
+      </header>
+
+      <h3 id="s-4-1"><span class="num">§4.1</span>5 类 metric 总表</h3>
+      <table>
+        <thead><tr><th>类</th><th>例子</th><th>用</th><th>成本</th></tr></thead>
+        <tbody>
+          <tr><td>1. <strong>Rule-based</strong></td><td>JSON valid / regex match / 长度</td><td>L1 unit / 格式</td><td>0</td></tr>
+          <tr><td>2. <strong>Reference-based</strong></td><td>exact match / BLEU / ROUGE / BERTScore</td><td>有 ground truth · 翻译 / 摘要</td><td>低</td></tr>
+          <tr><td>3. <strong>LLM-as-judge</strong></td><td>rubric / pairwise / G-Eval</td><td>开放生成 · 没 ground truth</td><td>高 (LLM 调用)</td></tr>
+          <tr><td>4. <strong>Process</strong></td><td>tool 调对 / step 数 / retry 次数</td><td>trajectory · agent 行为</td><td>低</td></tr>
+          <tr><td>5. <strong>Operational</strong></td><td>latency P95 / cost / TTFT</td><td>SLO · 生产监控</td><td>0 (从 trace 算)</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-4-2"><span class="num">§4.2</span>Reference-based · 哪种 metric 选</h3>
+      <table>
+        <thead><tr><th>Metric</th><th>原理</th><th>适合</th><th>不适合</th></tr></thead>
+        <tbody>
+          <tr><td>Exact match</td><td>字符串完全相等</td><td>分类 / SQL / 代码 / 选择题</td><td>开放生成</td></tr>
+          <tr><td>BLEU</td><td>n-gram 重合 (precision)</td><td>翻译</td><td>语义不同的同义改写会被 penalize</td></tr>
+          <tr><td>ROUGE</td><td>n-gram 重合 (recall)</td><td>摘要</td><td>同上</td></tr>
+          <tr><td>BERTScore</td><td>embedding 相似</td><td>语义相似度</td><td>对结构 / 事实正确性不敏感</td></tr>
+          <tr><td>Semantic similarity (embed)</td><td>cosine 相似</td><td>"答案大致对就行"</td><td>容易给 confidently wrong 高分</td></tr>
+        </tbody>
+      </table>
+      <p>结论：<strong>开放生成场景 reference-based 几乎都不够</strong> · 必须上 LLM-as-judge（第 5 章）。</p>
+
+      <h3 id="s-4-3"><span class="num">§4.3</span>Process metrics · agent 独有</h3>
+      <p>这层是 <strong>agent eval 区别于 LLM eval 的关键</strong>。常用：</p>
+      <ul>
+        <li><strong>tool selection accuracy</strong>——选对 tool 的比例（vs golden trajectory）</li>
+        <li><strong>tool call count</strong>——调 tool 次数 P50/P95（太多 = 绕弯）</li>
+        <li><strong>step count</strong>——总 superstep 数（vs golden）</li>
+        <li><strong>retry rate</strong>——同 tool 重试次数（高 = retry storm）</li>
+        <li><strong>HITL rate</strong>——触发 interrupt 的比例（设计预期对吗）</li>
+        <li><strong>recovery rate</strong>——失败后能 recover 的比例</li>
+      </ul>
+
+      <h3 id="s-4-4"><span class="num">§4.4</span>Operational metrics · 生产 SLO 基础</h3>
+      <pre><code><span class="c"># 4 个核心 SLO 数字</span>
+{
+    <span class="s">"success_rate"</span>:    <span class="s">"&gt; 92%"</span>,    <span class="c"># 业务定义的 success</span>
+    <span class="s">"p95_latency_ms"</span>:  <span class="s">"&lt; 8000"</span>,   <span class="c"># 含所有 LLM + tool</span>
+    <span class="s">"p95_ttft_ms"</span>:     <span class="s">"&lt; 1500"</span>,   <span class="c"># first token</span>
+    <span class="s">"avg_cost_per_req"</span>: <span class="s">"&lt; $0.04"</span>,  <span class="c"># input + output token</span>
+}
+</code></pre>
+      <p>P95 不要用 P50——P50 没事 P95 烂的场景天天发生。</p>
+    </section>
+
+    <!-- ============== Chapter 5 ============== -->
+    <section id="ch-5">
+      <header class="ch-head">
+        <span class="badge">Chapter 5 · 核心</span>
+        <h2>LLM-as-Judge 深讲 · 4 大偏差 + 校准</h2>
+        <p class="lede">"用 GPT-4 当裁判"听着简单 · 实际全是坑</p>
+      </header>
+
+      <h3 id="s-5-1"><span class="num">§5.1</span>3 种 judge 模式</h3>
+      <table>
+        <thead><tr><th>模式</th><th>怎么用</th><th>优势</th><th>劣势</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Single point</strong></td><td>评 1 个 output 给 1-5 分</td><td>简单</td><td>跨 judge 调用方差大 · 校准难</td></tr>
+          <tr><td><strong>Pairwise</strong></td><td>比较 A vs B · 选哪个好</td><td>稳定 · 跟人类相关性最高</td><td>O(N²) · 慢 · 贵</td></tr>
+          <tr><td><strong>Rubric scoring</strong></td><td>给 4-6 维 rubric · 每维独立打分</td><td>可解释 · 多维</td><td>rubric 设计是工艺活</td></tr>
+        </tbody>
+      </table>
+      <p>实战：<strong>大批量用 rubric (单点) · A/B 决策用 pairwise</strong>。</p>
+
+      <h3 id="s-5-2"><span class="num">§5.2</span>4 大偏差 · 必须知道</h3>
+      <ol>
+        <li><strong>Position bias</strong>——pairwise 时 LLM 倾向选位置 A 的（OpenAI / Claude 都有）。<em>解法</em>：A/B 各跑一次取平均</li>
+        <li><strong>Verbosity bias</strong>——LLM 倾向给长答案高分（哪怕灌水）。<em>解法</em>：rubric 明确 penalize 冗余 · 或限定字数对比</li>
+        <li><strong>Self-enhancement bias</strong>——GPT-4 当 judge 时偏向 GPT 写的。<em>解法</em>：用<em>不同家</em>的 LLM 当 judge（评 GPT 用 Claude · 评 Claude 用 GPT）</li>
+        <li><strong>Style bias</strong>——LLM 偏向 markdown 格式 / emoji / 列表。<em>解法</em>：rubric 加 "格式不影响打分" · 或 strip 格式后再评</li>
+      </ol>
+
+      <h3 id="s-5-3"><span class="num">§5.3</span>Rubric prompt · 模板 + 真实例</h3>
+      <pre><code>JUDGE_PROMPT = <span class="s">"""
+你是严格的客服质量评审员。评分 1-5 分整数 · 4 个维度独立打：
+
+[Helpfulness] 是否真正解决用户问题
+[Accuracy]    事实是否正确 · 没有幻觉
+[Safety]      是否泄露 PII · 是否触发越狱
+[Tone]        是否礼貌 · 是否符合品牌
+
+输出严格 JSON · 不加 markdown:
+{
+  "helpfulness": int,
+  "accuracy":    int,
+  "safety":      int,
+  "tone":        int,
+  "reasoning":   "1-2 句话解释"
+}
+
+⚠️ 不要因为答案长 / 用了 markdown / 列了 bullet 就打高分 · 只看内容。
+⚠️ 不要因为答案是英文/中文就有偏好 · 跟用户语言一致即可。
+
+---
+USER QUERY: {query}
+AGENT RESPONSE: {response}
+GROUND TRUTH (if any): {gt}
+"""</span>
+</code></pre>
+
+      <h3 id="s-5-4"><span class="num">§5.4</span>Judge 校准 · 必跟人类对齐</h3>
+      <p><strong>没校准的 LLM-judge 等于没 eval</strong>。流程：</p>
+      <ol>
+        <li>抽 100 条<strong>多样性</strong> sample</li>
+        <li>3 个人类专家独立打分（同 rubric）→ 取多数 / 平均</li>
+        <li>LLM-judge 跑同 100 条</li>
+        <li>算<strong>Cohen kappa / Spearman 相关</strong>——目标 ≥ 0.7</li>
+        <li>kappa &lt; 0.7 → 改 prompt / 换 model · 再校准</li>
+        <li>每<strong>季度重测</strong>——judge model 升级 / 业务漂移都会破坏校准</li>
+      </ol>
+
+      <h3 id="s-5-5"><span class="num">§5.5</span>3 种 judge 实现库</h3>
+      <table>
+        <thead><tr><th>库</th><th>核心</th><th>用</th></tr></thead>
+        <tbody>
+          <tr><td><a href="https://docs.confident-ai.com/" target="_blank">DeepEval</a></td><td>20+ prebuilt metric (G-Eval / faithfulness / answer relevancy)</td><td>RAG / agent 通用</td></tr>
+          <tr><td><a href="https://docs.ragas.io/" target="_blank">Ragas</a></td><td>RAG 专用 (faithfulness / context recall / answer relevance)</td><td>RAG 系统</td></tr>
+          <tr><td><a href="https://www.trulens.org/" target="_blank">TruLens</a></td><td>"feedback functions" 框架</td><td>定制 metric · 跟 LangChain 集成</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-5-6"><span class="num">§5.6</span>G-Eval · 业界主流框架</h3>
+      <p>NeurIPS 2023 paper · 思想：让 LLM 先生成<em>评估步骤</em>再打分（CoT 校准）。已成行业标配。</p>
+      <pre><code><span class="k">from</span> deepeval.metrics <span class="k">import</span> GEval
+<span class="k">from</span> deepeval.test_case <span class="k">import</span> LLMTestCaseParams
+
+correctness = GEval(
+    name=<span class="s">"Correctness"</span>,
+    criteria=<span class="s">"判断 actual_output 是否事实正确"</span>,
+    evaluation_steps=[
+        <span class="s">"对比 actual_output 和 expected_output 的事实"</span>,
+        <span class="s">"忽略表达差异 · 只看事实"</span>,
+        <span class="s">"任何幻觉直接 0 分"</span>,
+    ],
+    evaluation_params=[LLMTestCaseParams.INPUT,
+                       LLMTestCaseParams.ACTUAL_OUTPUT,
+                       LLMTestCaseParams.EXPECTED_OUTPUT],
+)
+</code></pre>
+
+      <div class="box deep">
+        <div class="box-label">面试金句</div>
+        <p><em>"LLM-as-judge 我用 G-Eval 框架 + rubric 多维打分 · pairwise 只用在 A/B。4 个偏差必须防：position bias 双向跑取平均 · verbosity 在 rubric 明确写 'penalize 冗余' · self-enhancement 用不同家 LLM 当 judge · style bias 强调 'format 不影响分'。每个 judge 上线前必跟 100 条人类标注算 Cohen kappa · ≥ 0.7 才算可用 · 每季度重新校准"</em></p>
+      </div>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 5</div>
+        <ul>
+          <li><a href="https://arxiv.org/abs/2303.16634" target="_blank">G-Eval paper (NeurIPS 2023)</a></li>
+          <li><a href="https://arxiv.org/abs/2306.05685" target="_blank">Judging LLM-as-a-Judge with MT-Bench (UC Berkeley)</a> ——讲 4 大偏差最早的 paper</li>
+          <li><a href="https://eugeneyan.com/writing/llm-evaluators/" target="_blank">Eugene Yan · LLM evaluators</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 6 ============== -->
+    <section id="ch-6">
+      <header class="ch-head">
+        <span class="badge">Chapter 6 · 横评</span>
+        <h2>5 工具横评 · LangSmith / Langfuse / W&amp;B Weave / Phoenix / Promptfoo</h2>
+        <p class="lede">不是 feature 表 · 是 senior 选型决策</p>
+      </header>
+
+      <h3 id="s-6-1"><span class="num">§6.1</span>5 个工具一句话定位</h3>
+      <table>
+        <thead><tr><th>工具</th><th>家</th><th>定位</th><th>开源?</th></tr></thead>
+        <tbody>
+          <tr><td><strong>LangSmith</strong></td><td>LangChain</td><td>LangChain 生态 default · trace + eval + dataset 一体</td><td>❌ SaaS only</td></tr>
+          <tr><td><strong>Langfuse</strong></td><td>独立</td><td>开源版 LangSmith · self-host 友好</td><td>✓ MIT</td></tr>
+          <tr><td><strong>W&amp;B Weave</strong></td><td>Weights &amp; Biases</td><td>ML team 已经在用 W&amp;B 的延伸</td><td>✓ Apache 2</td></tr>
+          <tr><td><strong>Arize Phoenix</strong></td><td>Arize</td><td>OSS · OpenTelemetry-native · self-host</td><td>✓ Elastic 2</td></tr>
+          <tr><td><strong>Promptfoo</strong></td><td>独立</td><td>CLI / CI 优先 · pre-merge eval gate</td><td>✓ MIT</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-6-2"><span class="num">§6.2</span>能力对比 · 8 维表</h3>
+      <table>
+        <thead><tr><th></th><th>LangSmith</th><th>Langfuse</th><th>W&amp;B Weave</th><th>Phoenix</th><th>Promptfoo</th></tr></thead>
+        <tbody>
+          <tr><td>Trace UI</td><td>★★★★★</td><td>★★★★</td><td>★★★★</td><td>★★★★</td><td>★★</td></tr>
+          <tr><td>Self-host</td><td>❌</td><td>✓ docker compose</td><td>✓ wandb local</td><td>✓ docker</td><td>✓ pip</td></tr>
+          <tr><td>Dataset 管理</td><td>★★★★★</td><td>★★★★</td><td>★★★</td><td>★★★</td><td>★★ (yaml)</td></tr>
+          <tr><td>LLM-judge prebuilt</td><td>★★★★</td><td>★★★</td><td>★★★</td><td>★★★ (用 Ragas)</td><td>★★★★</td></tr>
+          <tr><td>CI 集成</td><td>★★★</td><td>★★★</td><td>★★</td><td>★★</td><td>★★★★★</td></tr>
+          <tr><td>OpenTelemetry</td><td>部分</td><td>✓</td><td>部分</td><td>✓✓ native</td><td>❌</td></tr>
+          <tr><td>多 framework</td><td>偏 LangChain</td><td>any</td><td>any</td><td>any</td><td>any</td></tr>
+          <tr><td>价格</td><td>SaaS · 按 trace 计</td><td>免费 self-host / SaaS</td><td>SaaS · 按 user</td><td>OSS 免费</td><td>OSS 免费</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-6-3"><span class="num">§6.3</span>选型决策 · 4 种典型场景</h3>
+      <ul>
+        <li><strong>已经用 LangChain · 有预算</strong> → LangSmith （集成最深 · 文档最好）</li>
+        <li><strong>要 self-host / 数据合规</strong> → Langfuse （开源 · 一键部署）</li>
+        <li><strong>已经用 W&amp;B 跟踪传统 ML</strong> → Weave （省一个工具）</li>
+        <li><strong>OSS-first · OpenTelemetry 栈</strong> → Phoenix （跟 Datadog/Grafana 对接好）</li>
+        <li><strong>最重 CI eval gate</strong> → Promptfoo + 上面任一 trace 工具组合</li>
+      </ul>
+
+      <h3 id="s-6-4"><span class="num">§6.4</span>典型集成代码</h3>
+      <pre><code><span class="c"># Langfuse · 几乎零代码集成 LangChain</span>
+<span class="k">from</span> langfuse.callback <span class="k">import</span> CallbackHandler
+
+handler = CallbackHandler(
+    public_key=<span class="s">"pk-..."</span>, secret_key=<span class="s">"sk-..."</span>,
+    host=<span class="s">"http://localhost:3000"</span>,
+)
+result = agent.invoke({<span class="s">"input"</span>: q}, config={<span class="s">"callbacks"</span>: [handler]})
+<span class="c"># trace 自动到 Langfuse UI</span>
+</code></pre>
+
+      <pre><code><span class="c"># Promptfoo · CI gate</span>
+<span class="c"># promptfooconfig.yaml</span>
+<span class="s">prompts: [file://prompts/agent.yaml]
+providers: ["openai:gpt-4o-mini", "anthropic:claude-3-5-haiku"]
+tests:
+  - vars: { query: "退货" }
+    assert:
+      - type: contains
+        value: "退货政策"
+      - type: llm-rubric
+        value: "回答必须礼貌且包含具体步骤"
+      - type: cost
+        threshold: 0.01</span>
+
+$ promptfoo eval --output report.html
+$ promptfoo eval --fail-on-error  <span class="c"># CI 用 · 失败 exit 1</span>
+</code></pre>
+    </section>
+
+    <!-- ============== Chapter 7 ============== -->
+    <section id="ch-7">
+      <header class="ch-head">
+        <span class="badge">Chapter 7 · 生产</span>
+        <h2>生产 observability · SLO + dashboard + alert + incident</h2>
+        <p class="lede">eval 是<em>开发期</em>的事 · obs 是<em>生产期</em>的事 · 都要</p>
+      </header>
+
+      <h3 id="s-7-1"><span class="num">§7.1</span>SLO 定义 · 4 个数字一张图</h3>
+      <table>
+        <thead><tr><th>SLO</th><th>典型 target</th><th>怎么算</th><th>违反时</th></tr></thead>
+        <tbody>
+          <tr><td>Success rate</td><td>≥ 92%</td><td>业务定义 (LLM-judge / rule)</td><td>P0 alert · 上 incident</td></tr>
+          <tr><td>P95 latency</td><td>&lt; 8s</td><td>trace duration</td><td>P1 alert</td></tr>
+          <tr><td>P95 TTFT</td><td>&lt; 1.5s</td><td>first token timestamp</td><td>P1 alert</td></tr>
+          <tr><td>Avg cost / req</td><td>&lt; $0.04</td><td>token 计 + price table</td><td>P2 alert · cost 周报</td></tr>
+        </tbody>
+      </table>
+      <p>每个 SLO 配 <strong>error budget</strong>：success 92% = 月 8% 错误预算 · 烧完触发 release freeze。</p>
+
+      <h3 id="s-7-2"><span class="num">§7.2</span>Dashboard · 5 板块</h3>
+      <ol>
+        <li><strong>Overview</strong>——4 SLO 实时数字 + 24h 趋势 + error budget remaining</li>
+        <li><strong>Per-flow</strong>——按 use case 拆（"退货 query" / "技术 query"）· 各自 SLO</li>
+        <li><strong>Top failures</strong>——失败 case Top 20 + cluster · 一键跳 trace</li>
+        <li><strong>Cost breakdown</strong>——按 model / use case / customer · 找 cost spike</li>
+        <li><strong>Eval drift</strong>——LLM-judge 评分 24h / 7d 移动平均 · 看 regression</li>
+      </ol>
+
+      <h3 id="s-7-3"><span class="num">§7.3</span>Alert 4 个核心规则</h3>
+      <ul>
+        <li><strong>Success rate 突降</strong>——5 min 窗口 success &lt; 85% (vs baseline 92%) → P0</li>
+        <li><strong>Cost 暴涨</strong>——hour cost &gt; 历史 P95 × 2 → P1（防 prompt injection 套问 LLM 烧钱）</li>
+        <li><strong>P95 latency 突增</strong>——10 min P95 &gt; 12s → P1</li>
+        <li><strong>Hallucination 突增</strong>——LLM-judge faithfulness 评分 24h 均值 &lt; 0.85 → P1</li>
+      </ul>
+      <p><strong>避坑</strong>：alert 数量控制在每周 &lt; 5 个 · 否则团队疲劳忽略真正 P0。</p>
+
+      <h3 id="s-7-4"><span class="num">§7.4</span>Incident response · 6 步</h3>
+      <ol>
+        <li><strong>Acknowledge</strong>——5 分钟内 ack（PagerDuty / Slack）</li>
+        <li><strong>Triage</strong>——看 dashboard · 是 model / prompt / tool / data 哪层</li>
+        <li><strong>Mitigate</strong>——能 rollback 优先 rollback · 不能就 feature flag 关掉</li>
+        <li><strong>Communicate</strong>——status page + 内部 channel 30 分钟 update 一次</li>
+        <li><strong>Resolve</strong>——根因找到 + fix 上线 + alert 恢复</li>
+        <li><strong>Postmortem</strong>——24-48h 内写 · 含 5-why · 进 review</li>
+      </ol>
+    </section>
+
+    <!-- ============== Chapter 8 ============== -->
+    <section id="ch-8">
+      <header class="ch-head">
+        <span class="badge">Chapter 8 · 在线</span>
+        <h2>在线 eval · A/B + shadow + canary + champion-challenger</h2>
+        <p class="lede">offline eval 跑 100% 可能上线挂 · 4 种 deploy 策略保你不翻</p>
+      </header>
+
+      <h3 id="s-8-1"><span class="num">§8.1</span>4 种 deploy 模式</h3>
+      <table>
+        <thead><tr><th>模式</th><th>怎么</th><th>风险</th><th>用</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Shadow</strong></td><td>新版本接收同 traffic · output<em>不</em>返回用户 · 只记录 + LLM-judge</td><td>0 用户风险 · 但贵 (跑 2 倍 LLM)</td><td>大改动 · 第一道</td></tr>
+          <tr><td><strong>Canary</strong></td><td>新版本 1% → 5% → 25% → 100% · 每档观察 24h</td><td>1% 用户受影响</td><td>standard release</td></tr>
+          <tr><td><strong>A/B test</strong></td><td>50/50 同时跑 · 比 metric · 算统计显著</td><td>50% 用户受影响</td><td>需要量化 lift 的改动</td></tr>
+          <tr><td><strong>Champion-challenger</strong></td><td>多个新版本同时挑战 baseline · winner 占满</td><td>多版本并行</td><td>探索 prompt / model 多选项</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-8-2"><span class="num">§8.2</span>A/B 算样本量 + 显著性</h3>
+      <pre><code><span class="c"># 经典 frequentist sample size 算</span>
+<span class="k">from</span> statsmodels.stats.power <span class="k">import</span> NormalIndPower
+
+baseline = <span class="s">0.92</span>     <span class="c"># 现在 success rate</span>
+mde = <span class="s">0.02</span>          <span class="c"># 想检测的最小提升 (2 个百分点)</span>
+alpha = <span class="s">0.05</span>; power = <span class="s">0.8</span>
+
+effect_size = (mde) / (baseline * (<span class="s">1</span> - baseline)) ** <span class="s">0.5</span>
+n_per_arm = NormalIndPower().solve_power(effect_size, alpha=alpha, power=power)
+print(f<span class="s">"{int(n_per_arm)} samples / arm needed"</span>)
+<span class="c"># 输出: ~3700 samples / arm</span>
+</code></pre>
+
+      <p><strong>原则</strong>：</p>
+      <ul>
+        <li>跑到样本量再读结果——<em>peeking 是统计大忌</em>（除非用 sequential test）</li>
+        <li>对 cost / latency 跑<em>双方差</em>分析 · 不只比 mean</li>
+        <li>用<em>guardrail metric</em>——主 metric (success) 涨 · 但 cost 翻倍 / hallucination 涨 · 也要 reject</li>
+      </ul>
+
+      <h3 id="s-8-3"><span class="num">§8.3</span>Shadow eval pipeline</h3>
+      <pre><code><span class="c"># 简化版 shadow service</span>
+<span class="k">async</span> <span class="k">def</span> <span class="f">shadow_eval</span>(req, prod_resp):
+    <span class="c"># 异步 fire-and-forget · 不阻塞用户</span>
+    asyncio.create_task(_shadow_run(req, prod_resp))
+    <span class="k">return</span> prod_resp
+
+<span class="k">async</span> <span class="k">def</span> <span class="f">_shadow_run</span>(req, prod_resp):
+    new_resp = <span class="k">await</span> agent_v2.invoke(req)            <span class="c"># 跑新版</span>
+    judge = <span class="k">await</span> llm_judge.compare(prod_resp, new_resp, req)  <span class="c"># LLM 比</span>
+    <span class="k">await</span> log.write({<span class="s">"req"</span>: req, <span class="s">"prod"</span>: prod_resp,
+                     <span class="s">"new"</span>: new_resp, <span class="s">"verdict"</span>: judge})
+</code></pre>
+    </section>
+
+    <!-- ============== Chapter 9 ============== -->
+    <section id="ch-9">
+      <header class="ch-head">
+        <span class="badge">Chapter 9 · CI</span>
+        <h2>Eval-driven dev · CI 集成 + pre-merge gate</h2>
+        <p class="lede">eval 不进 CI = 等于没 eval · 每个 PR 都该跑</p>
+      </header>
+
+      <h3 id="s-9-1"><span class="num">§9.1</span>3 层 CI gate</h3>
+      <table>
+        <thead><tr><th>Gate</th><th>跑什么</th><th>耗时</th><th>触发</th></tr></thead>
+        <tbody>
+          <tr><td>Pre-commit</td><td>L1 unit / lint</td><td>&lt; 30s</td><td>本地 commit</td></tr>
+          <tr><td>PR open</td><td>L1 + L2 (50 sample)</td><td>2-5 min</td><td>PR 创建 / push</td></tr>
+          <tr><td>Pre-merge</td><td>L1 + L2 + L3 (300 sample)</td><td>10-30 min</td><td>required check</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-9-2"><span class="num">§9.2</span>GitHub Actions 模板</h3>
+      <pre><code><span class="c"># .github/workflows/eval.yml</span>
+name: agent-eval
+on: [pull_request]
+jobs:
+  l1-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install -r requirements.txt
+      - run: pytest tests/unit -v          <span class="c"># L1 unit</span>
+  l2-component:
+    needs: l1-unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install -r requirements.txt
+      - run: promptfoo eval -c eval/component.yaml --output result.json
+      - run: python ci/check_thresholds.py result.json
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  l3-e2e:
+    needs: l2-component
+    if: contains(github.event.pull_request.labels.*.name, 'release')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python eval/run_e2e.py --dataset golden_v3 --judge gpt-4o
+      - uses: actions/upload-artifact@v3
+        with: { name: eval-report, path: report.html }
+</code></pre>
+
+      <h3 id="s-9-3"><span class="num">§9.3</span>Threshold 怎么定</h3>
+      <ul>
+        <li><strong>绝对阈值</strong>——success ≥ 92% / cost ≤ $0.04（业务承诺）</li>
+        <li><strong>相对阈值 (regression check)</strong>——新分 ≥ baseline × 0.98（允许 2% 噪声）</li>
+        <li><strong>per-metric 都要</strong>——一个挂全挂 · 不能某 metric 提升而无视另一个崩</li>
+      </ul>
+    </section>
+
+    <!-- ============== Chapter 10 ============== -->
+    <section id="ch-10">
+      <header class="ch-head">
+        <span class="badge">Chapter 10 · 实战</span>
+        <h2>3 个真实 eval 案例 · 完整复盘</h2>
+        <p class="lede">看别人翻车比读教程值钱</p>
+      </header>
+
+      <h3 id="s-10-1"><span class="num">§10.1</span>案例 1 · 客服 agent · LLM-judge 校准失误</h3>
+      <p><strong>背景</strong>：客服 agent 上线 2 个月 · LLM-judge 评分 4.2/5 一直稳。NPS 突然跌 8 分 · 业务侧反馈用户抱怨"答案对但语气冷"。</p>
+      <p><strong>挖根因</strong>：发现 judge prompt 只评 helpfulness + accuracy · 没评 tone。换更新的 model（GPT-4o）后<em>更</em>偏好简短直接的回答 · 跟人类期待的"温暖"反向。</p>
+      <p><strong>fix</strong>：</p>
+      <ol>
+        <li>rubric 加 tone 维度 · 重 spec</li>
+        <li>抽 200 真实人类评分重新校准 judge</li>
+        <li>每季度 mandatory recalibration</li>
+        <li>加 NPS 进 dashboard 当 leading indicator</li>
+      </ol>
+      <p><strong>教训</strong>：<em>judge 评分稳 ≠ 用户满意。判断标准跟业务 KPI 必须 align · 还要跟人类定期校准</em></p>
+
+      <h3 id="s-10-2"><span class="num">§10.2</span>案例 2 · RAG agent · golden dataset 老化</h3>
+      <p><strong>背景</strong>：医疗问答 RAG · golden dataset 100 条 · accuracy 一直 95% · 上线 6 个月。突然客户复诊重复问题率涨 30%。</p>
+      <p><strong>挖根因</strong>：<em>golden 还停在旧版药品目录</em> · 6 个月里有 23% 药品改了适应症。agent 答的都是<em>过时但跟 golden 对得上</em>的答案。</p>
+      <p><strong>fix</strong>：</p>
+      <ol>
+        <li>每 quarter rotate golden（30% 替换为新 production sample）</li>
+        <li>加 "时效性" 评估 · LLM 检查事实是否最新</li>
+        <li>knowledge base 增量同步监控 · 落后 &gt; 7 天 alert</li>
+      </ol>
+      <p><strong>教训</strong>：<em>dataset 不是一次性资产 · 必须有维护节奏</em></p>
+
+      <h3 id="s-10-3"><span class="num">§10.3</span>案例 3 · 销售助手 · A/B test 假赢</h3>
+      <p><strong>背景</strong>：销售助手新 prompt A/B 跑 2 周 · A 组 conversion +3.2% · 推全量 3 周后 conversion 反而 -1.8%。</p>
+      <p><strong>挖根因</strong>：A/B 时 A 组分到的是<strong>新客户多</strong> (随机 hash 跟客户注册时间相关) · 新客户基数 conversion 本来就高。这是<em>分组偏差</em>不是真效果。</p>
+      <p><strong>fix</strong>：</p>
+      <ol>
+        <li>分组算法用 deterministic hash on user_id · 不能跟时间相关</li>
+        <li>看 A/B 报告必看<em>分组 baseline 是否平衡</em>（pre-test 关键 segment 各组占比）</li>
+        <li>用 stratified sampling 强制平衡</li>
+      </ol>
+      <p><strong>教训</strong>：<em>A/B 不是分流就完事 · 分组偏差 / Simpson 悖论会骗你</em></p>
+    </section>
+
+    <!-- ============== Interview Q ============== -->
+    <section id="qa">
+      <header class="ch-head">
+        <span class="badge">附录 A</span>
+        <h2>15 道 senior eval 面试题</h2>
+      </header>
+      <div class="box interview"><div class="box-label">概念 (5)</div><ol>
+        <li><strong>agent eval 跟 LLM eval 区别？</strong>——compounding error / trajectory eval / process metric / 多 step error 累积</li>
+        <li><strong>没有 ground truth 怎么 eval？</strong>——LLM-as-judge / pairwise / process metric / 人类抽审 4 选 1</li>
+        <li><strong>为啥不能只看 P50 latency？</strong>——P50 良好 P95 烂在 LLM 场景普遍 · 长尾决定 SLO 是否破</li>
+        <li><strong>什么是 compounding error · 怎么对抗</strong>——单步 95% × 15 = 46% · 对抗：每步 eval / 加 verifier / 减 step / 减 retry</li>
+        <li><strong>5 层 eval 金字塔讲一下</strong>——unit / component / E2E / production / red team · 触发 + dataset + metric 全说</li>
+      </ol></div>
+      <div class="box interview"><div class="box-label">LLM-as-Judge (5)</div><ol start="6">
+        <li><strong>4 大偏差 + 怎么防</strong>——position (双向)/ verbosity (rubric 限) / self-enhancement (跨家 LLM) / style (strip format)</li>
+        <li><strong>怎么校准 judge</strong>——100 sample 人类标 + Cohen kappa ≥ 0.7 · 季度 recalibrate</li>
+        <li><strong>pairwise vs single point 何选</strong>——A/B 决策用 pairwise · 大批量用 single + rubric · pairwise O(N²) 贵</li>
+        <li><strong>G-Eval 是啥</strong>——LLM 先生成 evaluation_steps 再评分 (CoT) · NeurIPS 2023</li>
+        <li><strong>judge 用什么 model</strong>——比被评 agent 的 model<em>强一档</em> · 评 GPT-4 用 Claude Opus / 评 mid-tier 用 GPT-4o</li>
+      </ol></div>
+      <div class="box interview"><div class="box-label">生产 (5)</div><ol start="11">
+        <li><strong>SLO 怎么定</strong>——4 数字 (success / P95 latency / TTFT / cost) + error budget + alert 阈值</li>
+        <li><strong>shadow vs canary 区别</strong>——shadow 不返用户 · 0 风险但贵 2x；canary 真接 1% 流量逐步放</li>
+        <li><strong>A/B 显著性踩过哪些坑</strong>——peeking / 分组偏差 / 没看 guardrail metric / 样本量没算</li>
+        <li><strong>eval 进 CI 怎么设计</strong>——3 层 gate · pre-commit / PR open / pre-merge · 各跑 L1/L2/L3</li>
+        <li><strong>postmortem 写啥</strong>——timeline / impact / root cause (5-why) / fix / action items / 防再犯措施</li>
+      </ol></div>
+    </section>
+
+    <!-- ============== Glossary ============== -->
+    <section id="glossary">
+      <header class="ch-head"><span class="badge">附录 B</span><h2>70 词术语速查</h2></header>
+      <table>
+        <thead><tr><th>术语</th><th>含义</th></tr></thead>
+        <tbody>
+          <tr><td><strong>A/B test</strong></td><td>新旧版本同时跑分流量 · 比 metric 显著性</td></tr>
+          <tr><td><strong>BLEU</strong></td><td>机器翻译 metric · n-gram precision</td></tr>
+          <tr><td><strong>BERTScore</strong></td><td>用 BERT embedding 算文本相似度</td></tr>
+          <tr><td><strong>Canary</strong></td><td>新版本 1% → 5% → 25% → 100% 逐步放量</td></tr>
+          <tr><td><strong>Champion-challenger</strong></td><td>多新版本并行挑战 baseline</td></tr>
+          <tr><td><strong>Cohen's kappa</strong></td><td>annotator agreement 指标 · 0.7 是常见阈值</td></tr>
+          <tr><td><strong>Compounding error</strong></td><td>多 step task 单步错率累积 · agent eval 核心难点</td></tr>
+          <tr><td><strong>DeepEval</strong></td><td>开源 eval 库 · 20+ prebuilt metric</td></tr>
+          <tr><td><strong>Drift</strong></td><td>数据分布 / metric 随时间漂移</td></tr>
+          <tr><td><strong>E2E eval</strong></td><td>End-to-end · 整链路评 final output + trajectory</td></tr>
+          <tr><td><strong>Error budget</strong></td><td>SLO 允许的失败配额 · 烧完 release freeze</td></tr>
+          <tr><td><strong>Exact match</strong></td><td>output 跟 ground truth 字符串完全相等</td></tr>
+          <tr><td><strong>Faithfulness</strong></td><td>RAG metric · output 是否忠于 retrieved context</td></tr>
+          <tr><td><strong>G-Eval</strong></td><td>LLM-judge 框架 · CoT 校准 (NeurIPS 2023)</td></tr>
+          <tr><td><strong>Golden dataset</strong></td><td>人工标注的高质量 eval 集</td></tr>
+          <tr><td><strong>Ground truth</strong></td><td>"标准答案" · agent 场景常没有</td></tr>
+          <tr><td><strong>Guardrail metric</strong></td><td>A/B 必看的副 metric (cost / safety) · 防主 metric 单赢</td></tr>
+          <tr><td><strong>Hallucination rate</strong></td><td>output 含幻觉的比例</td></tr>
+          <tr><td><strong>Hit rate</strong></td><td>retriever metric · top-k 是否含 relevant doc</td></tr>
+          <tr><td><strong>HITL rate</strong></td><td>触发 human-in-the-loop 的请求比例</td></tr>
+          <tr><td><strong>Implicit feedback</strong></td><td>👍/👎 · 编辑 diff · 重问率等隐性信号</td></tr>
+          <tr><td><strong>Inter-annotator agreement</strong></td><td>多标注员一致性 · 用 kappa / Krippendorff α</td></tr>
+          <tr><td><strong>Langfuse</strong></td><td>开源 trace + eval 平台 · MIT</td></tr>
+          <tr><td><strong>LangSmith</strong></td><td>LangChain 官方 trace + eval SaaS</td></tr>
+          <tr><td><strong>LLM-as-judge</strong></td><td>用 LLM 当评估器 · 给 rubric 打分</td></tr>
+          <tr><td><strong>MDE</strong></td><td>Minimum Detectable Effect · A/B 想检测的最小 lift</td></tr>
+          <tr><td><strong>NDCG</strong></td><td>Normalized Discounted Cumulative Gain · ranking metric</td></tr>
+          <tr><td><strong>OpenTelemetry</strong></td><td>跨语言 trace 标准 · Phoenix / Langfuse 都支持</td></tr>
+          <tr><td><strong>Pairwise comparison</strong></td><td>比较 A vs B · 跟人类 preference 相关性最高</td></tr>
+          <tr><td><strong>Peeking</strong></td><td>A/B 没跑够样本就读结果 · 假阳性大幅升</td></tr>
+          <tr><td><strong>Phoenix</strong></td><td>Arize OSS · OpenTelemetry-native</td></tr>
+          <tr><td><strong>PII scrub</strong></td><td>从 trace 去敏感信息 · Presidio / 正则</td></tr>
+          <tr><td><strong>Position bias</strong></td><td>pairwise judge 偏向位置 A 的 output</td></tr>
+          <tr><td><strong>Postmortem</strong></td><td>incident 后的复盘文档</td></tr>
+          <tr><td><strong>Process metric</strong></td><td>评 trajectory 而非 final output (tool 选 / step 数)</td></tr>
+          <tr><td><strong>Promptfoo</strong></td><td>CLI / CI eval 工具 · YAML 配置</td></tr>
+          <tr><td><strong>P95 latency</strong></td><td>95 分位响应时长 · LLM SLO 核心</td></tr>
+          <tr><td><strong>Ragas</strong></td><td>RAG 专用 eval 库 (faithfulness / context recall)</td></tr>
+          <tr><td><strong>Recall@k</strong></td><td>retriever metric · top-k 中 relevant doc 比例</td></tr>
+          <tr><td><strong>Red team</strong></td><td>主动攻击测试 (jailbreak / injection / 对抗 input)</td></tr>
+          <tr><td><strong>Reference-based</strong></td><td>有 ground truth 的 metric (BLEU / ROUGE / exact match)</td></tr>
+          <tr><td><strong>Regression detection</strong></td><td>新版本是否比旧版本差 · CI / 生产都要</td></tr>
+          <tr><td><strong>ROUGE</strong></td><td>摘要 metric · n-gram recall</td></tr>
+          <tr><td><strong>Rubric</strong></td><td>多维评分标准 · LLM-judge 必备</td></tr>
+          <tr><td><strong>Self-enhancement bias</strong></td><td>LLM 偏向自家 output</td></tr>
+          <tr><td><strong>Sequential test</strong></td><td>支持 peeking 的 A/B 算法 (mSPRT)</td></tr>
+          <tr><td><strong>Shadow eval</strong></td><td>新版本接 traffic 但不返用户 · LLM-judge 实时打分</td></tr>
+          <tr><td><strong>Single point</strong></td><td>评单 output 单分 · 跟 pairwise 对应</td></tr>
+          <tr><td><strong>SLO</strong></td><td>Service Level Objective · success / latency / cost target</td></tr>
+          <tr><td><strong>Spearman correlation</strong></td><td>rank 相关 · judge vs human 校准用</td></tr>
+          <tr><td><strong>Style bias</strong></td><td>judge 偏好 markdown / emoji / 列表</td></tr>
+          <tr><td><strong>Stratified sampling</strong></td><td>分层抽样 · A/B 防分组偏差</td></tr>
+          <tr><td><strong>Synthetic dataset</strong></td><td>LLM 生成的 eval 集</td></tr>
+          <tr><td><strong>Test set leakage</strong></td><td>train data 含 test data · accuracy 假高</td></tr>
+          <tr><td><strong>Trace</strong></td><td>一次请求的全 step 记录 · obs 核心</td></tr>
+          <tr><td><strong>Trajectory</strong></td><td>agent 的 thought / action 序列</td></tr>
+          <tr><td><strong>TruLens</strong></td><td>开源 eval 库 · "feedback functions"</td></tr>
+          <tr><td><strong>TTFT</strong></td><td>Time To First Token · 用户感知 latency 关键</td></tr>
+          <tr><td><strong>Uncertainty sampling</strong></td><td>挑 confidence 低的样本人工标 · active learning</td></tr>
+          <tr><td><strong>Verbosity bias</strong></td><td>judge 偏好长答案</td></tr>
+          <tr><td><strong>W&amp;B Weave</strong></td><td>Weights &amp; Biases 的 LLM eval 模块</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer class="colophon">
+      <div class="row"><span><strong>Eval &amp; Observability</strong> · v1.0 · 2026-05</span><span>10 章 · 5 工具横评 · 15 题 · 70 词</span></div>
+      <div class="row">
+        <span>姊妹 · → <a href="learn.html">学习</a> · <a href="enterprise.html">企业级</a> · <a href="agent-design.html">设计</a> · <a href="agent-coding.html">Coding</a> · <a href="agent-debugging.html">Debug</a> · <a href="langgraph-internals.html">LangGraph</a> · <a href="rag-production.html">RAG</a> · <a href="memory-context.html">Memory</a> · <a href="tool-design.html">Tool</a> · <a href="infra.html">Infra</a> · <a href="index.html">实现</a></span>
+      </div>
+    </footer>
+  </main>
+</div>
+<script>
+(function(){var l=document.querySelectorAll('.toc a[href^="#"]');var s=Array.prototype.map.call(l,function(a){var e=document.querySelector(a.getAttribute('href'));return{link:a,el:e};}).filter(function(x){return x.el;});function o(){var y=window.scrollY+80;var c=s[0];s.forEach(function(x){if(x.el.offsetTop<=y)c=x;});s.forEach(function(x){x.link.classList.toggle('active',x===c);});}window.addEventListener('scroll',o,{passive:true});o();})();
+</script>
+</body>
+</html>
