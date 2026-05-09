@@ -10,11 +10,12 @@ Built on **LangGraph 0.6** (orchestration backbone) + **FastAPI** (SSE streaming
 ![stack](https://img.shields.io/badge/backend-LangGraph%200.6%20%2B%20FastAPI-black)
 ![ui](https://img.shields.io/badge/frontend-React%2019%20%2B%20Vite-blue)
 
-> **📚 学习路径**
+> **📚 学习路径 · 三本书覆盖完整 agent 工程**
 > - 🟢 **完全新手** → [`docs/learn.html`](docs/learn.html) — 《从 0 到面试》13 章 + 110 词术语表 + 60 道面试题 + 8 周路线 + 进阶专题（benchmark / reasoning / async / agentic RAG / vibe coding / security）+ 每节附公开教程 / GitHub demo URL
+> - 🟠 **要做企业级项目** → [`docs/enterprise.html`](docs/enterprise.html) — 《企业级交付手册》10 章 + 5 份 spec 模板（PRD / Tech Design / Eval Plan / Risk Assessment / Runbook）+ 12 层技术栈选型 + 6 大工程能力 + RACI + 5 个翻车复盘 + 50 道企业级面试题 + 50 项上线 checklist
 > - 🔵 **想看实现** → [`docs/index.html`](docs/index.html) — 《Implementation Field Guide》17 章逐节点详解
 >
-> 双文件互补：先读 learn 建立心智模型，再读 field guide 看每个组件具体怎么写。
+> 三本互补：learn 建立心智 → enterprise 学交付流程 → index 看代码实现。
 
 ---
 
