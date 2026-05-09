@@ -11,7 +11,7 @@ Built on **LangGraph 0.6** (orchestration backbone) + **FastAPI** (SSE streaming
 ![ui](https://img.shields.io/badge/frontend-React%2019%20%2B%20Vite-blue)
 
 > **📚 学习路径**
-> - 🟢 **完全新手** → [`docs/learn.html`](docs/learn.html) — 《从 0 到面试》12 章 + 60 道面试题 + 8 周路线 + 2026 生态全景
+> - 🟢 **完全新手** → [`docs/learn.html`](docs/learn.html) — 《从 0 到面试》13 章 + 110 词术语表 + 60 道面试题 + 8 周路线 + 进阶专题（benchmark / reasoning / async / agentic RAG / vibe coding / security）+ 每节附公开教程 / GitHub demo URL
 > - 🔵 **想看实现** → [`docs/index.html`](docs/index.html) — 《Implementation Field Guide》17 章逐节点详解
 >
 > 双文件互补：先读 learn 建立心智模型，再读 field guide 看每个组件具体怎么写。
