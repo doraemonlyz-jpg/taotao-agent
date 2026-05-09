@@ -27,7 +27,7 @@ import (
 )
 
 func main() {
-	mode := flag.String("mode", "stream", "stream | block | multi-turn | http-server")
+	mode := flag.String("mode", "stream", "stream | block | multi-turn | http-server | healthcheck")
 	base := flag.String("base", envOr("AGENT_URL", "http://localhost:8000"), "agent base URL")
 	msg := flag.String("msg", "用一句话介绍一下 LangGraph", "message to send")
 	flag.Parse()
@@ -39,6 +39,19 @@ func main() {
 
 	ctx, cancel := signalCtx()
 	defer cancel()
+
+	// `healthcheck` mode is special: it just calls /health and exits non-zero
+	// on failure. Used by Docker / k8s probes — does NOT burn LLM tokens.
+	if *mode == "healthcheck" {
+		hctx, hc := context.WithTimeout(ctx, 5*time.Second)
+		defer hc()
+		if _, err := cli.Health(hctx); err != nil {
+			fmt.Fprintln(os.Stderr, "unhealthy:", err)
+			os.Exit(1)
+		}
+		fmt.Println("ok")
+		return
+	}
 
 	if h, err := cli.Health(ctx); err != nil {
 		log.Fatalf("health failed · is the backend up? %v", err)
@@ -116,6 +129,19 @@ func runMultiTurn(ctx context.Context, cli *agent.Client) {
 
 func runHTTPServer(ctx context.Context, cli *agent.Client) {
 	mux := http.NewServeMux()
+
+	// GET /health · for docker / k8s liveness probes
+	// returns 200 only if the upstream agent is reachable too
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		hctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+		defer cancel()
+		if _, err := cli.Health(hctx); err != nil {
+			http.Error(w, "agent unreachable: "+err.Error(), 503)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"ok":true,"upstream":"agent"}`))
+	})
 
 	// POST /api/ask  {"message":"...","session_id":"..."}
 	// → returns plain text reply (blocking)

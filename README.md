@@ -28,6 +28,10 @@ Built on **LangGraph 0.6** (orchestration backbone) + **FastAPI** (SSE streaming
 >
 > 四本互补：learn 建心智 → enterprise 学交付 → infra 钻底层 → index 看代码。
 
+> **🐹 想用 Go 服务调 agent？** → [`clients/go-client/`](clients/go-client/) · 零依赖纯 stdlib SDK · `cli.Chat` 阻塞 / `cli.ChatStream` 流式 · 4 个可跑 demo
+>
+> **🐳 想容器化一键起？** → [`DOCKER.md`](DOCKER.md) · `docker compose up --build` · agent + Go gateway 同时拉起 · 自带健康检查 + 持久化卷
+
 ---
 
 ## What's inside

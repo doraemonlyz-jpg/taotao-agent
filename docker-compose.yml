@@ -1,0 +1,81 @@
+# One command to bring up the entire taotao-agent stack:
+#
+#     docker compose up --build
+#
+# What you get:
+#   - agent    · Python FastAPI · LangGraph backend on :8000
+#   - gateway  · Go service     · public-facing proxy   on :8080
+#
+# Talk to it:
+#   curl http://localhost:8080/health
+#   curl -X POST http://localhost:8080/api/ask -d 'hello agent'
+#   curl 'http://localhost:8080/api/stream?msg=hi'   # SSE stream
+#
+# First-run notes:
+#   1. Copy backend/.env.example → backend/.env and fill ONE provider key
+#      (ANTHROPIC_API_KEY=sk-ant-... is the default).
+#   2. First build downloads ~1.2 GB Python deps (chromadb, sentence-transformers,
+#      onnxruntime); subsequent builds hit the cache and finish in seconds.
+#   3. ./data/ on the host stores chroma vectors + sqlite checkpoints + traces;
+#      delete to reset memory across restarts.
+
+services:
+
+  agent:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: taotao-agent-backend:dev
+    container_name: taotao-agent
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8000:8000"
+    volumes:
+      # persistent state across restarts (chroma, checkpoints, traces, HF cache)
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      start_period: 40s
+      retries: 5
+    restart: unless-stopped
+    # If you run a local LLM on the host (Ollama / LM Studio / vLLM), the agent
+    # container needs to reach it. Uncomment + adjust:
+    #   extra_hosts:
+    #     - "host.docker.internal:host-gateway"
+    # then in backend/.env set OLLAMA_BASE_URL=http://host.docker.internal:11434
+
+  gateway:
+    build:
+      context: ./clients/go-client
+      dockerfile: Dockerfile
+    image: taotao-agent-gateway:dev
+    container_name: taotao-gateway
+    environment:
+      # The Go service talks to the agent via the compose network
+      AGENT_URL: http://agent:8000
+      LISTEN_ADDR: ":8080"
+      # Optional: forward only requests that present this token.
+      # AGENT_API_KEY: change-me-in-prod
+    ports:
+      - "8080:8080"
+    depends_on:
+      agent:
+        condition: service_healthy
+    restart: unless-stopped
+    # Distroless image has no shell · health check uses the exposed /health
+    # endpoint, called by the gateway binary itself via TCP, exposed below.
+    # healthcheck reuses the gateway binary in `healthcheck` mode · just calls
+    # /health on the upstream agent · NEVER burns LLM tokens.
+    healthcheck:
+      test: ["CMD", "/gateway", "-mode=healthcheck", "-base=http://agent:8000"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+
+# Named volume alternative · uncomment if you'd rather not bind-mount ./data:
+# volumes:
+#   agent-data:
