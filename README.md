@@ -10,6 +10,11 @@ Built on **LangGraph 0.6** (orchestration backbone) + **FastAPI** (SSE streaming
 ![stack](https://img.shields.io/badge/backend-LangGraph%200.6%20%2B%20FastAPI-black)
 ![ui](https://img.shields.io/badge/frontend-React%2019%20%2B%20Vite-blue)
 
+> **📖 Implementation Field Guide** — open [`docs/index.html`](docs/index.html) in a
+> browser for a complete walkthrough of every node, tool, design tradeoff, and
+> pattern in this codebase. Written for studying, not for skimming.
+> ([preview the source](docs/index.html))
+
 ---
 
 ## What's inside
