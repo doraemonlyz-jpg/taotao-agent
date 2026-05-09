@@ -10,10 +10,11 @@ Built on **LangGraph 0.6** (orchestration backbone) + **FastAPI** (SSE streaming
 ![stack](https://img.shields.io/badge/backend-LangGraph%200.6%20%2B%20FastAPI-black)
 ![ui](https://img.shields.io/badge/frontend-React%2019%20%2B%20Vite-blue)
 
-> **📖 Implementation Field Guide** — open [`docs/index.html`](docs/index.html) in a
-> browser for a complete walkthrough of every node, tool, design tradeoff, and
-> pattern in this codebase. Written for studying, not for skimming.
-> ([preview the source](docs/index.html))
+> **📚 学习路径**
+> - 🟢 **完全新手** → [`docs/learn.html`](docs/learn.html) — 《从 0 到面试》11 章 + 60 道面试题 + 8 周路线
+> - 🔵 **想看实现** → [`docs/index.html`](docs/index.html) — 《Implementation Field Guide》17 章逐节点详解
+>
+> 双文件互补：先读 learn 建立心智模型，再读 field guide 看每个组件具体怎么写。
 
 ---
 
