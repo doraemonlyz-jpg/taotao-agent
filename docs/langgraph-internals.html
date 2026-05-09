@@ -1,0 +1,1850 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LangGraph 内部原理 + 5 框架对比 · senior agent engineer 必修</title>
+<meta name="description" content="LangGraph 6 大原语深讲（State/Reducer · Channels · Checkpointer · Interrupt · Command · Send）+ 跟 CrewAI / AutoGen / OpenAI Agents SDK / PydanticAI / Mastra 5 框架的设计哲学对比 + 5 个真实场景决策树 + Pregel 源码导读 + 15 道面试题。给 LangGraph-heavy 团队投递的差异化卖点。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #fbf5e8; --paper-2: #f4ecd6; --paper-card: #ffffff;
+  --ink: #1d1a14; --ink-soft: #3a3327; --ink-mute: #756c5c;
+  --rule: #d8cdb0; --rule-soft: #e8debc;
+  --leaf: #4a8a4a; --leaf-soft: #ebf3e7;
+  --rust: #c44d2a; --rust-soft: #fae6dc;
+  --sky:  #2c6ca8; --sky-soft:  #e2edf5;
+  --plum: #864c8e; --plum-soft: #f1e6f2;
+  --gold: #b8881e; --gold-soft: #f7eccd;
+  --code-bg: #fdf9ed; --code-fg: #2a2620; --code-key: #c44d2a;
+  --code-str: #4a8a4a; --code-cmt: #998a6c; --code-fn: #864c8e;
+  --font-display: "Fraunces", "Times New Roman", serif;
+  --font-body: "Lora", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  --font-zh: "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: radial-gradient(ellipse at top left, rgba(196, 178, 144, 0.12), transparent 50%), radial-gradient(ellipse at bottom right, rgba(74, 138, 74, 0.08), transparent 50%), var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.75; }
+:lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
+.book-body p, .book-body li { color: var(--ink-soft); }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(196, 77, 42, 0.4); }
+a:hover { background: rgba(196, 77, 42, 0.08); }
+em { font-style: italic; color: var(--leaf); font-weight: 500; }
+strong { font-weight: 600; color: var(--ink); }
+
+.layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); max-width: 1400px; margin: 0 auto; padding: 0 2rem; gap: 3rem; }
+@media (max-width: 980px) { .layout { grid-template-columns: 1fr; gap: 0; padding: 0 1.2rem; } .toc { position: static !important; max-height: none !important; } .toc-inner { display: none; } .toc.open .toc-inner { display: block; } .toc-toggle { display: inline-flex !important; } }
+
+.toc { position: sticky; top: 0; align-self: start; height: 100vh; max-height: 100vh; overflow: auto; padding: 2rem 0.4rem 4rem 0; border-right: 1px dashed var(--rule); font-family: var(--font-sans); font-size: 0.85rem; }
+.toc-toggle { display: none; margin: 1rem 0; padding: 0.4rem 0.8rem; background: var(--paper-card); border: 1px solid var(--rule); border-radius: 999px; cursor: pointer; }
+.toc-brand { padding: 0 0.7rem 1.1rem; border-bottom: 1px dashed var(--rule); margin-bottom: 1rem; }
+.toc-brand .mark { font-family: var(--font-display); font-style: italic; font-weight: 500; font-size: 1.4rem; color: var(--ink); display: block; line-height: 1.1; }
+.toc-brand .mark .dot { color: var(--rust); }
+.toc-brand .sub { font-family: var(--font-sans); font-size: 0.72rem; color: var(--ink-mute); margin-top: 0.4rem; display: block; line-height: 1.4; }
+.toc-brand .sub strong { color: var(--rust); font-weight: 700; }
+.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: tocch; }
+.toc > .toc-inner > ol > li { counter-increment: tocch; margin: 0.05rem 0; }
+.toc a { display: flex; gap: 0.6rem; align-items: baseline; padding: 0.34rem 0.6rem; border: none; color: var(--ink-soft); font-weight: 500; border-radius: 6px; line-height: 1.35; }
+.toc > .toc-inner > ol > li > a::before { content: "Ch " counter(tocch, decimal-leading-zero); font-family: var(--font-mono); font-size: 0.65rem; color: var(--rust); width: 3.4em; flex-shrink: 0; font-weight: 500; }
+.toc a:hover { background: var(--paper-2); color: var(--ink); }
+.toc a.active { background: var(--rust-soft); color: var(--rust); }
+.toc-foot { margin-top: 2rem; padding: 1rem 0.7rem 0; border-top: 1px dashed var(--rule); font-family: var(--font-sans); font-size: 0.74rem; color: var(--ink-mute); line-height: 1.6; }
+.toc-foot a { color: var(--ink-mute); border-bottom-color: rgba(117, 108, 92, 0.3); }
+.toc-foot a:hover { color: var(--rust); }
+
+.book-body { padding: 2rem 0 6rem; max-width: 800px; }
+.book-body section { margin: 0 0 5rem; scroll-margin-top: 1rem; }
+
+.cover { margin-bottom: 4.5rem; padding-bottom: 2.5rem; border-bottom: 1px solid var(--ink); position: relative; }
+.cover::after { content: ""; position: absolute; left: 0; bottom: -5px; width: 80px; height: 3px; background: var(--rust); }
+.cover .eyebrow { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.06em; color: var(--rust); margin-bottom: 1.4rem; font-weight: 600; text-transform: uppercase; }
+.cover .eyebrow .sep { color: var(--rule); margin: 0 0.6rem; font-weight: 400; }
+.cover h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(2.4rem, 4.8vw, 4rem); line-height: 1.08; letter-spacing: -0.015em; margin: 0 0 1.4rem; color: var(--ink); }
+.cover h1 em { color: var(--rust); font-style: italic; }
+.cover .lede { font-size: 1.18rem; color: var(--ink-soft); max-width: 36em; margin: 0 0 2rem; line-height: 1.65; }
+.cover .who { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; padding: 1.4rem 1.6rem; margin-top: 2rem; font-size: 0.96rem; }
+.cover .who h4 { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--rust); margin: 0 0 0.6rem; }
+.cover .who ul { margin: 0; padding-left: 1.2rem; }
+.cover .who li { margin: 0.15rem 0; }
+
+.ch-head { margin: 0 0 2rem; }
+.ch-head .badge { display: inline-block; font-family: var(--font-sans); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--rust); background: var(--rust-soft); padding: 0.25rem 0.7rem; border-radius: 999px; margin-bottom: 1rem; }
+.ch-head h2 { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.9rem, 3.2vw, 2.7rem); line-height: 1.12; margin: 0 0 0.6rem; color: var(--ink); letter-spacing: -0.01em; }
+.ch-head .lede { font-style: italic; color: var(--ink-mute); font-size: 1.05rem; font-family: var(--font-display); margin: 0; }
+h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.5rem; margin: 2.8rem 0 0.8rem; color: var(--ink); scroll-margin-top: 1rem; }
+h3 .num { font-family: var(--font-mono); font-size: 0.7rem; color: var(--rust); font-weight: 500; margin-right: 0.5rem; }
+h4 { font-family: var(--font-sans); font-weight: 600; font-size: 1.05rem; margin: 1.8rem 0 0.4rem; color: var(--ink); }
+h5 { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-mute); margin: 1.2rem 0 0.4rem; }
+p { margin: 0 0 1rem; }
+ol, ul { padding-left: 1.4rem; margin: 0.4rem 0 1.2rem; }
+li { margin: 0.25rem 0; }
+
+code { font-family: var(--font-mono); font-size: 0.86em; background: var(--sky-soft); padding: 0.05rem 0.4rem; border-radius: 4px; color: var(--sky); font-weight: 500; }
+strong code { color: var(--ink); }
+pre { font-family: var(--font-mono); background: var(--code-bg); color: var(--code-fg); padding: 1.1rem 1.3rem; border-radius: 8px; border: 1px solid var(--rule-soft); border-left: 3px solid var(--sky); overflow-x: auto; font-size: 0.81rem; line-height: 1.6; margin: 1rem 0 1.4rem; }
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; font-weight: 400; }
+pre .k { color: var(--code-key); font-weight: 500; }
+pre .s { color: var(--code-str); }
+pre .c { color: var(--code-cmt); font-style: italic; }
+pre .f { color: var(--code-fn); font-weight: 500; }
+
+.box { margin: 1.5rem 0; padding: 1.2rem 1.4rem; border-radius: 10px; border-left: 4px solid; }
+.box .box-label { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
+.box .box-label::before { font-size: 1rem; }
+.box p:last-child { margin-bottom: 0; }
+.box.concept { background: var(--leaf-soft); border-color: var(--leaf); }
+.box.concept .box-label { color: var(--leaf); }
+.box.concept .box-label::before { content: "📖"; }
+.box.tip { background: var(--rust-soft); border-color: var(--rust); }
+.box.tip .box-label { color: var(--rust); }
+.box.tip .box-label::before { content: "💡"; }
+.box.warn { background: #fff4e0; border-color: #d49414; }
+.box.warn .box-label { color: #b87a0a; }
+.box.warn .box-label::before { content: "⚠️"; }
+.box.deep { background: var(--plum-soft); border-color: var(--plum); }
+.box.deep .box-label { color: var(--plum); }
+.box.deep .box-label::before { content: "✦"; font-weight: 600; }
+.box.interview { background: var(--gold-soft); border-color: var(--gold); }
+.box.interview .box-label { color: var(--gold); }
+.box.interview .box-label::before { content: "🎯"; }
+.box.reading { background: var(--sky-soft); border-color: var(--sky); }
+.box.reading .box-label { color: var(--sky); }
+.box.reading .box-label::before { content: "📚"; }
+
+table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.6rem; font-size: 0.9rem; background: var(--paper-card); border-radius: 6px; overflow: hidden; border: 1px solid var(--rule); }
+th, td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+th { font-family: var(--font-sans); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink); font-weight: 600; background: var(--paper-2); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(196, 178, 144, 0.13); }
+table code { font-size: 0.82em; }
+
+.figure { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 12px; padding: 1.6rem 1.4rem 1.2rem; margin: 1.4rem 0 1.8rem; box-shadow: 0 1px 3px rgba(29, 26, 20, 0.04); }
+.figure svg { display: block; width: 100%; height: auto; max-width: 760px; margin: 0 auto; }
+.figure figcaption { text-align: center; font-family: var(--font-sans); font-size: 0.82rem; letter-spacing: 0.05em; color: var(--ink-mute); text-transform: uppercase; margin-top: 0.9rem; }
+.figure figcaption strong { color: var(--ink-soft); font-weight: 600; text-transform: none; letter-spacing: 0; }
+
+.fig-box       { fill: var(--paper-card); stroke: var(--ink-soft); stroke-width: 1.5; }
+.fig-box-soft  { fill: #fdf9ed; stroke: var(--rule); stroke-width: 1.2; }
+.fig-box-leaf  { fill: var(--leaf-soft); stroke: var(--leaf); stroke-width: 1.5; }
+.fig-box-rust  { fill: var(--rust-soft); stroke: var(--rust); stroke-width: 1.5; }
+.fig-box-sky   { fill: var(--sky-soft); stroke: var(--sky); stroke-width: 1.5; }
+.fig-box-plum  { fill: var(--plum-soft); stroke: var(--plum); stroke-width: 1.5; }
+.fig-box-gold  { fill: var(--gold-soft); stroke: var(--gold); stroke-width: 1.5; }
+.fig-line      { fill: none; stroke: var(--ink-mute); stroke-width: 1.4; }
+.fig-line-rust { fill: none; stroke: var(--rust); stroke-width: 1.6; }
+.fig-line-leaf { fill: none; stroke: var(--leaf); stroke-width: 1.6; }
+.fig-dash      { fill: none; stroke: var(--ink-mute); stroke-width: 1.2; stroke-dasharray: 4 3; }
+.fig-t        { font-family: var(--font-sans); font-size: 13px; fill: var(--ink); font-weight: 500; }
+.fig-t-lg     { font-family: var(--font-display); font-size: 15px; fill: var(--ink); font-weight: 600; font-style: italic; }
+.fig-t-sm     { font-family: var(--font-sans); font-size: 11px; fill: var(--ink-mute); }
+.fig-t-mono   { font-family: var(--font-mono); font-size: 11px; fill: var(--ink-soft); }
+.fig-t-label  { font-family: var(--font-sans); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.fig-t-leaf   { fill: var(--leaf); }
+.fig-t-rust   { fill: var(--rust); }
+.fig-t-sky    { fill: var(--sky); }
+.fig-t-plum   { fill: var(--plum); }
+.fig-t-mute   { fill: var(--ink-mute); }
+
+.pull { margin: 3rem 0; padding: 1.8rem 2rem; font-family: var(--font-display); font-style: italic; font-size: 1.5rem; line-height: 1.4; color: var(--ink); border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); position: relative; text-align: center; }
+.pull::before { content: "“"; position: absolute; top: -0.2rem; left: 1.2rem; font-family: var(--font-display); font-size: 4.5rem; color: var(--rust); line-height: 1; }
+.pull cite { display: block; margin-top: 0.6rem; font-style: normal; font-family: var(--font-sans); font-size: 0.78rem; color: var(--ink-mute); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500; }
+
+footer.colophon { margin-top: 5rem; padding-top: 2.5rem; border-top: 2px solid var(--ink); font-family: var(--font-sans); font-size: 0.85rem; color: var(--ink-mute); }
+footer.colophon .row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.6rem; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <aside class="toc" id="toc">
+    <div class="toc-brand">
+      <span class="mark">LangGraph 内部 <span class="dot">·</span> + 5 框架对比</span>
+      <span class="sub">6 大原语深讲 · 5 框架横评 · Pregel 源码导读<br><strong>10 章 · 15 道面试题 · 60 词术语</strong></span>
+    </div>
+    <button class="toc-toggle" onclick="document.getElementById('toc').classList.toggle('open')">≡ 目录</button>
+    <nav class="toc-inner">
+      <ol>
+        <li><a href="#ch-1">为什么是 LangGraph · 跟 LangChain 的本质区别</a></li>
+        <li><a href="#ch-2">原语 1 · State + Reducer · 数据怎么流</a></li>
+        <li><a href="#ch-3">原语 2 · Channels · State 只是糖</a></li>
+        <li><a href="#ch-4">原语 3 · Checkpointer · 持久化 + 时间旅行</a></li>
+        <li><a href="#ch-5">原语 4 · Interrupt + Command · HITL 的正确姿势</a></li>
+        <li><a href="#ch-6">原语 5 · Send · 真正的 map-reduce</a></li>
+        <li><a href="#ch-7">原语 6 · Subgraph + ToolNode · 组合的极致</a></li>
+        <li><a href="#ch-8">5 框架对比 · CrewAI / AutoGen / OpenAI SDK / PydanticAI / Mastra</a></li>
+        <li><a href="#ch-9">5 个真实场景 · 该选谁的决策树</a></li>
+        <li><a href="#ch-10">Pregel 源码导读 · 3 个关键文件</a></li>
+        <li><a href="#qa">15 道 senior 面试题</a></li>
+        <li><a href="#glossary">术语表 (60 词)</a></li>
+      </ol>
+    </nav>
+    <div class="toc-foot">
+      配套：<br>
+      <a href="learn.html">→ 应用 · 从 0 到面试</a><br>
+      <a href="enterprise.html">→ 企业级交付</a><br>
+      <a href="agent-design.html">→ Agent System Design</a><br>
+      <a href="agent-coding.html">→ Live Coding 实战</a><br>
+      <a href="agent-debugging.html">→ Debugging Playbook</a><br>
+      <a href="infra.html">→ AI Infra</a><br>
+      <a href="index.html">→ 实现详解</a><br><br>
+      <a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/.../taotao-agent ↗</a>
+    </div>
+  </aside>
+
+  <main class="book-body">
+
+    <!-- ============== Cover ============== -->
+    <header class="cover">
+      <div class="eyebrow">
+        Senior Agent Engineer
+        <span class="sep">·</span> Framework Deep Dive
+        <span class="sep">·</span> 2026
+      </div>
+      <h1>
+        90% 的人会用 <em>StateGraph</em>，<br>
+        10% 的人懂 <em>Pregel + channel + superstep</em>。<br>
+        这本让你进入 10%。
+      </h1>
+      <p class="lede">
+        LangGraph 已成为 2026 年生产级 agent 框架的事实标准——但绝大多数候选人停留在
+        "<code>g.add_node + g.add_edge</code>"。Senior 面试问到 <em>reducer 怎么处理并发更新 / Send vs conditional_edges 区别 / interrupt 触发后 checkpoint 长什么样 / Pregel 跟 BSP 的关系</em>
+        这些就立刻露馅。这本把 LangGraph 6 大原语深挖到源码层 + 跟 5 个对手框架横向对比设计哲学，让你
+        <strong>立刻区分自己跟"会用框架"的 mid 候选人</strong>。
+      </p>
+
+      <div class="who">
+        <h4>📌 学完你能做的事</h4>
+        <ul>
+          <li>讲清 LangGraph 跟 LangChain LCEL 的<strong>本质设计差别</strong>（不是"一个能循环一个不能"这种皮）</li>
+          <li>讲清 reducer 在并发更新场景下的语义（add / overwrite / custom merge）</li>
+          <li>解释 LangGraph 为什么基于 Pregel/BSP 而不是基于 actor / dataflow</li>
+          <li>解释 <code>interrupt()</code> 触发后 checkpoint 的内部状态变化 + 为什么 resume 不重跑前面节点</li>
+          <li>解释 <code>Send</code> 跟 <code>conditional_edges</code> 的本质区别（spawn vs route）</li>
+          <li>面 "LangGraph vs CrewAI vs AutoGen vs OpenAI Agents SDK" → 5 维度横评 + 选型决策树</li>
+          <li>读 LangGraph 源码不慌——知道 <code>pregel.py</code> 的 superstep loop 在干啥</li>
+          <li>面 staff 题 "如果让你设计一个新 agent 框架你会怎么做" → 能引用 BSP / actor / dataflow 三派权衡</li>
+        </ul>
+      </div>
+    </header>
+
+    <!-- ============== Chapter 1 — Why LangGraph ============== -->
+    <section id="ch-1">
+      <header class="ch-head">
+        <span class="badge">Chapter 1 · 立场</span>
+        <h2>为什么是 LangGraph · 跟 LangChain LCEL 的本质区别</h2>
+        <p class="lede">不是 "LangChain 加了循环"——是<em>另一种数据模型</em></p>
+      </header>
+
+      <p>很多人误以为 LangGraph 是 "LangChain 2.0 加了循环"。<strong>这是错的</strong>——它们解决的是<em>不同抽象层</em>的问题。
+      Senior 面试这个问题答 "一个能 loop 一个不能" 直接掉进 mid 档。</p>
+
+      <h3 id="s-1-1"><span class="num">§1.1</span>LangChain LCEL · DAG 风格的 chain</h3>
+      <p>LangChain LCEL（LangChain Expression Language）的核心抽象是 <code>Runnable</code>——一个无状态的输入→输出函数，用 <code>|</code> pipe 串起来：</p>
+
+      <pre><code><span class="c"># LCEL 经典写法</span>
+chain = prompt | llm | output_parser
+result = chain.invoke({<span class="s">"question"</span>: <span class="s">"hi"</span>})
+</code></pre>
+
+      <p>设计哲学：<strong>无状态 · 静态 DAG · functional composition</strong>。每个 Runnable 是纯函数 · 整个 chain 是 declarative。</p>
+
+      <p><strong>这模型对 chain 完美 · 对 agent 不行</strong>：</p>
+      <ul>
+        <li><strong>没循环</strong>——agent 是 think→act→observe→think 反复</li>
+        <li><strong>没状态</strong>——agent 要记 history / iter / 中间结果</li>
+        <li><strong>没 HITL</strong>——chain 不暂停 · agent 经常要等用户</li>
+        <li><strong>没 checkpoint</strong>——LLM 调一次几秒到几分钟 · 服务挂了不能从头再来</li>
+        <li><strong>没并发原语</strong>——agent 想同时调 3 个 tool · LCEL <code>RunnableParallel</code> 不够灵活</li>
+      </ul>
+
+      <h3 id="s-1-2"><span class="num">§1.2</span>LangGraph · BSP 风格的 state machine</h3>
+      <p>LangGraph 的核心抽象是<strong>显式 state graph + Pregel 执行器</strong>：</p>
+
+      <pre><code><span class="c"># LangGraph 核心结构</span>
+<span class="k">class</span> <span class="f">State</span>(TypedDict):
+    messages: Annotated[list, add_messages]  <span class="c"># reducer 决定怎么 merge</span>
+
+g = StateGraph(State)
+g.add_node(<span class="s">"agent"</span>, agent_fn)        <span class="c"># node 读 state · 写 state update</span>
+g.add_node(<span class="s">"tools"</span>, tool_fn)
+g.add_conditional_edges(<span class="s">"agent"</span>, route, [<span class="s">"tools"</span>, END])
+g.add_edge(<span class="s">"tools"</span>, <span class="s">"agent"</span>)
+
+graph = g.compile(checkpointer=PostgresSaver(...))
+</code></pre>
+
+      <p>设计哲学：<strong>显式 state · channels · supersteps</strong>。每个 node 读 state · 输出 update · reducer 合并 · 进入下个 superstep。这<em>不是</em>函数组合 · 是<em>状态机 + 数据流</em>。</p>
+
+      <h3 id="s-1-3"><span class="num">§1.3</span>核心区别 · 一张表讲清</h3>
+
+      <table>
+        <thead><tr><th>维度</th><th>LangChain LCEL</th><th>LangGraph</th></tr></thead>
+        <tbody>
+          <tr><td>抽象</td><td>Runnable (无状态函数)</td><td>StateGraph (有状态 graph)</td></tr>
+          <tr><td>组合</td><td>functional pipe (<code>|</code>)</td><td>node + edge (declarative graph)</td></tr>
+          <tr><td>执行模型</td><td>同步/异步 invoke</td><td>Pregel · superstep · BSP</td></tr>
+          <tr><td>状态</td><td>无 (输入即一切)</td><td>显式 State + reducer</td></tr>
+          <tr><td>并发</td><td>RunnableParallel · 静态</td><td>Send · 动态 fan-out</td></tr>
+          <tr><td>循环</td><td>不原生支持</td><td>add_edge 回到自己即可</td></tr>
+          <tr><td>HITL</td><td>无原生</td><td>interrupt() · Command</td></tr>
+          <tr><td>持久化</td><td>无</td><td>checkpointer · time travel</td></tr>
+          <tr><td>典型用</td><td>chain · RAG · 简单 prompt 流水</td><td>agent · multi-agent · long-horizon</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-1-4"><span class="num">§1.4</span>BSP / Pregel · LangGraph 思想根源</h3>
+      <p>LangGraph 不是凭空设计——它<strong>明确地基于 Google Pregel 论文</strong>（2010 · 大规模图计算系统），而 Pregel 又基于 <strong>BSP (Bulk Synchronous Parallel)</strong> 模型（Valiant 1990）。
+      理解 BSP 是理解 LangGraph 的钥匙。</p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="BSP superstep model">
+          <defs>
+            <marker id="bsp-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#756c5c"/>
+            </marker>
+          </defs>
+
+          <!-- Superstep N -->
+          <text class="fig-t-label fig-t-rust" x="120" y="30" text-anchor="middle">SUPERSTEP N</text>
+          <rect class="fig-box-rust" x="20"  y="50" width="60" height="40" rx="6"/>
+          <text class="fig-t-sm" x="50" y="74" text-anchor="middle">node A</text>
+          <rect class="fig-box-rust" x="100" y="50" width="60" height="40" rx="6"/>
+          <text class="fig-t-sm" x="130" y="74" text-anchor="middle">node B</text>
+          <rect class="fig-box-rust" x="180" y="50" width="60" height="40" rx="6"/>
+          <text class="fig-t-sm" x="210" y="74" text-anchor="middle">node C</text>
+          <text class="fig-t-sm fig-t-mute" x="120" y="110" text-anchor="middle">3 个 node 并行执行</text>
+          <text class="fig-t-sm fig-t-mute" x="120" y="124" text-anchor="middle">读 superstep N-1 的 state</text>
+          <text class="fig-t-sm fig-t-mute" x="120" y="138" text-anchor="middle">输出 update（不立即生效）</text>
+
+          <!-- Barrier -->
+          <line class="fig-line-rust" x1="270" y1="20" x2="270" y2="260" stroke-dasharray="6 4"/>
+          <text class="fig-t-label fig-t-rust" x="270" y="160" text-anchor="middle" transform="rotate(-90 270 160)">SYNC BARRIER</text>
+
+          <!-- Superstep N+1 -->
+          <text class="fig-t-label fig-t-leaf" x="430" y="30" text-anchor="middle">SUPERSTEP N+1</text>
+          <rect class="fig-box-leaf" x="320" y="50" width="80" height="40" rx="6"/>
+          <text class="fig-t-sm" x="360" y="74" text-anchor="middle">reducer</text>
+          <rect class="fig-box-leaf" x="420" y="50" width="80" height="40" rx="6"/>
+          <text class="fig-t-sm" x="460" y="74" text-anchor="middle">channel</text>
+          <text class="fig-t-sm" x="460" y="86" text-anchor="middle">apply update</text>
+          <rect class="fig-box-leaf" x="520" y="50" width="80" height="40" rx="6"/>
+          <text class="fig-t-sm" x="560" y="74" text-anchor="middle">next nodes</text>
+          <text class="fig-t-sm fig-t-mute" x="460" y="110" text-anchor="middle">所有 update 用 reducer 合并</text>
+          <text class="fig-t-sm fig-t-mute" x="460" y="124" text-anchor="middle">写入 channel</text>
+          <text class="fig-t-sm fig-t-mute" x="460" y="138" text-anchor="middle">触发下一波 node</text>
+
+          <line class="fig-line" x1="240" y1="70" x2="318" y2="70" marker-end="url(#bsp-arr)"/>
+          <line class="fig-line" x1="400" y1="70" x2="418" y2="70" marker-end="url(#bsp-arr)"/>
+          <line class="fig-line" x1="500" y1="70" x2="518" y2="70" marker-end="url(#bsp-arr)"/>
+
+          <!-- Checkpoint -->
+          <rect class="fig-box-soft" x="320" y="180" width="280" height="40" rx="6"/>
+          <text class="fig-t" x="460" y="204" text-anchor="middle">→ Checkpointer 持久化</text>
+          <text class="fig-t-sm fig-t-mute" x="460" y="218" text-anchor="middle">每个 superstep 后保存 · resume 必备</text>
+          <line class="fig-line" x1="460" y1="90" x2="460" y2="178" marker-end="url(#bsp-arr)"/>
+
+          <text class="fig-t-sm fig-t-mute" x="380" y="260" text-anchor="middle" font-style="italic">"Bulk Synchronous Parallel" · 一波并行 + 一道 barrier · 重复</text>
+        </svg>
+        <figcaption><strong>Figure 1.4</strong> · BSP 模型 · LangGraph 每个 superstep 是 "并行执行 → barrier 同步 → reducer 合并 → 持久化 → 下一波"</figcaption>
+      </figure>
+
+      <h4>BSP 三阶段（每个 superstep）</h4>
+      <ol>
+        <li><strong>Compute</strong>——所有 active node 并行跑，读上一 superstep 的 state · 输出 update（不直接改 state）</li>
+        <li><strong>Communication</strong>——node 输出的 update 通过 channel 传给后续 node</li>
+        <li><strong>Barrier</strong>——所有 node 等齐，reducer 合并 update 写 state，进入下一 superstep</li>
+      </ol>
+
+      <p><strong>为什么选 BSP 而不是 actor / dataflow？</strong></p>
+      <ul>
+        <li><strong>vs actor</strong>（Akka / Erlang 风）——actor 异步消息 · 时序难追 · debug 噩梦。BSP 同步 · 每 superstep 是确定性 snapshot · checkpoint 自然</li>
+        <li><strong>vs dataflow</strong>（Apache Beam / Flink 风）——dataflow 流式 · 没有"全局回到 user 等输入"的概念。BSP 把 superstep 边界当成天然 HITL 接入点</li>
+        <li><strong>对 agent 的好处</strong>——time travel / resume / 并发 fan-out 全是 BSP 自然产物</li>
+      </ul>
+
+      <div class="box deep">
+        <div class="box-label">面试金句 · 这一段直接区分 senior</div>
+        <p><em>"LangGraph 不是 LangChain 加了循环 · 是另一种执行模型——基于 Pregel/BSP。每个 superstep 内 node 并行跑，barrier 同步，reducer 合并 update 写 channel，checkpointer 持久化。这给了它 4 个对 agent 关键的能力：循环（自然）· 并发（fan-out）· HITL（superstep 边界 pause）· time travel（每 step snapshot）。LCEL 是函数组合 · 解决 chain 问题；LangGraph 是 state machine · 解决 agent 问题。两者互补不替代——LangGraph 节点内部经常用 LCEL"</em></p>
+      </div>
+
+      <h3 id="s-1-5"><span class="num">§1.5</span>什么时候不用 LangGraph</h3>
+      <p>不要无脑上 LangGraph。这些场景用 LCEL 就够：</p>
+      <ul>
+        <li>简单 RAG（query → retrieve → LLM → answer · 一遍走完）</li>
+        <li>纯 prompt chain（多步 prompt 但不需 loop）</li>
+        <li>批处理 ETL（input → transform → output · 静态 pipeline）</li>
+        <li>只用 OpenAI function calling 的简单 ReAct（OpenAI Agents SDK 都比 LangGraph 轻）</li>
+      </ul>
+      <p>LangGraph 的复杂度是有代价的——多了 State / channel / reducer / checkpoint 4 个概念。<strong>简单场景用 LCEL · 真有 agent 需求再上 LangGraph</strong>。</p>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 1</div>
+        <ul>
+          <li><a href="https://langchain-ai.github.io/langgraph/concepts/why-langgraph/" target="_blank">官方 · Why LangGraph</a></li>
+          <li><a href="https://blog.langchain.dev/langgraph/" target="_blank">LangGraph 发布博客</a></li>
+          <li><a href="https://kowshik1729.medium.com/pregel-the-distributed-graph-engine-driving-langgraph-c2e3e7d9c1f6" target="_blank">Pregel · LangGraph 引擎论文导读</a></li>
+          <li><a href="https://research.google/pubs/pregel-a-system-for-large-scale-graph-processing/" target="_blank">Google Pregel 原论文 (2010)</a></li>
+          <li><a href="https://en.wikipedia.org/wiki/Bulk_synchronous_parallel" target="_blank">BSP model · Wikipedia</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 2 — State + Reducer ============== -->
+    <section id="ch-2">
+      <header class="ch-head">
+        <span class="badge">Chapter 2 · 原语 1</span>
+        <h2>State + Reducer · 数据怎么流</h2>
+        <p class="lede">90% 的 LangGraph bug 在 reducer 用错</p>
+      </header>
+
+      <h3 id="s-2-1"><span class="num">§2.1</span>State schema · 3 种写法</h3>
+
+      <pre><code><span class="c"># 1) TypedDict (最常见)</span>
+<span class="k">from</span> typing <span class="k">import</span> TypedDict, Annotated
+<span class="k">from</span> langgraph.graph.message <span class="k">import</span> add_messages
+
+<span class="k">class</span> <span class="f">State</span>(TypedDict):
+    messages: Annotated[list, add_messages]
+    iter: int
+    user_id: str | None
+
+<span class="c"># 2) Pydantic (要 validation)</span>
+<span class="k">from</span> pydantic <span class="k">import</span> BaseModel
+<span class="k">from</span> langgraph.graph <span class="k">import</span> StateGraph
+
+<span class="k">class</span> <span class="f">State</span>(BaseModel):
+    messages: list
+    iter: int = <span class="s">0</span>
+
+<span class="c"># 3) dataclass (轻量 · 不要 type hint 校验)</span>
+<span class="k">from</span> dataclasses <span class="k">import</span> dataclass, field
+
+<span class="f">@dataclass</span>
+<span class="k">class</span> <span class="f">State</span>:
+    messages: list = field(default_factory=list)
+    iter: int = <span class="s">0</span>
+</code></pre>
+
+      <p><strong>选哪种</strong>：</p>
+      <ul>
+        <li><strong>TypedDict</strong>——最常用 · 跟 LangGraph 文档对齐 · reducer Annotated 写法清晰</li>
+        <li><strong>Pydantic</strong>——你的 state 字段需要 validation（如 enum / 数值范围）。注意 reducer 写法略不同，用 <code>Field(..., metadata={"reducer": add_messages})</code></li>
+        <li><strong>dataclass</strong>——已经在用 dataclass 的项目 · 但 reducer 注解支持弱 · 不推荐新项目</li>
+      </ul>
+
+      <h3 id="s-2-2"><span class="num">§2.2</span>Reducer · 并发更新怎么 merge</h3>
+      <p>这是 LangGraph 最容易忽视也最容易踩坑的概念。</p>
+
+      <p><strong>问题</strong>：node A 和 node B 同一 superstep 都对 <code>messages</code> 字段输出 update——LangGraph 怎么 merge？</p>
+
+      <p><strong>答案</strong>：取决于该字段的 <strong>reducer</strong>。</p>
+
+      <pre><code><span class="c"># 不写 reducer · 默认 = LastValue · 后到的覆盖前到的（不可预测！）</span>
+<span class="k">class</span> <span class="f">State</span>(TypedDict):
+    messages: list  <span class="c"># ⚠️ A 和 B 同 step 写, 只留一个</span>
+
+<span class="c"># 写 reducer · A 和 B 的 update 累加</span>
+<span class="k">class</span> <span class="f">State</span>(TypedDict):
+    messages: Annotated[list, add_messages]  <span class="c"># ✓ 两边的都保留 + dedup by id</span>
+    counters: Annotated[dict[str, int], merge_counters]  <span class="c"># 自定义</span>
+</code></pre>
+
+      <h4>常用 reducer 速查</h4>
+      <table>
+        <thead><tr><th>Reducer</th><th>语义</th><th>用在</th></tr></thead>
+        <tbody>
+          <tr><td><strong>(默认)</strong></td><td>LastValue · 覆盖</td><td>单值字段（current_step / final_answer）</td></tr>
+          <tr><td><code>operator.add</code></td><td>list / str 拼接 · 数字相加</td><td>累积 list / counter</td></tr>
+          <tr><td><code>add_messages</code></td><td>list of BaseMessage 拼接 + by-id dedup + ToolMessage 配对</td><td>messages 字段几乎必用</td></tr>
+          <tr><td><code>operator.or_</code></td><td>set union · dict merge</td><td>tag 集合 / metadata 字典</td></tr>
+          <tr><td><strong>自定义</strong></td><td><code>Callable[[X, X], X]</code></td><td>复杂场景</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-2-3"><span class="num">§2.3</span>add_messages · 看似简单实则复杂</h3>
+      <p><code>add_messages</code> 是 LangGraph 内置 · 表面像 list append · 实际做了 4 件事：</p>
+
+      <ol>
+        <li><strong>by-id dedup</strong>——message 有 id 时按 id 去重 · 不重复加</li>
+        <li><strong>by-id update</strong>——同 id 的新 message 替换旧的（用于 streaming · partial → full）</li>
+        <li><strong>RemoveMessage 处理</strong>——传 RemoveMessage(id=X) 会从 list 删 id=X 的 message</li>
+        <li><strong>ToolMessage 配对</strong>——ToolMessage 必须紧跟其 tool_calls 的 AIMessage 后</li>
+      </ol>
+
+      <pre><code><span class="c"># 删 message 怎么写</span>
+<span class="k">from</span> langchain_core.messages <span class="k">import</span> RemoveMessage
+
+<span class="k">def</span> <span class="f">delete_old_messages</span>(state):
+    <span class="c"># 删除前 N-3 条 message · 保留最近 3 条</span>
+    msgs = state[<span class="s">"messages"</span>]
+    <span class="k">if</span> len(msgs) &gt; <span class="s">3</span>:
+        <span class="k">return</span> {<span class="s">"messages"</span>: [RemoveMessage(id=m.id) <span class="k">for</span> m <span class="k">in</span> msgs[:-<span class="s">3</span>]]}
+    <span class="k">return</span> {}
+</code></pre>
+
+      <h3 id="s-2-4"><span class="num">§2.4</span>自定义 reducer · 真实例</h3>
+
+      <p>例：实现"sub-agent 历史"——多个 sub-agent 同步跑 · 每个产出自己的 history 段 · 主 agent 最后看到合并版。</p>
+
+      <pre><code><span class="k">from</span> typing <span class="k">import</span> TypedDict, Annotated
+
+<span class="k">def</span> <span class="f">merge_subagent_history</span>(left: dict, right: dict) -&gt; dict:
+    <span class="s">"""把多个 sub-agent 的 history 按 agent_name key 合并."""</span>
+    out = {**left}
+    <span class="k">for</span> name, msgs <span class="k">in</span> right.items():
+        <span class="k">if</span> name <span class="k">in</span> out:
+            out[name] = out[name] + msgs   <span class="c"># 同名 sub-agent 累积</span>
+        <span class="k">else</span>:
+            out[name] = msgs
+    <span class="k">return</span> out
+
+<span class="k">class</span> <span class="f">State</span>(TypedDict):
+    user_input: str
+    main_messages: Annotated[list, add_messages]
+    sub_history: Annotated[dict[str, list], merge_subagent_history]
+
+<span class="c"># sub_agent_A 输出: {"sub_history": {"researcher": [msg1, msg2]}}</span>
+<span class="c"># sub_agent_B 输出: {"sub_history": {"coder":     [msg3]}}</span>
+<span class="c"># 合并后: state["sub_history"] = {"researcher": [msg1,msg2], "coder": [msg3]}</span>
+</code></pre>
+
+      <h3 id="s-2-5"><span class="num">§2.5</span>Node 返回 partial update · 别返完整 state</h3>
+      <p><strong>常见错误</strong>：</p>
+      <pre><code><span class="c"># ❌ 错 · 返回完整 state · LangGraph 会把所有字段当 update 触发 reducer</span>
+<span class="k">def</span> <span class="f">my_node</span>(state):
+    state[<span class="s">"iter"</span>] += <span class="s">1</span>
+    <span class="k">return</span> state   <span class="c"># messages 也被当 update · add_messages 会 dedup 但仍走一遍</span>
+
+<span class="c"># ✓ 对 · 只返要改的字段</span>
+<span class="k">def</span> <span class="f">my_node</span>(state):
+    <span class="k">return</span> {<span class="s">"iter"</span>: state[<span class="s">"iter"</span>] + <span class="s">1</span>}
+</code></pre>
+
+      <p>原则：<strong>node 是 reducer</strong>——你返 <code>{"k": v}</code> 就是给 channel <code>k</code> 输入 v · reducer 决定怎么合 · 别返没改的字段。</p>
+
+      <div class="box warn">
+        <div class="box-label">最常踩坑 · 默认 reducer = 覆盖</div>
+        <p>不写 Annotated → 该字段 reducer = LastValue（覆盖）。
+        如果有 2 个 node 同 superstep 都更新该字段（典型：fan-out 用 Send 派 N 个 worker · 每个写 result），<em>结果只有一个会保留 · 其他丢</em>。<strong>必须写 reducer</strong> · 哪怕只是 <code>operator.add</code>。</p>
+      </div>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 2</div>
+        <ul>
+          <li><a href="https://langchain-ai.github.io/langgraph/concepts/low_level/#state" target="_blank">官方 · State concept</a></li>
+          <li><a href="https://langchain-ai.github.io/langgraph/concepts/low_level/#reducers" target="_blank">官方 · Reducers</a></li>
+          <li><a href="https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/graph/message.py" target="_blank">add_messages 源码</a> ——70 行 · 推荐读</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 3 — Channels ============== -->
+    <section id="ch-3">
+      <header class="ch-head">
+        <span class="badge">Chapter 3 · 原语 2</span>
+        <h2>Channels · State 只是糖</h2>
+        <p class="lede">看到这章你才算懂 LangGraph 真实的数据模型</p>
+      </header>
+
+      <h3 id="s-3-1"><span class="num">§3.1</span>Channel 是什么</h3>
+      <p><strong>核心揭秘</strong>：你写的 <code>State + Annotated reducer</code> 在 LangGraph 内部<em>都被编译成 channels</em>。State 不是真原语 · channel 才是。</p>
+
+      <p>Channel 是 Pregel 里的<strong>命名数据通道</strong>——一个有 reducer 语义的 slot · 接收多个 node 的 update · 持久化为 checkpoint 的一部分。</p>
+
+      <pre><code><span class="c"># 你写</span>
+<span class="k">class</span> <span class="f">State</span>(TypedDict):
+    messages: Annotated[list, add_messages]
+    iter: int
+
+<span class="c"># 编译后内部是</span>
+channels = {
+    <span class="s">"messages"</span>: BinaryOperatorAggregate(list, add_messages),
+    <span class="s">"iter"</span>: LastValue(int),
+}
+</code></pre>
+
+      <h3 id="s-3-2"><span class="num">§3.2</span>5 种内置 channel 类型</h3>
+      <table>
+        <thead><tr><th>Channel</th><th>语义</th><th>对应 reducer</th></tr></thead>
+        <tbody>
+          <tr><td><code>LastValue&lt;T&gt;</code></td><td>只保留最后一次 write · 多 write 同 step 报错</td><td>(默认 · 不写 Annotated)</td></tr>
+          <tr><td><code>BinaryOperatorAggregate&lt;T, op&gt;</code></td><td>所有 update 用 op(left, right) reduce</td><td>operator.add / 自定义</td></tr>
+          <tr><td><code>Topic&lt;T&gt;</code></td><td>list 累积 · 可设置每 step 后 reset</td><td>pubsub 风</td></tr>
+          <tr><td><code>EphemeralValue&lt;T&gt;</code></td><td>只活 1 superstep · 不持久化</td><td>临时变量</td></tr>
+          <tr><td><code>Context&lt;T&gt;</code></td><td>全局只读 · 整个 invoke 期间不变</td><td>config-like</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-3-3"><span class="num">§3.3</span>node 跟 channel 的关系</h3>
+
+      <figure class="figure">
+        <svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Node and channels">
+          <defs>
+            <marker id="ch-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#756c5c"/>
+            </marker>
+          </defs>
+
+          <!-- channels left -->
+          <text class="fig-t-label fig-t-sky" x="100" y="30" text-anchor="middle">CHANNELS</text>
+          <rect class="fig-box-sky" x="20"  y="50" width="160" height="40" rx="6"/>
+          <text class="fig-t" x="100" y="68" text-anchor="middle">messages</text>
+          <text class="fig-t-sm" x="100" y="82" text-anchor="middle">BinaryOpAgg(add_messages)</text>
+
+          <rect class="fig-box-sky" x="20"  y="100" width="160" height="40" rx="6"/>
+          <text class="fig-t" x="100" y="118" text-anchor="middle">iter</text>
+          <text class="fig-t-sm" x="100" y="132" text-anchor="middle">LastValue(int)</text>
+
+          <rect class="fig-box-sky" x="20"  y="150" width="160" height="40" rx="6"/>
+          <text class="fig-t" x="100" y="168" text-anchor="middle">user_id</text>
+          <text class="fig-t-sm" x="100" y="182" text-anchor="middle">LastValue(str)</text>
+
+          <!-- node center -->
+          <rect class="fig-box-rust" x="280" y="90" width="200" height="80" rx="8"/>
+          <text class="fig-t-lg" x="380" y="120" text-anchor="middle">node "agent"</text>
+          <text class="fig-t-sm" x="380" y="140" text-anchor="middle">subscribes_to: [messages, iter]</text>
+          <text class="fig-t-sm" x="380" y="156" text-anchor="middle">writes_to: [messages, iter]</text>
+
+          <!-- output channels right -->
+          <text class="fig-t-label fig-t-leaf" x="660" y="30" text-anchor="middle">UPDATES</text>
+          <rect class="fig-box-leaf" x="580" y="70" width="160" height="40" rx="6"/>
+          <text class="fig-t" x="660" y="88" text-anchor="middle">{messages: [new_msg]}</text>
+          <text class="fig-t-sm" x="660" y="102" text-anchor="middle">→ append by reducer</text>
+
+          <rect class="fig-box-leaf" x="580" y="120" width="160" height="40" rx="6"/>
+          <text class="fig-t" x="660" y="138" text-anchor="middle">{iter: 4}</text>
+          <text class="fig-t-sm" x="660" y="152" text-anchor="middle">→ overwrite by LastValue</text>
+
+          <line class="fig-line-leaf" x1="180" y1="70" x2="278" y2="110" marker-end="url(#ch-arr)"/>
+          <line class="fig-line-leaf" x1="180" y1="120" x2="278" y2="130" marker-end="url(#ch-arr)"/>
+          <text class="fig-t-sm fig-t-leaf" x="225" y="95">read</text>
+
+          <line class="fig-line-rust" x1="480" y1="120" x2="578" y2="90" marker-end="url(#ch-arr)"/>
+          <line class="fig-line-rust" x1="480" y1="140" x2="578" y2="140" marker-end="url(#ch-arr)"/>
+          <text class="fig-t-sm fig-t-rust" x="528" y="105">write</text>
+
+          <text class="fig-t-sm fig-t-mute" x="380" y="240" text-anchor="middle" font-style="italic">node 是<strong>纯函数</strong>: 读 channels 当前值 → 输出 update dict</text>
+          <text class="fig-t-sm fig-t-mute" x="380" y="258" text-anchor="middle" font-style="italic">不直接 mutate state · 由 channel 的 reducer 决定怎么 apply</text>
+        </svg>
+        <figcaption><strong>Figure 3.3</strong> · LangGraph 内部数据流 · node 是 channel 的 subscriber + writer</figcaption>
+      </figure>
+
+      <h3 id="s-3-4"><span class="num">§3.4</span>显式用 channel 跳过 State sugar</h3>
+      <p>偶尔你需要更细粒度控制——直接用 channel API。例：node 只读不写某字段。</p>
+
+      <pre><code><span class="k">from</span> langgraph.graph <span class="k">import</span> StateGraph
+<span class="k">from</span> langgraph.constants <span class="k">import</span> START, END
+
+<span class="c"># 高级 · 不用 TypedDict · 直接定义 channels</span>
+<span class="k">from</span> langgraph.channels <span class="k">import</span> LastValue, Topic, BinaryOperatorAggregate
+<span class="k">from</span> operator <span class="k">import</span> add
+
+graph = StateGraph(
+    state_schema=None,
+    input=<span class="s">"input"</span>, output=<span class="s">"output"</span>,
+)
+
+<span class="c"># （高级用法 · 通常 StateGraph + TypedDict 已足够）</span>
+</code></pre>
+
+      <p>实战 99% 用 TypedDict 就够。但<strong>知道 channel 存在让你能解释 reducer / Send / interrupt 内部行为</strong>——senior 必备。</p>
+
+      <h3 id="s-3-5"><span class="num">§3.5</span>Channel 跟持久化的关系</h3>
+      <p>每个 superstep 后，<strong>channel 的当前值</strong>序列化进 checkpoint。这就是为什么：</p>
+      <ul>
+        <li>state 字段类型必须可序列化（不要塞 db connection / file handle）</li>
+        <li>checkpoint 大小 = 所有 channel 当前值大小之和</li>
+        <li>Ephemeral channel 不进 checkpoint（设计上就是临时数据）</li>
+      </ul>
+
+      <div class="box deep">
+        <div class="box-label">面试金句</div>
+        <p><em>"State 是 sugar · channels 是真实的 LangGraph 数据原语。每个 state 字段被编译成一个 channel · 字段的 Annotated reducer 决定 channel 类型（默认 LastValue · 写 reducer 就是 BinaryOperatorAggregate）。Node 是 channel 的 subscriber + writer——读当前值 · 输出 update · 让 channel 的 reducer 决定怎么 merge。每 superstep 后所有 channel snapshot 进 checkpoint · 这就是 time travel 的物理基础"</em></p>
+      </div>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 3</div>
+        <ul>
+          <li><a href="https://github.com/langchain-ai/langgraph/tree/main/libs/langgraph/langgraph/channels" target="_blank">channels/ 源码目录</a> ——5 个 channel 实现都很短</li>
+          <li><a href="https://langchain-ai.github.io/langgraph/reference/channels/" target="_blank">官方 · Channels API</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 4 — Checkpointer ============== -->
+    <section id="ch-4">
+      <header class="ch-head">
+        <span class="badge">Chapter 4 · 原语 3</span>
+        <h2>Checkpointer · 持久化 + 时间旅行</h2>
+        <p class="lede">Resume / HITL / 多用户 / time travel 4 件事的物理基础</p>
+      </header>
+
+      <h3 id="s-4-1"><span class="num">§4.1</span>Checkpointer 是什么</h3>
+      <p>Checkpointer = <strong>每个 superstep 后把 channel 当前值持久化的存储后端</strong>。它让：</p>
+      <ul>
+        <li>服务挂了重启能 resume</li>
+        <li><code>interrupt()</code> 触发后的 state 能存住等用户回来</li>
+        <li>多用户对话隔离（按 thread_id）</li>
+        <li>time travel——回到任意历史 superstep · 改 state · 分支重跑</li>
+      </ul>
+
+      <h3 id="s-4-2"><span class="num">§4.2</span>4 种 backend · 怎么选</h3>
+      <table>
+        <thead><tr><th>Backend</th><th>持久化</th><th>并发</th><th>时间旅行</th><th>用</th></tr></thead>
+        <tbody>
+          <tr><td><code>MemorySaver</code></td><td>❌ in-process</td><td>不安全</td><td>✓</td><td>开发 · demo · 单测</td></tr>
+          <tr><td><code>SqliteSaver</code></td><td>✓ 本地文件</td><td>有限</td><td>✓</td><td>本地 / 单机小项目</td></tr>
+          <tr><td><code>PostgresSaver</code></td><td>✓ Postgres</td><td>✓</td><td>✓</td><td><strong>生产首选</strong></td></tr>
+          <tr><td><code>RedisSaver</code></td><td>✓ Redis</td><td>✓ · 极快</td><td>✓</td><td>高 QPS · 短期会话 (有 TTL)</td></tr>
+        </tbody>
+      </table>
+
+      <pre><code><span class="c"># 生产用 Postgres</span>
+<span class="k">from</span> langgraph.checkpoint.postgres <span class="k">import</span> PostgresSaver
+<span class="k">from</span> psycopg_pool <span class="k">import</span> ConnectionPool
+
+pool = ConnectionPool(conninfo=<span class="s">"postgresql://user:pwd@host/db"</span>, max_size=<span class="s">20</span>)
+checkpointer = PostgresSaver(pool)
+checkpointer.setup()  <span class="c"># 创建表 · 只跑一次</span>
+
+graph = g.compile(checkpointer=checkpointer)
+</code></pre>
+
+      <h3 id="s-4-3"><span class="num">§4.3</span>thread_id / checkpoint_ns / checkpoint_id 三层标识</h3>
+      <p>每个 checkpoint 有 3 层 key——senior 必须能讲清：</p>
+
+      <table>
+        <thead><tr><th>层</th><th>含义</th><th>典型值</th></tr></thead>
+        <tbody>
+          <tr><td><code>thread_id</code></td><td>"对话线程"——一个用户的一次会话</td><td><code>f"{user_id}:{session_id}"</code></td></tr>
+          <tr><td><code>checkpoint_ns</code></td><td>"命名空间"——subgraph 隔离</td><td>主 graph = "" · subgraph = "researcher"</td></tr>
+          <tr><td><code>checkpoint_id</code></td><td>checkpoint 唯一 ID（每 superstep 新生）</td><td>UUID（自动）</td></tr>
+        </tbody>
+      </table>
+
+      <pre><code><span class="c"># 配置只需 thread_id · 其他自动</span>
+config = {<span class="s">"configurable"</span>: {<span class="s">"thread_id"</span>: <span class="s">"alice:session-42"</span>}}
+
+graph.invoke({<span class="s">"messages"</span>: [...]}, config)
+<span class="c"># 内部每 superstep 都 save: (thread="alice:session-42", ns="", id=&lt;uuid&gt;)</span>
+</code></pre>
+
+      <h3 id="s-4-4"><span class="num">§4.4</span>get_state / get_state_history / update_state · time travel API</h3>
+
+      <pre><code>cfg = {<span class="s">"configurable"</span>: {<span class="s">"thread_id"</span>: <span class="s">"alice:s1"</span>}}
+
+<span class="c"># 1) 看当前 state</span>
+state = graph.get_state(cfg)
+print(state.values)        <span class="c"># 当前所有 channel 值</span>
+print(state.next)          <span class="c"># 下一个会跑的 node · () = 已完成</span>
+print(state.tasks)         <span class="c"># pending tasks (含 interrupt 信息)</span>
+
+<span class="c"># 2) 看历史 (time travel 基础)</span>
+<span class="k">for</span> ckpt <span class="k">in</span> graph.get_state_history(cfg):
+    print(ckpt.config[<span class="s">"configurable"</span>][<span class="s">"checkpoint_id"</span>],
+          <span class="s">"·"</span>, ckpt.values.get(<span class="s">"iter"</span>),
+          <span class="s">"·"</span>, ckpt.next)
+
+<span class="c"># 3) 回到某个历史点 · 用那个 checkpoint_id 当 config</span>
+old_cfg = {<span class="s">"configurable"</span>: {
+    <span class="s">"thread_id"</span>: <span class="s">"alice:s1"</span>,
+    <span class="s">"checkpoint_id"</span>: <span class="s">"&lt;the old uuid&gt;"</span>
+}}
+
+<span class="c"># 4) 修改某个 state 字段后从那点重跑</span>
+graph.update_state(old_cfg, {<span class="s">"messages"</span>: [HumanMessage(<span class="s">"换个问法试试"</span>)]})
+graph.invoke(None, old_cfg)  <span class="c"># 从该点 resume · 走分支</span>
+</code></pre>
+
+      <p><strong>time travel 实战价值</strong>：</p>
+      <ul>
+        <li><strong>debug</strong>——agent 走偏了 · 回到岔路前 · 改 prompt · 看是不是变好</li>
+        <li><strong>用户 "重做这一步"</strong>——chat UI 让用户 edit 上一句重发</li>
+        <li><strong>探索 "what if"</strong>——eval 时同 state 跑不同 model 对比</li>
+      </ul>
+
+      <h3 id="s-4-5"><span class="num">§4.5</span>checkpoint 大小 · 不要塞大对象</h3>
+      <p>每个 superstep save 一个完整 channel snapshot——<strong>state 大 = checkpoint 大 = DB 慢 + 贵</strong>。</p>
+
+      <p>实战经验：</p>
+      <ul>
+        <li>不要把 retrieval 召回的 100 个 chunk 全塞 state——用完就 RemoveMessage 清</li>
+        <li>大 binary（图片 / PDF）存对象存储 · state 只存 URL</li>
+        <li>每 thread 设 checkpoint 数上限（用 cron 删老的）—— 否则 1 个长 thread 几 GB</li>
+        <li>monitor checkpoint write latency · 突变意味着 state 膨胀</li>
+      </ul>
+
+      <h3 id="s-4-6"><span class="num">§4.6</span>事务性 · checkpoint 跟你的 DB 写一起</h3>
+      <p>常见问：node 里更新了业务 DB · 但 checkpoint 写失败怎么办？</p>
+
+      <p><strong>答案</strong>：默认<em>不</em>事务一致——checkpoint 写失败时业务 DB 已改，造成 state inconsistent。
+      解决方案：</p>
+      <ol>
+        <li><strong>Idempotent node</strong>——node 业务操作设计成幂等 · resume 重跑没事</li>
+        <li><strong>Saga pattern</strong>——业务操作记录到自己 table · 失败时有 compensating action</li>
+        <li><strong>同 DB 同事务</strong>——业务 DB 也用 Postgres + checkpointer 用 PostgresSaver · 包一个 transaction（高级用法 · 需要自己 hack）</li>
+      </ol>
+
+      <div class="box deep">
+        <div class="box-label">面试金句 · resume 内部到底发生啥</div>
+        <p><em>"Resume 不重跑前面 node · 是因为 checkpointer 存了上次 superstep 末所有 channel 的 snapshot。Pregel 重启时不从 START 开始 · 是从 <code>state.next</code> 指示的 pending node 开始 · 这些 node 读的就是已 restore 的 channel 值。所以 resume 是 O(remaining work) 不是 O(total work)——是真 resume 不是 replay"</em></p>
+      </div>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 4</div>
+        <ul>
+          <li><a href="https://langchain-ai.github.io/langgraph/concepts/persistence/" target="_blank">官方 · Persistence</a></li>
+          <li><a href="https://langchain-ai.github.io/langgraph/how-tos/persistence/" target="_blank">官方 · How-to: persistence</a></li>
+          <li><a href="https://github.com/langchain-ai/langgraph/tree/main/libs/checkpoint-postgres" target="_blank">PostgresSaver 源码</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 5 — Interrupt + Command ============== -->
+    <section id="ch-5">
+      <header class="ch-head">
+        <span class="badge">Chapter 5 · 原语 4</span>
+        <h2>Interrupt + Command · HITL 的正确姿势</h2>
+        <p class="lede">2024 末重写的 API · 老版本 NodeInterrupt 已过时 · 新人最常错</p>
+      </header>
+
+      <h3 id="s-5-1"><span class="num">§5.1</span>新 API · interrupt() + Command(resume=...)</h3>
+      <p>2024 年 Q4 LangGraph 推出新 HITL API · 比老的 <code>NodeInterrupt</code> exception 风格简单太多。<strong>新代码必须用新版</strong>。</p>
+
+      <pre><code><span class="k">from</span> langgraph.types <span class="k">import</span> interrupt, Command
+
+<span class="k">def</span> <span class="f">human_review_node</span>(state):
+    <span class="c"># 1) interrupt 把任意 payload 给外部 · 同时 pause graph</span>
+    user_response = interrupt({
+        <span class="s">"action"</span>: state[<span class="s">"proposed_action"</span>],
+        <span class="s">"reason"</span>: state[<span class="s">"reason"</span>],
+        <span class="s">"prompt"</span>: <span class="s">"approve or reject"</span>,
+    })
+    <span class="c"># 2) 用户 resume 后 · interrupt() 返回 Command(resume=X) 里的 X</span>
+    <span class="k">return</span> {<span class="s">"approved"</span>: user_response.get(<span class="s">"approved"</span>, False)}
+
+<span class="c"># 客户端代码</span>
+cfg = {<span class="s">"configurable"</span>: {<span class="s">"thread_id"</span>: <span class="s">"t1"</span>}}
+
+<span class="c"># 第一次跑 · 跑到 interrupt 处停</span>
+out1 = graph.invoke({<span class="s">"proposed_action"</span>: <span class="s">"refund $50"</span>}, cfg)
+print(out1)  <span class="c"># 含 __interrupt__ 字段</span>
+
+<span class="c"># 用户 approve · resume</span>
+out2 = graph.invoke(Command(resume={<span class="s">"approved"</span>: True}), cfg)
+print(out2[<span class="s">"approved"</span>])  <span class="c"># True</span>
+</code></pre>
+
+      <h3 id="s-5-2"><span class="num">§5.2</span>interrupt 的 4 个内部要点</h3>
+      <ol>
+        <li><strong>必须有 checkpointer</strong>——interrupt 状态靠 checkpoint 持久化 · 没 checkpointer 直接报错</li>
+        <li><strong>幂等性问题</strong>——interrupt 是<em>函数式风格</em> · resume 时 node <strong>从头重跑</strong>到 interrupt() 返回点 · 所以 interrupt 之前的代码要幂等（不要发邮件 / 不要改 DB · 副作用放 interrupt 之后）</li>
+        <li><strong>多个 interrupt 同 node</strong>——支持 · 按调用顺序 resume · 但要小心顺序依赖</li>
+        <li><strong>跨 node 多 interrupt</strong>——支持 · 用户可以 batch resume 多个</li>
+      </ol>
+
+      <div class="box warn">
+        <div class="box-label">最常踩坑</div>
+        <pre style="margin: 0.4rem 0;"><code><span class="k">def</span> <span class="f">bad_node</span>(state):
+    send_email(state[<span class="s">"user"</span>])  <span class="c"># ❌ resume 时这行会重跑 · 邮件发 2 次</span>
+    response = interrupt({...})
+    <span class="k">return</span> {...}
+
+<span class="k">def</span> <span class="f">good_node</span>(state):
+    response = interrupt({...})
+    <span class="c"># interrupt 之后才副作用 · resume 后才执行 1 次</span>
+    send_email(state[<span class="s">"user"</span>])
+    <span class="k">return</span> {...}</code></pre>
+      </div>
+
+      <h3 id="s-5-3"><span class="num">§5.3</span>Command · 不只是 resume</h3>
+      <p>Command 是 LangGraph 的<strong>"node 输出动态控制"机制</strong> · 比 conditional_edges 灵活。它能同时做 3 件事：</p>
+
+      <pre><code><span class="k">from</span> langgraph.types <span class="k">import</span> Command
+<span class="k">from</span> typing <span class="k">import</span> Literal
+
+<span class="k">def</span> <span class="f">router_node</span>(state) -&gt; Command[Literal[<span class="s">"agent_a"</span>, <span class="s">"agent_b"</span>, END]]:
+    decision = classify(state)
+    <span class="k">return</span> Command(
+        update={<span class="s">"routed_to"</span>: decision},  <span class="c"># ① 更新 state</span>
+        goto=decision,                       <span class="c"># ② 指定下个 node (替代 conditional_edges)</span>
+        graph=Command.PARENT,                <span class="c"># ③ 往父 graph 跳 (subgraph 用)</span>
+    )
+</code></pre>
+
+      <p><strong>Command vs conditional_edges</strong>：</p>
+      <ul>
+        <li>conditional_edges——<em>静态</em>定义路径 · graph compile 时已知</li>
+        <li>Command——<em>动态</em> · node 执行时才决定 · 还能同时 update state</li>
+        <li>实战：simple routing 用 conditional_edges（清晰），复杂场景用 Command（灵活）</li>
+      </ul>
+
+      <h3 id="s-5-4"><span class="num">§5.4</span>HITL 4 种典型 pattern</h3>
+
+      <h4>① Approve / Reject (最常见)</h4>
+      <pre><code><span class="k">def</span> <span class="f">approve_node</span>(state):
+    resp = interrupt({<span class="s">"action"</span>: state[<span class="s">"action"</span>], <span class="s">"prompt"</span>: <span class="s">"approve?"</span>})
+    <span class="k">return</span> {<span class="s">"approved"</span>: resp[<span class="s">"approved"</span>]}
+</code></pre>
+
+      <h4>② Edit before continue</h4>
+      <pre><code><span class="k">def</span> <span class="f">review_draft</span>(state):
+    resp = interrupt({<span class="s">"draft"</span>: state[<span class="s">"draft"</span>], <span class="s">"prompt"</span>: <span class="s">"edit if needed"</span>})
+    <span class="k">return</span> {<span class="s">"draft"</span>: resp.get(<span class="s">"edited"</span>, state[<span class="s">"draft"</span>])}
+</code></pre>
+
+      <h4>③ Provide missing info</h4>
+      <pre><code><span class="k">def</span> <span class="f">ask_clarification</span>(state):
+    resp = interrupt({<span class="s">"need"</span>: <span class="s">"date_range"</span>})
+    <span class="k">return</span> {<span class="s">"date_range"</span>: resp[<span class="s">"date_range"</span>]}
+</code></pre>
+
+      <h4>④ Multi-step approval (chained)</h4>
+      <pre><code><span class="k">def</span> <span class="f">multi_step</span>(state):
+    legal = interrupt({<span class="s">"step"</span>: <span class="s">"legal review"</span>})
+    <span class="k">if</span> <span class="k">not</span> legal[<span class="s">"approved"</span>]: <span class="k">return</span> {<span class="s">"final"</span>: <span class="s">"rejected by legal"</span>}
+    finance = interrupt({<span class="s">"step"</span>: <span class="s">"finance review"</span>})
+    <span class="k">return</span> {<span class="s">"final"</span>: <span class="s">"approved"</span> <span class="k">if</span> finance[<span class="s">"approved"</span>] <span class="k">else</span> <span class="s">"rejected"</span>}
+</code></pre>
+
+      <h3 id="s-5-5"><span class="num">§5.5</span>老版 NodeInterrupt · 看到要识别</h3>
+      <p>遗留代码可能用 <code>raise NodeInterrupt(...)</code> + <code>interrupt_before / interrupt_after</code> compile 选项 · 或 <code>graph.update_state</code> 手动改后再 invoke。<strong>这是老 API · 新代码必弃</strong>。
+      看到老代码要能识别 + 知道怎么迁移。</p>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 5</div>
+        <ul>
+          <li><a href="https://langchain-ai.github.io/langgraph/concepts/human_in_the_loop/" target="_blank">官方 · Human-in-the-loop</a></li>
+          <li><a href="https://langchain-ai.github.io/langgraph/how-tos/human_in_the_loop/wait-user-input/" target="_blank">How-to · wait for user input</a></li>
+          <li><a href="https://blog.langchain.dev/making-it-easier-to-build-human-in-the-loop-agents-with-interrupt/" target="_blank">interrupt() 设计博客</a> ——讲了为啥重写 API</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 6 — Send · Map-reduce ============== -->
+    <section id="ch-6">
+      <header class="ch-head">
+        <span class="badge">Chapter 6 · 原语 5</span>
+        <h2>Send · 真正的 map-reduce</h2>
+        <p class="lede">动态并行的钥匙 · 跟 conditional_edges 是两个东西</p>
+      </header>
+
+      <h3 id="s-6-1"><span class="num">§6.1</span>Send vs conditional_edges · 本质区别</h3>
+      <p>新人经常分不清 · 这俩看着都是"决定下一步去哪"实际<strong>设计目的不同</strong>：</p>
+
+      <table>
+        <thead><tr><th></th><th>conditional_edges</th><th>Send</th></tr></thead>
+        <tbody>
+          <tr><td>语义</td><td>"我下一步去 A 还是 B"——routing</td><td>"我要派 N 个独立 task 给 X · 同时跑"——spawn</td></tr>
+          <tr><td>下游 node 数</td><td>1 个 (一条路)</td><td>N 个并行 instance</td></tr>
+          <tr><td>每个 instance 看到的 state</td><td>共享 state</td><td>独立 input · 不是 state</td></tr>
+          <tr><td>典型场景</td><td>分支决策</td><td>map-reduce / 并行 sub-task</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-6-2"><span class="num">§6.2</span>map-reduce 实战 · 并行总结 N 篇文章</h3>
+
+      <pre><code><span class="k">from</span> langgraph.constants <span class="k">import</span> Send
+<span class="k">from</span> typing <span class="k">import</span> TypedDict, Annotated
+<span class="k">from</span> operator <span class="k">import</span> add
+
+<span class="k">class</span> <span class="f">State</span>(TypedDict):
+    urls: list[str]
+    summaries: Annotated[list[str], add]   <span class="c"># reducer 必须 · 多 worker 并写</span>
+    final: str
+
+<span class="k">class</span> <span class="f">SummaryInput</span>(TypedDict):
+    url: str
+
+<span class="k">def</span> <span class="f">prepare</span>(state: State):
+    <span class="c"># node 不直接返 update · 返 Send 列表</span>
+    <span class="k">return</span> [Send(<span class="s">"summarize"</span>, {<span class="s">"url"</span>: u}) <span class="k">for</span> u <span class="k">in</span> state[<span class="s">"urls"</span>]]
+
+<span class="k">def</span> <span class="f">summarize</span>(input: SummaryInput):
+    <span class="c"># worker · 看到的是 SummaryInput 不是 State！</span>
+    summary = llm.invoke(f<span class="s">"summarize: {fetch(input['url'])}"</span>).content
+    <span class="k">return</span> {<span class="s">"summaries"</span>: [summary]}   <span class="c"># reducer add 累积</span>
+
+<span class="k">def</span> <span class="f">finalize</span>(state: State):
+    final = <span class="s">"\n\n"</span>.join(state[<span class="s">"summaries"</span>])
+    <span class="k">return</span> {<span class="s">"final"</span>: final}
+
+g = StateGraph(State)
+g.add_node(<span class="s">"summarize"</span>, summarize)
+g.add_node(<span class="s">"finalize"</span>, finalize)
+g.add_conditional_edges(START, prepare, [<span class="s">"summarize"</span>])  <span class="c"># prepare 返 Send list</span>
+g.add_edge(<span class="s">"summarize"</span>, <span class="s">"finalize"</span>)
+g.add_edge(<span class="s">"finalize"</span>, END)
+
+graph = g.compile()
+out = graph.invoke({<span class="s">"urls"</span>: [<span class="s">"u1"</span>, <span class="s">"u2"</span>, <span class="s">"u3"</span>]})
+<span class="c"># summarize 派出 3 个并行 worker · 每个写 summaries</span>
+<span class="c"># reducer add 把 3 个 [summary] 合成 [s1, s2, s3]</span>
+<span class="c"># finalize 看到完整 summaries · 合一</span>
+</code></pre>
+
+      <h3 id="s-6-3"><span class="num">§6.3</span>Send 的 3 个内部要点</h3>
+      <ol>
+        <li><strong>Send 接受的 input 不是 State</strong>——是任意 dict / TypedDict · 跟 worker node 签名一致</li>
+        <li><strong>worker node 看到的也不是完整 State</strong>——只是 Send 给的 input。<em>但 worker 的输出会进 State channels · 受 reducer 处理</em></li>
+        <li><strong>Send 列表内 task 真并行</strong>——同 superstep 跑 · 共享 channel · reducer merge</li>
+      </ol>
+
+      <h3 id="s-6-4"><span class="num">§6.4</span>常见 anti-pattern · Send 配错 reducer</h3>
+      <pre><code><span class="c"># ❌ State.summaries 没写 reducer · 默认 LastValue</span>
+<span class="k">class</span> <span class="f">State</span>(TypedDict):
+    summaries: list[str]   <span class="c"># 多 worker 同 step 写 · 只剩 1 个！</span>
+
+<span class="c"># ✓ 必须给 reducer</span>
+<span class="k">class</span> <span class="f">State</span>(TypedDict):
+    summaries: Annotated[list[str], add]
+</code></pre>
+
+      <p><strong>Send + 没 reducer = 数据丢</strong>——<em>这是新人最常踩</em>。
+      记住：<strong>多 writer 同 step → 必须 reducer</strong>。</p>
+
+      <h3 id="s-6-5"><span class="num">§6.5</span>Send 高级 · 动态 fan-out 数</h3>
+      <p>Send list 长度可以是 LLM 决定的——这才是它的真正威力：</p>
+
+      <pre><code><span class="k">def</span> <span class="f">planner</span>(state):
+    <span class="c"># LLM 看 query 决定要拆几个 sub-question</span>
+    sub_qs = llm.with_structured_output(SubQs).invoke(state[<span class="s">"query"</span>])
+    <span class="c"># 动态 fan-out · 可能 1 个可能 10 个</span>
+    <span class="k">return</span> [Send(<span class="s">"researcher"</span>, {<span class="s">"q"</span>: q}) <span class="k">for</span> q <span class="k">in</span> sub_qs.questions]
+</code></pre>
+
+      <p>这是 Deep Research 模式（agent-design.html §5.2）的标准 LangGraph 实现。</p>
+
+      <div class="box deep">
+        <div class="box-label">面试金句</div>
+        <p><em>"Send 跟 conditional_edges 都返 'next' 但语义不同——conditional_edges 是 routing（选 1 条路）· Send 是 spawning（派 N 个独立 instance 并行）。Send 给 worker 的 input 不是 State 是任意 dict · 但 worker 的输出会进 State channels · 必须配对应的 reducer · 否则多 worker 同 step 写会丢数据。Deep Research / map-reduce / sub-agent 并发探索这种 fan-out 模式都依赖 Send"</em></p>
+      </div>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 6</div>
+        <ul>
+          <li><a href="https://langchain-ai.github.io/langgraph/how-tos/map-reduce/" target="_blank">官方 · Map-reduce with Send</a></li>
+          <li><a href="https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/constants.py" target="_blank">Send 定义源码</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 7 — Subgraph + ToolNode ============== -->
+    <section id="ch-7">
+      <header class="ch-head">
+        <span class="badge">Chapter 7 · 原语 6</span>
+        <h2>Subgraph + ToolNode · 组合的极致</h2>
+        <p class="lede">把 graph 当 node 用 · 把 tool 调用模式化</p>
+      </header>
+
+      <h3 id="s-7-1"><span class="num">§7.1</span>Subgraph · graph 是一等公民</h3>
+      <p>LangGraph 的<strong>compiled graph 本身可以当 node 用</strong>。这是组合性的基础。</p>
+
+      <pre><code><span class="c"># 子 graph (一个完整 LangGraph)</span>
+<span class="k">class</span> <span class="f">SubState</span>(TypedDict):
+    sub_messages: Annotated[list, add_messages]
+    sub_result: str
+
+sg = StateGraph(SubState)
+sg.add_node(<span class="s">"think"</span>, think_fn)
+sg.add_node(<span class="s">"act"</span>, act_fn)
+<span class="c"># ... 完整 graph 定义</span>
+sub_graph = sg.compile()
+
+<span class="c"># 主 graph 用 sub_graph 当 node</span>
+<span class="k">class</span> <span class="f">MainState</span>(TypedDict):
+    messages: Annotated[list, add_messages]
+    sub_result: str
+
+g = StateGraph(MainState)
+g.add_node(<span class="s">"sub"</span>, sub_graph)   <span class="c"># ✓ compiled graph 当 node</span>
+g.add_node(<span class="s">"after"</span>, after_fn)
+</code></pre>
+
+      <h3 id="s-7-2"><span class="num">§7.2</span>State 共享 vs 隔离 · 2 种 subgraph 用法</h3>
+
+      <h4>用法 A · 共享 state（自动 key 映射）</h4>
+      <p>主 State 跟 sub State <strong>有同名字段</strong> → LangGraph 自动映射 · sub 写的字段流回主。</p>
+
+      <pre><code><span class="k">class</span> <span class="f">MainState</span>(TypedDict):
+    messages: Annotated[list, add_messages]
+    sub_result: str
+
+<span class="k">class</span> <span class="f">SubState</span>(TypedDict):
+    messages: Annotated[list, add_messages]   <span class="c"># 同名 → 共享</span>
+    sub_result: str                            <span class="c"># 同名 → 共享</span>
+    sub_internal: int                          <span class="c"># 主没有 → sub 内部用</span>
+</code></pre>
+
+      <h4>用法 B · 完全隔离（subgraph 当 worker）</h4>
+      <p>主 State 跟 sub State <strong>无同名字段</strong> → 用 wrapper 函数显式转换。</p>
+
+      <pre><code><span class="k">def</span> <span class="f">call_subgraph</span>(state: MainState):
+    <span class="c"># 显式喂 input · 提取 output</span>
+    sub_out = sub_graph.invoke({<span class="s">"sub_messages"</span>: [...], <span class="s">"sub_result"</span>: <span class="s">""</span>})
+    <span class="k">return</span> {<span class="s">"sub_result"</span>: sub_out[<span class="s">"sub_result"</span>]}
+
+g.add_node(<span class="s">"sub"</span>, call_subgraph)
+</code></pre>
+
+      <p><strong>选哪种</strong>：messages 这种共享意图明确用 A；context 隔离 / 不让 sub 看到主 state 用 B。
+      Claude Code Task tool 的 sub-agent 隔离（agent-design.html §3.2）就是 B 的极致。</p>
+
+      <h3 id="s-7-3"><span class="num">§7.3</span>ToolNode · prebuilt 助手</h3>
+      <p>每次写 ReAct 都重写 tool dispatch 节点很烦——LangGraph 给了 <code>ToolNode</code>。</p>
+
+      <pre><code><span class="k">from</span> langgraph.prebuilt <span class="k">import</span> ToolNode
+<span class="k">from</span> langchain_core.tools <span class="k">import</span> tool
+
+<span class="f">@tool</span>
+<span class="k">def</span> <span class="f">search</span>(query: str) -&gt; str:
+    <span class="s">"""Web search."""</span>
+    <span class="k">return</span> mock_search(query)
+
+<span class="f">@tool</span>
+<span class="k">def</span> <span class="f">calc</span>(expression: str) -&gt; str:
+    <span class="s">"""Eval math."""</span>
+    <span class="k">return</span> str(eval(expression))
+
+tools = [search, calc]
+tool_node = ToolNode(tools)   <span class="c"># 自动处理 last AIMessage.tool_calls</span>
+
+<span class="c"># 这一句替代之前手写的 tool_node 函数 (agent-coding.html Q3)</span>
+g.add_node(<span class="s">"tools"</span>, tool_node)
+</code></pre>
+
+      <p>ToolNode 内部做了 4 件事：</p>
+      <ol>
+        <li>取 last AIMessage 的 tool_calls list</li>
+        <li>每个 tool_call 找对应 tool function · 调它（支持并行）</li>
+        <li>异常捕获 · 转 ToolMessage(content="error: ...") · 不让 graph 挂</li>
+        <li>返回 ToolMessage list 写回 messages channel</li>
+      </ol>
+
+      <h3 id="s-7-4"><span class="num">§7.4</span>create_react_agent · 一行 ReAct</h3>
+      <p>更进一步——LangGraph 给 prebuilt ReAct agent。</p>
+
+      <pre><code><span class="k">from</span> langgraph.prebuilt <span class="k">import</span> create_react_agent
+
+agent = create_react_agent(
+    model=ChatOpenAI(model=<span class="s">"gpt-4o-mini"</span>),
+    tools=[search, calc],
+    checkpointer=PostgresSaver(...),  <span class="c"># 可选 · 给持久化</span>
+    state_schema=MyState,              <span class="c"># 可选 · 自定义 State</span>
+    interrupt_before=[<span class="s">"tools"</span>],        <span class="c"># 可选 · tool 调用前 HITL</span>
+)
+
+<span class="c"># 直接 invoke · 内部就是 agent + ToolNode loop</span>
+out = agent.invoke({<span class="s">"messages"</span>: [HumanMessage(<span class="s">"hi"</span>)]}, cfg)
+</code></pre>
+
+      <p><strong>什么时候用 prebuilt vs 自定义</strong>：</p>
+      <ul>
+        <li><strong>prebuilt</strong>——MVP / 标准 ReAct 行为够用 · 不想 reinvent</li>
+        <li><strong>自定义</strong>——要插入额外 node（HITL gate / planning / reflection / supervisor）就自己拼</li>
+      </ul>
+
+      <h3 id="s-7-5"><span class="num">§7.5</span>组合范式 · 大型 agent 的层级结构</h3>
+
+      <figure class="figure">
+        <svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Subgraph composition">
+          <defs>
+            <marker id="sg-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#756c5c"/>
+            </marker>
+          </defs>
+
+          <!-- main graph -->
+          <text class="fig-t-label fig-t-rust" x="380" y="22" text-anchor="middle">MAIN GRAPH</text>
+          <rect class="fig-box-rust" x="40"  y="40" width="120" height="50" rx="6"/>
+          <text class="fig-t" x="100" y="62" text-anchor="middle">supervisor</text>
+          <text class="fig-t-sm" x="100" y="78" text-anchor="middle">routing</text>
+
+          <rect class="fig-box-rust" x="200" y="40" width="160" height="50" rx="6"/>
+          <text class="fig-t" x="280" y="62" text-anchor="middle">research_agent</text>
+          <text class="fig-t-sm" x="280" y="78" text-anchor="middle">subgraph (隔离 ctx)</text>
+
+          <rect class="fig-box-rust" x="400" y="40" width="160" height="50" rx="6"/>
+          <text class="fig-t" x="480" y="62" text-anchor="middle">code_agent</text>
+          <text class="fig-t-sm" x="480" y="78" text-anchor="middle">subgraph (共享 msgs)</text>
+
+          <rect class="fig-box-rust" x="600" y="40" width="120" height="50" rx="6"/>
+          <text class="fig-t" x="660" y="62" text-anchor="middle">writer</text>
+          <text class="fig-t-sm" x="660" y="78" text-anchor="middle">prebuilt</text>
+
+          <line class="fig-line" x1="160" y1="65" x2="198" y2="65" marker-end="url(#sg-arr)"/>
+          <line class="fig-line" x1="360" y1="65" x2="398" y2="65" marker-end="url(#sg-arr)"/>
+          <line class="fig-line" x1="560" y1="65" x2="598" y2="65" marker-end="url(#sg-arr)"/>
+
+          <!-- sub graph 1 expand -->
+          <text class="fig-t-label fig-t-leaf" x="280" y="135" text-anchor="middle">research_agent · subgraph 内部</text>
+          <rect class="fig-box-leaf" x="180" y="150" width="80" height="40" rx="6"/>
+          <text class="fig-t-sm" x="220" y="172" text-anchor="middle">planner</text>
+          <rect class="fig-box-leaf" x="280" y="150" width="80" height="40" rx="6"/>
+          <text class="fig-t-sm" x="320" y="172" text-anchor="middle">searcher</text>
+          <line class="fig-line-leaf" x1="260" y1="170" x2="278" y2="170" marker-end="url(#sg-arr)"/>
+          <line class="fig-line" x1="280" y1="92" x2="280" y2="148" stroke-dasharray="3 2"/>
+
+          <!-- sub graph 2 expand -->
+          <text class="fig-t-label fig-t-leaf" x="480" y="135" text-anchor="middle">code_agent · subgraph 内部</text>
+          <rect class="fig-box-leaf" x="380" y="150" width="80" height="40" rx="6"/>
+          <text class="fig-t-sm" x="420" y="172" text-anchor="middle">react agent</text>
+          <rect class="fig-box-leaf" x="480" y="150" width="80" height="40" rx="6"/>
+          <text class="fig-t-sm" x="520" y="172" text-anchor="middle">ToolNode</text>
+          <line class="fig-line-leaf" x1="460" y1="170" x2="478" y2="160" marker-end="url(#sg-arr)"/>
+          <line class="fig-line-leaf" x1="478" y1="180" x2="460" y2="180" marker-end="url(#sg-arr)"/>
+          <line class="fig-line" x1="480" y1="92" x2="480" y2="148" stroke-dasharray="3 2"/>
+
+          <!-- checkpoint -->
+          <rect class="fig-box-soft" x="40" y="230" width="680" height="40" rx="6"/>
+          <text class="fig-t" x="380" y="252" text-anchor="middle">PostgresSaver · 主 + 每个 subgraph 各自 namespace 持久化</text>
+          <text class="fig-t-sm fig-t-mute" x="380" y="266" text-anchor="middle">checkpoint_ns: "" / "research_agent" / "code_agent"</text>
+        </svg>
+        <figcaption><strong>Figure 7.5</strong> · 大型 agent 典型组合 · 主 graph 作 supervisor + subgraph 当 worker · ToolNode prebuilt</figcaption>
+      </figure>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 7</div>
+        <ul>
+          <li><a href="https://langchain-ai.github.io/langgraph/concepts/subgraphs/" target="_blank">官方 · Subgraphs</a></li>
+          <li><a href="https://langchain-ai.github.io/langgraph/reference/prebuilt/" target="_blank">官方 · Prebuilt API (ToolNode / create_react_agent)</a></li>
+          <li><a href="https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/prebuilt/tool_node.py" target="_blank">ToolNode 源码</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 8 — 5 Framework Comparison ============== -->
+    <section id="ch-8">
+      <header class="ch-head">
+        <span class="badge">Chapter 8 · 横评</span>
+        <h2>5 框架横评 · 设计哲学的本质差异</h2>
+        <p class="lede">不是 feature 对比 · 是哲学对比 · 选错框架 6 个月白干</p>
+      </header>
+
+      <h3 id="s-8-1"><span class="num">§8.1</span>5 个对手 · 一句话定位</h3>
+      <table>
+        <thead><tr><th>框架</th><th>团队</th><th>哲学一句话</th></tr></thead>
+        <tbody>
+          <tr><td><strong>LangGraph</strong></td><td>LangChain</td><td>显式 state graph + Pregel · 灵活 low-level</td></tr>
+          <tr><td><strong>CrewAI</strong></td><td>独立</td><td>"角色 + 任务" 高抽象 · agent 当员工配</td></tr>
+          <tr><td><strong>AutoGen v0.4</strong></td><td>Microsoft</td><td>conversation-driven · 多 agent chat</td></tr>
+          <tr><td><strong>OpenAI Agents SDK</strong></td><td>OpenAI</td><td>handoff 原语 · 跟 OpenAI 模型深度集成</td></tr>
+          <tr><td><strong>PydanticAI</strong></td><td>Pydantic 团队</td><td>type-safe Pythonic · 极简 · Pydantic 一等</td></tr>
+          <tr><td><strong>Mastra</strong></td><td>Gatsby 创始人</td><td>TypeScript-first · 工作流风格</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-8-2"><span class="num">§8.2</span>CrewAI · "角色 + 任务" 高抽象</h3>
+
+      <pre><code><span class="c"># CrewAI 经典写法 · 跟 LangGraph 完全不同的抽象</span>
+<span class="k">from</span> crewai <span class="k">import</span> Agent, Task, Crew, Process
+
+researcher = Agent(
+    role=<span class="s">"Senior Researcher"</span>,
+    goal=<span class="s">"Find latest AI agent papers"</span>,
+    backstory=<span class="s">"You are an expert in agent research..."</span>,
+    tools=[search_tool],
+    llm=ChatOpenAI(model=<span class="s">"gpt-4o"</span>),
+)
+
+writer = Agent(role=<span class="s">"Writer"</span>, goal=<span class="s">"Write blog posts"</span>, ...)
+
+research_task = Task(
+    description=<span class="s">"Research X"</span>,
+    expected_output=<span class="s">"5 key findings"</span>,
+    agent=researcher,
+)
+write_task = Task(description=<span class="s">"Write blog from research"</span>, agent=writer,
+                  context=[research_task])  <span class="c"># 隐式数据流</span>
+
+crew = Crew(agents=[researcher, writer], tasks=[research_task, write_task],
+            process=Process.sequential)
+result = crew.kickoff()
+</code></pre>
+
+      <p><strong>哲学</strong>：把 agent 当"员工"——给 role / goal / backstory 三件套配 prompt · task 之间靠 <code>context=</code> 隐式传数据 · process 是 sequential / hierarchical 二选一。</p>
+
+      <p><strong>优势</strong>：</p>
+      <ul>
+        <li>quick prototype——20 行能 ship 一个 multi-agent demo</li>
+        <li>新人友好——没 state / channel / reducer 这些概念</li>
+        <li>YAML 配置——非工程师能改 agent 描述</li>
+      </ul>
+
+      <p><strong>劣势</strong>：</p>
+      <ul>
+        <li>抽象太高 → 想细控制就难（要 hack）</li>
+        <li>没有 first-class HITL（2025 后加了但弱）</li>
+        <li>没有真正持久化（demo 用 SQLite hack）</li>
+        <li>多 agent 之间通信靠 prompt + context 拼接 · 黑盒难 debug</li>
+        <li>生产用的非常少——大多停留在 hackathon</li>
+      </ul>
+
+      <h3 id="s-8-3"><span class="num">§8.3</span>AutoGen v0.4 · conversation-driven</h3>
+
+      <pre><code><span class="c"># AutoGen v0.4 (2024 末重写后)</span>
+<span class="k">from</span> autogen_agentchat.agents <span class="k">import</span> AssistantAgent, UserProxyAgent
+<span class="k">from</span> autogen_agentchat.teams <span class="k">import</span> RoundRobinGroupChat
+<span class="k">from</span> autogen_ext.models.openai <span class="k">import</span> OpenAIChatCompletionClient
+
+writer = AssistantAgent(<span class="s">"writer"</span>, model_client=client, system_message=<span class="s">"You write."</span>)
+critic = AssistantAgent(<span class="s">"critic"</span>, model_client=client, system_message=<span class="s">"You critique."</span>)
+
+team = RoundRobinGroupChat([writer, critic], max_turns=<span class="s">5</span>)
+<span class="k">async</span> <span class="k">for</span> msg <span class="k">in</span> team.run_stream(task=<span class="s">"Write a 200-word essay about X"</span>):
+    print(msg.content)
+</code></pre>
+
+      <p><strong>哲学</strong>：agent 之间是<em>对话</em>——每个 agent 是 chat participant · 一个 group chat 协调谁说话（round-robin / selector / swarm）· 终止条件触发结束。<strong>conversation 是 first-class · state 不是</strong>。</p>
+
+      <p><strong>优势</strong>：</p>
+      <ul>
+        <li>research 友好——agent 间复杂交互方便表达</li>
+        <li>v0.4 重写后异步 · 比早期 v0.2 / 0.3 工程化好很多</li>
+        <li>Magentic-One 等多 agent 模式 prebuilt</li>
+        <li>跟 .NET / 多语言生态有 binding (MS 重视)</li>
+      </ul>
+
+      <p><strong>劣势</strong>：</p>
+      <ul>
+        <li>不适合<em>workflow</em> 场景——硬要做就是把 agent 假装成 user</li>
+        <li>HITL / 持久化 都比 LangGraph 弱</li>
+        <li>v0.2 → v0.4 大重写——老代码迁移痛 · 生态分裂</li>
+        <li>主要是研究项目 · 生产用例少</li>
+      </ul>
+
+      <h3 id="s-8-4"><span class="num">§8.4</span>OpenAI Agents SDK · handoff 一等公民</h3>
+
+      <pre><code><span class="c"># OpenAI Agents SDK (2025 推出)</span>
+<span class="k">from</span> agents <span class="k">import</span> Agent, Runner, function_tool, handoff
+
+<span class="f">@function_tool</span>
+<span class="k">def</span> <span class="f">search</span>(query: str) -&gt; str:
+    <span class="k">return</span> mock_search(query)
+
+researcher = Agent(name=<span class="s">"Researcher"</span>, instructions=<span class="s">"You research"</span>,
+                   tools=[search])
+writer = Agent(name=<span class="s">"Writer"</span>, instructions=<span class="s">"You write blogs"</span>)
+triage = Agent(name=<span class="s">"Triage"</span>, instructions=<span class="s">"Route to specialist"</span>,
+               handoffs=[researcher, writer])  <span class="c"># 关键 · handoff 列表</span>
+
+result = Runner.run_sync(triage, <span class="s">"Write a blog about agents"</span>)
+print(result.final_output)
+</code></pre>
+
+      <p><strong>哲学</strong>：把<strong>"handoff"做成 first-class 原语</strong>——一个 agent 能把整个对话<em>整体移交</em>给另一个 agent。这是 2024 OpenAI 内部 Swarm 实验的产品化。极简——少到不能再少的 API。</p>
+
+      <p><strong>优势</strong>：</p>
+      <ul>
+        <li>极简 · 学习曲线最低</li>
+        <li>跟 OpenAI Realtime / Responses API 集成最好</li>
+        <li>tracing 内置 · OpenAI dashboard 直接看</li>
+        <li>tool_calls 用 OpenAI strict schema · 错误率低</li>
+      </ul>
+
+      <p><strong>劣势</strong>：</p>
+      <ul>
+        <li>vendor lock-in——换 model 提供商麻烦</li>
+        <li>没真正 state graph——复杂 workflow 很别扭</li>
+        <li>没 checkpointer · 没 time travel</li>
+        <li>HITL 弱（2026 在补）</li>
+        <li>SDK 还年轻 · API 仍在变</li>
+      </ul>
+
+      <h3 id="s-8-5"><span class="num">§8.5</span>PydanticAI · type-safe + Pythonic</h3>
+
+      <pre><code><span class="c"># PydanticAI · 跟 Pydantic / FastAPI 风格一致</span>
+<span class="k">from</span> pydantic_ai <span class="k">import</span> Agent, RunContext
+<span class="k">from</span> pydantic <span class="k">import</span> BaseModel
+
+<span class="k">class</span> <span class="f">Deps</span>(BaseModel):
+    user_id: str
+
+<span class="k">class</span> <span class="f">Result</span>(BaseModel):
+    answer: str
+    confidence: float
+
+agent = Agent(
+    <span class="s">"openai:gpt-4o"</span>,
+    deps_type=Deps,
+    output_type=Result,   <span class="c"># strict structured output</span>
+    system_prompt=<span class="s">"You answer questions"</span>,
+)
+
+<span class="f">@agent.tool</span>
+<span class="k">async</span> <span class="k">def</span> <span class="f">get_orders</span>(ctx: RunContext[Deps]) -&gt; list[str]:
+    <span class="k">return</span> await db.orders.find(user=ctx.deps.user_id)
+
+result = await agent.run(<span class="s">"my orders?"</span>, deps=Deps(user_id=<span class="s">"u1"</span>))
+print(result.output.answer, result.output.confidence)  <span class="c"># type-checked</span>
+</code></pre>
+
+      <p><strong>哲学</strong>：<em>"FastAPI for agents"</em>——用 Pydantic 做强类型 + 依赖注入 + structured output。所有 input / output / deps 全类型 · IDE 提示完美。</p>
+
+      <p><strong>优势</strong>：</p>
+      <ul>
+        <li>type-safe + 极简——很 Pythonic</li>
+        <li>Pydantic 生态用户零学习成本</li>
+        <li>structured output 一等公民</li>
+        <li>多 model 都支持（OpenAI / Anthropic / Gemini / Ollama）</li>
+        <li>2025-2026 增速最快的框架之一</li>
+      </ul>
+
+      <p><strong>劣势</strong>：</p>
+      <ul>
+        <li>没 graph state——复杂 multi-step / multi-agent 工作流要自拼</li>
+        <li>没 checkpointer / time travel</li>
+        <li>HITL 简单但弱</li>
+        <li>面对 long-horizon agent 仍要回 LangGraph</li>
+        <li>生态比 LangGraph 小很多</li>
+      </ul>
+
+      <h3 id="s-8-6"><span class="num">§8.6</span>Mastra · TypeScript-first</h3>
+
+      <pre><code><span class="c">// Mastra · TypeScript</span>
+import { Mastra, Agent, createTool } from <span class="s">"@mastra/core"</span>;
+import { openai } from <span class="s">"@ai-sdk/openai"</span>;
+import { z } from <span class="s">"zod"</span>;
+
+<span class="k">const</span> searchTool = createTool({
+  id: <span class="s">"search"</span>, description: <span class="s">"web search"</span>,
+  inputSchema: z.object({ query: z.string() }),
+  execute: <span class="k">async</span> ({ context }) =&gt; mockSearch(context.query),
+});
+
+<span class="k">const</span> agent = <span class="k">new</span> Agent({
+  name: <span class="s">"researcher"</span>, model: openai(<span class="s">"gpt-4o"</span>),
+  instructions: <span class="s">"You research"</span>, tools: { searchTool },
+});
+
+<span class="k">const</span> result = <span class="k">await</span> agent.generate(<span class="s">"What is X"</span>);
+</code></pre>
+
+      <p><strong>哲学</strong>：TypeScript / Node 团队的"LangGraph"。带<strong>workflows + agents + RAG + memory + eval</strong> 全套 · 设计哲学跟 LangGraph 像但更产品化。</p>
+
+      <p><strong>优势</strong>：</p>
+      <ul>
+        <li>TypeScript / Node 项目首选</li>
+        <li>跟 Vercel AI SDK 紧密集成</li>
+        <li>built-in eval / observability</li>
+        <li>Cloud Hosting 完整</li>
+      </ul>
+
+      <p><strong>劣势</strong>：</p>
+      <ul>
+        <li>仅 TypeScript · Python 项目用不上</li>
+        <li>仍年轻——2024 末才推出 · 生态小</li>
+        <li>workflows 抽象不如 LangGraph state graph 灵活</li>
+      </ul>
+
+      <h3 id="s-8-7"><span class="num">§8.7</span>10 维度横评 · 一图看完</h3>
+
+      <table>
+        <thead><tr><th>维度</th><th>LangGraph</th><th>CrewAI</th><th>AutoGen</th><th>OpenAI SDK</th><th>PydanticAI</th><th>Mastra</th></tr></thead>
+        <tbody>
+          <tr><td>抽象层</td><td>low (灵活)</td><td>high (省事)</td><td>mid</td><td>high (极简)</td><td>mid</td><td>mid</td></tr>
+          <tr><td>State 模型</td><td>显式 graph</td><td>隐式 task ctx</td><td>对话 history</td><td>handoff 链</td><td>无 (per call)</td><td>workflow state</td></tr>
+          <tr><td>HITL</td><td>★★★★★</td><td>★★</td><td>★★★</td><td>★★</td><td>★★</td><td>★★★</td></tr>
+          <tr><td>持久化</td><td>★★★★★</td><td>★</td><td>★★</td><td>★ (build-your-own)</td><td>★</td><td>★★★★</td></tr>
+          <tr><td>Multi-agent</td><td>★★★★★</td><td>★★★★ (核心场景)</td><td>★★★★★</td><td>★★★ (handoff)</td><td>★★ (拼)</td><td>★★★</td></tr>
+          <tr><td>Time travel</td><td>★★★★★</td><td>无</td><td>无</td><td>无</td><td>无</td><td>★★★</td></tr>
+          <tr><td>Type safety</td><td>★★★ (TypedDict)</td><td>★★</td><td>★★★</td><td>★★★</td><td>★★★★★</td><td>★★★★ (TS)</td></tr>
+          <tr><td>Vendor lock</td><td>无</td><td>无</td><td>无</td><td>OpenAI</td><td>无</td><td>无</td></tr>
+          <tr><td>学习曲线</td><td>陡 (1-2 周)</td><td>低 (1 天)</td><td>中</td><td>低 (1 天)</td><td>低 (1 天)</td><td>中</td></tr>
+          <tr><td>生产成熟度</td><td>★★★★★</td><td>★★ (hackathon-grade)</td><td>★★★ (research)</td><td>★★★ (新)</td><td>★★★★ (涨快)</td><td>★★★</td></tr>
+        </tbody>
+      </table>
+
+      <div class="pull">
+        Default 选 <strong>LangGraph</strong> · 真有特殊原因再选别的。
+        <cite>—— 2026 行业经验</cite>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 9 — Decision tree ============== -->
+    <section id="ch-9">
+      <header class="ch-head">
+        <span class="badge">Chapter 9 · 决策</span>
+        <h2>5 个真实场景 · 该选谁</h2>
+        <p class="lede">面试官问"为什么选 X"——这章给你标准答法</p>
+      </header>
+
+      <h3 id="s-9-1"><span class="num">§9.1</span>场景 1 · 生产级客服 agent · HITL + 持久化必须</h3>
+      <p><strong>选 LangGraph</strong>。理由：</p>
+      <ul>
+        <li>HITL on refund / sensitive op——LangGraph <code>interrupt()</code> 是同类最强</li>
+        <li>持久化——PostgresSaver 直接生产可用</li>
+        <li>multi-tenant——thread_id 模型天然适配</li>
+        <li>observability——LangSmith 集成最深</li>
+      </ul>
+      <p><strong>反方观点</strong>："我用 OpenAI Agents SDK 行不行？" 答：HITL 和持久化要自己 build · 时间不一定省。</p>
+
+      <h3 id="s-9-2"><span class="num">§9.2</span>场景 2 · 周末黑客松快速 multi-agent demo</h3>
+      <p><strong>选 CrewAI</strong>。理由：</p>
+      <ul>
+        <li>20 行写完 demo · 不写 state / reducer / channel</li>
+        <li>"role + task" 抽象对 demo 来说够用</li>
+        <li>YAML 配置——非工程队友能改</li>
+      </ul>
+      <p><strong>注意</strong>：<em>千万别把 CrewAI demo 直接搬上生产</em>——长期看一定要重写成 LangGraph。CrewAI 是<em>原型工具</em>不是<em>生产框架</em>。</p>
+
+      <h3 id="s-9-3"><span class="num">§9.3</span>场景 3 · OpenAI Realtime 语音 agent</h3>
+      <p><strong>选 OpenAI Agents SDK</strong>。理由：</p>
+      <ul>
+        <li>Realtime API 跟 Agents SDK 同团队设计 · 集成最好</li>
+        <li>handoff 模式适配语音 routing（"我转给计费专员"）</li>
+        <li>tracing 在 OpenAI dashboard 直接看</li>
+      </ul>
+      <p><strong>例外</strong>：如果你强烈反 vendor lock-in · 用 LangGraph + 手写 voice loop 也行 · 但工作量大</p>
+
+      <h3 id="s-9-4"><span class="num">§9.4</span>场景 4 · TypeScript 全栈项目</h3>
+      <p><strong>选 Mastra · 或 Vercel AI SDK + 手拼</strong>。理由：</p>
+      <ul>
+        <li>不要为了用 LangGraph 引入 Python 服务——多一个语言多一倍运维</li>
+        <li>Mastra 有 LangGraph 80% 能力 + TS 生态</li>
+        <li>简单场景 Vercel AI SDK 够用</li>
+      </ul>
+      <p><strong>反方</strong>："我可以用 LangGraph.js" 答：LangGraph.js 比 Python 版落后 6-12 个月特性 · 不推荐主用</p>
+
+      <h3 id="s-9-5"><span class="num">§9.5</span>场景 5 · Pydantic-heavy backend 加 agent</h3>
+      <p><strong>选 PydanticAI</strong>。理由：</p>
+      <ul>
+        <li>Pydantic schema 直接当 agent output / tool input · 零转换</li>
+        <li>FastAPI / SQLModel 风格一致 · 团队上手快</li>
+        <li>简单 agent 场景下比 LangGraph 简洁 5x</li>
+      </ul>
+      <p><strong>边界</strong>：复杂 multi-step workflow 仍要 LangGraph——那就 PydanticAI agent + LangGraph orchestrator 组合</p>
+
+      <h3 id="s-9-6"><span class="num">§9.6</span>决策流程图</h3>
+
+      <figure class="figure">
+        <svg viewBox="0 0 760 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Framework decision tree">
+          <defs>
+            <marker id="dt-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#756c5c"/>
+            </marker>
+          </defs>
+
+          <rect class="fig-box-rust" x="280" y="20" width="200" height="40" rx="6"/>
+          <text class="fig-t" x="380" y="44" text-anchor="middle">要做 agent · 选什么框架?</text>
+
+          <rect class="fig-box-soft" x="280" y="90" width="200" height="40" rx="6"/>
+          <text class="fig-t-sm" x="380" y="114" text-anchor="middle">语言?</text>
+
+          <rect class="fig-box-leaf" x="40" y="160" width="180" height="50" rx="6"/>
+          <text class="fig-t" x="130" y="180" text-anchor="middle">TypeScript</text>
+          <text class="fig-t-sm" x="130" y="196" text-anchor="middle">→ Mastra · Vercel AI SDK</text>
+
+          <rect class="fig-box-leaf" x="540" y="160" width="180" height="50" rx="6"/>
+          <text class="fig-t" x="630" y="180" text-anchor="middle">Python</text>
+          <text class="fig-t-sm" x="630" y="196" text-anchor="middle">↓ 继续问</text>
+
+          <line class="fig-line" x1="380" y1="60" x2="380" y2="88" marker-end="url(#dt-arr)"/>
+          <line class="fig-line" x1="320" y1="130" x2="180" y2="158" marker-end="url(#dt-arr)"/>
+          <line class="fig-line" x1="440" y1="130" x2="600" y2="158" marker-end="url(#dt-arr)"/>
+
+          <rect class="fig-box-soft" x="540" y="240" width="180" height="40" rx="6"/>
+          <text class="fig-t-sm" x="630" y="264" text-anchor="middle">用途?</text>
+
+          <line class="fig-line" x1="630" y1="210" x2="630" y2="238" marker-end="url(#dt-arr)"/>
+
+          <rect class="fig-box-rust" x="20" y="300" width="160" height="50" rx="6"/>
+          <text class="fig-t" x="100" y="320" text-anchor="middle">生产 + 复杂</text>
+          <text class="fig-t-sm" x="100" y="336" text-anchor="middle">→ LangGraph</text>
+
+          <rect class="fig-box-rust" x="200" y="300" width="160" height="50" rx="6"/>
+          <text class="fig-t" x="280" y="320" text-anchor="middle">demo / hack</text>
+          <text class="fig-t-sm" x="280" y="336" text-anchor="middle">→ CrewAI</text>
+
+          <rect class="fig-box-rust" x="380" y="300" width="160" height="50" rx="6"/>
+          <text class="fig-t" x="460" y="320" text-anchor="middle">OpenAI 栈</text>
+          <text class="fig-t-sm" x="460" y="336" text-anchor="middle">→ Agents SDK</text>
+
+          <rect class="fig-box-rust" x="560" y="300" width="160" height="50" rx="6"/>
+          <text class="fig-t" x="640" y="320" text-anchor="middle">Pydantic 项目</text>
+          <text class="fig-t-sm" x="640" y="336" text-anchor="middle">→ PydanticAI</text>
+
+          <line class="fig-line" x1="560" y1="280" x2="100" y2="298" marker-end="url(#dt-arr)"/>
+          <line class="fig-line" x1="580" y1="280" x2="280" y2="298" marker-end="url(#dt-arr)"/>
+          <line class="fig-line" x1="660" y1="280" x2="460" y2="298" marker-end="url(#dt-arr)"/>
+          <line class="fig-line" x1="700" y1="280" x2="640" y2="298" marker-end="url(#dt-arr)"/>
+        </svg>
+        <figcaption><strong>Figure 9.6</strong> · 框架选型决策树 · 90% 场景 LangGraph (Python) 或 Mastra (TS)</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============== Chapter 10 — Source code walkthrough ============== -->
+    <section id="ch-10">
+      <header class="ch-head">
+        <span class="badge">Chapter 10 · 源码</span>
+        <h2>Pregel 源码导读 · 3 个关键文件</h2>
+        <p class="lede">面试官追问"你看过 LangGraph 源码吗"——这章保你能答</p>
+      </header>
+
+      <p>LangGraph 主要源码在 <code>libs/langgraph/langgraph/</code>。<strong>3 个文件就讲明白核心</strong>：</p>
+
+      <table>
+        <thead><tr><th>文件</th><th>作用</th><th>关键 class / function</th></tr></thead>
+        <tbody>
+          <tr><td><code>graph/state.py</code></td><td>StateGraph 编译</td><td><code>StateGraph</code> · <code>compile()</code></td></tr>
+          <tr><td><code>pregel/__init__.py</code></td><td>Pregel 执行器（核心）</td><td><code>Pregel</code> · <code>stream()</code> · <code>_loop()</code></td></tr>
+          <tr><td><code>channels/</code></td><td>Channel 实现</td><td><code>BaseChannel</code> · 5 种子类</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-10-1"><span class="num">§10.1</span>StateGraph.compile() · 你写的代码到 Pregel 的转换</h3>
+
+      <pre><code><span class="c"># 你写的</span>
+g = StateGraph(State)
+g.add_node(<span class="s">"agent"</span>, agent_fn)
+g.add_node(<span class="s">"tools"</span>, tool_fn)
+g.add_edge(START, <span class="s">"agent"</span>)
+g.add_conditional_edges(<span class="s">"agent"</span>, route, [<span class="s">"tools"</span>, END])
+g.add_edge(<span class="s">"tools"</span>, <span class="s">"agent"</span>)
+graph = g.compile(checkpointer=cp)
+
+<span class="c"># compile() 内部做了 3 件事：</span>
+<span class="c"># 1. 把 State 字段编译成 channels (LastValue / BinaryOpAgg)</span>
+<span class="c"># 2. 把每个 node 包装成 PregelNode (含 subscribes/writes 信息)</span>
+<span class="c"># 3. 实例化 Pregel(nodes={...}, channels={...}, checkpointer=cp)</span>
+</code></pre>
+
+      <h3 id="s-10-2"><span class="num">§10.2</span>Pregel._loop() · 核心 superstep 循环</h3>
+
+      <pre><code><span class="c"># 简化伪代码 · 真源码在 pregel/__init__.py</span>
+<span class="k">async</span> <span class="k">def</span> <span class="f">_loop</span>(self):
+    <span class="k">while</span> True:
+        <span class="c"># Step 1: 决定本 superstep 要跑哪些 node</span>
+        tasks = self._prepare_next_tasks()
+        <span class="k">if</span> <span class="k">not</span> tasks:
+            <span class="k">break</span>   <span class="c"># 没有更多 task · 结束</span>
+
+        <span class="c"># Step 2: 并行执行这些 node (asyncio.gather)</span>
+        results = <span class="k">await</span> asyncio.gather(*[task.run() <span class="k">for</span> task <span class="k">in</span> tasks])
+
+        <span class="c"># Step 3: 检查 interrupt</span>
+        <span class="k">if</span> any_interrupted(results):
+            <span class="c"># 保存 checkpoint · raise GraphInterrupt</span>
+            <span class="k">await</span> self.checkpointer.aput(...)
+            <span class="k">raise</span> GraphInterrupt(...)
+
+        <span class="c"># Step 4: 收集 update · 通过 channel.update(values) 走 reducer</span>
+        <span class="k">for</span> name, update_value <span class="k">in</span> collect_updates(results):
+            self.channels[name].update([update_value])
+
+        <span class="c"># Step 5: 持久化 checkpoint</span>
+        <span class="k">if</span> self.checkpointer:
+            <span class="k">await</span> self.checkpointer.aput(thread_id, ns, ckpt_id,
+                                          self._snapshot_channels())
+
+        <span class="c"># Step 6: 检查 recursion_limit</span>
+        self.step += <span class="s">1</span>
+        <span class="k">if</span> self.step &gt; self.recursion_limit:
+            <span class="k">raise</span> GraphRecursionError(...)
+</code></pre>
+
+      <p>这就是 LangGraph 的"<em>心脏</em>"。一旦你看懂这 6 步 · 之前所有概念都自然 click：</p>
+      <ul>
+        <li><strong>循环</strong>——while True 自然支持</li>
+        <li><strong>并发</strong>——asyncio.gather 多 node 同 step 跑</li>
+        <li><strong>reducer</strong>——channel.update 时 BinaryOpAgg 调你的 reducer</li>
+        <li><strong>checkpoint</strong>——每 step 末写</li>
+        <li><strong>interrupt</strong>——raise 时 state 已 save · 下次 resume 从 _prepare_next_tasks 开始</li>
+        <li><strong>time travel</strong>——你给的 checkpoint_id 决定从哪个 snapshot restore channels</li>
+      </ul>
+
+      <h3 id="s-10-3"><span class="num">§10.3</span>BaseChannel · 简洁的接口</h3>
+
+      <pre><code><span class="c"># channels/base.py 简化</span>
+<span class="k">class</span> <span class="f">BaseChannel</span>(Generic[Value, Update, Checkpoint]):
+    <span class="k">def</span> <span class="f">update</span>(self, values: Sequence[Update]) -&gt; bool:
+        <span class="s">"""Apply updates · 返回是否真改了."""</span>
+        ...
+
+    <span class="k">def</span> <span class="f">get</span>(self) -&gt; Value:
+        <span class="s">"""读当前值."""</span>
+        ...
+
+    <span class="k">def</span> <span class="f">checkpoint</span>(self) -&gt; Checkpoint:
+        <span class="s">"""序列化."""</span>
+        ...
+
+    <span class="k">def</span> <span class="f">from_checkpoint</span>(cls, value: Checkpoint) -&gt; Self:
+        <span class="s">"""反序列化."""</span>
+        ...
+</code></pre>
+
+      <p>4 个接口——所有 channel 类型都实现这 4 个。这就是为什么 channel 是<em>真原语</em>而 State 是糖。</p>
+
+      <h3 id="s-10-4"><span class="num">§10.4</span>读源码顺序建议（1 周计划）</h3>
+      <ol>
+        <li><strong>Day 1</strong>——<code>channels/base.py</code> + <code>channels/last_value.py</code> + <code>channels/binop.py</code>（300 行）</li>
+        <li><strong>Day 2</strong>——<code>graph/message.py</code> 看 add_messages 实现（80 行）</li>
+        <li><strong>Day 3</strong>——<code>graph/state.py</code> StateGraph 类 + compile（500 行）</li>
+        <li><strong>Day 4-5</strong>——<code>pregel/__init__.py</code> _loop（核心 · 1500+ 行 · 慢慢啃）</li>
+        <li><strong>Day 6</strong>——<code>checkpoint/base.py</code> + <code>checkpoint/postgres/</code></li>
+        <li><strong>Day 7</strong>——<code>prebuilt/tool_node.py</code> + <code>prebuilt/chat_agent_executor.py</code>（create_react_agent 实现）</li>
+      </ol>
+
+      <div class="box deep">
+        <div class="box-label">面试金句 · "你看过源码吗"</div>
+        <p><em>"看过 channels/ 和 pregel 入口。LangGraph 核心是 Pregel._loop · 6 步重复：prepare_next_tasks · 并行 gather · 检查 interrupt · channel.update 走 reducer · 持久化 · 检查 recursion limit。channels 是真原语 · 5 种 (LastValue / BinaryOpAgg / Topic / EphemeralValue / Context) · State 编译时变成对应 channel · Annotated reducer 决定 channel 类型。我读源码主要是为了理解 reducer 在并发场景的语义和 interrupt 的 checkpoint 时机"</em></p>
+      </div>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 10</div>
+        <ul>
+          <li><a href="https://github.com/langchain-ai/langgraph" target="_blank">LangGraph 仓库</a></li>
+          <li><a href="https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/pregel/__init__.py" target="_blank">pregel/__init__.py</a> ——核心循环</li>
+          <li><a href="https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/graph/state.py" target="_blank">graph/state.py</a></li>
+          <li><a href="https://github.com/langchain-ai/langgraph/tree/main/libs/langgraph/langgraph/channels" target="_blank">channels/</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== 15 Interview Questions ============== -->
+    <section id="qa">
+      <header class="ch-head">
+        <span class="badge">附录 A · 面试</span>
+        <h2>15 道 senior LangGraph 面试题</h2>
+        <p class="lede">每题给 1-2 句答题骨架 · 配套深度</p>
+      </header>
+
+      <div class="box interview">
+        <div class="box-label">概念 (5)</div>
+        <ol>
+          <li><strong>LangGraph 跟 LangChain LCEL 的本质区别？</strong> — LCEL 是 functional composition 解决 chain · LangGraph 是 BSP state machine 解决 agent。详见 §1。</li>
+          <li><strong>什么是 superstep？</strong> — Pregel 执行单元：所有 active node 并行跑 · barrier 同步 · reducer 合并 · 持久化 · 进下一波。</li>
+          <li><strong>State 跟 Channel 关系？</strong> — State 是 sugar · 编译后每个字段是一个 channel · 字段的 Annotated reducer 决定 channel 类型。</li>
+          <li><strong>为什么需要 reducer？</strong> — 多 node 同 superstep 写同一字段时决定怎么 merge · 没 reducer 默认 LastValue 会丢数据。</li>
+          <li><strong>LangGraph 为啥基于 BSP 而不是 actor？</strong> — actor 异步消息时序难追 · BSP 同步 + 每 step 是确定 snapshot · 自然支持 checkpoint / time travel / debug。</li>
+        </ol>
+      </div>
+
+      <div class="box interview">
+        <div class="box-label">原语 (5)</div>
+        <ol start="6">
+          <li><strong>add_messages 内部做啥？</strong> — by-id dedup + by-id update + RemoveMessage 处理 + ToolMessage-AIMessage 配对（4 件事）。</li>
+          <li><strong>interrupt() 触发后 checkpoint 怎么变？</strong> — 当前 channel snapshot 全 save · state.next 指向 pending node · resume 时 Pregel 从 _prepare_next_tasks 开始不重跑前面 node。</li>
+          <li><strong>interrupt 之前的副作用为啥危险？</strong> — resume 时 node 函数<em>从头</em>重跑到 interrupt() 返回点 · 副作用会重复执行。<strong>所有副作用必须放 interrupt 之后</strong>。</li>
+          <li><strong>Send vs conditional_edges 区别？</strong> — conditional_edges 是 routing（选 1 条路）· Send 是 spawning（派 N 个并行 worker）· worker 接收 input dict 不是 State · 输出还是写 State channel。</li>
+          <li><strong>Subgraph 跟 sub-state 怎么映射？</strong> — 同名字段自动 share / 不同名要 wrapper 函数。共享适合 messages · 隔离适合 sub-agent context isolation。</li>
+        </ol>
+      </div>
+
+      <div class="box interview">
+        <div class="box-label">生产 (5)</div>
+        <ol start="11">
+          <li><strong>MemorySaver 为啥不能上生产？</strong> — in-process · 重启数据丢 + 多 worker 不能共享。生产用 PostgresSaver / RedisSaver。</li>
+          <li><strong>thread_id 怎么生成？</strong> — <code>f"{user_id}:{session_id}"</code> · 必须 per-user 隔离 · 串号是 P0 安全事件。</li>
+          <li><strong>recursion_limit 怎么定？</strong> — 看典型 task 步数 P95 加 buffer · 一般 15-25 · 必配 cost cap 双保险。</li>
+          <li><strong>checkpoint 大小膨胀怎么办？</strong> — 大对象（图片 / 长文）存对象存储只存 URL · RemoveMessage 清旧 message · per-thread 设 checkpoint 数 cap · monitor write latency。</li>
+          <li><strong>resume 跟 replay 区别？</strong> — resume 从 state.next 跑剩余 node（O(remaining)）· replay 从 START 重跑（O(total)）。LangGraph 默认 resume · 只有显式 update_state 后才类似 replay 分支。</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============== Glossary ============== -->
+    <section id="glossary">
+      <header class="ch-head">
+        <span class="badge">附录 B · 术语</span>
+        <h2>60 词术语速查</h2>
+        <p class="lede">面试听到不熟立刻查回</p>
+      </header>
+
+      <table>
+        <thead><tr><th>术语</th><th>含义</th></tr></thead>
+        <tbody>
+          <tr><td><strong>add_messages</strong></td><td>LangGraph 内置 reducer · 处理 message list 的 dedup/update/remove/pairing</td></tr>
+          <tr><td><strong>Annotated</strong></td><td>Python typing · LangGraph 用来给 state 字段挂 reducer</td></tr>
+          <tr><td><strong>AsyncPostgresSaver</strong></td><td>异步 Postgres checkpointer · FastAPI 推荐</td></tr>
+          <tr><td><strong>BaseChannel</strong></td><td>所有 channel 的抽象基类 · 4 个接口（update/get/checkpoint/from_checkpoint）</td></tr>
+          <tr><td><strong>BinaryOperatorAggregate</strong></td><td>Channel 类型 · 用 reducer op(a,b) 合并多 update</td></tr>
+          <tr><td><strong>BSP</strong></td><td>Bulk Synchronous Parallel · LangGraph 执行模型</td></tr>
+          <tr><td><strong>channel</strong></td><td>LangGraph 真实数据原语 · 命名 + reducer 的 slot</td></tr>
+          <tr><td><strong>checkpoint</strong></td><td>某 superstep 末所有 channel 的 snapshot</td></tr>
+          <tr><td><strong>checkpoint_id</strong></td><td>checkpoint 唯一 UUID · time travel 锚点</td></tr>
+          <tr><td><strong>checkpoint_ns</strong></td><td>checkpoint 命名空间 · 主 graph "" / subgraph 各自</td></tr>
+          <tr><td><strong>checkpointer</strong></td><td>持久化层 · MemorySaver / Sqlite / Postgres / Redis</td></tr>
+          <tr><td><strong>Command</strong></td><td>node 输出的动态控制对象 (update + goto + graph)</td></tr>
+          <tr><td><strong>compile()</strong></td><td>把 StateGraph 编译成可执行 Pregel 实例</td></tr>
+          <tr><td><strong>conditional_edges</strong></td><td>静态 routing · graph compile 时已知</td></tr>
+          <tr><td><strong>Context channel</strong></td><td>整个 invoke 期不变的全局只读 channel</td></tr>
+          <tr><td><strong>create_react_agent</strong></td><td>prebuilt · 一行配置 ReAct + ToolNode</td></tr>
+          <tr><td><strong>dataclass / Pydantic / TypedDict</strong></td><td>3 种 State schema 写法</td></tr>
+          <tr><td><strong>EphemeralValue</strong></td><td>只活 1 superstep 的 channel · 不持久化</td></tr>
+          <tr><td><strong>GraphRecursionError</strong></td><td>超过 recursion_limit 抛的异常</td></tr>
+          <tr><td><strong>graph=Command.PARENT</strong></td><td>subgraph 内 Command 跳到父 graph 的 node</td></tr>
+          <tr><td><strong>handoff</strong></td><td>OpenAI Agents SDK 的核心原语 · 整个对话移交</td></tr>
+          <tr><td><strong>HITL</strong></td><td>Human-in-the-Loop · LangGraph 用 interrupt() 实现</td></tr>
+          <tr><td><strong>interrupt()</strong></td><td>新 HITL API · pause graph 等用户输入</td></tr>
+          <tr><td><strong>interrupt_before / after</strong></td><td>compile 选项 · 静态 HITL gate</td></tr>
+          <tr><td><strong>LastValue</strong></td><td>默认 channel 类型 · 只保留最后 update · 多 write 报错</td></tr>
+          <tr><td><strong>LCEL</strong></td><td>LangChain Expression Language · 函数组合 chain</td></tr>
+          <tr><td><strong>map-reduce</strong></td><td>用 Send fan-out + reducer fan-in 的并行模式</td></tr>
+          <tr><td><strong>MemorySaver</strong></td><td>in-process checkpointer · 仅开发用</td></tr>
+          <tr><td><strong>NodeInterrupt</strong></td><td>老 HITL API · 已弃用</td></tr>
+          <tr><td><strong>operator.add</strong></td><td>常用 reducer · list 拼接 / 数字相加</td></tr>
+          <tr><td><strong>PostgresSaver</strong></td><td>生产首选 checkpointer</td></tr>
+          <tr><td><strong>Pregel</strong></td><td>Google 论文 · LangGraph 执行器名字来源</td></tr>
+          <tr><td><strong>PregelNode</strong></td><td>compile 后 node 的内部表示 · 含 subscribe/write 信息</td></tr>
+          <tr><td><strong>prebuilt</strong></td><td>LangGraph 内置 helper (ToolNode / create_react_agent)</td></tr>
+          <tr><td><strong>recursion_limit</strong></td><td>单次 invoke 最大 superstep 数 · 防死循环</td></tr>
+          <tr><td><strong>reducer</strong></td><td>合并多 update 的函数 · 决定 channel 行为</td></tr>
+          <tr><td><strong>RedisSaver</strong></td><td>高 QPS / 短期会话 checkpointer</td></tr>
+          <tr><td><strong>RemoveMessage</strong></td><td>add_messages 中的删除信号 · 按 id 移除</td></tr>
+          <tr><td><strong>resume</strong></td><td>从 checkpoint 继续 · O(remaining) 不重跑前面</td></tr>
+          <tr><td><strong>Runnable</strong></td><td>LCEL 抽象 · 无状态输入→输出函数</td></tr>
+          <tr><td><strong>Send</strong></td><td>动态 fan-out 原语 · 派 N 个 worker</td></tr>
+          <tr><td><strong>SqliteSaver</strong></td><td>本地文件 checkpointer · 单机小项目</td></tr>
+          <tr><td><strong>StateGraph</strong></td><td>用户定义 graph 的 builder class</td></tr>
+          <tr><td><strong>state_schema</strong></td><td>StateGraph 接收的 State 类型</td></tr>
+          <tr><td><strong>subgraph</strong></td><td>compiled graph 当 node · 支持嵌套</td></tr>
+          <tr><td><strong>superstep</strong></td><td>BSP 一波并行执行 + barrier 同步 + reducer 合并</td></tr>
+          <tr><td><strong>thread_id</strong></td><td>对话线程 ID · 必须 per-user</td></tr>
+          <tr><td><strong>time travel</strong></td><td>用历史 checkpoint_id 回到任意 superstep</td></tr>
+          <tr><td><strong>ToolMessage</strong></td><td>tool 调用结果 message · 必须紧跟 AIMessage</td></tr>
+          <tr><td><strong>ToolNode</strong></td><td>prebuilt · 自动 dispatch tool_calls</td></tr>
+          <tr><td><strong>Topic</strong></td><td>Channel 类型 · pubsub 风 · 可设 reset</td></tr>
+          <tr><td><strong>TypedDict</strong></td><td>最常用的 State schema 写法</td></tr>
+          <tr><td><strong>update_state</strong></td><td>手动改某 checkpoint 的 state · time travel 必备</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer class="colophon">
+      <div class="row"><span><strong>LangGraph 内部 + 5 框架对比</strong> · v1.0 · 2026-05</span><span>10 ch · 6 原语深讲 · 5 框架横评 · 15 Qs · 60 terms</span></div>
+      <div class="row">
+        <span>姊妹手册：→ <a href="learn.html">应用</a> · <a href="enterprise.html">企业级</a> · <a href="agent-design.html">设计</a> · <a href="agent-coding.html">Coding</a> · <a href="agent-debugging.html">Debug</a> · <a href="infra.html">AI Infra</a> · <a href="index.html">实现详解</a></span>
+        <span><a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/.../taotao-agent</a></span>
+      </div>
+      <div class="row"><span>Set in Fraunces · Lora · Outfit · JetBrains Mono</span><span>构建 / 写于 2026 春</span></div>
+    </footer>
+
+  </main>
+</div>
+
+<script>
+  (function() {
+    var links = document.querySelectorAll('.toc a[href^="#"]');
+    var sections = Array.prototype.map.call(links, function(a) {
+      var el = document.querySelector(a.getAttribute('href'));
+      return { link: a, el: el };
+    }).filter(function(x) { return x.el; });
+    function onScroll() {
+      var y = window.scrollY + 80;
+      var current = sections[0];
+      sections.forEach(function(s) { if (s.el.offsetTop <= y) current = s; });
+      sections.forEach(function(s) { s.link.classList.toggle('active', s === current); });
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+</body>
+</html>
