@@ -737,7 +737,7 @@ footer.colophon .row {
   <aside class="toc" id="toc">
     <div class="toc-brand">
       <span class="mark">Agent <span class="dot">·</span> 从 0 到面试</span>
-      <span class="sub">桃桃 Agent 学习手册<br><strong>10 章 · 60 道面试题 · 8 周路线</strong></span>
+      <span class="sub">桃桃 Agent 学习手册<br><strong>12 章 · 60 道面试题 · 8 周路线</strong></span>
     </div>
     <button class="toc-toggle" onclick="document.getElementById('toc').classList.toggle('open')">≡ 目录</button>
     <nav class="toc-inner">
@@ -752,8 +752,9 @@ footer.colophon .row {
         <li><a href="#ch-8">Streaming · Observability · Guardrails</a></li>
         <li><a href="#ch-9">桃桃 Agent 全代码导读</a></li>
         <li><a href="#ch-10">60 道面试题 · 含答题模板</a></li>
-        <li><a href="#ch-11">8 周学习路线</a></li>
-        <li><a href="#glossary">术语表 (50 词)</a></li>
+        <li><a href="#ch-11">2026 必知生态 · MCP / CLI / Browser / Eval</a></li>
+        <li><a href="#ch-12">8 周学习路线</a></li>
+        <li><a href="#glossary">术语表 (60 词)</a></li>
       </ol>
     </nav>
     <div class="toc-foot">
@@ -1869,6 +1870,9 @@ Agent (带检索的 agent):
 
       <p>实际生态里已经有几百个 MCP server——GitHub、Slack、Linear、Postgres、文件系统、浏览器自动化……
       Cursor / Claude Desktop / Windsurf 都内置 MCP 客户端。</p>
+
+      <p>这里先给一个最小心智模型，<strong>详细机制 + 怎么写一个 server + 主流 server 推荐</strong>放在
+      <a href="#s-11-1">§11.1 MCP 详解</a>。</p>
     </section>
 
     <!-- ============== Chapter 8 ============== -->
@@ -2355,10 +2359,271 @@ npm run dev                <span class="c"># 打开 http://localhost:5173</span>
       </div>
     </section>
 
-    <!-- ============== Chapter 11 ============== -->
+    <!-- ============== Chapter 11 (NEW) — 2026 ecosystem ============== -->
     <section id="ch-11">
       <header class="ch-head">
-        <span class="badge">Chapter 11 · 学习路线</span>
+        <span class="badge">Chapter 11 · 2026 必知生态</span>
+        <h2>MCP · CLI Agents · Browser · Voice · Eval · A2A</h2>
+        <p class="lede">这些不是冷知识——是 2026 面试官随口蹦的 buzzword。每节 5 分钟看完就能接上话</p>
+      </header>
+
+      <h3 id="s-11-1"><span class="num">§11.1</span>MCP 详解 · 协议机制 + 实战</h3>
+
+      <p>第 7 章已经一句话讲过 MCP = "agent 工具的 USB-C"。这里展开。</p>
+
+      <h4>协议结构 · 三类资源</h4>
+      <p>每个 MCP server 可以暴露<strong>三类东西</strong>给客户端：</p>
+
+      <table>
+        <thead><tr><th>类型</th><th>是什么</th><th>典型例子</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Tools</strong></td><td>可调用的函数（带副作用）</td><td><code>create_github_issue(title, body)</code> · <code>run_sql(query)</code></td></tr>
+          <tr><td><strong>Resources</strong></td><td>可读的数据（无副作用）</td><td><code>file://README.md</code> · <code>postgres://users/all</code></td></tr>
+          <tr><td><strong>Prompts</strong></td><td>预置 prompt 模板</td><td><code>summarize_pr(diff)</code> · <code>code_review(file)</code></td></tr>
+        </tbody>
+      </table>
+
+      <h4>底层传输 · stdio 或 HTTP/SSE</h4>
+      <p>MCP server 和 client 之间用 JSON-RPC 通信，传输层有两种：</p>
+      <ul>
+        <li><strong>stdio</strong>：client 启动 server 子进程，stdin/stdout 通信。本地工具用这个</li>
+        <li><strong>HTTP + SSE</strong>：远程 server，client 通过 HTTP 调用 + SSE 接收推送。云服务用这个</li>
+      </ul>
+
+      <h4>写一个最小 MCP server（10 行）</h4>
+
+<pre><span class="c"># my_mcp_server.py — 用官方 mcp Python SDK</span>
+<span class="k">from</span> mcp.server.fastmcp <span class="k">import</span> FastMCP
+
+mcp = <span class="f">FastMCP</span>(<span class="s">"weather-server"</span>)
+
+<span class="k">@mcp.tool</span>()
+<span class="k">def</span> <span class="f">get_weather</span>(city: str) -> str:
+    <span class="s">"""Get current weather for a city."""</span>
+    <span class="k">return</span> <span class="f">f"{city}: 22°C, sunny"</span>   <span class="c"># 实际接 API</span>
+
+<span class="k">if</span> __name__ == <span class="s">"__main__"</span>:
+    mcp.<span class="f">run</span>(transport=<span class="s">"stdio"</span>)
+</pre>
+
+      <p>装到 Claude Desktop 只要在 <code>~/Library/Application Support/Claude/claude_desktop_config.json</code> 加一段：</p>
+
+<pre>{
+  <span class="s">"mcpServers"</span>: {
+    <span class="s">"weather"</span>: {
+      <span class="s">"command"</span>: <span class="s">"python"</span>,
+      <span class="s">"args"</span>: [<span class="s">"/path/to/my_mcp_server.py"</span>]
+    }
+  }
+}
+</pre>
+
+      <p>重启 Claude Desktop——你的 server 就上线了，Claude 能调你写的 <code>get_weather</code>。
+      <strong>同样这一份 server 在 Cursor / Windsurf / Continue / 任何 MCP 客户端里都能用</strong>。这就是 MCP 的威力。</p>
+
+      <h4>当前最有用的开源 MCP servers</h4>
+      <table>
+        <thead><tr><th>Server</th><th>能干什么</th></tr></thead>
+        <tbody>
+          <tr><td><code>@modelcontextprotocol/server-filesystem</code></td><td>读写指定目录的文件</td></tr>
+          <tr><td><code>@modelcontextprotocol/server-github</code></td><td>操作 GitHub（issues / PRs / files）</td></tr>
+          <tr><td><code>@modelcontextprotocol/server-postgres</code></td><td>查 Postgres</td></tr>
+          <tr><td><code>@modelcontextprotocol/server-slack</code></td><td>发 Slack 消息 / 读历史</td></tr>
+          <tr><td><code>@playwright/mcp</code></td><td>用浏览器（截图、点击、表单填写）</td></tr>
+          <tr><td><code>tavily-mcp</code></td><td>Tavily 搜索（专为 agent 优化的搜索 API）</td></tr>
+          <tr><td><code>linear-mcp</code></td><td>操作 Linear（issue 管理）</td></tr>
+        </tbody>
+      </table>
+
+      <div class="box interview">
+        <div class="box-label">面试题 · 升级版</div>
+        <p><strong>Q：</strong>MCP 跟 OpenAI 的 GPT Plugin 有什么区别？</p>
+        <p><strong>答：</strong>本质都是"统一工具接入协议"，但定位不同：
+        ① <strong>Plugin 闭源</strong>，只能在 ChatGPT 里用；<strong>MCP 开放协议</strong>，任何客户端都能接。
+        ② Plugin 走 OpenAPI spec + HTTPS，每个 plugin 必须在云上；MCP 支持 stdio，可以在本地跑。
+        ③ Plugin 已经基本被 OpenAI 自己放弃了（2024 末停止接受新 plugin），MCP 反而是 2025-2026 主流方向，被 Anthropic / Google / Mistral / Cursor / Continue 等多家共同推动。</p>
+      </div>
+
+      <h3 id="s-11-2"><span class="num">§11.2</span>CLI / Coding Agent 全景</h3>
+
+      <p>2025 最火的 agent 形态是 <strong>terminal 里跑的 coding agent</strong>。它们的共同特征：</p>
+      <ul>
+        <li>跑在你本地终端 / IDE 里</li>
+        <li>能<strong>读写你的代码 + 跑命令 + 跑测试</strong></li>
+        <li>核心循环是 ReAct：看代码 → 想办法 → 改文件 → 跑测试 → 看结果 → 再改</li>
+        <li>大多数支持 MCP 接外部工具</li>
+      </ul>
+
+      <table>
+        <thead><tr><th>名字</th><th>形态</th><th>主推方</th><th>特色</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Claude Code</strong></td><td>CLI + IDE</td><td>Anthropic</td><td>当前最强 coding agent；用 Claude Sonnet/Opus；纯终端 + VS Code 扩展</td></tr>
+          <tr><td><strong>Cursor</strong></td><td>VS Code fork</td><td>Anysphere</td><td>原生 IDE 体验最好；Composer 是其 agent 模式；支持 MCP</td></tr>
+          <tr><td><strong>Cursor CLI</strong></td><td>CLI</td><td>Anysphere</td><td>2025 推出，把 Composer 搬到终端</td></tr>
+          <tr><td><strong>Codex</strong></td><td>CLI + cloud</td><td>OpenAI</td><td>2025 重启的项目（早期 GPT-3 时代叫这个）</td></tr>
+          <tr><td><strong>Aider</strong></td><td>CLI</td><td>开源 (paul-gauthier)</td><td>历史最久（2023）；git-aware；支持几乎所有 LLM</td></tr>
+          <tr><td><strong>Continue</strong></td><td>VS Code/JetBrains 扩展</td><td>开源</td><td>开源版 Cursor；MCP 一等公民</td></tr>
+          <tr><td><strong>Cline</strong> (former Claude Dev)</td><td>VS Code 扩展</td><td>开源</td><td>非常活跃；支持 MCP；plan/act 双模式</td></tr>
+          <tr><td><strong>Devin</strong></td><td>云 IDE</td><td>Cognition</td><td>第一个"自主软件工程师"；asynchronous agent；非常贵</td></tr>
+          <tr><td><strong>Goose</strong></td><td>CLI</td><td>Block (Square)</td><td>开源；可扩展性强；MCP 一等公民</td></tr>
+          <tr><td><strong>OpenHands</strong> (former OpenDevin)</td><td>CLI / web</td><td>开源</td><td>Devin 的开源对应</td></tr>
+        </tbody>
+      </table>
+
+      <div class="box concept">
+        <div class="box-label">CLI agent 的特殊设计点</div>
+        <p>面试时问"<em>设计一个 CLI agent 跟普通 chat agent 有什么不一样</em>"——答这 5 个：</p>
+        <ol>
+          <li><strong>文件系统是状态</strong>——agent 主要的"输出"是修改文件，而不是输出文字</li>
+          <li><strong>必须能跑命令</strong>——shell tool 是核心工具，要做好 sandboxing 和确认机制</li>
+          <li><strong>Diff-first UI</strong>——每次改动展示 diff 让用户预览/批准</li>
+          <li><strong>长上下文是常态</strong>——读整个项目可能 10k+ 文件；要做 indexing + RAG over codebase</li>
+          <li><strong>Approval mode</strong>——危险操作（rm / git push / curl）必须等用户确认；安全模式 vs YOLO 模式</li>
+        </ol>
+      </div>
+
+      <h4>怎么选用</h4>
+      <ul>
+        <li><strong>面试 / 学习</strong>：Aider 或 Cline——开源、能看代码、便宜</li>
+        <li><strong>个人日常</strong>：Cursor 或 Claude Code——体验好、贵但值</li>
+        <li><strong>团队接入</strong>：Continue 或 Goose——开源 + 可定制 + 不锁厂商</li>
+      </ul>
+
+      <h3 id="s-11-3"><span class="num">§11.3</span>Browser &amp; Computer Use Agent</h3>
+
+      <p>让 agent <strong>真的去操作浏览器或桌面</strong>——点击按钮、填表单、看截图。
+      Anthropic 2024 末发布的 <strong>Computer Use</strong> 是行业标杆。</p>
+
+      <h4>三种实现路径</h4>
+      <ol>
+        <li><strong>Visual / Computer Use</strong>：模型直接看截图 → 输出 "click(x, y)" / "type(text)"。代表：Claude Computer Use、OpenAI Operator</li>
+        <li><strong>DOM / Accessibility tree</strong>：模型读结构化 DOM 而不是看图，更稳定但只支持网页。代表：Browser Use、Playwright + LLM、Skyvern</li>
+        <li><strong>Hybrid</strong>：DOM 为主，截图辅助校验</li>
+      </ol>
+
+      <h4>典型工具集</h4>
+      <ul>
+        <li><a href="https://github.com/browser-use/browser-use">browser-use</a>——开源 Python 库，DOM-first，最火</li>
+        <li><a href="https://github.com/microsoft/playwright">Playwright + LLM</a>——自己组装，最灵活</li>
+        <li>Anthropic Computer Use API——视觉路线，跨应用</li>
+        <li>OpenAI Operator——闭源 SaaS</li>
+      </ul>
+
+      <div class="box warn">
+        <div class="box-label">当前痛点</div>
+        <p>Browser/Computer Use 在 2026 仍然<strong>慢且贵</strong>——一次 click 要 1 张截图（几千 token）+ 1 次推理 + 1 次执行，
+        一个简单的"登录 + 下单"任务要 30-60 秒、$0.5+。
+        <strong>真生产场景</strong>建议先看能不能用 API 替代（比如用 OpenAI / Stripe API 而不是自动化它们的网页）。
+        Browser agent 适合<strong>没有 API 的小众网站</strong> + 一次性任务。</p>
+      </div>
+
+      <h3 id="s-11-4"><span class="num">§11.4</span>Voice Agent · 实时语音</h3>
+
+      <p>2025 起跑出来的新形态——用户用<strong>语音</strong>跟 agent 实时对话，agent 用语音回答，能打断、能边听边想。</p>
+
+      <h4>技术演进</h4>
+      <ul>
+        <li><strong>第一代</strong>：STT → LLM → TTS 三段式管道。延迟 1.5-3 秒</li>
+        <li><strong>第二代（2024 末）</strong>：speech-to-speech 端到端模型。OpenAI Realtime API、Gemini Live。延迟 200-500ms</li>
+        <li><strong>第三代（2025+）</strong>：实时双工 + 工具调用 + 多 agent 切换</li>
+      </ul>
+
+      <h4>主流框架</h4>
+      <table>
+        <thead><tr><th>名字</th><th>类型</th><th>特色</th></tr></thead>
+        <tbody>
+          <tr><td><strong>OpenAI Realtime API</strong></td><td>API</td><td>WebRTC + speech-to-speech；最强但贵</td></tr>
+          <tr><td><strong>Vapi</strong></td><td>SaaS</td><td>把电话/语音 agent 工程化打包</td></tr>
+          <tr><td><strong>Retell AI</strong></td><td>SaaS</td><td>同类产品</td></tr>
+          <tr><td><strong>LiveKit Agents</strong></td><td>开源</td><td>开源 voice agent 框架，能换底层模型</td></tr>
+          <tr><td><strong>Pipecat</strong></td><td>开源</td><td>Daily.co 出品，模块化 voice pipeline</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-11-5"><span class="num">§11.5</span>Eval &amp; Observability 工具栈</h3>
+
+      <p>把 agent 推上生产前的<strong>必备工具</strong>。第 8 章讲了原理，这里给你一个选型决策树。</p>
+
+      <h4>Tracing（链路追踪）</h4>
+      <table>
+        <thead><tr><th>工具</th><th>开闭源</th><th>该用场景</th></tr></thead>
+        <tbody>
+          <tr><td><strong>LangSmith</strong></td><td>闭源 SaaS</td><td>已经全家桶用 LangChain 的，最丝滑</td></tr>
+          <tr><td><strong>Langfuse</strong></td><td>开源 + SaaS</td><td>想自部署 / 多框架 / 注重数据隐私</td></tr>
+          <tr><td><strong>Phoenix (Arize)</strong></td><td>开源</td><td>科研 / 调试导向，可视化最好</td></tr>
+          <tr><td><strong>Helicone</strong></td><td>开源 + SaaS</td><td>专注 LLM gateway + cost tracking</td></tr>
+          <tr><td><strong>OpenTelemetry + Jaeger</strong></td><td>开源</td><td>已经有 OTel 基建的团队</td></tr>
+        </tbody>
+      </table>
+
+      <h4>Eval（自动评测）</h4>
+      <table>
+        <thead><tr><th>工具</th><th>该用场景</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Promptfoo</strong></td><td>YAML 驱动，CI 友好，对比 prompt/model 最好用</td></tr>
+          <tr><td><strong>DeepEval</strong></td><td>pytest 风格的 eval；指标库丰富（hallucination/faithfulness/relevance）</td></tr>
+          <tr><td><strong>Ragas</strong></td><td>专为 RAG 评测；recall@k / faithfulness / answer_relevancy</td></tr>
+          <tr><td><strong>OpenAI Evals</strong></td><td>OpenAI 官方框架，结构最严</td></tr>
+          <tr><td><strong>Inspect (UK AISI)</strong></td><td>2024 新出，写复杂 task 评测最强</td></tr>
+        </tbody>
+      </table>
+
+      <h4>Sandboxing（代码执行隔离）</h4>
+      <p>Agent 跑用户输入的代码必须 sandbox。现成方案：</p>
+      <ul>
+        <li><strong>E2B</strong>——专为 LLM 设计的 cloud sandbox，毫秒级冷启动；最常用</li>
+        <li><strong>Daytona</strong>——开源对应，可自部署</li>
+        <li><strong>Modal Sandbox</strong>——Modal 自带的隔离 runtime</li>
+        <li><strong>Docker / Firecracker</strong>——传统方案，自己搞基建</li>
+        <li><strong>Pyodide (WASM)</strong>——浏览器内沙箱，不用后端</li>
+      </ul>
+
+      <h3 id="s-11-6"><span class="num">§11.6</span>A2A · Agent-to-Agent 协议</h3>
+
+      <div class="box concept">
+        <div class="box-label">A2A 解决什么</div>
+        <p>Google 2025 春发布的 <strong>Agent2Agent Protocol</strong>——
+        如果说 MCP 是"agent 怎么调工具"，那 A2A 是"<strong>agent 怎么调另一个 agent</strong>"。</p>
+        <p>具体场景：你的 agent 需要让另一团队/公司的 agent 帮忙做一件事——
+        比如你的 travel agent 调对方的 hotel agent。两边可能用不同 framework / 模型，
+        但只要都讲 A2A，就能互相 task 派发、状态查询、结果回收。</p>
+      </div>
+
+      <p>核心概念：</p>
+      <ul>
+        <li><strong>Agent Card</strong>——每个 agent 在 <code>/.well-known/agent.json</code> 暴露自己的能力描述（类似 robots.txt）</li>
+        <li><strong>Task</strong>——异步任务对象，有 lifecycle (submitted → working → completed/failed)</li>
+        <li><strong>Artifacts</strong>——任务产出（文件、消息、结构化数据）</li>
+        <li><strong>Streaming</strong>——长任务通过 SSE 推送中间状态</li>
+      </ul>
+
+      <p>2026 年这个协议<strong>还没大爆发</strong>，但是面试如果有人问"如何让多个组织的 agent 互通"——你能蹦出 A2A 这个词就赢了。</p>
+
+      <div class="box interview">
+        <div class="box-label">面试题 · 生态全景</div>
+        <p><strong>Q：</strong>2026 年做 agent 项目你会用哪些工具栈？</p>
+        <p><strong>答（按层级）：</strong></p>
+        <ul>
+          <li><strong>编排</strong>：LangGraph（首选）/ Mastra / Pydantic AI</li>
+          <li><strong>LLM gateway</strong>：LiteLLM 或自己封装；多 provider fallback</li>
+          <li><strong>Tool 接入</strong>：MCP——能装现成 server 的就别自己写</li>
+          <li><strong>RAG</strong>：Qdrant + BGE embedding + Cohere reranker</li>
+          <li><strong>Memory</strong>：Mem0 库 或 自己实现 Mem0-style</li>
+          <li><strong>Observability</strong>：Langfuse（自部署）或 LangSmith（如果用 LangChain）</li>
+          <li><strong>Eval</strong>：Promptfoo（CI 阶段）+ Langfuse（生产监控）</li>
+          <li><strong>Sandbox</strong>：E2B（最快）或 Modal（如果已经在用）</li>
+          <li><strong>UI</strong>：Vercel AI SDK + ag-ui 或自己写 SSE client</li>
+          <li><strong>部署</strong>：FastAPI + Modal / Railway / Fly.io</li>
+        </ul>
+        <p>这一套是 2026 业界主流，每个组件都有<em>开源</em>和<em>SaaS</em>选项。
+        我做桃桃 Agent 时为了演示完整性，所有这些组件都自己写了一份——所以我能在面试时既讲<em>用现成的怎么搭</em>又讲<em>底层怎么实现</em>。</p>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 12 (was 11) ============== -->
+    <section id="ch-12">
+      <header class="ch-head">
+        <span class="badge">Chapter 12 · 学习路线</span>
         <h2>8 周从 0 到面试</h2>
         <p class="lede">每周一个明确目标 + 一个能展示的 ship。8 周后你能在面试里说"我做过的 agent 项目是……"</p>
       </header>
@@ -2457,7 +2722,7 @@ npm run dev                <span class="c"># 打开 http://localhost:5173</span>
     <section id="glossary">
       <header class="ch-head">
         <span class="badge">Appendix · 术语表</span>
-        <h2>50 个必懂术语 · 一句话讲清</h2>
+        <h2>60 个必懂术语 · 一句话讲清</h2>
         <p class="lede">面试官随口蹦一个词你就能接住——不会陷入"啊那个我好像见过……"</p>
       </header>
 
@@ -2577,6 +2842,44 @@ npm run dev                <span class="c"># 打开 http://localhost:5173</span>
         <dt>vLLM / TGI / Ollama</dt><dd>三大主流本地 LLM 服务方案。vLLM = GPU 高吞吐；TGI = HuggingFace 出品；Ollama = 个人本地最易用。</dd>
 
         <dt>OpenAI-compatible API</dt><dd>与 OpenAI <code>/v1/chat/completions</code> 接口签名一致的 API。LM Studio / vLLM / together.ai 都暴露这个，agent 框架可以无缝切换。</dd>
+
+        <dt>Computer Use <small>Anthropic</small></dt><dd>Anthropic 2024 末发布的能力——模型直接看屏幕截图 + 输出鼠标键盘指令操作桌面/浏览器。</dd>
+
+        <dt>Browser Agent <small>browser-use / Skyvern</small></dt><dd>专门控制浏览器的 agent。多走 DOM 路线（更稳定）而不是看截图（更通用）。</dd>
+
+        <dt>Voice Agent</dt><dd>用语音实时双向对话的 agent。OpenAI Realtime API、Vapi、LiveKit Agents、Pipecat 是主流栈。</dd>
+
+        <dt>Realtime API <small>OpenAI</small></dt><dd>WebRTC + speech-to-speech 端到端模型，把延迟从传统 STT→LLM→TTS 三段式的 1.5-3 秒降到 200-500ms。</dd>
+
+        <dt>A2A <small>Agent-to-Agent Protocol</small></dt><dd>Google 2025 春发布。协议层让不同 framework / 公司的 agent 互通，类比 MCP 之于工具。</dd>
+
+        <dt>Agent Card</dt><dd>A2A 协议里 agent 在 <code>/.well-known/agent.json</code> 暴露自己能力的描述文件。</dd>
+
+        <dt>E2B</dt><dd>专为 LLM 设计的 cloud sandbox，毫秒级冷启动，跑 agent 生成的代码。</dd>
+
+        <dt>LangSmith</dt><dd>LangChain 公司的 observability SaaS。最丝滑接入 LangChain/LangGraph 项目。</dd>
+
+        <dt>Langfuse</dt><dd>开源的 LLM observability 平台，可自部署。多框架支持，注重数据隐私。</dd>
+
+        <dt>Promptfoo</dt><dd>YAML 驱动的 prompt / model 对比评测工具。CI 阶段必备。</dd>
+
+        <dt>Ragas</dt><dd>专为 RAG 评测的开源库。指标含 faithfulness / answer_relevancy / context_precision。</dd>
+
+        <dt>Cline / Cursor / Aider / Claude Code</dt><dd>2025 主流的 coding agent 工具——CLI 或 IDE 内运行，能读写代码 + 跑命令 + 跑测试。大多数支持 MCP。</dd>
+
+        <dt>Devin <small>Cognition</small></dt><dd>第一个"自主软件工程师"agent，全异步运行在云 IDE，能 hours-long 跑长任务。</dd>
+
+        <dt>OpenHands <small>former OpenDevin</small></dt><dd>Devin 的开源对应实现。</dd>
+
+        <dt>LiteLLM</dt><dd>开源 LLM gateway，统一接入 100+ provider，统一 OpenAI 风格 API；做 fallback / rate limit / cost tracking 标配。</dd>
+
+        <dt>Mastra</dt><dd>2024 末出现的 TypeScript agent 框架，对标 LangGraph 但 TS-first，更适合前端工程师。</dd>
+
+        <dt>Pydantic AI</dt><dd>Pydantic 团队出的 Python agent 框架，强调 type safety + 结构化输出。</dd>
+
+        <dt>Vercel AI SDK</dt><dd>Vercel 出品的前端流式 LLM 库，<code>useChat</code>/<code>useCompletion</code> hook 帮你 5 行接入 streaming UI。</dd>
+
+        <dt>ag-ui</dt><dd>开源的 agent 前端组件库，提供 chat / trace / tool 调用展示等开箱即用组件。</dd>
       </dl>
     </section>
 
