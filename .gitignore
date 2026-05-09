@@ -1,0 +1,48 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+
+# --- Secrets (never commit) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.json
+credentials.json
+
+# --- uv ---
+.uv-cache/
+
+# --- Local runtime state (memory, traces, workspace, conversations) ---
+# Whitelist approach: ignore everything inside backend/data/ EXCEPT the
+# .gitkeep marker and the curated `skills/` examples.
+backend/data/*
+!backend/data/.gitkeep
+!backend/data/skills/
+backend/data/skills/*.tmp
+
+# Belt-and-braces: never commit these even if someone forgets the rule above
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+profile.json
+traces.jsonl
+
+# --- Node ---
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# --- IDE / OS ---
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.swp

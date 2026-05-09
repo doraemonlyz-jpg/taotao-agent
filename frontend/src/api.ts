@@ -1,0 +1,266 @@
+/* Tiny fetch wrappers + an SSE chat helper.
+ * In dev we go through Vite's `/api` proxy → http://127.0.0.1:8000.
+ * In prod the same `/api` prefix is expected.
+ */
+
+const BASE = "/api";
+
+export interface TraceEvent {
+  ts: number;
+  node: string;
+  kind: string;
+  payload: Record<string, unknown>;
+}
+
+export interface ToolDesc {
+  name: string;
+  description: string;
+}
+
+export interface MemoryItem {
+  id: string;
+  text: string;
+  metadata: Record<string, unknown>;
+}
+
+export async function fetchTools(): Promise<ToolDesc[]> {
+  const r = await fetch(`${BASE}/tools`);
+  return r.json();
+}
+
+export async function fetchMemory(): Promise<MemoryItem[]> {
+  const r = await fetch(`${BASE}/memory`);
+  return r.json();
+}
+
+export async function clearMemory(): Promise<void> {
+  await fetch(`${BASE}/memory`, { method: "DELETE" });
+}
+
+export async function fetchHealth(): Promise<{ ok: boolean; model: string }> {
+  const r = await fetch(`${BASE}/health`);
+  return r.json();
+}
+
+/* ---------------- model catalogue + switching ---------------- */
+export interface ModelEntry {
+  id: string;
+  label: string;
+  tier: "big" | "fast" | "any";
+  size_gb: number | null;
+  /** False for known no-tool models (Ollama R1, Gemma, etc.). They can't be
+   *  the executor / sub-agent model — only the router / critic / extractor. */
+  supports_tools: boolean;
+}
+
+export interface ProviderGroup {
+  provider: "ollama" | "anthropic" | "openai" | "google_genai";
+  label: string;
+  available: boolean;
+  reason: string | null;
+  models: ModelEntry[];
+}
+
+export interface ModelCatalog {
+  current: string;
+  current_fast: string;
+  groups: ProviderGroup[];
+}
+
+export async function fetchModels(): Promise<ModelCatalog> {
+  const r = await fetch(`${BASE}/models`);
+  return r.json();
+}
+
+export async function switchModel(
+  model: string,
+  fast_model?: string
+): Promise<{ ok: boolean; model: string; fast_model: string }> {
+  const r = await fetch(`${BASE}/model`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model, fast_model }),
+  });
+  if (!r.ok) {
+    let detail = `HTTP ${r.status}`;
+    try {
+      const j = await r.json();
+      if (j?.detail) detail = j.detail;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail);
+  }
+  return r.json();
+}
+
+export interface UsageBucket {
+  input: number;
+  output: number;
+  cache_creation: number;
+  cache_read: number;
+  calls: number;
+  cost_usd: number;
+  since?: number;
+}
+
+export interface UsageSnapshot {
+  model: string;
+  pricing_known: boolean;
+  budget_usd: number;
+  over_budget?: boolean;
+  global: UsageBucket;
+  session_id?: string;
+  session?: UsageBucket;
+}
+
+export async function fetchUsage(sessionId: string | null): Promise<UsageSnapshot> {
+  const url = sessionId
+    ? `${BASE}/usage?session_id=${encodeURIComponent(sessionId)}`
+    : `${BASE}/usage`;
+  const r = await fetch(url);
+  return r.json();
+}
+
+/* ---------------- profile ---------------- */
+export async function fetchProfile(): Promise<Record<string, unknown>> {
+  const r = await fetch(`${BASE}/profile`);
+  return r.json();
+}
+
+export async function updateProfile(key: string, value: unknown): Promise<Record<string, unknown>> {
+  const r = await fetch(`${BASE}/profile`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ key, value }),
+  });
+  return r.json();
+}
+
+export async function deleteProfileKey(key: string): Promise<Record<string, unknown>> {
+  const r = await fetch(`${BASE}/profile/${encodeURIComponent(key)}`, { method: "DELETE" });
+  return r.json();
+}
+
+export async function clearProfile(): Promise<{ ok: boolean }> {
+  const r = await fetch(`${BASE}/profile`, { method: "DELETE" });
+  return r.json();
+}
+
+/* ---------------- reflections ---------------- */
+export async function fetchReflections(): Promise<MemoryItem[]> {
+  const r = await fetch(`${BASE}/reflections`);
+  return r.json();
+}
+
+export async function clearReflections(): Promise<{ ok: boolean }> {
+  const r = await fetch(`${BASE}/reflections`, { method: "DELETE" });
+  return r.json();
+}
+
+/* ---------------- skills ---------------- */
+export interface SkillEntry {
+  name: string;
+  description: string;
+  when_to_use: string;
+  body: string;
+  path: string;
+}
+
+export async function fetchSkills(): Promise<SkillEntry[]> {
+  const r = await fetch(`${BASE}/skills`);
+  return r.json();
+}
+
+/* ---- SSE chat stream --------------------------------------------------- */
+
+export interface ChatHandlers {
+  onSession: (sessionId: string) => void;
+  onTrace: (evt: TraceEvent) => void;
+  /** Streaming token chunk from a user-facing node (executor / writer). */
+  onToken?: (text: string) => void;
+  onDone: () => void;
+  onError: (err: string) => void;
+}
+
+/**
+ * Posts a chat message and consumes the SSE stream of trace events.
+ * Returns a function to abort the in-flight request.
+ */
+export function streamChat(
+  message: string,
+  sessionId: string | null,
+  handlers: ChatHandlers
+): () => void {
+  const ctrl = new AbortController();
+
+  (async () => {
+    try {
+      const resp = await fetch(`${BASE}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, session_id: sessionId }),
+        signal: ctrl.signal,
+      });
+      if (!resp.ok || !resp.body) {
+        handlers.onError(`HTTP ${resp.status}`);
+        return;
+      }
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+      let doneFired = false;
+
+      const dispatch = (event: string, data: string) => {
+        if (!data) return;
+        try {
+          const parsed = JSON.parse(data);
+          if (event === "session") handlers.onSession(parsed.session_id);
+          else if (event === "trace") handlers.onTrace(parsed as TraceEvent);
+          else if (event === "token") {
+            const text = (parsed as { text?: string }).text;
+            if (text && handlers.onToken) handlers.onToken(text);
+          } else if (event === "done") {
+            doneFired = true;
+            handlers.onDone();
+          }
+        } catch {
+          /* ignore malformed frames */
+        }
+      };
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        // Normalise CRLF → LF; sse-starlette uses CRLF on some setups.
+        buf += decoder.decode(value, { stream: true }).replace(/\r\n/g, "\n");
+
+        // Frames are separated by a blank line: "...\n\n"
+        let idx;
+        while ((idx = buf.indexOf("\n\n")) !== -1) {
+          const frame = buf.slice(0, idx);
+          buf = buf.slice(idx + 2);
+
+          let event = "message";
+          const dataLines: string[] = [];
+          for (const rawLine of frame.split("\n")) {
+            const line = rawLine.replace(/\r$/, "");
+            if (line.startsWith(":")) continue;            // SSE comment
+            if (line.startsWith("event:")) event = line.slice(6).trim();
+            else if (line.startsWith("data:")) dataLines.push(line.slice(5).trimStart());
+          }
+          dispatch(event, dataLines.join("\n"));
+        }
+      }
+      if (!doneFired) handlers.onDone();
+    } catch (e) {
+      if ((e as Error).name !== "AbortError") {
+        handlers.onError(String(e));
+      }
+    }
+  })();
+
+  return () => ctrl.abort();
+}
