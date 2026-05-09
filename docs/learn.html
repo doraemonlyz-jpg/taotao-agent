@@ -752,9 +752,9 @@ footer.colophon .row {
         <li><a href="#ch-8">Streaming · Observability · Guardrails</a></li>
         <li><a href="#ch-9">桃桃 Agent 全代码导读</a></li>
         <li><a href="#ch-10">60 道面试题 · 含答题模板</a></li>
-        <li><a href="#ch-11">2026 必知生态 · MCP / CLI / Browser / Eval</a></li>
+        <li><a href="#ch-11">2026 必知生态 · MCP / CLI / Harness / Self-Evolving</a></li>
         <li><a href="#ch-12">8 周学习路线</a></li>
-        <li><a href="#glossary">术语表 (60 词)</a></li>
+        <li><a href="#glossary">术语表 (90 词)</a></li>
       </ol>
     </nav>
     <div class="toc-foot">
@@ -2599,6 +2599,156 @@ mcp = <span class="f">FastMCP</span>(<span class="s">"weather-server"</span>)
 
       <p>2026 年这个协议<strong>还没大爆发</strong>，但是面试如果有人问"如何让多个组织的 agent 互通"——你能蹦出 A2A 这个词就赢了。</p>
 
+      <h3 id="s-11-7"><span class="num">§11.7</span>Agent Harness · "the harness matters as much as the model"</h3>
+
+      <div class="box concept">
+        <div class="box-label">什么是 harness</div>
+        <p><strong>Harness（"挽具"）</strong>是 2025 业界开始流行的术语，指<strong>套在 LLM 外面的那层循环 + 工具 + 状态管理 + 提示策略</strong>——
+        说白了就是<em>本手册前 10 章讲的所有非 LLM 的部分加在一起</em>。</p>
+        <p>这个词流行是因为 Cognition / Anthropic 等团队反复发现一件事：
+        <strong>同一个 LLM，配不同 harness，效果差距 5-10 倍</strong>。
+        Claude Sonnet 4.5 在裸 API 下做 SWE-bench 大概 30%，
+        套上 Claude Code 的 harness 能做到 70%+。<em>模型没变，harness 不一样。</em></p>
+      </div>
+
+      <h4>Harness 包含什么</h4>
+      <table>
+        <thead><tr><th>层</th><th>具体做什么</th><th>桃桃 Agent 的对应</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Loop</strong></td><td>ReAct / Plan-Execute / Supervisor 等控制循环</td><td>LangGraph 的 graph 编排</td></tr>
+          <tr><td><strong>Tools</strong></td><td>工具集 + 调用协议 + 错误处理</td><td>12 个 @tool + safe_run_tool</td></tr>
+          <tr><td><strong>Context mgmt</strong></td><td>什么进 prompt / 什么不进 / 何时压缩</td><td>perception 节点 + summarizer</td></tr>
+          <tr><td><strong>Memory</strong></td><td>跨轮 / 跨会话状态</td><td>4 个 memory store</td></tr>
+          <tr><td><strong>Verification</strong></td><td>批评、重试、护栏</td><td>critic + guardrails</td></tr>
+          <tr><td><strong>Sub-agent topology</strong></td><td>多 agent 调度策略</td><td>supervisor + 三层熔断</td></tr>
+          <tr><td><strong>System prompts</strong></td><td>每个节点的 prompt 设计</td><td>perception / planner / supervisor 各自 prompt</td></tr>
+        </tbody>
+      </table>
+
+      <h4>顶尖 harness 示例</h4>
+      <ul>
+        <li><strong>Claude Code harness</strong>（Anthropic）—— 支持 Plan/Edit/Verify 三阶段循环、subagent 调度、TodoList 工具、严格的 diff-based 编辑、approval gates</li>
+        <li><strong>Cursor Composer harness</strong>—— 项目级 codebase 索引、@-file 显式 context、agentic mode 自动调多文件</li>
+        <li><strong>Devin harness</strong>（Cognition）—— 长任务（hours-long）+ 异步事件循环 + 自带浏览器和 IDE</li>
+        <li><strong>OpenAI Operator harness</strong>—— 基于 Computer Use 模型的浏览器操作循环</li>
+        <li><strong>SWE-Agent harness</strong>（Princeton）—— 学术界开源的 SWE-bench 优化 harness</li>
+      </ul>
+
+      <div class="box tip">
+        <div class="box-label">面试金句</div>
+        <p>"我现在做 agent 不太纠结模型选哪个——<strong>top 3 模型的能力差距远小于 harness 设计差距</strong>。
+        我把更多时间花在 prompt 设计、工具描述、context engineering、retry/critic 策略上。
+        我做的桃桃 Agent 就是把这些 harness 层的实践全部体现出来——同样的 Claude Sonnet，
+        裸调用和过我的 harness 跑研究类任务，<strong>步骤数减半、token 省 50%、错误率降 60%</strong>。"</p>
+      </div>
+
+      <h3 id="s-11-8"><span class="num">§11.8</span>Self-Adaptive / Self-Evolving Agents · 让 agent 自己变强</h3>
+
+      <p>2024-2026 最热的研究方向。核心问题：<strong>传统 agent 部署后能力被冻结——能不能让它在跑的过程中自己变得更好？</strong></p>
+
+      <div class="box concept">
+        <div class="box-label">三个层级的"自我进化"</div>
+        <ol>
+          <li><strong>Level α · 反思级</strong>—— agent 在<em>当前任务内</em>自我批评 + 重写。代表：<em>Reflexion</em>、<em>Self-Refine</em></li>
+          <li><strong>Level β · 经验级</strong>—— agent 把<em>过去经验</em>沉淀进可召回库，下次能自动用。代表：<em>Voyager</em>、<em>Mem0</em>、桃桃 Agent 的 reflections store</li>
+          <li><strong>Level γ · 元级</strong>—— agent 自己<em>修改自己的 prompt / 工具 / 拓扑</em>。代表：<em>DSPy</em>、<em>TextGrad</em>、<em>Gödel Agent</em>、<em>ADAS</em></li>
+        </ol>
+        <p>层级越高，研究价值越大，但工程稳定性越差。生产里大多停在 α-β，γ 多在论文。</p>
+      </div>
+
+      <h4>Level α · 反思级 · 已经能上生产</h4>
+
+      <table>
+        <thead><tr><th>方法</th><th>思路</th><th>论文/出处</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Self-Refine</strong></td><td>给答案 → 自己批评 → 自己改 → 循环 N 次</td><td>NeurIPS 2023</td></tr>
+          <tr><td><strong>Reflexion</strong></td><td>同上 + 批评意见存进长期反思库（防再犯）</td><td>NeurIPS 2023</td></tr>
+          <tr><td><strong>Self-Discover</strong></td><td>每个任务前先<em>选择/组合</em>合适的推理结构（chain-of-thought / decomposition / step-back…）</td><td>Google 2024</td></tr>
+          <tr><td><strong>STaR / Quiet-STaR</strong></td><td>让模型为每步推理生成 rationale，用对的 rationale 自训练</td><td>Stanford 2022/2024</td></tr>
+        </tbody>
+      </table>
+
+      <p>桃桃 Agent 的 critic + reflections store 就是 Reflexion 的工程化实现。</p>
+
+      <h4>Level β · 经验级 · 在工程化扩散中</h4>
+
+      <table>
+        <thead><tr><th>方法</th><th>思路</th><th>领域</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Voyager</strong></td><td>Minecraft agent；探索成功的"技能"存进 skill library，下次组合调用</td><td>NVIDIA 2023</td></tr>
+          <tr><td><strong>Mem0 / MemGPT</strong></td><td>把对话事实持续化进向量库，下次召回</td><td>开源</td></tr>
+          <tr><td><strong>Generative Agents</strong></td><td>Stanford 模拟小镇——每个 agent 自己反思 + 规划自己的人生</td><td>Stanford 2023</td></tr>
+          <tr><td><strong>Skills 系统</strong>（Anthropic）</td><td>把"如何做 X"写成 markdown skill，agent 按需 load</td><td>Anthropic 2025；桃桃也实现了</td></tr>
+        </tbody>
+      </table>
+
+      <h4>Level γ · 元级 · 多在研究阶段</h4>
+
+      <table>
+        <thead><tr><th>方法</th><th>思路</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td><strong>DSPy</strong></td><td>把 prompt 当作"可微参数"，用训练集自动优化（"compile" prompts）</td><td>Stanford 开源；最成熟的 γ 工具</td></tr>
+          <tr><td><strong>TextGrad</strong></td><td>对 prompt 做"自然语言梯度下降"——LLM 自己写"应该改成什么"</td><td>Stanford 2024 开源</td></tr>
+          <tr><td><strong>Gödel Agent</strong></td><td>Agent 能修改自己的源代码（包括循环结构）；递归自我改进</td><td>2024 论文；研究阶段</td></tr>
+          <tr><td><strong>ADAS</strong></td><td>Automated Design of Agentic Systems——LLM 自己设计 agent 拓扑结构</td><td>2024 论文</td></tr>
+          <tr><td><strong>AlphaEvolve</strong></td><td>DeepMind 用 LLM + 进化算法自动发现新算法（2025 年发表）</td><td>研究阶段</td></tr>
+          <tr><td><strong>Self-Rewarding LM</strong></td><td>LLM 自己当 judge 给自己的输出打分，用这个分微调自己</td><td>Meta 2024</td></tr>
+        </tbody>
+      </table>
+
+      <h4>DSPy · γ 级里最该会的</h4>
+
+      <p>DSPy 是<strong>面试加分项</strong>——会用的人不多，但越来越主流。一句话原理：</p>
+
+      <div class="box concept">
+        <div class="box-label">DSPy 思想</div>
+        <p>把 LLM 程序写成<strong>声明式签名</strong>（"输入是 X，输出是 Y"），prompt 里的<strong>具体措辞</strong>不写死。
+        然后给一个 metric（"输出对不对"），DSPy 用<strong>少量训练数据 + 自动搜索</strong>找到最优的
+        prompt（包括 few-shot example 选哪些、CoT 用什么模板、模块怎么组合）。</p>
+        <p>类比：传统 prompt engineering 像手写汇编；DSPy 像写高级语言再"编译"成 prompt。</p>
+      </div>
+
+<pre><span class="c"># 一个最小 DSPy 例子</span>
+<span class="k">import</span> dspy
+
+dspy.<span class="f">configure</span>(lm=dspy.<span class="f">LM</span>(<span class="s">"openai/gpt-4o-mini"</span>))
+
+<span class="c"># 声明签名 — 不写 prompt 措辞，只声明输入输出</span>
+<span class="k">class</span> <span class="f">QA</span>(dspy.Signature):
+    <span class="s">"""Answer the question with reasoning."""</span>
+    question: str = dspy.<span class="f">InputField</span>()
+    answer: str = dspy.<span class="f">OutputField</span>()
+
+solver = dspy.<span class="f">ChainOfThought</span>(QA)
+
+<span class="c"># 用 BootstrapFewShot 自动找最佳 few-shot 例子</span>
+optimizer = dspy.<span class="f">BootstrapFewShot</span>(metric=accuracy_metric)
+compiled_solver = optimizer.<span class="f">compile</span>(solver, trainset=train_examples)
+
+<span class="c"># 现在 compiled_solver 用的 prompt 是 DSPy 优化过的</span>
+result = compiled_solver(question=<span class="s">"What is the capital of France?"</span>)
+</pre>
+
+      <h4>Self-Improvement 的工程取舍</h4>
+
+      <ul>
+        <li><strong>α 级</strong>：成本 ×2，准确率 +10-30%。<em>大多数 agent 都该上</em>（桃桃用了）</li>
+        <li><strong>β 级</strong>：基础设施投入大（向量库、抽取流程、去重），但是<em>用户感知到的"越用越懂"全靠这层</em></li>
+        <li><strong>γ 级</strong>：研究价值高，但生产风险大——agent 自己改自己出了问题不好定位。<em>建议 prompt 优化场景试 DSPy，其余的等论文落地</em></li>
+      </ul>
+
+      <div class="box warn">
+        <div class="box-label">面试坑题</div>
+        <p><strong>Q：</strong>self-improving agent 听起来很美好，为什么生产里很少用 γ 级？</p>
+        <p><strong>答（3 点）：</strong></p>
+        <ol>
+          <li><strong>不可复现</strong>——agent 改了自己的 prompt/拓扑，下次跑同一任务行为不同；调试和回归测试基础设施全部失效</li>
+          <li><strong>没有 ground truth 时容易自欺</strong>——"自我打分" 的 LLM 容易给自己高分，导致<em>越改越偏</em>而不自知</li>
+          <li><strong>合规和审计</strong>——金融/医疗等场景必须能追溯每次决策的"系统状态"，γ 级 agent 的状态在不断变化，不可审计</li>
+        </ol>
+        <p>能讲出这三点，面试官会觉得你<strong>不光知道前沿研究，还懂工程现实</strong>——这种平衡感比纯炫技重要 10 倍。</p>
+      </div>
+
       <div class="box interview">
         <div class="box-label">面试题 · 生态全景</div>
         <p><strong>Q：</strong>2026 年做 agent 项目你会用哪些工具栈？</p>
@@ -2722,7 +2872,7 @@ mcp = <span class="f">FastMCP</span>(<span class="s">"weather-server"</span>)
     <section id="glossary">
       <header class="ch-head">
         <span class="badge">Appendix · 术语表</span>
-        <h2>60 个必懂术语 · 一句话讲清</h2>
+        <h2>90 个必懂术语 · 一句话讲清</h2>
         <p class="lede">面试官随口蹦一个词你就能接住——不会陷入"啊那个我好像见过……"</p>
       </header>
 
@@ -2880,6 +3030,32 @@ mcp = <span class="f">FastMCP</span>(<span class="s">"weather-server"</span>)
         <dt>Vercel AI SDK</dt><dd>Vercel 出品的前端流式 LLM 库，<code>useChat</code>/<code>useCompletion</code> hook 帮你 5 行接入 streaming UI。</dd>
 
         <dt>ag-ui</dt><dd>开源的 agent 前端组件库，提供 chat / trace / tool 调用展示等开箱即用组件。</dd>
+
+        <dt>Harness <small>agent 挽具</small></dt><dd>套在 LLM 外面的整层 scaffolding——loop / tools / context / memory / verification / sub-agent 调度。"模型没变，harness 不一样"是 SWE-bench 30% vs 70% 的根因。</dd>
+
+        <dt>Self-Refine</dt><dd>Agent 给答案 → 自己批评 → 自己改 → 循环。NeurIPS 2023。</dd>
+
+        <dt>Self-Discover <small>Google 2024</small></dt><dd>每个任务前先选择/组合合适的推理结构（CoT / decomposition / step-back…），再开始解题。</dd>
+
+        <dt>STaR <small>Self-Taught Reasoner</small></dt><dd>让模型为每步推理生成 rationale，用对的 rationale 自训练。Stanford。</dd>
+
+        <dt>Voyager <small>NVIDIA 2023</small></dt><dd>Minecraft 自我进化 agent；探索成功的"技能"存进 skill library，下次组合调用。</dd>
+
+        <dt>Generative Agents <small>Stanford 2023</small></dt><dd>"模拟小镇"——25 个 agent 各自反思 / 规划 / 互动，催生群体行为。Sims 风格。</dd>
+
+        <dt>DSPy</dt><dd>Stanford 开源；把 prompt 当"可微参数"，用训练集 + metric 自动优化（"compile" prompts）。</dd>
+
+        <dt>TextGrad</dt><dd>对 prompt 做"自然语言梯度下降"——LLM 自己写"应该改成什么"作为梯度。Stanford 2024。</dd>
+
+        <dt>Gödel Agent</dt><dd>Agent 能修改自己的源代码（包括循环结构）；递归自我改进的研究方向。</dd>
+
+        <dt>ADAS <small>Automated Design of Agentic Systems</small></dt><dd>用 LLM 自动设计 agent 拓扑 / 节点 / 工具组合的研究方向。</dd>
+
+        <dt>AlphaEvolve <small>DeepMind 2025</small></dt><dd>LLM + 进化算法自动发现新算法；号称发现了几个数学/工程优化新方法。</dd>
+
+        <dt>Self-Rewarding LM</dt><dd>LLM 自己当 judge 给输出打分，用分微调自己。Meta 2024。</dd>
+
+        <dt>Self-Improving Agent</dt><dd>统称——分 α (反思) / β (经验沉淀) / γ (元级自改) 三层。生产里多停在 α-β。</dd>
       </dl>
     </section>
 
