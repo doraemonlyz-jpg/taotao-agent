@@ -1,0 +1,3105 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Infra · 从硬件到面试 · GPU / 推理 / 训练 / 平台</title>
+<meta name="description" content="给目标 AI Infra 岗位的工程师写的系统手册。覆盖 GPU/网络、LLM 推理引擎 (vLLM/SGLang/TRT-LLM)、量化、分布式训练 (FSDP/ZeRO/Megatron)、算子 (FlashAttention/Triton)、MoE、MLOps 平台、向量库内部、性能指标、可靠性、80 道面试题 + 12 周学习路线。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper:        #fbf5e8;
+  --paper-2:      #f4ecd6;
+  --paper-card:   #ffffff;
+  --ink:          #1d1a14;
+  --ink-soft:     #3a3327;
+  --ink-mute:     #756c5c;
+  --rule:         #d8cdb0;
+  --rule-soft:    #e8debc;
+  --leaf:         #4a8a4a; --leaf-soft: #ebf3e7;
+  --rust:         #c44d2a; --rust-soft: #fae6dc;
+  --sky:          #2c6ca8; --sky-soft:  #e2edf5;
+  --plum:         #864c8e; --plum-soft: #f1e6f2;
+  --gold:         #b8881e; --gold-soft: #f7eccd;
+  --code-bg:      #fdf9ed;
+  --code-fg:      #2a2620;
+  --code-key:     #c44d2a;
+  --code-str:     #4a8a4a;
+  --code-cmt:     #998a6c;
+  --code-fn:      #864c8e;
+  --font-display: "Fraunces", "Times New Roman", serif;
+  --font-body:    "Lora", "Iowan Old Style", Georgia, serif;
+  --font-sans:    "Outfit", system-ui, -apple-system, sans-serif;
+  --font-mono:    "JetBrains Mono", "SF Mono", Menlo, monospace;
+  --font-zh:      "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background:
+    radial-gradient(ellipse at top left, rgba(196, 178, 144, 0.12), transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(74, 138, 74, 0.08), transparent 50%),
+    var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+:lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
+.book-body p, .book-body li { color: var(--ink-soft); }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(196, 77, 42, 0.4); }
+a:hover { background: rgba(196, 77, 42, 0.08); }
+em { font-style: italic; color: var(--leaf); font-weight: 500; }
+strong { font-weight: 600; color: var(--ink); }
+
+.layout {
+  display: grid;
+  grid-template-columns: 290px minmax(0, 1fr);
+  max-width: 1400px; margin: 0 auto; padding: 0 2rem; gap: 3rem;
+}
+@media (max-width: 980px) {
+  .layout { grid-template-columns: 1fr; gap: 0; padding: 0 1.2rem; }
+  .toc { position: static !important; max-height: none !important; }
+  .toc-inner { display: none; }
+  .toc.open .toc-inner { display: block; }
+  .toc-toggle { display: inline-flex !important; }
+}
+
+.toc {
+  position: sticky; top: 0; align-self: start;
+  height: 100vh; max-height: 100vh; overflow: auto;
+  padding: 2rem 0.4rem 4rem 0;
+  border-right: 1px dashed var(--rule);
+  font-family: var(--font-sans); font-size: 0.85rem;
+}
+.toc-toggle {
+  display: none; margin: 1rem 0; padding: 0.4rem 0.8rem;
+  background: var(--paper-card); border: 1px solid var(--rule);
+  border-radius: 999px; font-family: var(--font-sans);
+  font-size: 0.78rem; cursor: pointer;
+}
+.toc-brand {
+  padding: 0 0.7rem 1.1rem;
+  border-bottom: 1px dashed var(--rule); margin-bottom: 1rem;
+}
+.toc-brand .mark {
+  font-family: var(--font-display);
+  font-style: italic; font-weight: 500;
+  font-size: 1.4rem; color: var(--ink);
+  display: block; line-height: 1.1;
+}
+.toc-brand .mark .dot { color: var(--rust); font-style: normal; }
+.toc-brand .sub {
+  font-family: var(--font-sans); font-size: 0.72rem;
+  letter-spacing: 0.04em; color: var(--ink-mute);
+  margin-top: 0.4rem; display: block; line-height: 1.4;
+}
+.toc-brand .sub strong { color: var(--rust); font-weight: 700; }
+.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: tocch; }
+.toc > .toc-inner > ol > li { counter-increment: tocch; margin: 0.05rem 0; }
+.toc a {
+  display: flex; gap: 0.6rem; align-items: baseline;
+  padding: 0.34rem 0.6rem; border: none;
+  color: var(--ink-soft); font-weight: 500;
+  border-radius: 6px;
+  transition: background 0.12s, color 0.12s;
+  line-height: 1.35;
+}
+.toc > .toc-inner > ol > li > a::before {
+  content: "Ch " counter(tocch, decimal-leading-zero);
+  font-family: var(--font-mono); font-size: 0.65rem; color: var(--rust);
+  width: 3.4em; flex-shrink: 0; font-weight: 500; letter-spacing: 0.02em;
+}
+.toc a:hover { background: var(--paper-2); color: var(--ink); }
+.toc a.active { background: var(--rust-soft); color: var(--rust); }
+.toc-foot {
+  margin-top: 2rem; padding: 1rem 0.7rem 0;
+  border-top: 1px dashed var(--rule);
+  font-family: var(--font-sans);
+  font-size: 0.74rem; color: var(--ink-mute);
+  line-height: 1.6;
+}
+.toc-foot a { color: var(--ink-mute); border-bottom-color: rgba(117, 108, 92, 0.3); }
+.toc-foot a:hover { color: var(--rust); }
+
+.book-body { padding: 2rem 0 6rem; max-width: 800px; }
+.book-body section { margin: 0 0 5rem; scroll-margin-top: 1rem; }
+
+.cover {
+  margin-bottom: 4.5rem; padding-bottom: 2.5rem;
+  border-bottom: 1px solid var(--ink); position: relative;
+}
+.cover::after {
+  content: ""; position: absolute; left: 0; bottom: -5px;
+  width: 80px; height: 3px; background: var(--rust);
+}
+.cover .eyebrow {
+  font-family: var(--font-sans); font-size: 0.78rem;
+  letter-spacing: 0.06em; color: var(--rust);
+  margin-bottom: 1.4rem; font-weight: 600; text-transform: uppercase;
+}
+.cover .eyebrow .sep { color: var(--rule); margin: 0 0.6rem; font-weight: 400; }
+.cover h1 {
+  font-family: var(--font-display); font-weight: 500;
+  font-size: clamp(2.4rem, 4.8vw, 4rem);
+  line-height: 1.08; letter-spacing: -0.015em;
+  margin: 0 0 1.4rem; color: var(--ink);
+}
+.cover h1 em { color: var(--rust); font-style: italic; font-weight: 500; }
+.cover .lede {
+  font-size: 1.18rem; color: var(--ink-soft);
+  max-width: 36em; margin: 0 0 2rem; line-height: 1.65;
+}
+.cover .who {
+  background: var(--paper-card); border: 1px solid var(--rule);
+  border-radius: 10px; padding: 1.4rem 1.6rem;
+  margin-top: 2rem; font-size: 0.96rem;
+}
+.cover .who h4 {
+  font-family: var(--font-sans); font-size: 0.78rem;
+  font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.04em; color: var(--rust);
+  margin: 0 0 0.6rem;
+}
+.cover .who ul { margin: 0; padding-left: 1.2rem; }
+.cover .who li { margin: 0.15rem 0; }
+
+.ch-head { margin: 0 0 2rem; }
+.ch-head .badge {
+  display: inline-block; font-family: var(--font-sans);
+  font-size: 0.72rem; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--rust); background: var(--rust-soft);
+  padding: 0.25rem 0.7rem; border-radius: 999px; margin-bottom: 1rem;
+}
+.ch-head h2 {
+  font-family: var(--font-display); font-weight: 500;
+  font-size: clamp(1.9rem, 3.2vw, 2.7rem); line-height: 1.12;
+  margin: 0 0 0.6rem; color: var(--ink); letter-spacing: -0.01em;
+}
+.ch-head .lede {
+  font-style: italic; color: var(--ink-mute);
+  font-size: 1.05rem; font-family: var(--font-display); margin: 0;
+}
+h3 {
+  font-family: var(--font-display); font-weight: 500;
+  font-size: 1.5rem; letter-spacing: -0.005em;
+  margin: 2.8rem 0 0.8rem; color: var(--ink); scroll-margin-top: 1rem;
+}
+h3 .num {
+  font-family: var(--font-mono); font-size: 0.7rem; color: var(--rust);
+  font-weight: 500; margin-right: 0.5rem;
+  font-style: normal; letter-spacing: 0.04em;
+}
+h4 {
+  font-family: var(--font-sans); font-weight: 600;
+  font-size: 1.05rem; letter-spacing: -0.005em;
+  margin: 1.8rem 0 0.4rem; color: var(--ink);
+}
+h5 {
+  font-family: var(--font-sans); font-size: 0.78rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--ink-mute); margin: 1.2rem 0 0.4rem;
+}
+p { margin: 0 0 1rem; }
+ol, ul { padding-left: 1.4rem; margin: 0.4rem 0 1.2rem; }
+li { margin: 0.25rem 0; }
+
+code {
+  font-family: var(--font-mono); font-size: 0.86em;
+  background: var(--sky-soft); padding: 0.05rem 0.4rem;
+  border-radius: 4px; color: var(--sky); font-weight: 500;
+}
+strong code { color: var(--ink); }
+pre {
+  font-family: var(--font-mono); background: var(--code-bg); color: var(--code-fg);
+  padding: 1.1rem 1.3rem; border-radius: 8px;
+  border: 1px solid var(--rule-soft); border-left: 3px solid var(--sky);
+  overflow-x: auto; font-size: 0.81rem; line-height: 1.6;
+  margin: 1rem 0 1.4rem;
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; font-weight: 400; }
+pre .k { color: var(--code-key); font-weight: 500; }
+pre .s { color: var(--code-str); }
+pre .c { color: var(--code-cmt); font-style: italic; }
+pre .f { color: var(--code-fn); font-weight: 500; }
+
+.box {
+  margin: 1.5rem 0; padding: 1.2rem 1.4rem;
+  border-radius: 10px; border-left: 4px solid; position: relative;
+}
+.box .box-label {
+  font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;
+}
+.box .box-label::before { font-size: 1rem; font-weight: normal; }
+.box p:last-child { margin-bottom: 0; }
+.box ol, .box ul { margin-bottom: 0.4rem; }
+
+.box.concept { background: var(--leaf-soft); border-color: var(--leaf); }
+.box.concept .box-label { color: var(--leaf); }
+.box.concept .box-label::before { content: "📖"; }
+.box.tip { background: var(--rust-soft); border-color: var(--rust); }
+.box.tip .box-label { color: var(--rust); }
+.box.tip .box-label::before { content: "💡"; }
+.box.code-pin { background: var(--sky-soft); border-color: var(--sky); }
+.box.code-pin .box-label { color: var(--sky); }
+.box.code-pin .box-label::before { content: "📍"; }
+.box.interview { background: var(--gold-soft); border-color: var(--gold); }
+.box.interview .box-label { color: var(--gold); }
+.box.interview .box-label::before { content: "🎯"; }
+.box.warn { background: #fff4e0; border-color: #d49414; }
+.box.warn .box-label { color: #b87a0a; }
+.box.warn .box-label::before { content: "⚠️"; }
+.box.reading { background: #eef4f0; border-color: #2f6c4d; }
+.box.reading .box-label { color: #2f6c4d; }
+.box.reading .box-label::before { content: "📚"; }
+.box.reading ul { margin: 0.4rem 0 0; padding-left: 1.2rem; list-style: none; }
+.box.reading ul li {
+  margin: 0.32rem 0; padding-left: 1.1rem;
+  position: relative; font-size: 0.94rem;
+}
+.box.reading ul li::before { content: "↗"; position: absolute; left: 0; color: #2f6c4d; font-weight: 600; }
+.box.reading ul li.gh::before { content: "★"; color: #b87a0a; }
+.box.reading ul li.demo::before { content: "▶"; color: var(--rust); }
+.box.reading ul li.paper::before { content: "§"; color: var(--plum); font-weight: 700; }
+.box.reading ul li.video::before { content: "▶"; color: var(--sky); }
+
+.box.formula { background: #fdf6e9; border-color: var(--gold); font-family: var(--font-mono); font-size: 0.92rem; }
+.box.formula .box-label { color: var(--gold); font-family: var(--font-sans); }
+.box.formula .box-label::before { content: "𝑓"; font-weight: 600; font-style: italic; }
+
+.qa {
+  margin: 1.2rem 0; border: 1px solid var(--rule);
+  border-radius: 10px; background: var(--paper-card); overflow: hidden;
+}
+.qa .q {
+  background: var(--gold-soft); padding: 0.9rem 1.3rem;
+  font-family: var(--font-display); font-weight: 500;
+  font-style: italic; font-size: 1.05rem; color: var(--ink);
+  border-bottom: 1px dashed var(--rule);
+  display: flex; gap: 0.7rem; align-items: baseline;
+}
+.qa .q::before {
+  content: "Q"; font-family: var(--font-display);
+  font-weight: 600; font-size: 1.3rem; color: var(--gold);
+  font-style: italic; flex-shrink: 0; line-height: 1;
+}
+.qa .a { padding: 1rem 1.3rem 1.2rem; font-size: 0.96rem; }
+.qa .a > h5:first-child { margin-top: 0; }
+.qa .a p:last-child { margin-bottom: 0; }
+.qa-template {
+  margin-top: 0.8rem; padding: 0.7rem 1rem;
+  background: var(--paper-2); border-radius: 6px;
+  font-family: var(--font-sans); font-size: 0.86rem;
+  color: var(--ink-soft); border-left: 2px solid var(--gold);
+}
+.qa-template strong { color: var(--gold); font-weight: 700; }
+
+table {
+  width: 100%; border-collapse: collapse;
+  margin: 1rem 0 1.6rem; font-size: 0.9rem;
+  background: var(--paper-card); border-radius: 6px;
+  overflow: hidden; border: 1px solid var(--rule);
+}
+th, td {
+  text-align: left; padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid var(--rule-soft);
+  vertical-align: top;
+}
+th {
+  font-family: var(--font-sans); font-size: 0.72rem;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--ink); font-weight: 600; background: var(--paper-2);
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(196, 178, 144, 0.13); }
+table code { font-size: 0.82em; }
+
+/* SVG figures */
+.figure {
+  background: var(--paper-card); border: 1px solid var(--rule);
+  border-radius: 12px; padding: 1.6rem 1.4rem 1.2rem;
+  margin: 1.4rem 0 1.8rem;
+  box-shadow: 0 1px 3px rgba(29, 26, 20, 0.04);
+}
+.figure svg { display: block; width: 100%; height: auto; max-width: 760px; margin: 0 auto; }
+.figure figcaption {
+  text-align: center; font-family: var(--font-sans);
+  font-size: 0.82rem; letter-spacing: 0.05em;
+  color: var(--ink-mute); text-transform: uppercase; margin-top: 0.9rem;
+}
+.figure figcaption strong { color: var(--ink-soft); font-weight: 600; text-transform: none; letter-spacing: 0; }
+
+.fig-box       { fill: var(--paper-card); stroke: var(--ink-soft); stroke-width: 1.5; }
+.fig-box-soft  { fill: #fdf9ed; stroke: var(--rule); stroke-width: 1.2; }
+.fig-box-leaf  { fill: var(--leaf-soft); stroke: var(--leaf); stroke-width: 1.5; }
+.fig-box-rust  { fill: var(--rust-soft); stroke: var(--rust); stroke-width: 1.5; }
+.fig-box-sky   { fill: var(--sky-soft); stroke: var(--sky); stroke-width: 1.5; }
+.fig-box-plum  { fill: var(--plum-soft); stroke: var(--plum); stroke-width: 1.5; }
+.fig-box-gold  { fill: var(--gold-soft); stroke: var(--gold); stroke-width: 1.5; }
+.fig-line      { fill: none; stroke: var(--ink-mute); stroke-width: 1.4; }
+.fig-line-rust { fill: none; stroke: var(--rust); stroke-width: 1.6; }
+.fig-line-leaf { fill: none; stroke: var(--leaf); stroke-width: 1.6; }
+.fig-dash      { fill: none; stroke: var(--ink-mute); stroke-width: 1.2; stroke-dasharray: 4 3; }
+.fig-dash-leaf { fill: none; stroke: var(--leaf); stroke-width: 1.2; stroke-dasharray: 4 3; }
+.fig-t        { font-family: var(--font-sans); font-size: 13px; fill: var(--ink); font-weight: 500; }
+.fig-t-lg     { font-family: var(--font-display); font-size: 15px; fill: var(--ink); font-weight: 600; font-style: italic; }
+.fig-t-sm     { font-family: var(--font-sans); font-size: 11px; fill: var(--ink-mute); }
+.fig-t-mono   { font-family: var(--font-mono); font-size: 11px; fill: var(--ink-soft); }
+.fig-t-label  { font-family: var(--font-sans); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.fig-t-leaf   { fill: var(--leaf); }
+.fig-t-rust   { fill: var(--rust); }
+.fig-t-sky    { fill: var(--sky); }
+.fig-t-plum   { fill: var(--plum); }
+.fig-t-gold   { fill: var(--gold); }
+.fig-t-mute   { fill: var(--ink-mute); }
+
+/* Stack diagram (Ch1) */
+.stack {
+  background: var(--paper-card); border: 1px solid var(--rule);
+  border-radius: 12px; padding: 1.4rem 1.6rem; margin: 1.4rem 0 2rem;
+}
+.stack-row {
+  display: grid; grid-template-columns: 38px 1fr 100px;
+  gap: 1rem; align-items: center;
+  padding: 0.8rem 0; border-bottom: 1px dashed var(--rule);
+}
+.stack-row:last-child { border-bottom: none; }
+.stack-num {
+  font-family: var(--font-display); font-style: italic;
+  font-weight: 500; font-size: 1.7rem; color: var(--rust); text-align: center;
+}
+.stack-name { font-family: var(--font-sans); font-weight: 600; color: var(--ink); }
+.stack-name small { display: block; color: var(--ink-mute); font-weight: 400; font-size: 0.85rem; margin-top: 0.1rem; }
+.stack-tag {
+  font-family: var(--font-sans); font-size: 0.68rem;
+  font-weight: 600; text-align: center;
+  padding: 0.2rem 0.5rem; border-radius: 4px;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+.stack-tag.t-h { background: var(--rust-soft); color: var(--rust); }
+.stack-tag.t-m { background: var(--gold-soft); color: var(--gold); }
+.stack-tag.t-l { background: var(--leaf-soft); color: var(--leaf); }
+
+/* Track cards */
+.tracks {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1rem; margin: 1.5rem 0;
+}
+@media (max-width: 720px) { .tracks { grid-template-columns: 1fr; } }
+.track {
+  background: var(--paper-card); border: 1px solid var(--rule);
+  border-left: 4px solid var(--rust);
+  border-radius: 8px; padding: 1.1rem 1.3rem;
+}
+.track h4 {
+  margin: 0 0 0.4rem; font-family: var(--font-display);
+  font-style: italic; font-weight: 500; font-size: 1.15rem;
+  color: var(--ink); text-transform: none; letter-spacing: 0;
+}
+.track .who { font-family: var(--font-sans); font-size: 0.78rem; color: var(--ink-mute); margin-bottom: 0.5rem; }
+.track ul { margin: 0; padding-left: 1.2rem; font-size: 0.88rem; }
+
+/* Checklist */
+.checklist {
+  list-style: none; padding-left: 0; margin: 0.6rem 0 1rem;
+  background: var(--paper-card); border: 1px solid var(--rule);
+  border-radius: 8px; padding: 0.8rem 1.1rem;
+}
+.checklist li {
+  padding: 0.32rem 0 0.32rem 1.7rem; position: relative;
+  border-bottom: 1px dashed var(--rule-soft);
+  font-size: 0.93rem; line-height: 1.45;
+}
+.checklist li:last-child { border-bottom: none; }
+.checklist li::before { content: "☐"; position: absolute; left: 0; color: var(--ink-mute); font-size: 1.1rem; line-height: 1; }
+.checklist li.crit::before { content: "★"; color: var(--rust); }
+
+/* Pull / Glossary / Footer (same as enterprise.html) */
+.pull {
+  margin: 3rem 0; padding: 1.8rem 2rem;
+  font-family: var(--font-display); font-style: italic;
+  font-size: 1.5rem; line-height: 1.4; color: var(--ink);
+  border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink);
+  position: relative; text-align: center;
+}
+.pull::before {
+  content: "“"; position: absolute; top: -0.2rem; left: 1.2rem;
+  font-family: var(--font-display); font-size: 4.5rem;
+  color: var(--rust); line-height: 1;
+}
+.pull cite {
+  display: block; margin-top: 0.6rem; font-style: normal;
+  font-family: var(--font-sans); font-size: 0.78rem;
+  color: var(--ink-mute); letter-spacing: 0.06em;
+  text-transform: uppercase; font-weight: 500;
+}
+.glossary {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1rem 2rem; margin: 1rem 0;
+}
+@media (max-width: 720px) { .glossary { grid-template-columns: 1fr; } }
+.glossary dt {
+  font-family: var(--font-sans); font-weight: 700;
+  font-size: 0.92rem; color: var(--rust); margin-top: 0.6rem;
+}
+.glossary dt small {
+  color: var(--ink-mute); font-weight: 400;
+  font-size: 0.78rem; display: block;
+  margin-top: 0.1rem; font-family: var(--font-mono);
+}
+.glossary dd { margin: 0.2rem 0 0; font-size: 0.9rem; color: var(--ink-soft); line-height: 1.55; }
+
+footer.colophon {
+  margin-top: 5rem; padding-top: 2.5rem;
+  border-top: 2px solid var(--ink);
+  font-family: var(--font-sans);
+  font-size: 0.85rem; color: var(--ink-mute);
+}
+footer.colophon .row {
+  display: flex; justify-content: space-between;
+  flex-wrap: wrap; gap: 1rem; margin-bottom: 0.6rem;
+}
+
+/* Weeks (Ch13) */
+.weeks { padding: 0; list-style: none; counter-reset: wkidx; }
+.weeks > li {
+  counter-increment: wkidx;
+  display: grid; grid-template-columns: 100px 1fr;
+  gap: 1.5rem; padding: 1.4rem 0;
+  border-bottom: 1px dashed var(--rule);
+}
+.weeks > li:last-child { border-bottom: none; }
+.weeks .wk-num {
+  font-family: var(--font-display); font-style: italic;
+  font-weight: 500; color: var(--rust);
+}
+.weeks .wk-num .lbl {
+  display: block; font-family: var(--font-sans);
+  font-style: normal; font-size: 0.7rem; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--ink-mute); font-weight: 600;
+}
+.weeks .wk-num .n { font-size: 2rem; line-height: 1; }
+.weeks h4 {
+  margin: 0 0 0.5rem; font-family: var(--font-display);
+  font-weight: 500; font-size: 1.2rem; color: var(--ink);
+  text-transform: none; letter-spacing: 0;
+}
+.weeks .wk-do { font-size: 0.9rem; margin: 0.4rem 0; }
+.weeks .wk-ship {
+  font-family: var(--font-sans); font-size: 0.78rem;
+  color: var(--leaf); font-weight: 600; margin-top: 0.5rem;
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <aside class="toc" id="toc">
+    <div class="toc-brand">
+      <span class="mark">AI Infra <span class="dot">·</span> 从硬件到面试</span>
+      <span class="sub">GPU · 推理 · 训练 · 平台 · 2026<br><strong>13 章 · 80 道面试题 · 12 周路线 · 100 词术语</strong></span>
+    </div>
+    <button class="toc-toggle" onclick="document.getElementById('toc').classList.toggle('open')">≡ 目录</button>
+    <nav class="toc-inner">
+      <ol>
+        <li><a href="#ch-1">AI Infra 全景 · 5 层栈 + 4 子方向</a></li>
+        <li><a href="#ch-2">GPU 与网络 · H100 / NVLink / IB / RDMA</a></li>
+        <li><a href="#ch-3">LLM 推理引擎 · vLLM / SGLang / TRT-LLM 内部</a></li>
+        <li><a href="#ch-4">量化与压缩 · FP8 / GPTQ / AWQ / GGUF</a></li>
+        <li><a href="#ch-5">分布式训练 · FSDP / ZeRO / Megatron 3D</a></li>
+        <li><a href="#ch-6">算子与编译 · FlashAttention / Triton / CUDA Graph</a></li>
+        <li><a href="#ch-7">MoE · 训练与推理</a></li>
+        <li><a href="#ch-8">MLOps 平台 · Ray / KServe / Slurm / K8s</a></li>
+        <li><a href="#ch-9">向量库内部 · HNSW / IVF / DiskANN / PQ</a></li>
+        <li><a href="#ch-10">性能与 Profiling · MFU / TTFT / DCGM</a></li>
+        <li><a href="#ch-11">可靠性 · 训练 fault tolerance / 推理 SLO</a></li>
+        <li><a href="#ch-12">80 道 AI Infra 面试题 + 答题模板</a></li>
+        <li><a href="#ch-13">12 周学习路线 + 资源清单</a></li>
+        <li><a href="#glossary">术语表 (100 词)</a></li>
+      </ol>
+    </nav>
+    <div class="toc-foot">
+      配套：<br>
+      <a href="learn.html">→ 应用层 · 从 0 到面试</a><br>
+      <a href="enterprise.html">→ 企业级交付手册</a><br>
+      <a href="index.html">→ 实现详解 Field Guide</a><br><br>
+      <a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/.../taotao-agent ↗</a>
+    </div>
+  </aside>
+
+  <main class="book-body">
+
+    <!-- ============== Cover ============== -->
+    <header class="cover">
+      <div class="eyebrow">
+        AI Infra 工程师面试手册
+        <span class="sep">·</span> Hardware to Production
+        <span class="sep">·</span> 2026
+      </div>
+      <h1>
+        看完这本，你能 <em>讲清楚</em> agent API 调用下面那 4 层在干什么，<br>
+        也能在 AI Infra 面试里 <em>答出工程细节</em>。
+      </h1>
+      <p class="lede">
+        Agent 应用层（learn.html / enterprise.html）讲的是<strong>"用 LLM"</strong>——
+        AI Infra 讲的是<strong>"造让 LLM 能跑的基础设施"</strong>。
+        从 GPU 硬件、NVLink 拓扑、vLLM 内部的 PagedAttention、FlashAttention 怎么省 HBM 带宽、
+        ZeRO-3 跟 FSDP 区别、HNSW 怎么检索——这本把<strong>面试官最爱问的 inference / training / platform / vector DB 4 个子方向</strong>全覆盖。
+      </p>
+
+      <div class="who">
+        <h4>📌 学完你会拥有</h4>
+        <ul>
+          <li>对 <strong>5 层 AI 栈</strong>建立完整心智（hardware → kernel → engine → platform → app）</li>
+          <li>能讲清楚 <strong>vLLM / SGLang / TGI / TRT-LLM 4 大推理引擎</strong>各自的优化技术（PagedAttention / Continuous Batching / RadixAttention / Speculative Decoding）</li>
+          <li>能讲清楚 <strong>分布式训练 7 种并行</strong>（DP / TP / PP / SP / EP / CP / ZeRO 1-2-3）的 trade-off</li>
+          <li><strong>FlashAttention 1→2→3 演进</strong>讲明白：哪一代解决什么 bottleneck</li>
+          <li>会读 <strong>Profiler 输出</strong>（MFU / SM utilization / TTFT / TPOT）并诊断瓶颈</li>
+          <li><strong>80 道 AI Infra 面试题</strong>分 4 子方向（Inference / Training / Platform / Vector）的答题模板</li>
+          <li><strong>12 周学习路线表</strong> + 必读 25 篇论文 + 必读源码 6 个 + 必看视频清单</li>
+        </ul>
+      </div>
+    </header>
+
+    <!-- ============== Chapter 1 — Overview ============== -->
+    <section id="ch-1">
+      <header class="ch-head">
+        <span class="badge">Chapter 1 · 全景</span>
+        <h2>AI Infra 是什么 · 5 层栈 + 4 个子方向</h2>
+        <p class="lede">先把版图画出来——再决定你要主攻哪一片，避免学一堆用不上的</p>
+      </header>
+
+      <h3 id="s-1-1"><span class="num">§1.1</span>5 层 AI 栈 · 你必须能画出来</h3>
+      <p>当面试官说"讲讲 AI Infra 是什么"，你应该能脱口而出下面这张图。每层的关键词、典型代表、面试热度——心里都要有数。</p>
+
+      <div class="stack">
+        <div class="stack-row">
+          <div class="stack-num">5</div>
+          <div class="stack-name">Application <small>agent · RAG · chat · 业务逻辑</small></div>
+          <div class="stack-tag t-l">应用</div>
+        </div>
+        <div class="stack-row">
+          <div class="stack-num">4</div>
+          <div class="stack-name">Platform / MLOps <small>Ray · KServe · BentoML · Slurm · K8s · Kueue</small></div>
+          <div class="stack-tag t-m">中度</div>
+        </div>
+        <div class="stack-row">
+          <div class="stack-num">3</div>
+          <div class="stack-name">Engine <small>vLLM · SGLang · TGI · TRT-LLM · DeepSpeed-Inference</small></div>
+          <div class="stack-tag t-h">高频</div>
+        </div>
+        <div class="stack-row">
+          <div class="stack-num">2</div>
+          <div class="stack-name">Kernel / Compiler <small>FlashAttention · Triton · CUDA · TVM · MLIR · XLA</small></div>
+          <div class="stack-tag t-h">高频</div>
+        </div>
+        <div class="stack-row">
+          <div class="stack-num">1</div>
+          <div class="stack-name">Hardware / Network <small>H100/B200 · HBM3e · NVLink5 · NVSwitch · IB / RoCE · GPUDirect</small></div>
+          <div class="stack-tag t-m">基础</div>
+        </div>
+      </div>
+
+      <p><strong>L1 硬件</strong>是基础（不深问但要会名词）；<strong>L2 算子 / L3 引擎</strong>是面试主战场（80% 题目在这两层）；
+      <strong>L4 平台</strong>看公司——AI 公司面少、传统大厂面多；<strong>L5 应用</strong>是 agent 工程师那边的事，infra 岗不深问。</p>
+
+      <h3 id="s-1-2"><span class="num">§1.2</span>4 个 AI Infra 子方向 · 你要选一个深耕</h3>
+      <p>"AI Infra"是伞概念。下面 4 个子方向<strong>侧重的层完全不同</strong>，你要先想清自己面哪个。</p>
+
+      <div class="tracks">
+        <div class="track" style="border-left-color: var(--rust);">
+          <h4>① Inference Infra</h4>
+          <div class="who">代表岗位：OpenAI Inference / Anthropic / 字节 ByteServing / 阿里 DashScope · DeepSeek API</div>
+          <ul>
+            <li><strong>主战场</strong>：L3 引擎 + L2 算子（推理向）</li>
+            <li>必会：vLLM / SGLang / TRT-LLM 内部、PagedAttention、Continuous Batching、Speculative Decoding、Disaggregated serving</li>
+            <li>加分：FP8 量化、长 context optimization、KV cache offload</li>
+          </ul>
+        </div>
+        <div class="track" style="border-left-color: var(--sky);">
+          <h4>② Training Infra</h4>
+          <div class="who">代表岗位：OpenAI Pretraining / Meta GenAI Infra / DeepSeek / 月之暗面 / 智谱</div>
+          <ul>
+            <li><strong>主战场</strong>：L1 硬件 + L2 算子 + 分布式</li>
+            <li>必会：FSDP / DeepSpeed ZeRO 1-2-3 / Megatron 3D / Ring attention / FlashAttention 内部</li>
+            <li>加分：FP8 训练、checkpoint 优化、profile 调优 MFU</li>
+          </ul>
+        </div>
+        <div class="track" style="border-left-color: var(--leaf);">
+          <h4>③ AI Platform / MLOps</h4>
+          <div class="who">代表岗位：AWS SageMaker / Anyscale / Databricks / 字节 BMF / 阿里 PAI</div>
+          <ul>
+            <li><strong>主战场</strong>：L4 平台 + 一点 L3 + L1</li>
+            <li>必会：K8s GPU 调度、Ray、Slurm、Kueue/Volcano、autoscaling、模型注册表、experiment tracking</li>
+            <li>加分：multi-tenant GPU、cost dashboard、capacity planning</li>
+          </ul>
+        </div>
+        <div class="track" style="border-left-color: var(--plum);">
+          <h4>④ Vector DB / Search Infra</h4>
+          <div class="who">代表岗位：Pinecone / Qdrant / Milvus / 字节 Veloce / 阿里 Hologres</div>
+          <ul>
+            <li><strong>主战场</strong>：算法（HNSW / IVF / DiskANN）+ 一点 L1（带宽）</li>
+            <li>必会：HNSW 怎么搜索、IVF-PQ、DiskANN 跟 HNSW 区别、量化向量</li>
+            <li>加分：分布式 index、增量更新、混合检索</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3 id="s-1-3"><span class="num">§1.3</span>AI Infra vs AI Engineer vs MLOps vs SRE</h3>
+      <p>面试新人最常搞混的 4 个相关岗位。一句话区分：</p>
+      <table>
+        <thead><tr><th>岗位</th><th>核心动词</th><th>主要工作</th></tr></thead>
+        <tbody>
+          <tr><td><strong>AI Infra Engineer</strong></td><td><em>build</em></td><td>造让 LLM 能跑得快/省/稳的基础设施。改 vLLM 源码、写 CUDA kernel、调 NCCL 通信</td></tr>
+          <tr><td><strong>AI / Agent Engineer</strong></td><td><em>use</em></td><td>用 LLM API 写产品。写 prompt、装 LangGraph、做 RAG。<em>不动模型权重和推理代码</em></td></tr>
+          <tr><td><strong>MLOps / ML Platform</strong></td><td><em>operate</em></td><td>装 pipeline、模型注册表、CI/CD、监控。传统 ML 时代来的，现在向 LLMOps 过渡</td></tr>
+          <tr><td><strong>SRE / GPU SRE</strong></td><td><em>keep alive</em></td><td>GPU 集群健康度、incident response、容量规划。on-call 主力</td></tr>
+        </tbody>
+      </table>
+
+      <p>这 4 个岗位经常一个人身兼几职——尤其在小公司。但<strong>"我做的是 AI Infra"</strong>这句话<strong>必须能说清你具体改过哪一层、改的是什么</strong>，不然就是空话。</p>
+
+      <h3 id="s-1-4"><span class="num">§1.4</span>2026 年 AI Infra 5 个最热话题</h3>
+      <ol>
+        <li><strong>Disaggregated Prefill / Decode Serving</strong>——把 LLM 推理的 prefill 阶段（计算密集）和 decode 阶段（带宽密集）分到不同 GPU pool 上跑，整体 throughput 提升 2-5x。代表系统：<em>Mooncake</em> (Moonshot) / <em>DistServe</em> / <em>Splitwise</em> (MS)。</li>
+        <li><strong>FP8 Training</strong>——H100/B200 原生支持 FP8，DeepSeek-V3 用 FP8 训出 671B MoE 证明可行。比 BF16 快 2x、省一半显存。</li>
+        <li><strong>Speculative Decoding 普及</strong>——MTP (Multi-Token Prediction)、Medusa、EAGLE-2/3，主推理速度提升 1.5-3x，成 vLLM/SGLang 标配。</li>
+        <li><strong>Long Context 推理优化</strong>——StreamingLLM、Ring Attention、KV cache offload to CPU/SSD、prefix sharing —— 100k-1M context window 的工程化。</li>
+        <li><strong>MoE Inference 工程</strong>——expert parallelism 怎么做、capacity factor 怎么调、稀疏激活怎么避免 GPU idle。Mixtral / DeepSeek / Qwen 的 MoE 都需要专门优化。</li>
+      </ol>
+
+      <div class="box tip">
+        <div class="box-label">面试金句</div>
+        <p>"我对 AI Infra 的认知分 5 层栈和 4 个子方向。我目前主攻 [子方向 X]——
+        这层的核心 trade-off 是 [throughput vs latency / 显存 vs 通信 / 准确率 vs 速度]，
+        当下最热的演进方向是 [disaggregated serving / FP8 training / spec decoding / MoE]。
+        我读的最深的论文是 [PagedAttention / FlashAttention / ZeRO / DeepSeek-V3 tech report]。"</p>
+        <p>能蹦出这套话术就把"我懂 AI Infra"的牌立住了。</p>
+      </div>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 1</div>
+        <ul>
+          <li><a href="https://www.semianalysis.com/" target="_blank">SemiAnalysis</a> ——AI 硬件 / infra 行业分析最权威，订阅必读</li>
+          <li><a href="https://horace.io/brrr_intro.html" target="_blank">Horace He · Making Deep Learning Go Brrrr</a> ——5 类瓶颈（compute / memory / overhead / bandwidth / IO）的经典入门</li>
+          <li><a href="https://blog.eleuther.ai/transformer-math/" target="_blank">EleutherAI · Transformer Math 101</a> ——估算 LLM 训/推显存 + FLOPs 必背</li>
+          <li class="paper"><a href="https://arxiv.org/abs/2407.21783" target="_blank">Llama 3 论文 (Meta, 2024)</a> ——一份完整 LLM infra 实战报告，必读</li>
+          <li class="paper"><a href="https://arxiv.org/abs/2412.19437" target="_blank">DeepSeek-V3 技术报告 (2024-12)</a> ——FP8 训练 + MoE 工程化最详细的公开材料</li>
+          <li class="gh"><a href="https://github.com/stas00/ml-engineering" target="_blank">stas00/ml-engineering</a> ——HuggingFace 工程师的开源 ML infra 笔记，star 14k+</li>
+          <li class="video"><a href="https://www.youtube.com/@AndrejKarpathy" target="_blank">Andrej Karpathy YouTube</a> ——nanoGPT / llm.c / GPT-2 reproduce 系列</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 2 — GPU & Network ============== -->
+    <section id="ch-2">
+      <header class="ch-head">
+        <span class="badge">Chapter 2 · 硬件</span>
+        <h2>GPU 与网络 · H100 / NVLink / IB / RDMA</h2>
+        <p class="lede">不要求背 SM 数量，但要能聊 HBM 带宽 / NVLink 拓扑 / IB 跟以太网区别</p>
+      </header>
+
+      <h3 id="s-2-1"><span class="num">§2.1</span>GPU 一眼看全 · H100 / H200 / B100/B200 / MI300X</h3>
+      <p>面试常考 4 张表：<strong>FLOPs</strong>、<strong>HBM 容量+带宽</strong>、<strong>互联</strong>、<strong>价格</strong>。下面是 2026 年主流卡的硬指标速记：</p>
+
+      <table>
+        <thead><tr><th>GPU</th><th>FP16/BF16 TFLOPs</th><th>FP8 TFLOPs</th><th>HBM</th><th>HBM 带宽</th><th>NVLink</th><th>典型价 ($)</th></tr></thead>
+        <tbody>
+          <tr><td><strong>H100 SXM</strong></td><td>989</td><td>1979</td><td>80GB HBM3</td><td>3.35 TB/s</td><td>NVLink4 · 900 GB/s</td><td>~30k</td></tr>
+          <tr><td><strong>H200 SXM</strong></td><td>989</td><td>1979</td><td>141GB HBM3e</td><td>4.8 TB/s</td><td>NVLink4 · 900 GB/s</td><td>~32k</td></tr>
+          <tr><td><strong>B100</strong></td><td>1800</td><td>3500</td><td>192GB HBM3e</td><td>8 TB/s</td><td>NVLink5 · 1.8 TB/s</td><td>~35k</td></tr>
+          <tr><td><strong>B200</strong></td><td>2250</td><td>4500</td><td>192GB HBM3e</td><td>8 TB/s</td><td>NVLink5 · 1.8 TB/s</td><td>~40k</td></tr>
+          <tr><td><strong>GB200 (Grace+B200×2)</strong></td><td>4500</td><td>9000</td><td>384GB</td><td>16 TB/s</td><td>NVLink5</td><td>~70k</td></tr>
+          <tr><td><strong>AMD MI300X</strong></td><td>1300</td><td>2600</td><td>192GB HBM3</td><td>5.3 TB/s</td><td>Infinity Fabric</td><td>~15-20k</td></tr>
+        </tbody>
+      </table>
+
+      <div class="box concept">
+        <div class="box-label">3 个数你必须记住（用来估算）</div>
+        <ol>
+          <li><strong>H100 FP16 ≈ 1 PFLOPS</strong>（一个数量级好记）</li>
+          <li><strong>H100 HBM 80GB · 3.35 TB/s</strong>（推理 bottleneck 几乎都在 HBM 带宽）</li>
+          <li><strong>NVLink 单 GPU bw ≈ 900 GB/s（H100）/ 1.8 TB/s（B200）</strong>，远超 PCIe 5.0 的 ~120 GB/s</li>
+        </ol>
+        <p>有这 3 个数你能现场估算"这模型能不能跑在 1 张 H100 上"、"throughput 上限大概多少"——这就是 infra 工程师的基本功。</p>
+      </div>
+
+      <h3 id="s-2-2"><span class="num">§2.2</span>GPU 内部架构 · SM / Tensor Core / HBM 三件套</h3>
+      <p>无论哪代卡，结构都是<strong>"很多 SM + Tensor Core 加速 + 三层 memory hierarchy"</strong>：</p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="GPU memory hierarchy">
+          <defs>
+            <marker id="g2-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#756c5c"/>
+            </marker>
+          </defs>
+          <!-- SM grid on left -->
+          <text class="fig-t-label fig-t-rust" x="100" y="30" text-anchor="middle">132 × SM (H100)</text>
+          <g transform="translate(20, 50)">
+            <!-- 6x4 SM grid -->
+            <g>
+              <rect class="fig-box-rust" x="0"   y="0"  width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="26"  y="0"  width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="52"  y="0"  width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="78"  y="0"  width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="104" y="0"  width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="130" y="0"  width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="0"   y="26" width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="26"  y="26" width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="52"  y="26" width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="78"  y="26" width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="104" y="26" width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="130" y="26" width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="0"   y="52" width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="26"  y="52" width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="52"  y="52" width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="78"  y="52" width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="104" y="52" width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="130" y="52" width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="0"   y="78" width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="26"  y="78" width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="52"  y="78" width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="78"  y="78" width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="104" y="78" width="22" height="22" rx="2"/>
+              <rect class="fig-box-rust" x="130" y="78" width="22" height="22" rx="2"/>
+            </g>
+            <text class="fig-t-sm" x="76" y="120" text-anchor="middle">每 SM 含 4 个 Tensor Core</text>
+          </g>
+
+          <!-- Memory hierarchy on right -->
+          <text class="fig-t-label fig-t-sky" x="500" y="30" text-anchor="middle">3 层 Memory Hierarchy</text>
+
+          <rect class="fig-box-sky" x="380" y="50" width="240" height="40" rx="6"/>
+          <text class="fig-t" x="500" y="70" text-anchor="middle">Registers + L1 / SMEM</text>
+          <text class="fig-t-sm" x="500" y="84" text-anchor="middle">~256KB/SM · ~30TB/s · 1 cycle</text>
+
+          <rect class="fig-box-sky" x="380" y="100" width="240" height="40" rx="6"/>
+          <text class="fig-t" x="500" y="120" text-anchor="middle">L2 Cache</text>
+          <text class="fig-t-sm" x="500" y="134" text-anchor="middle">50MB · ~5TB/s · ~50 cycles</text>
+
+          <rect class="fig-box-sky" x="380" y="150" width="240" height="40" rx="6"/>
+          <text class="fig-t" x="500" y="170" text-anchor="middle">HBM (Global Memory)</text>
+          <text class="fig-t-sm" x="500" y="184" text-anchor="middle">80GB · 3.35TB/s · ~600 cycles</text>
+
+          <rect class="fig-box-soft" x="380" y="200" width="240" height="40" rx="6"/>
+          <text class="fig-t" x="500" y="220" text-anchor="middle">PCIe / NVLink → 别的 GPU / CPU RAM</text>
+          <text class="fig-t-sm" x="500" y="234" text-anchor="middle">~120GB/s PCIe5 · ~900GB/s NVLink4</text>
+
+          <text class="fig-t-sm fig-t-mute" x="500" y="270" text-anchor="middle" font-style="italic">优化的核心 = 减少访问越下层的次数</text>
+          <text class="fig-t-sm fig-t-mute" x="500" y="285" text-anchor="middle" font-style="italic">FlashAttention / KV cache 优化都在做这件事</text>
+        </svg>
+        <figcaption><strong>Figure 2.2</strong> · GPU 内部 · 132 SM 计算单元 + 3 层 memory hierarchy（H100 数据）</figcaption>
+      </figure>
+
+      <p>面试经典题"<strong>什么是 memory-bound 什么是 compute-bound</strong>"——本质就是上图。
+      Decode 阶段每个 token 只算一遍 → 大量 HBM 读 KV cache → memory-bound；
+      Prefill 阶段一次算很多 token → 计算密度高 → compute-bound。这就是为什么要 disaggregate（§3.6）。</p>
+
+      <h3 id="s-2-3"><span class="num">§2.3</span>NVLink / NVSwitch · 单机多卡互联</h3>
+      <p>1 台 8 卡机内部 GPU 怎么互联？答案：<strong>NVLink + NVSwitch</strong>。每张 H100 有 18 条 NVLink4 链路（25GB/s × 18 = 900GB/s），
+      接到 4 个 NVSwitch 上，形成<strong>full-mesh</strong>——任意两张 GPU 之间都有 900GB/s 直连。</p>
+
+      <table>
+        <thead><tr><th>互联</th><th>带宽（双向）</th><th>典型用途</th></tr></thead>
+        <tbody>
+          <tr><td><code>HBM → SM</code></td><td>3.35 TB/s</td><td>显存读写</td></tr>
+          <tr><td><code>NVLink4 (H100)</code></td><td>900 GB/s</td><td>同机 GPU 互联</td></tr>
+          <tr><td><code>NVLink5 (B200)</code></td><td>1.8 TB/s</td><td>同机 GPU 互联</td></tr>
+          <tr><td><code>PCIe Gen5 x16</code></td><td>128 GB/s</td><td>GPU ↔ CPU / 老机型 GPU 互联</td></tr>
+          <tr><td><code>InfiniBand NDR (400G)</code></td><td>50 GB/s</td><td>跨机 GPU 互联</td></tr>
+          <tr><td><code>InfiniBand XDR (800G)</code></td><td>100 GB/s</td><td>2026 旗舰</td></tr>
+          <tr><td><code>RoCEv2 (400Gb)</code></td><td>50 GB/s</td><td>InfiniBand 替代品（用以太网线）</td></tr>
+        </tbody>
+      </table>
+
+      <p><strong>关键认知</strong>：从 SM 视角看，HBM 比 NVLink 快 3-4x，NVLink 比 IB 快 18-20x，IB 比普通 TCP 快 100x。
+      所以分布式训练的<strong>"通信策略" = 让数据尽量留在更上层</strong>。这是 ZeRO / Megatron / FSDP 各种 sharding 策略背后的根本动机。</p>
+
+      <h3 id="s-2-4"><span class="num">§2.4</span>InfiniBand / RoCE / RDMA / GPUDirect · 跨机互联术语扫盲</h3>
+      <p>跨机训练就要走网络，几个术语必须分清：</p>
+      <ul>
+        <li><strong>InfiniBand (IB)</strong>——专用网络协议（不是以太网），低延迟、高带宽。代表厂商 NVIDIA Mellanox。</li>
+        <li><strong>RoCE (RDMA over Converged Ethernet)</strong>——把 RDMA 跑在以太网上，省钱替代品。RoCEv2 是事实标准。</li>
+        <li><strong>RDMA (Remote Direct Memory Access)</strong>——一种<em>能力</em>，CPU 不参与的内存到内存传输。IB 和 RoCE 都支持。</li>
+        <li><strong>GPUDirect RDMA</strong>——更进一步：跨机 GPU 显存可直接互传（不经过 CPU 也不经过 host RAM）。LLM 训练必备。</li>
+        <li><strong>NCCL</strong>——NVIDIA 集合通信库（all-reduce / all-gather / broadcast）。所有分布式训练框架（PyTorch DDP / FSDP / DeepSpeed / Megatron）底层都用它。</li>
+      </ul>
+
+      <h3 id="s-2-5"><span class="num">§2.5</span>集群拓扑 · Fat-tree vs Rail-optimized</h3>
+      <p>大规模 GPU 集群（&gt; 100 节点）的网络拓扑有两种主流设计：</p>
+      <ul>
+        <li><strong>Fat-tree (Clos)</strong>——传统 HPC 设计，所有节点等价对称，bisection bandwidth 高。Meta 的 Research SuperCluster 用这个。</li>
+        <li><strong>Rail-optimized</strong>——把同 rank 的 GPU（如所有节点的 GPU0）放在同一个 rail 上，跨节点 all-reduce 只走自己的 rail。NVIDIA / Microsoft / xAI 的 H100/B200 集群基本都用这个。</li>
+      </ul>
+      <p>Rail-optimized 的优势：<strong>大幅降低 all-reduce 的"碰撞"</strong>，对 TP+DP 训练特别友好。
+      面试如果你能说出"我们集群是 rail-optimized 拓扑，单 pod 1024 张 H100，pod 间走 IB NDR"——立刻显示是真做过大集群的。</p>
+
+      <h3 id="s-2-6"><span class="num">§2.6</span>单卡显存装得下吗？ · 一个必背公式</h3>
+      <div class="box formula">
+        <div class="box-label">推理显存（1 batch）</div>
+        <p><code>params × bytes/param + KV_cache</code></p>
+        <p>其中 <code>KV_cache = 2 × num_layers × num_heads × head_dim × seq_len × batch × bytes</code></p>
+      </div>
+      <p>例：Llama 3 70B FP16 推理，<code>seq=4k, batch=1</code>：</p>
+      <ul>
+        <li>权重：70B × 2 = <strong>140 GB</strong>（显然 1 张 H100 80GB 装不下，需要 2-4 张 TP）</li>
+        <li>KV cache：2 × 80 × 64 × 128 × 4096 × 1 × 2 = ~10.7 GB（注意 GQA 把 KV head 数减到 8 了，否则更大）</li>
+      </ul>
+      <p>这就是为什么 70B+ 模型必须<strong>tensor parallel 切到多卡</strong>。能现场算这个公式，infra 面试基本过半了。</p>
+
+      <div class="box formula">
+        <div class="box-label">训练显存（粗略）</div>
+        <p><code>params × (2 weights + 2 grads + 8 optimizer state for Adam) + activations</code></p>
+        <p>BF16 训练 70B：<code>70B × 12 = 840 GB</code> 仅 model state。Adam 8 字节是 fp32 momentum/variance + master weights。</p>
+        <p>这就是 ZeRO 的来源——Adam state 是大头，把它 shard 掉是 ZeRO-1 的核心。</p>
+      </div>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 2 (Hardware &amp; Network)</div>
+        <ul>
+          <li><a href="https://www.semianalysis.com/p/nvidias-h100-architecture-deep-dive" target="_blank">SemiAnalysis · H100 deep dive</a></li>
+          <li><a href="https://images.nvidia.com/aem-dam/Solutions/Data-Center/h100/PB-11133-001_v01.pdf" target="_blank">NVIDIA H100 White Paper</a> ——官方架构白皮书</li>
+          <li><a href="https://blog.eleuther.ai/transformer-math/" target="_blank">EleutherAI · Transformer Math 101</a> ——显存/FLOPs 估算</li>
+          <li><a href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/" target="_blank">NVIDIA · CUDA C Programming Guide</a> ——SM / memory hierarchy 权威</li>
+          <li><a href="https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/" target="_blank">NCCL User Guide</a></li>
+          <li class="paper"><a href="https://arxiv.org/abs/2407.05858" target="_blank">Llama 3 Training Cluster (Meta)</a> ——24k GPU 集群的工程报告</li>
+          <li class="gh"><a href="https://github.com/NVIDIA/nccl" target="_blank">NVIDIA/nccl</a> ——读它的 README + 集合通信原语图</li>
+          <li class="video"><a href="https://www.youtube.com/watch?v=KrJjBTvD9d0" target="_blank">Tim Dettmers · GPU 选购 (老视频但概念好)</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 3 — Inference Engine ============== -->
+    <section id="ch-3">
+      <header class="ch-head">
+        <span class="badge">Chapter 3 · 推理引擎</span>
+        <h2>vLLM / SGLang / TGI / TRT-LLM 内部</h2>
+        <p class="lede">面试 inference infra 80% 的题在这一章——每个核心技术单独讲透</p>
+      </header>
+
+      <h3 id="s-3-1"><span class="num">§3.1</span>LLM 推理两阶段 · Prefill vs Decode</h3>
+      <p>每次 LLM 推理本质分两步：<strong>prefill</strong>（一次处理全部 prompt）+ <strong>decode</strong>（一个个吐 token）。
+      这两步的<strong>计算特征截然相反</strong>，搞清楚这点是后面所有优化的前提。</p>
+
+      <table>
+        <thead><tr><th>阶段</th><th>做什么</th><th>计算特征</th><th>瓶颈</th><th>优化方向</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Prefill</strong></td><td>处理 prompt 全部 N 个 token</td><td>大矩阵乘 · 计算密集 · arithmetic intensity 高</td><td>compute-bound</td><td>更高 FLOPs · FlashAttention · 算子融合</td></tr>
+          <tr><td><strong>Decode</strong></td><td>生成第 N+1, N+2, … 个 token</td><td>每步只算 1 个 token · 大量读 KV cache · 矩阵×向量</td><td>memory-bound (HBM 带宽)</td><td>大 batch · KV cache 优化 · speculative decoding</td></tr>
+        </tbody>
+      </table>
+
+      <div class="box concept">
+        <div class="box-label">关键指标 TTFT vs TPOT</div>
+        <ul>
+          <li><strong>TTFT (Time To First Token)</strong>——首 token 延迟，由 prefill 决定。用户感知"反应快不快"</li>
+          <li><strong>TPOT (Time Per Output Token)</strong>——后续每 token 间隔，由 decode 决定。用户感知"打字流不流畅"</li>
+          <li><strong>ITL (Inter-Token Latency)</strong>——同 TPOT</li>
+          <li><strong>Goodput</strong>——实际有用 throughput（满足 SLO 的 token/s），跟 throughput 不同</li>
+        </ul>
+      </div>
+
+      <h3 id="s-3-2"><span class="num">§3.2</span>PagedAttention · vLLM 的核心创新</h3>
+      <p>2023 年 vLLM 论文提出，把 KV cache 借鉴 OS 虚拟内存的思路<strong>分页管理</strong>。</p>
+
+      <p><strong>问题</strong>：传统实现给每个 request 预分配 max_seq_len 的 KV cache 显存——大部分浪费（80%+ 显存碎片化或预留不用）。</p>
+
+      <p><strong>方案</strong>：把 KV cache 切成固定大小 block（默认 16 token/block），用 <em>block table</em> 映射逻辑 token 到物理 block，类似 OS page table。</p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="PagedAttention KV cache layout">
+          <text class="fig-t-label fig-t-rust" x="40" y="30">传统 KV cache · 预分配</text>
+          <rect class="fig-box-rust" x="40"  y="44" width="280" height="36" rx="4"/>
+          <text class="fig-t-sm" x="180" y="66" text-anchor="middle">Request 1 · max=2048 · 实际用 256 → 浪费 1792</text>
+          <rect class="fig-box-rust" x="40"  y="86" width="280" height="36" rx="4"/>
+          <text class="fig-t-sm" x="180" y="108" text-anchor="middle">Request 2 · max=2048 · 实际用 512 → 浪费 1536</text>
+          <rect class="fig-box-soft" x="40" y="128" width="280" height="36" rx="4"/>
+          <text class="fig-t-sm fig-t-mute" x="180" y="150" text-anchor="middle">无人用 · 显存碎片化</text>
+
+          <text class="fig-t-label fig-t-leaf" x="440" y="30">PagedAttention · 按 block 分配</text>
+          <!-- physical blocks -->
+          <g>
+            <rect class="fig-box-leaf" x="440" y="44" width="32" height="22" rx="2"/><text class="fig-t-mono" x="456" y="60" text-anchor="middle">B0</text>
+            <rect class="fig-box-leaf" x="476" y="44" width="32" height="22" rx="2"/><text class="fig-t-mono" x="492" y="60" text-anchor="middle">B1</text>
+            <rect class="fig-box-leaf" x="512" y="44" width="32" height="22" rx="2"/><text class="fig-t-mono" x="528" y="60" text-anchor="middle">B2</text>
+            <rect class="fig-box-sky"  x="548" y="44" width="32" height="22" rx="2"/><text class="fig-t-mono" x="564" y="60" text-anchor="middle">B3</text>
+            <rect class="fig-box-sky"  x="584" y="44" width="32" height="22" rx="2"/><text class="fig-t-mono" x="600" y="60" text-anchor="middle">B4</text>
+            <rect class="fig-box-sky"  x="620" y="44" width="32" height="22" rx="2"/><text class="fig-t-mono" x="636" y="60" text-anchor="middle">B5</text>
+            <rect class="fig-box-leaf" x="656" y="44" width="32" height="22" rx="2"/><text class="fig-t-mono" x="672" y="60" text-anchor="middle">B6</text>
+            <rect class="fig-box-soft" x="692" y="44" width="32" height="22" rx="2"/><text class="fig-t-mono" x="708" y="60" text-anchor="middle">free</text>
+          </g>
+
+          <text class="fig-t-sm fig-t-leaf" x="440" y="92">R1 · block_table = [B0, B1, B2, B6]</text>
+          <text class="fig-t-sm fig-t-sky"  x="440" y="112">R2 · block_table = [B3, B4, B5]</text>
+          <text class="fig-t-sm fig-t-mute" x="440" y="132">↑ 16 token/block 按需分配 · 浪费 &lt; 4%</text>
+
+          <!-- benefits -->
+          <text class="fig-t-label fig-t-rust" x="40" y="200">→ 收益</text>
+          <text class="fig-t-sm" x="40" y="220">① 显存利用率从 ~20% → 96%+ · 同显存能 batch 4-5x request</text>
+          <text class="fig-t-sm" x="40" y="240">② Throughput 提升 14-24x (vLLM paper benchmark)</text>
+          <text class="fig-t-sm" x="40" y="260">③ Block 共享自然支持 prefix sharing · beam search · parallel sampling</text>
+          <text class="fig-t-sm" x="40" y="280">④ 代价：每次 attention 多一次 indirect block_table 查找（开销小）</text>
+        </svg>
+        <figcaption><strong>Figure 3.2</strong> · PagedAttention · 借鉴 OS 虚拟内存解决 KV cache 碎片化</figcaption>
+      </figure>
+
+      <div class="box interview">
+        <div class="box-label">面试题 · 必答</div>
+        <p><strong>Q:</strong> PagedAttention 解决什么问题？跟传统 KV cache 区别？</p>
+        <p><strong>A:</strong> 解决 KV cache 显存碎片化问题。传统实现按 max_seq_len 预分配（浪费 60-80% 显存），
+        PagedAttention 借鉴 OS 虚拟内存把 KV cache 切成 16-token 固定大小 block，用 block table 映射。
+        显存利用率 20% → 96%+，throughput 提升 14-24x（vLLM 论文）。
+        副作用：每次 attention 多一次 indirect 查找，开销可忽略。
+        <strong>额外收益：</strong>block 自然支持 prefix sharing（多 request 同 system prompt 共享 block）、parallel sampling、beam search。</p>
+      </div>
+
+      <h3 id="s-3-3"><span class="num">§3.3</span>Continuous Batching · static batching 的革命</h3>
+      <p>传统 <strong>static batching</strong>：组一个 batch (e.g., 8 个 request)，所有 request 算到全部完成才能开下一 batch。
+      问题：长度不等 → 短的等长的 → GPU 大量 idle。</p>
+
+      <p><strong>Continuous batching</strong>（也叫 <em>iteration-level scheduling</em>）：<strong>每个 step 重新组 batch</strong>。
+      谁结束了立刻走人，新来的 request 立刻插队。GPU 几乎不 idle。</p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Static vs Continuous batching">
+          <text class="fig-t-label fig-t-mute" x="40" y="24">STATIC BATCHING</text>
+          <!-- 4 requests, very different lengths -->
+          <rect class="fig-box-rust"  x="40" y="34" width="80"  height="22" rx="2"/><text class="fig-t-mono" x="80"  y="50" text-anchor="middle">R1</text>
+          <rect class="fig-box-soft"  x="120" y="34" width="180" height="22" rx="2"/><text class="fig-t-sm fig-t-mute" x="210" y="50" text-anchor="middle">idle (R1 done, 等其他)</text>
+          <rect class="fig-box-rust"  x="40" y="58" width="180" height="22" rx="2"/><text class="fig-t-mono" x="130" y="74" text-anchor="middle">R2</text>
+          <rect class="fig-box-soft"  x="220" y="58" width="80"  height="22" rx="2"/><text class="fig-t-sm fig-t-mute" x="260" y="74" text-anchor="middle">idle</text>
+          <rect class="fig-box-rust"  x="40" y="82" width="120" height="22" rx="2"/><text class="fig-t-mono" x="100" y="98" text-anchor="middle">R3</text>
+          <rect class="fig-box-soft"  x="160" y="82" width="140" height="22" rx="2"/><text class="fig-t-sm fig-t-mute" x="230" y="98" text-anchor="middle">idle</text>
+          <rect class="fig-box-rust"  x="40" y="106" width="260" height="22" rx="2"/><text class="fig-t-mono" x="170" y="122" text-anchor="middle">R4 (最长)</text>
+          <text class="fig-t-sm" x="320" y="80">batch 等所有结束 · GPU 利用率 ~40%</text>
+
+          <!-- divider -->
+          <line class="fig-dash" x1="40" y1="140" x2="720" y2="140"/>
+
+          <text class="fig-t-label fig-t-leaf" x="40" y="166">CONTINUOUS BATCHING</text>
+          <rect class="fig-box-leaf" x="40"  y="176" width="80"  height="22" rx="2"/><text class="fig-t-mono" x="80"  y="192" text-anchor="middle">R1</text>
+          <rect class="fig-box-leaf" x="120" y="176" width="100" height="22" rx="2"/><text class="fig-t-mono" x="170" y="192" text-anchor="middle">R5</text>
+          <rect class="fig-box-leaf" x="220" y="176" width="80"  height="22" rx="2"/><text class="fig-t-mono" x="260" y="192" text-anchor="middle">R6</text>
+          <rect class="fig-box-leaf" x="40"  y="200" width="180" height="22" rx="2"/><text class="fig-t-mono" x="130" y="216" text-anchor="middle">R2</text>
+          <rect class="fig-box-leaf" x="220" y="200" width="80"  height="22" rx="2"/><text class="fig-t-mono" x="260" y="216" text-anchor="middle">R7</text>
+          <rect class="fig-box-leaf" x="40"  y="224" width="120" height="22" rx="2"/><text class="fig-t-mono" x="100" y="240" text-anchor="middle">R3</text>
+          <rect class="fig-box-leaf" x="160" y="224" width="140" height="22" rx="2"/><text class="fig-t-mono" x="230" y="240" text-anchor="middle">R8</text>
+          <rect class="fig-box-leaf" x="40"  y="248" width="260" height="22" rx="2"/><text class="fig-t-mono" x="170" y="264" text-anchor="middle">R4 (最长)</text>
+          <text class="fig-t-sm" x="320" y="222">每 step 重组 batch · GPU 利用率 90%+</text>
+          <text class="fig-t-sm" x="320" y="240">throughput 提升 5-10x</text>
+        </svg>
+        <figcaption><strong>Figure 3.3</strong> · Static vs Continuous batching · 后者每 step 重新组 batch，GPU 几乎不 idle</figcaption>
+      </figure>
+
+      <p>Continuous batching 来自 2022 Orca 论文，2023 年被 vLLM / TGI / TensorRT-LLM 全都实现。<strong>2026 年是行业标配</strong>，没有的就不算 production 推理引擎。</p>
+
+      <h3 id="s-3-4"><span class="num">§3.4</span>Speculative Decoding · 让 decode 跑得快</h3>
+      <p>Decode 是 memory-bound（每 token 都要读全部 KV cache + weights），核心 bottleneck 是 HBM 带宽。<strong>怎么破？</strong>
+      让 GPU 在<em>等带宽的同时</em>多算几个候选 token——<strong>用一个小模型猜 N 个 token，大模型一次性 verify</strong>。如果命中就赚 N-1 步，错了也只浪费这一步。</p>
+
+      <table>
+        <thead><tr><th>方法</th><th>怎么猜</th><th>命中率</th><th>速度提升</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Vanilla Speculative</strong></td><td>用小模型（如 Llama-3 8B 给 70B 当 drafter）</td><td>40-60%</td><td>1.5-2x</td></tr>
+          <tr><td><strong>Medusa</strong></td><td>主模型加多个 prediction head 直接预测后续 token</td><td>50-65%</td><td>1.8-2.5x</td></tr>
+          <tr><td><strong>EAGLE / EAGLE-2 / EAGLE-3</strong></td><td>更精巧的 drafter（用 hidden state 预测）</td><td>60-80%</td><td>2.5-3.5x</td></tr>
+          <tr><td><strong>MTP (Multi-Token Prediction)</strong></td><td>训练时直接学多 token 预测（DeepSeek-V3 用）</td><td>~85% acceptance</td><td>1.8x</td></tr>
+          <tr><td><strong>Lookahead Decoding</strong></td><td>用历史生成做 n-gram 猜（不需额外模型）</td><td>30-50%</td><td>1.5-2x</td></tr>
+        </tbody>
+      </table>
+
+      <p>2026 年 vLLM 默认支持 EAGLE / Medusa；SGLang 实现得最早最全。如果你做 inference infra 不知道这些，面试基本挂。</p>
+
+      <h3 id="s-3-5"><span class="num">§3.5</span>Prefix Sharing / RadixAttention · SGLang 的杀招</h3>
+      <p>多个 request 共享 system prompt（agent / chat 场景常见）——能不能让它们<strong>共享 KV cache</strong>？答案：能。</p>
+      <p>SGLang 的 <strong>RadixAttention</strong>：用 radix tree 索引<strong>所有历史请求的 prefix</strong>。
+      新 request 来了先查 tree，命中就直接复用 KV cache（连 prefill 都省了）。多轮对话场景能省 50-90% prefill 计算。</p>
+
+      <p>vLLM 也有类似的 <strong>Automatic Prefix Caching (APC)</strong>，2024 后默认开启。</p>
+
+      <h3 id="s-3-6"><span class="num">§3.6</span>Disaggregated Prefill / Decode · 2024-2026 最大架构变革</h3>
+      <p><strong>洞察</strong>：prefill 是 compute-bound，decode 是 memory-bound——为什么把它俩跑在<em>同一组 GPU</em>上？</p>
+      <p><strong>方案</strong>：把 prefill 和 decode <strong>分到不同 GPU pool</strong>，KV cache 通过 NVLink/RDMA 从 prefill GPU 传到 decode GPU。
+      代表系统：</p>
+      <ul>
+        <li><strong>Mooncake</strong>（月之暗面 2024）——Kimi 在用，全球第一个生产规模 disaggregated 推理系统</li>
+        <li><strong>DistServe</strong>（北大 2024）——学术界开源参考实现</li>
+        <li><strong>Splitwise</strong>（Microsoft 2024）——Azure 部署</li>
+        <li><strong>vLLM 1.0+ 实验性支持</strong></li>
+      </ul>
+
+      <figure class="figure">
+        <svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Disaggregated prefill decode">
+          <defs>
+            <marker id="dp-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#c44d2a"/>
+            </marker>
+          </defs>
+
+          <!-- request pool -->
+          <rect class="fig-box-soft" x="20" y="20" width="120" height="60" rx="6"/>
+          <text class="fig-t" x="80" y="44" text-anchor="middle">Request</text>
+          <text class="fig-t-sm" x="80" y="60" text-anchor="middle">scheduler</text>
+          <text class="fig-t-sm" x="80" y="76" text-anchor="middle">+ KV transfer</text>
+
+          <!-- Prefill pool -->
+          <rect class="fig-box-rust" x="200" y="20" width="220" height="100" rx="8"/>
+          <text class="fig-t-label fig-t-rust" x="310" y="42" text-anchor="middle">PREFILL POOL</text>
+          <text class="fig-t-sm" x="310" y="60" text-anchor="middle">e.g. 4 × H100</text>
+          <text class="fig-t-sm" x="310" y="78" text-anchor="middle">compute-bound 优化</text>
+          <text class="fig-t-sm" x="310" y="96" text-anchor="middle">FlashAttention · 高并发短任务</text>
+
+          <!-- Decode pool -->
+          <rect class="fig-box-leaf" x="200" y="160" width="220" height="100" rx="8"/>
+          <text class="fig-t-label fig-t-leaf" x="310" y="182" text-anchor="middle">DECODE POOL</text>
+          <text class="fig-t-sm" x="310" y="200" text-anchor="middle">e.g. 8 × H100</text>
+          <text class="fig-t-sm" x="310" y="218" text-anchor="middle">memory-bound 优化</text>
+          <text class="fig-t-sm" x="310" y="236" text-anchor="middle">大 batch · spec decoding · 长 task</text>
+
+          <line class="fig-line" x1="140" y1="50" x2="195" y2="50" marker-end="url(#dp-arr)"/>
+
+          <!-- KV cache transfer -->
+          <path class="fig-line-rust" d="M 310 120 L 310 160" marker-end="url(#dp-arr)"/>
+          <text class="fig-t-sm fig-t-rust" x="430" y="142" text-anchor="middle">KV cache</text>
+          <text class="fig-t-sm fig-t-rust" x="430" y="156" text-anchor="middle">transfer (RDMA)</text>
+
+          <!-- output -->
+          <rect class="fig-box-soft" x="540" y="180" width="200" height="60" rx="6"/>
+          <text class="fig-t" x="640" y="204" text-anchor="middle">Streaming output</text>
+          <text class="fig-t-sm" x="640" y="220" text-anchor="middle">(tokens to user)</text>
+          <line class="fig-line" x1="420" y1="210" x2="535" y2="210" marker-end="url(#dp-arr)"/>
+
+          <text class="fig-t-sm fig-t-mute" x="640" y="60" text-anchor="middle" font-style="italic">收益：</text>
+          <text class="fig-t-sm fig-t-mute" x="640" y="78" text-anchor="middle" font-style="italic">throughput +2-5x</text>
+          <text class="fig-t-sm fig-t-mute" x="640" y="94" text-anchor="middle" font-style="italic">TTFT -50% / TPOT -30%</text>
+          <text class="fig-t-sm fig-t-mute" x="640" y="110" text-anchor="middle" font-style="italic">代价：架构复杂 + KV 传输带宽</text>
+        </svg>
+        <figcaption><strong>Figure 3.6</strong> · Disaggregated prefill / decode · 让两阶段在不同 GPU pool 各司其职</figcaption>
+      </figure>
+
+      <h3 id="s-3-7"><span class="num">§3.7</span>4 大推理引擎横向对比</h3>
+      <table>
+        <thead><tr><th>引擎</th><th>主推</th><th>核心特点</th><th>适合场景</th></tr></thead>
+        <tbody>
+          <tr><td><strong>vLLM</strong></td><td>UC Berkeley 2023</td><td>PagedAttention 鼻祖 · 最大社区 · APC · spec decode · disaggregated 1.0+</td><td>通用首选 · 模型支持最广</td></tr>
+          <tr><td><strong>SGLang</strong></td><td>UC Berkeley 2024</td><td>RadixAttention · structured output 一流 · 长 system prompt 强</td><td>chat/agent · 复杂调用</td></tr>
+          <tr><td><strong>TensorRT-LLM</strong></td><td>NVIDIA</td><td>NVIDIA 最优化 · FP8 first-class · in-flight batching</td><td>纯 NVIDIA 栈 · 极致性能</td></tr>
+          <tr><td><strong>TGI</strong></td><td>HuggingFace</td><td>HF ecosystem · 部署简单 · 商业 license 友好</td><td>HF 生态 · 中小规模</td></tr>
+          <tr><td><strong>llama.cpp</strong></td><td>Georgi Gerganov</td><td>CPU/Metal/CUDA 全平台 · GGUF 量化 · MacBook 也能跑</td><td>边缘部署 · 个人</td></tr>
+          <tr><td><strong>MLX</strong></td><td>Apple</td><td>Apple Silicon 原生 · unified memory</td><td>Mac 推理</td></tr>
+          <tr><td><strong>DeepSpeed-Inference</strong></td><td>MS</td><td>跟训练栈共享 · ZeRO-Inference 把权重 offload</td><td>显存超紧 · MS 生态</td></tr>
+        </tbody>
+      </table>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 3 (Inference)</div>
+        <ul>
+          <li class="paper"><a href="https://arxiv.org/abs/2309.06180" target="_blank">vLLM / PagedAttention 论文 (Kwon et al., SOSP 2023)</a> ——必读</li>
+          <li class="paper"><a href="https://arxiv.org/abs/2312.07104" target="_blank">SGLang / RadixAttention 论文 (Zheng et al., 2024)</a></li>
+          <li class="paper"><a href="https://arxiv.org/abs/2207.00032" target="_blank">Orca · Continuous Batching (OSDI 2022)</a> ——continuous batching 出处</li>
+          <li class="paper"><a href="https://arxiv.org/abs/2401.09670" target="_blank">DistServe · Disaggregated Serving (USENIX 2024)</a></li>
+          <li class="paper"><a href="https://arxiv.org/abs/2407.00079" target="_blank">Mooncake (Moonshot 2024)</a> ——Kimi 生产实战</li>
+          <li class="paper"><a href="https://arxiv.org/abs/2305.09781" target="_blank">SpecInfer · Speculative Inference</a></li>
+          <li class="paper"><a href="https://arxiv.org/abs/2401.10774" target="_blank">Medusa</a> · <a href="https://arxiv.org/abs/2401.15077" target="_blank">EAGLE</a></li>
+          <li class="gh"><a href="https://github.com/vllm-project/vllm" target="_blank">vllm-project/vllm</a> ——必读源码 · star 35k+</li>
+          <li class="gh"><a href="https://github.com/sgl-project/sglang" target="_blank">sgl-project/sglang</a></li>
+          <li class="gh"><a href="https://github.com/NVIDIA/TensorRT-LLM" target="_blank">NVIDIA/TensorRT-LLM</a></li>
+          <li><a href="https://blog.vllm.ai/" target="_blank">vLLM 官方博客</a> ——每个新特性都有解读</li>
+          <li><a href="https://lmsys.org/blog/" target="_blank">LMSYS 博客</a> ——SGLang / Chatbot Arena 团队</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 4 — Quantization ============== -->
+    <section id="ch-4">
+      <header class="ch-head">
+        <span class="badge">Chapter 4 · 量化</span>
+        <h2>量化与压缩 · FP8 / GPTQ / AWQ / GGUF</h2>
+        <p class="lede">把 FP16 模型变 INT4 不掉点的工程艺术——面试必考的 4 个算法</p>
+      </header>
+
+      <h3 id="s-4-1"><span class="num">§4.1</span>为什么要量化？</h3>
+      <p>3 个目的，按重要性排序：</p>
+      <ol>
+        <li><strong>省显存</strong>——70B FP16 = 140GB，INT4 = 35GB，能塞进 1 张 A100/H100</li>
+        <li><strong>提速</strong>——decode 阶段是 memory-bound，读权重的字节数 ↓ → throughput ↑</li>
+        <li><strong>降本</strong>——同 GPU 装更多模型 / batch，单位成本 ↓</li>
+      </ol>
+
+      <h3 id="s-4-2"><span class="num">§4.2</span>主流精度位宽</h3>
+      <table>
+        <thead><tr><th>精度</th><th>每参数字节</th><th>动态范围</th><th>典型用途</th></tr></thead>
+        <tbody>
+          <tr><td><strong>FP32</strong></td><td>4</td><td>~10⁻³⁸ ~ 10³⁸</td><td>master weight · Adam state</td></tr>
+          <tr><td><strong>FP16 / BF16</strong></td><td>2</td><td>FP16 窄, BF16 宽（同 FP32 范围）</td><td>训练 + 标准推理</td></tr>
+          <tr><td><strong>FP8 (E4M3)</strong></td><td>1</td><td>~±448</td><td>训练（forward / activation）+ 推理</td></tr>
+          <tr><td><strong>FP8 (E5M2)</strong></td><td>1</td><td>~±57344</td><td>训练（gradient · 需要更大范围）</td></tr>
+          <tr><td><strong>INT8</strong></td><td>1</td><td>±127</td><td>SmoothQuant 推理</td></tr>
+          <tr><td><strong>INT4 / NF4</strong></td><td>0.5</td><td>±7</td><td>GPTQ / AWQ 推理</td></tr>
+          <tr><td><strong>FP4 / MXFP4</strong></td><td>0.5</td><td>~±6</td><td>B200 原生支持，2026 新热</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-4-3"><span class="num">§4.3</span>4 个必会的量化算法</h3>
+
+      <h4>① GPTQ · 逐列量化 + 误差补偿（2022）</h4>
+      <p>把 weight 矩阵每列做量化时，<strong>用剩余未量化的列吸收误差</strong>。
+      基于 OBS (Optimal Brain Surgeon) 思想。算法 1-pass，几小时能量化 70B。<strong>4-bit 推理 SOTA 之一</strong>。</p>
+
+      <h4>② AWQ · 激活感知量化（2023）</h4>
+      <p>关键洞察：<strong>不是所有 weight 都同等重要</strong>——对应大 activation 的那些 weight 量化误差影响巨大。
+      AWQ 用 calibration data 找出"重要 weight"，给它们更高精度（per-channel scaling）。
+      跟 GPTQ 同精度，<strong>速度更快、不需要 backprop</strong>。当前 vLLM/SGLang 默认推荐。</p>
+
+      <h4>③ SmoothQuant · 把 outlier 从 activation 挪到 weight（2022）</h4>
+      <p>LLM 量化最大的坑：<strong>activation 有 outlier</strong>（个别维度值很大），导致 INT8 量化掉点严重。
+      SmoothQuant 引入 <code>scale</code> 把 outlier 从 activation 转到 weight 上（weight 容易处理 outlier），
+      使 W8A8 (weight INT8 + activation INT8) 可行。</p>
+
+      <h4>④ GGUF · 边缘部署的 quantization 容器</h4>
+      <p>不是算法是<strong>文件格式</strong>——llama.cpp 出品，把模型 + 量化 + tokenizer 打包成一个文件，
+      支持 Q2_K / Q4_K_M / Q5_K_M / Q8_0 等多种 mixed precision。
+      主流量化算法都能 export 成 GGUF。
+      <strong>个人本地跑 LLM 几乎都用 GGUF</strong>（Ollama 底层就是 llama.cpp）。</p>
+
+      <h3 id="s-4-4"><span class="num">§4.4</span>QAT vs PTQ · 何时该 retrain</h3>
+      <table>
+        <thead><tr><th></th><th>PTQ (Post-Training)</th><th>QAT (Quantization-Aware Training)</th></tr></thead>
+        <tbody>
+          <tr><td>需要训练</td><td>否（calibration 用 ~256 sample 即可）</td><td>是（fine-tune 几个 epoch）</td></tr>
+          <tr><td>精度</td><td>4-bit 有点掉，2-bit 显著掉</td><td>2-bit 也能基本不掉</td></tr>
+          <tr><td>典型用</td><td>GPTQ / AWQ / SmoothQuant</td><td>QLoRA / 极低位宽</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-4-5"><span class="num">§4.5</span>FP8 训练 · DeepSeek-V3 印证可行</h3>
+      <p>2024-12 DeepSeek-V3 技术报告把 FP8 训练带火——<strong>671B MoE 全程 FP8 训练</strong>，相比 BF16 显存省一半、速度快 2x，最终质量超过 GPT-4-class。</p>
+      <p>关键技术：<strong>tile-wise scaling</strong>（不是 per-tensor 一个 scale，而是按 tile 给不同 scale）+
+      <strong>FP32 master weight + FP8 forward/backward</strong> + 多种 fp8 variant 混用（E4M3 forward / E5M2 grad）。</p>
+
+      <div class="box interview">
+        <div class="box-label">面试题 · 必答</div>
+        <p><strong>Q:</strong> AWQ 和 GPTQ 哪个更好？</p>
+        <p><strong>A:</strong> 精度差不多（INT4 都能保持 95%+ 任务表现），但<strong>AWQ 在工程上更优</strong>：① 不需要 backprop 因此更快、内存更省；② 对 outlier 处理更系统（per-channel scaling）；③ 推理时实现的算子（如 vLLM W4A16 kernel）针对 AWQ 优化得更早。
+        生产 LLM 推理 2024 年起 AWQ 已经成默认推荐，GPTQ 主要在 HuggingFace 老 checkpoint 兼容性上还有优势。
+        如果追求<strong>极低位宽</strong>（INT2/INT3），现在还看 GGUF k-quant 系列。</p>
+      </div>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 4 (Quantization)</div>
+        <ul>
+          <li class="paper"><a href="https://arxiv.org/abs/2210.17323" target="_blank">GPTQ (Frantar et al., 2022)</a></li>
+          <li class="paper"><a href="https://arxiv.org/abs/2306.00978" target="_blank">AWQ (Lin et al., 2023)</a></li>
+          <li class="paper"><a href="https://arxiv.org/abs/2211.10438" target="_blank">SmoothQuant (Xiao et al., 2022)</a></li>
+          <li class="paper"><a href="https://arxiv.org/abs/2305.14314" target="_blank">QLoRA (Dettmers et al., 2023)</a></li>
+          <li class="paper"><a href="https://arxiv.org/abs/2412.19437" target="_blank">DeepSeek-V3 报告</a> ——FP8 训练实战</li>
+          <li class="gh"><a href="https://github.com/mit-han-lab/llm-awq" target="_blank">mit-han-lab/llm-awq</a></li>
+          <li class="gh"><a href="https://github.com/IST-DASLab/gptq" target="_blank">IST-DASLab/gptq</a></li>
+          <li class="gh"><a href="https://github.com/ggml-org/llama.cpp" target="_blank">ggml-org/llama.cpp</a> ——GGUF 来源</li>
+          <li><a href="https://huggingface.co/docs/transformers/main/en/quantization/overview" target="_blank">HuggingFace · Quantization Overview</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 5 — Distributed Training ============== -->
+    <section id="ch-5">
+      <header class="ch-head">
+        <span class="badge">Chapter 5 · 分布式训练</span>
+        <h2>FSDP / ZeRO / Megatron 3D / Ring Attention</h2>
+        <p class="lede">7 种并行策略 · 每种解决什么问题 · 怎么组合 — Training Infra 面试主战场</p>
+      </header>
+
+      <h3 id="s-5-1"><span class="num">§5.1</span>为什么单卡不够？回到显存账</h3>
+      <p>训练 70B 模型 BF16 + Adam 显存账：</p>
+      <ul>
+        <li>权重：70B × 2B = 140 GB</li>
+        <li>梯度：70B × 2B = 140 GB</li>
+        <li>Adam state（fp32 momentum + variance + master weight）：70B × 8B = 560 GB</li>
+        <li>Activation（大约）：100-300 GB（取决于 seq_len + batch + recompute 策略）</li>
+        <li><strong>合计</strong>：1 TB+，<strong>1 张 H100 80GB 装得下个零头</strong></li>
+      </ul>
+      <p>所以必须多卡分布式。怎么分有 7 种策略：</p>
+
+      <h3 id="s-5-2"><span class="num">§5.2</span>7 种并行 · 速记表</h3>
+      <table>
+        <thead><tr><th>缩写</th><th>全称</th><th>切什么</th><th>通信特征</th><th>典型用途</th></tr></thead>
+        <tbody>
+          <tr><td><strong>DP</strong></td><td>Data Parallel</td><td>每卡复制全部权重，分 batch</td><td>每 step all-reduce gradient</td><td>小模型 baseline</td></tr>
+          <tr><td><strong>TP</strong></td><td>Tensor Parallel</td><td>切矩阵（按行/列）跨 GPU</td><td>每层 all-reduce activation</td><td>单层放不下 / Megatron</td></tr>
+          <tr><td><strong>PP</strong></td><td>Pipeline Parallel</td><td>按 layer 切到不同 GPU</td><td>层间 send/recv activation</td><td>跨节点（NVLink 不够）</td></tr>
+          <tr><td><strong>SP</strong></td><td>Sequence Parallel</td><td>按 seq 维度切 activation</td><td>少量额外通信</td><td>降 activation 显存（Megatron）</td></tr>
+          <tr><td><strong>CP / Ring</strong></td><td>Context / Ring Parallel</td><td>按 seq 切 attention 计算</td><td>Ring all-reduce</td><td>超长 context (1M+)</td></tr>
+          <tr><td><strong>EP</strong></td><td>Expert Parallel</td><td>MoE expert 分到不同 GPU</td><td>all-to-all expert routing</td><td>MoE 模型</td></tr>
+          <tr><td><strong>ZeRO 1/2/3</strong></td><td>Zero Redundancy Optim.</td><td>把 optim state / grad / weight 在 DP 维度上 shard</td><td>shard 越多通信越多</td><td>单卡装不下且不想动模型代码</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-5-3"><span class="num">§5.3</span>ZeRO 1 / 2 / 3 · 必须能讲清楚</h3>
+      <p>ZeRO 是 Microsoft DeepSpeed 提出的<strong>"在 DP 之上 shard 显存"</strong>策略。3 个 stage 越来越激进：</p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ZeRO 1 2 3 stages">
+          <text class="fig-t-label fig-t-mute" x="40" y="24">DP Baseline (无 ZeRO)</text>
+          <rect class="fig-box-rust" x="40" y="34" width="160" height="22" rx="2"/><text class="fig-t-mono" x="120" y="50" text-anchor="middle">Optim 8B/p</text>
+          <rect class="fig-box-rust" x="40" y="58" width="80" height="22" rx="2"/><text class="fig-t-mono" x="80" y="74" text-anchor="middle">Grad 2B</text>
+          <rect class="fig-box-rust" x="40" y="82" width="80" height="22" rx="2"/><text class="fig-t-mono" x="80" y="98" text-anchor="middle">Weight 2B</text>
+          <text class="fig-t-sm fig-t-mute" x="220" y="74">每卡 12B/param · 70B → 840GB/卡 (×8 = 6.7TB total)</text>
+
+          <line class="fig-dash" x1="40" y1="120" x2="720" y2="120"/>
+
+          <text class="fig-t-label fig-t-leaf" x="40" y="146">ZeRO-1 · shard Optim state</text>
+          <rect class="fig-box-leaf" x="40" y="156" width="20" height="22" rx="2"/><text class="fig-t-mono" x="50" y="172" text-anchor="middle">O</text>
+          <rect class="fig-box-rust" x="40" y="180" width="80" height="22" rx="2"/><text class="fig-t-mono" x="80" y="196" text-anchor="middle">Grad</text>
+          <rect class="fig-box-rust" x="40" y="204" width="80" height="22" rx="2"/><text class="fig-t-mono" x="80" y="220" text-anchor="middle">Weight</text>
+          <text class="fig-t-sm fig-t-mute" x="220" y="172">每卡 ~5B/param · 节省 4x · 通信几乎不变</text>
+
+          <text class="fig-t-label fig-t-sky" x="40" y="252">ZeRO-2 · shard Optim + Grad</text>
+          <rect class="fig-box-sky" x="40" y="262" width="20" height="22" rx="2"/><text class="fig-t-mono" x="50" y="278" text-anchor="middle">O</text>
+          <rect class="fig-box-sky" x="40" y="262" width="20" height="22" rx="2" transform="translate(24)"/><text class="fig-t-mono" x="74" y="278" text-anchor="middle">G</text>
+          <rect class="fig-box-rust" x="88" y="262" width="80" height="22" rx="2"/><text class="fig-t-mono" x="128" y="278" text-anchor="middle">Weight</text>
+          <text class="fig-t-sm fig-t-mute" x="220" y="278">每卡 ~3.3B/param · grad 用 reduce-scatter 替代 all-reduce</text>
+
+          <text class="fig-t-label fig-t-plum" x="440" y="146">ZeRO-3 · shard Optim + Grad + Weight</text>
+          <rect class="fig-box-plum" x="440" y="156" width="20" height="22" rx="2"/><text class="fig-t-mono" x="450" y="172" text-anchor="middle">O</text>
+          <rect class="fig-box-plum" x="464" y="156" width="20" height="22" rx="2"/><text class="fig-t-mono" x="474" y="172" text-anchor="middle">G</text>
+          <rect class="fig-box-plum" x="488" y="156" width="20" height="22" rx="2"/><text class="fig-t-mono" x="498" y="172" text-anchor="middle">W</text>
+          <text class="fig-t-sm fig-t-mute" x="440" y="200">每卡 12B/N param · 70B + 8 卡 → 105GB/卡</text>
+          <text class="fig-t-sm fig-t-mute" x="440" y="218">代价：每个 forward / backward 都要 all-gather weight</text>
+          <text class="fig-t-sm fig-t-mute" x="440" y="236">通信 ~1.5x DP · 但能训以前根本训不了的模型</text>
+
+          <text class="fig-t-sm fig-t-rust" x="440" y="280">ZeRO-3 ≈ FSDP（PyTorch 原生实现）</text>
+        </svg>
+        <figcaption><strong>Figure 5.3</strong> · ZeRO 1/2/3 · 渐进 shard 不同的 model state · 显存换通信</figcaption>
+      </figure>
+
+      <p><strong>ZeRO 选哪个</strong>：</p>
+      <ul>
+        <li><strong>ZeRO-1</strong>：通信几乎不增、显存省 4x —— 永远先开</li>
+        <li><strong>ZeRO-2</strong>：grad 也 shard、再省 1.5x —— 普通训练默认开</li>
+        <li><strong>ZeRO-3</strong>：weight 也 shard、显存极致省但通信最多 —— 单卡装不下时才开</li>
+      </ul>
+
+      <h3 id="s-5-4"><span class="num">§5.4</span>FSDP vs ZeRO-3 · 同一回事吗？</h3>
+      <p><strong>本质上是同一思路的两个实现</strong>。区别：</p>
+      <table>
+        <thead><tr><th></th><th>DeepSpeed ZeRO-3</th><th>PyTorch FSDP</th></tr></thead>
+        <tbody>
+          <tr><td>出处</td><td>Microsoft 2020</td><td>PyTorch 1.11 (2022)</td></tr>
+          <tr><td>实现</td><td>独立框架</td><td>PyTorch 原生</td></tr>
+          <tr><td>API</td><td>装饰 model + 配置 JSON</td><td>用 <code>FSDP(model)</code> wrap</td></tr>
+          <tr><td>选择性</td><td>auto-partition</td><td>支持 <em>auto_wrap_policy</em> 灵活控制</td></tr>
+          <tr><td>跟 TP 组合</td><td>不太友好（自己生态）</td><td>跟 PyTorch DTensor + TP 集成更好（FSDP2）</td></tr>
+        </tbody>
+      </table>
+      <p><strong>2026 大势</strong>：FSDP2（PyTorch 2.4+）正在快速吞掉 DeepSpeed 的份额——因为 PyTorch 原生、跟 TP / SP 组合好。
+      新项目首选 FSDP2，老项目继续 DeepSpeed。</p>
+
+      <h3 id="s-5-5"><span class="num">§5.5</span>Tensor Parallel · Megatron 的核心</h3>
+      <p>TP 把<strong>单层内部矩阵乘法切到多 GPU</strong>。最经典是 <strong>Megatron-LM 的 column/row split</strong>：</p>
+      <ul>
+        <li><strong>QKV projection</strong> 按列切 → 4 GPU 各算 1/4 个 head</li>
+        <li><strong>Attention output projection</strong> 按行切 → 跨 GPU all-reduce 一次</li>
+        <li><strong>FFN up_proj</strong> 按列切，<strong>down_proj</strong> 按行切 → 同样 1 次 all-reduce</li>
+      </ul>
+      <p>每 transformer layer 通信 2 次 all-reduce activation。<strong>NVLink 内部很快但跨节点会很慢</strong>——所以 TP 一般限在<strong>同机 8 卡内部</strong>。</p>
+
+      <h3 id="s-5-6"><span class="num">§5.6</span>Pipeline Parallel · 跨节点的选择</h3>
+      <p>把 transformer 80 层按 layer 切，每 GPU 拿 N 层。问题：<strong>"bubble"</strong>——前向时 GPU 1 算完才轮到 GPU 2，前面 idle。</p>
+      <p><strong>1F1B (1-Forward-1-Backward) schedule</strong>（GPipe / Megatron）：交替前向反向跑，把 bubble 压到 ~10%。
+      <strong>Interleaved schedule</strong>：每 GPU 不只拿连续 N 层，而是<strong>分散拿几段</strong>，进一步缩小 bubble。</p>
+
+      <h3 id="s-5-7"><span class="num">§5.7</span>3D Parallelism · 实战组合</h3>
+      <p>训 70B+ 模型必须组合：<strong>TP × PP × DP</strong>。典型配置：</p>
+      <ul>
+        <li><strong>TP=8</strong>：单机内 NVLink，切层内</li>
+        <li><strong>PP=8</strong>：跨节点 IB，切层间</li>
+        <li><strong>DP=N/64</strong>：剩下做数据并行（N 是总 GPU 数）</li>
+      </ul>
+      <p>训 GPT-3 175B 在 1024 GPU 上，配置就是 TP=8, PP=16, DP=8。<strong>能现场算这个分解面试就过了</strong>。</p>
+
+      <h3 id="s-5-8"><span class="num">§5.8</span>Sequence Parallel + Ring Attention · 长 context 救星</h3>
+      <p><strong>SP</strong>：Megatron 的扩展，把 LayerNorm / Dropout 这些 elementwise 算子按 seq 维度切 → 进一步降 activation 显存。</p>
+      <p><strong>Ring Attention</strong>（UC Berkeley 2023）：把 attention 计算按 seq 切到多个 GPU，KV 在 ring 上传，能算<strong>1M+ context</strong>。
+      Gemini 1.5 Pro 1M context 用的就是这个。</p>
+
+      <h3 id="s-5-9"><span class="num">§5.9</span>Activation Recomputation · 显存换计算</h3>
+      <p>反向传播需要 forward 的 activation——<strong>不存而是反向时重算一遍</strong>就能省大量显存。
+      Selective recompute（Megatron）：只重算 attention（最贵的部分），其他存。
+      <strong>典型省 50% activation 显存代价 25-30% 多算时间</strong>。70B+ 训练几乎必开。</p>
+
+      <div class="box interview">
+        <div class="box-label">面试题 · 高频</div>
+        <p><strong>Q:</strong> Tensor Parallel 跟 Pipeline Parallel 各适合什么场景？</p>
+        <p><strong>A:</strong> TP 通信频繁（每层 2 次 all-reduce activation），<strong>必须放在 NVLink 内（同机 8 卡）</strong>，跨 IB 就慢死。
+        PP 通信少（只在层边界传 activation），<strong>能跨节点</strong>，但有 bubble。
+        实战组合：TP=8（机内）× PP=N（跨节点）× DP=剩余。
+        <strong>选择规则</strong>：单层放不下用 TP，层数多放不下用 PP，剩下用 DP/ZeRO。</p>
+      </div>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 5 (Distributed Training)</div>
+        <ul>
+          <li class="paper"><a href="https://arxiv.org/abs/1909.08053" target="_blank">Megatron-LM (Shoeybi et al., 2019)</a></li>
+          <li class="paper"><a href="https://arxiv.org/abs/1910.02054" target="_blank">ZeRO (Rajbhandari et al., 2020)</a></li>
+          <li class="paper"><a href="https://arxiv.org/abs/2104.04473" target="_blank">Megatron-LM Scaling (3D parallelism)</a></li>
+          <li class="paper"><a href="https://arxiv.org/abs/2304.11277" target="_blank">PyTorch FSDP (Zhao et al., 2023)</a></li>
+          <li class="paper"><a href="https://arxiv.org/abs/2310.01889" target="_blank">Ring Attention (Liu et al., 2023)</a></li>
+          <li class="gh"><a href="https://github.com/NVIDIA/Megatron-LM" target="_blank">NVIDIA/Megatron-LM</a></li>
+          <li class="gh"><a href="https://github.com/microsoft/DeepSpeed" target="_blank">microsoft/DeepSpeed</a></li>
+          <li class="gh"><a href="https://github.com/pytorch/torchtitan" target="_blank">pytorch/torchtitan</a> ——FSDP2 + TP 现代示范</li>
+          <li><a href="https://huggingface.co/docs/transformers/perf_train_gpu_many" target="_blank">HuggingFace · Multi-GPU Training</a> ——文档清晰</li>
+          <li><a href="https://www.deepspeed.ai/tutorials/zero/" target="_blank">DeepSpeed · ZeRO Tutorial</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 6 — Kernels & Compilers ============== -->
+    <section id="ch-6">
+      <header class="ch-head">
+        <span class="badge">Chapter 6 · 算子与编译</span>
+        <h2>FlashAttention / Triton / CUDA Graph</h2>
+        <p class="lede">L2 算子层 · 写过 kernel 的工程师在面试天然加分</p>
+      </header>
+
+      <h3 id="s-6-1"><span class="num">§6.1</span>FlashAttention · 一篇论文改变 LLM</h3>
+      <p>2022 年 Tri Dao 的 FlashAttention 论文是<strong>近 5 年 deep learning kernel 最重要的工作</strong>。
+      解决一个看似无解的问题：<strong>attention 计算 O(N²) 显存怎么破</strong>。</p>
+
+      <p><strong>问题</strong>：标准 attention 实现要把 N×N 的 attention matrix 写到 HBM——<strong>seq_len=4096 时单层就 64MB，且大部分时间耗在 HBM 读写</strong>。</p>
+
+      <p><strong>核心洞察</strong>：attention 是 memory-bound 而不是 compute-bound——瓶颈在 HBM 带宽不在 FLOPs。
+      <strong>解法</strong>：把 Q/K/V 切 tile（block），用 <em>online softmax</em> 算法<strong>在 SRAM 内一次算完一个 block 的 softmax+matmul，never materialize 完整 N×N 矩阵</strong>。</p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 760 290" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="FlashAttention tiling">
+          <text class="fig-t-label fig-t-mute" x="40" y="24">标准 Attention</text>
+          <rect class="fig-box-soft" x="40" y="40" width="120" height="120" rx="2"/>
+          <text class="fig-t-sm" x="100" y="100" text-anchor="middle">N×N matrix</text>
+          <text class="fig-t-sm" x="100" y="118" text-anchor="middle">写到 HBM</text>
+          <text class="fig-t-sm fig-t-rust" x="100" y="180" text-anchor="middle">O(N²) HBM I/O</text>
+          <text class="fig-t-sm fig-t-rust" x="100" y="196" text-anchor="middle">N=4k → 64MB/层</text>
+
+          <text class="fig-t-label fig-t-leaf" x="320" y="24">FlashAttention · tiling + online softmax</text>
+          <!-- Q tiles -->
+          <rect class="fig-box-rust" x="320" y="40" width="40" height="40" rx="2"/>
+          <text class="fig-t-mono" x="340" y="64" text-anchor="middle">Q1</text>
+          <rect class="fig-box-rust" x="320" y="84" width="40" height="40" rx="2"/>
+          <text class="fig-t-mono" x="340" y="108" text-anchor="middle">Q2</text>
+          <rect class="fig-box-rust" x="320" y="128" width="40" height="40" rx="2"/>
+          <text class="fig-t-mono" x="340" y="152" text-anchor="middle">Q…</text>
+
+          <!-- KV tiles -->
+          <rect class="fig-box-sky" x="380" y="40" width="40" height="40" rx="2"/>
+          <text class="fig-t-mono" x="400" y="64" text-anchor="middle">K1V1</text>
+          <rect class="fig-box-sky" x="424" y="40" width="40" height="40" rx="2"/>
+          <text class="fig-t-mono" x="444" y="64" text-anchor="middle">K2V2</text>
+          <rect class="fig-box-sky" x="468" y="40" width="40" height="40" rx="2"/>
+          <text class="fig-t-mono" x="488" y="64" text-anchor="middle">K…</text>
+
+          <!-- output tiles -->
+          <rect class="fig-box-leaf" x="540" y="40" width="40" height="120" rx="2"/>
+          <text class="fig-t-mono" x="560" y="100" text-anchor="middle">O</text>
+
+          <text class="fig-t-sm" x="320" y="200">① Q 一块块进 SRAM</text>
+          <text class="fig-t-sm" x="320" y="216">② 对每个 Q block · KV block 流过</text>
+          <text class="fig-t-sm" x="320" y="232">③ online softmax 维护 running max + sum</text>
+          <text class="fig-t-sm" x="320" y="248">④ 直接写 O · 从不存 N×N matrix</text>
+
+          <text class="fig-t-sm fig-t-leaf" x="320" y="276">→ HBM I/O 从 O(N²) 降到 O(N) · 实测 7.6x 快</text>
+        </svg>
+        <figcaption><strong>Figure 6.1</strong> · FlashAttention · 用 tiling + online softmax 把 attention 变成 streaming 算子</figcaption>
+      </figure>
+
+      <h3 id="s-6-2"><span class="num">§6.2</span>FlashAttention 1 → 2 → 3 演进</h3>
+      <table>
+        <thead><tr><th>版本</th><th>年份</th><th>关键改进</th><th>对比基线提升</th></tr></thead>
+        <tbody>
+          <tr><td><strong>FlashAttn-1</strong></td><td>2022</td><td>tiling + online softmax</td><td>7.6x vs PyTorch (A100)</td></tr>
+          <tr><td><strong>FlashAttn-2</strong></td><td>2023</td><td>更好 work partition · 减少 non-matmul FLOPs · causal mask 优化</td><td>~2x vs FA1 (A100)</td></tr>
+          <tr><td><strong>FlashAttn-3</strong></td><td>2024</td><td>专为 H100 重写 · 用 Hopper async + WGMMA · FP8 path</td><td>1.5-2x vs FA2 · MFU 75%</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-6-3"><span class="num">§6.3</span>Triton · 写 GPU kernel 的 Python DSL</h3>
+      <p>OpenAI 出品，<strong>用类 Python 语法写 CUDA kernel</strong>。比 raw CUDA 简单 10 倍，性能能打到手写 CUDA 的 80-95%。
+      FlashAttention 2/3 都有 Triton 实现，vLLM 大量自定义算子用 Triton。
+      <strong>面试加分：你写过哪个 Triton kernel</strong>——能现场画 grid / block 切分的就是真懂。</p>
+
+      <pre><code><span class="c"># 一个最简单的 Triton kernel · 向量加</span>
+<span class="k">import</span> triton
+<span class="k">import</span> triton.language <span class="k">as</span> tl
+
+<span class="f">@triton.jit</span>
+<span class="k">def</span> <span class="f">add_kernel</span>(x_ptr, y_ptr, output_ptr, n, BLOCK: tl.constexpr):
+    pid = tl.program_id(<span class="s">0</span>)
+    offsets = pid * BLOCK + tl.arange(<span class="s">0</span>, BLOCK)
+    mask = offsets &lt; n
+    x = tl.load(x_ptr + offsets, mask=mask)
+    y = tl.load(y_ptr + offsets, mask=mask)
+    tl.store(output_ptr + offsets, x + y, mask=mask)
+</code></pre>
+
+      <h3 id="s-6-4"><span class="num">§6.4</span>CUDA Graph · 减少 launch overhead</h3>
+      <p>每个 CUDA kernel launch 有 ~5-10μs CPU 开销。decode 时一步只算几个小算子—— launch overhead 占比能到 30-50%！</p>
+      <p><strong>CUDA Graph</strong>：<strong>把整个 forward pass 录制成一个 graph，一次 launch 全部跑完</strong>。
+      vLLM / TRT-LLM 推理 decode 阶段几乎都用 CUDA Graph。<strong>典型加速 30-80%</strong>。</p>
+      <p>限制：graph 录制时形状必须固定（dynamic shape 不友好）→ 需要预录多个 batch_size 的 graph。</p>
+
+      <h3 id="s-6-5"><span class="num">§6.5</span>编译器 · TorchInductor / TVM / XLA / MLIR</h3>
+      <table>
+        <thead><tr><th>编译器</th><th>出处</th><th>主要场景</th></tr></thead>
+        <tbody>
+          <tr><td><strong>TorchInductor</strong></td><td>PyTorch (torch.compile)</td><td>PyTorch 默认 backend，自动算子融合 + Triton 生成</td></tr>
+          <tr><td><strong>XLA</strong></td><td>Google</td><td>TPU 主力 + JAX backend</td></tr>
+          <tr><td><strong>TVM</strong></td><td>Apache</td><td>跨硬件部署 · 算子搜索</td></tr>
+          <tr><td><strong>MLIR</strong></td><td>LLVM</td><td>所有上面这些的底层 IR 框架</td></tr>
+        </tbody>
+      </table>
+      <p>面试只要知道<strong>"torch.compile 是把 PyTorch graph 经 TorchInductor 编译成 Triton kernel"</strong>就能过 80% 题。</p>
+
+      <h3 id="s-6-6"><span class="num">§6.6</span>算子融合 · 为什么省 HBM</h3>
+      <p>典型 LayerNorm + Linear + GELU 三层连续算子，<strong>朴素实现要 3 次 HBM 读写</strong>（每个算子读输入写输出）。
+      融合成<strong>一个 kernel 后只 1 次读 1 次写</strong>，省 67% HBM I/O —— memory-bound 场景直接 3x 加速。
+      torch.compile / TorchInductor / Triton 自动做这件事。</p>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 6 (Kernels)</div>
+        <ul>
+          <li class="paper"><a href="https://arxiv.org/abs/2205.14135" target="_blank">FlashAttention (Dao et al., 2022)</a></li>
+          <li class="paper"><a href="https://arxiv.org/abs/2307.08691" target="_blank">FlashAttention-2</a></li>
+          <li class="paper"><a href="https://arxiv.org/abs/2407.08608" target="_blank">FlashAttention-3 (Hopper, 2024)</a></li>
+          <li class="gh"><a href="https://github.com/Dao-AILab/flash-attention" target="_blank">Dao-AILab/flash-attention</a></li>
+          <li class="gh"><a href="https://github.com/triton-lang/triton" target="_blank">triton-lang/triton</a></li>
+          <li><a href="https://triton-lang.org/main/getting-started/tutorials/index.html" target="_blank">Triton 官方 tutorial</a> ——必跟一遍</li>
+          <li><a href="https://horace.io/brrr_intro.html" target="_blank">Horace He · making DL go brrrr</a></li>
+          <li><a href="https://pytorch.org/blog/inside-the-matrix/" target="_blank">PyTorch · Inside the Matrix Multiplication</a></li>
+          <li class="video"><a href="https://www.youtube.com/playlist?list=PLAMHV77MSKJ4Z4OXqao1gRdfQK7VQYAXb" target="_blank">GPU Mode YouTube playlist</a> ——CUDA / Triton 实战</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 7 — MoE ============== -->
+    <section id="ch-7">
+      <header class="ch-head">
+        <span class="badge">Chapter 7 · MoE</span>
+        <h2>Mixture of Experts · 训练与推理</h2>
+        <p class="lede">DeepSeek / Mixtral / Qwen 后 MoE 已成主流——MoE infra 必学</p>
+      </header>
+
+      <h3 id="s-7-1"><span class="num">§7.1</span>MoE 是什么 · 一图看懂</h3>
+      <p>原本 FFN 是<strong>一个大网络</strong>，每个 token 都过它。MoE 改成<strong>一组小网络（experts）+ 一个 router</strong>，每个 token 只 route 到 top-k experts（通常 k=1 或 2）。</p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MoE architecture">
+          <defs>
+            <marker id="moe-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#756c5c"/>
+            </marker>
+          </defs>
+
+          <text class="fig-t-label fig-t-mute" x="60" y="24">Dense FFN</text>
+          <rect class="fig-box-soft" x="40" y="40" width="160" height="60" rx="6"/>
+          <text class="fig-t" x="120" y="62" text-anchor="middle">Single huge FFN</text>
+          <text class="fig-t-sm" x="120" y="80" text-anchor="middle">all params 激活</text>
+          <text class="fig-t-sm fig-t-rust" x="120" y="120" text-anchor="middle">每 token: 100% FLOPs</text>
+
+          <text class="fig-t-label fig-t-leaf" x="500" y="24">MoE</text>
+          <!-- Router -->
+          <rect class="fig-box-rust" x="320" y="40" width="80" height="40" rx="6"/>
+          <text class="fig-t-sm" x="360" y="64" text-anchor="middle">Router</text>
+          <text class="fig-t-sm" x="360" y="78" text-anchor="middle">(small)</text>
+
+          <!-- Experts -->
+          <rect class="fig-box-leaf" x="440" y="20" width="60" height="32" rx="4"/>
+          <text class="fig-t-mono" x="470" y="40" text-anchor="middle">E1</text>
+          <rect class="fig-box-soft" x="440" y="56" width="60" height="32" rx="4"/>
+          <text class="fig-t-mono" x="470" y="76" text-anchor="middle">E2</text>
+          <rect class="fig-box-leaf" x="440" y="92" width="60" height="32" rx="4"/>
+          <text class="fig-t-mono" x="470" y="112" text-anchor="middle">E3</text>
+          <rect class="fig-box-soft" x="440" y="128" width="60" height="32" rx="4"/>
+          <text class="fig-t-mono" x="470" y="148" text-anchor="middle">E…</text>
+          <rect class="fig-box-soft" x="440" y="164" width="60" height="32" rx="4"/>
+          <text class="fig-t-mono" x="470" y="184" text-anchor="middle">EN</text>
+
+          <line class="fig-line" x1="400" y1="60" x2="438" y2="36" marker-end="url(#moe-arr)"/>
+          <line class="fig-line" x1="400" y1="60" x2="438" y2="108" marker-end="url(#moe-arr)"/>
+
+          <text class="fig-t-sm fig-t-leaf" x="540" y="40">top-2 选中</text>
+          <text class="fig-t-sm fig-t-mute" x="540" y="78">未选中 · 不算</text>
+
+          <text class="fig-t-sm fig-t-leaf" x="320" y="220">激活参数: 671B 总 / 37B 激活 (DeepSeek-V3)</text>
+          <text class="fig-t-sm fig-t-mute" x="320" y="240">≈ 18x 容量但 6x FLOPs · "便宜的大模型"</text>
+        </svg>
+        <figcaption><strong>Figure 7.1</strong> · MoE 架构 · 总参数巨大但每 token 激活少 = 便宜的大模型</figcaption>
+      </figure>
+
+      <h3 id="s-7-2"><span class="num">§7.2</span>主流 MoE 模型对比</h3>
+      <table>
+        <thead><tr><th>模型</th><th>总参</th><th>激活参</th><th>experts</th><th>top-k</th></tr></thead>
+        <tbody>
+          <tr><td>Mixtral 8x7B</td><td>47B</td><td>13B</td><td>8</td><td>2</td></tr>
+          <tr><td>Mixtral 8x22B</td><td>141B</td><td>39B</td><td>8</td><td>2</td></tr>
+          <tr><td>DeepSeek-V3</td><td>671B</td><td>37B</td><td>256 + 1 shared</td><td>8</td></tr>
+          <tr><td>Qwen3-MoE-235B</td><td>235B</td><td>22B</td><td>128</td><td>8</td></tr>
+          <tr><td>GPT-4 (rumored)</td><td>~1.8T</td><td>~280B</td><td>16</td><td>2</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-7-3"><span class="num">§7.3</span>MoE Infra 4 大挑战</h3>
+      <ol>
+        <li><strong>负载不均</strong>——某些 expert 被频繁路由 → GPU 满 / 其他 GPU 闲。需要 <em>load balancing loss</em>（auxiliary loss 让 router 均衡）+ <em>capacity factor</em>（每 expert 最多收 C 个 token，超出丢弃 / 溢出）</li>
+        <li><strong>All-to-All 通信</strong>——expert 在不同 GPU，token 要 all-to-all 路由过去再路由回来。这是 MoE 训/推的<strong>主要瓶颈</strong>。</li>
+        <li><strong>显存大但激活小</strong>——推理要装全部 expert（DeepSeek 671B → 1.3TB FP16），需要多卡 expert parallel</li>
+        <li><strong>稀疏激活批不到一起</strong>——decode 时每 token 走的 expert 不同，无法像 dense 那样大 batch 算</li>
+      </ol>
+
+      <h3 id="s-7-4"><span class="num">§7.4</span>Expert Parallelism · MoE 必备</h3>
+      <p>把 N 个 expert 切到 N 张 GPU 上，每张 GPU 只装 1 个（或几个）expert。
+      forward 时：token 经过 router 选中 top-k expert → all-to-all 把 token 发到目标 GPU → expert 计算 → all-to-all 把结果发回。
+      <strong>跟 TP 组合</strong>：每个 expert 内部还可以 tensor parallel。
+      <strong>跟 DP 组合</strong>：DP 维度复制 expert（如 EP=8 + DP=4，就 32 GPU 上每个 expert 4 副本）。</p>
+
+      <h3 id="s-7-5"><span class="num">§7.5</span>2026 MoE 推理工程关键词</h3>
+      <ul>
+        <li><strong>Expert offloading</strong>——把不常用的 expert 放 CPU RAM，按需载入 GPU</li>
+        <li><strong>Speculative routing</strong>——猜测下一 token 会路由到哪些 expert，提前预热</li>
+        <li><strong>Batch within expert</strong>——同 expert 上的不同 token 一起算（grouped GEMM）</li>
+        <li><strong>Capacity-aware scheduling</strong>——调度器感知每 expert 当前队列，避免热点</li>
+      </ul>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 7 (MoE)</div>
+        <ul>
+          <li class="paper"><a href="https://arxiv.org/abs/1701.06538" target="_blank">Outrageously Large Neural Networks (Shazeer 2017)</a> ——MoE 始祖</li>
+          <li class="paper"><a href="https://arxiv.org/abs/2101.03961" target="_blank">Switch Transformer (Fedus 2021)</a></li>
+          <li class="paper"><a href="https://arxiv.org/abs/2401.04088" target="_blank">Mixtral of Experts (Mistral 2024)</a></li>
+          <li class="paper"><a href="https://arxiv.org/abs/2412.19437" target="_blank">DeepSeek-V3</a> ——MoE 工程范本</li>
+          <li class="paper"><a href="https://arxiv.org/abs/2211.15841" target="_blank">MegaBlocks (Gale et al., 2022)</a> ——dropless MoE</li>
+          <li class="gh"><a href="https://github.com/databricks/megablocks" target="_blank">databricks/megablocks</a></li>
+          <li class="gh"><a href="https://github.com/deepseek-ai/DeepEP" target="_blank">deepseek-ai/DeepEP</a> ——MoE all-to-all 优化</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 8 — Platform / MLOps ============== -->
+    <section id="ch-8">
+      <header class="ch-head">
+        <span class="badge">Chapter 8 · 平台</span>
+        <h2>MLOps 平台 · Ray / KServe / Slurm / K8s</h2>
+        <p class="lede">L4 平台层 · AI Platform 子方向的主战场</p>
+      </header>
+
+      <h3 id="s-8-1"><span class="num">§8.1</span>训练调度 · Slurm vs Kubernetes</h3>
+      <table>
+        <thead><tr><th></th><th>Slurm</th><th>Kubernetes</th></tr></thead>
+        <tbody>
+          <tr><td>出身</td><td>HPC 圈</td><td>云原生</td></tr>
+          <tr><td>主要用户</td><td>OpenAI · Meta · 学校 · 国家实验室</td><td>Google · 字节 · Anyscale</td></tr>
+          <tr><td>批作业</td><td>第一公民</td><td>需要 Volcano / Kueue 补</td></tr>
+          <tr><td>GPU 调度</td><td>原生 + GRES</td><td>NVIDIA device plugin + MIG</td></tr>
+          <tr><td>多机多卡</td><td>简单（srun + SLURM_PROCID）</td><td>需要 PyTorch Operator / Volcano job</td></tr>
+        </tbody>
+      </table>
+      <p><strong>趋势</strong>：训练 = Slurm 优势仍大；推理 / 在线服务 = K8s 一统；混合负载 = K8s + Volcano/Kueue 越来越流行。</p>
+
+      <h3 id="s-8-2"><span class="num">§8.2</span>K8s GPU 调度 · 实战要点</h3>
+      <ul>
+        <li><strong>NVIDIA device plugin</strong>：让 K8s 看到 GPU 资源（<code>nvidia.com/gpu: 8</code>）</li>
+        <li><strong>MIG (Multi-Instance GPU)</strong>：H100 可切成 7 个独立 instance · 不同 pod 共享 1 张卡</li>
+        <li><strong>Time-slicing</strong>：多 pod 时分复用同 GPU（不隔离，适合开发）</li>
+        <li><strong>Topology-aware scheduling</strong>：让一个 job 的 GPU 尽量在同一节点 / 同一 NVLink island</li>
+        <li><strong>Gang scheduling</strong>：要么全部 pod 起、要么都不起（防止半 pod 等其他 pod 死锁）</li>
+      </ul>
+
+      <h3 id="s-8-3"><span class="num">§8.3</span>推理服务平台横向对比</h3>
+      <table>
+        <thead><tr><th>平台</th><th>主推</th><th>关键能力</th></tr></thead>
+        <tbody>
+          <tr><td><strong>KServe</strong></td><td>K8s 原生</td><td>多 model · canary · scale-to-zero</td></tr>
+          <tr><td><strong>Ray Serve</strong></td><td>Anyscale</td><td>Python first · 与 Ray 训练栈无缝</td></tr>
+          <tr><td><strong>Triton Inference Server</strong></td><td>NVIDIA</td><td>多 framework · ensemble · dynamic batching</td></tr>
+          <tr><td><strong>BentoML</strong></td><td>Bento</td><td>开发体验最好 · Bento format</td></tr>
+          <tr><td><strong>vLLM Serve</strong></td><td>vLLM</td><td>OpenAI 兼容 API · 单引擎部署</td></tr>
+          <tr><td><strong>HuggingFace TGI</strong></td><td>HF</td><td>HF 生态友好 · Docker 一键</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-8-4"><span class="num">§8.4</span>Ray · 分布式 Python 框架</h3>
+      <p>Ray 是<strong>"分布式 Python 的 Spark"</strong>。3 个核心抽象：</p>
+      <ul>
+        <li><strong>Tasks</strong>——<code>@ray.remote</code> 装饰函数 → 远程执行</li>
+        <li><strong>Actors</strong>——<code>@ray.remote</code> 装饰类 → 有状态的远程对象</li>
+        <li><strong>Objects</strong>——分布式对象 store</li>
+      </ul>
+      <p>Ray 上面建了一堆库：<strong>Ray Train</strong>（分布式训练）、<strong>Ray Tune</strong>（HPO）、
+      <strong>Ray Serve</strong>（推理）、<strong>RLlib</strong>（强化学习）。
+      OpenAI / Uber / Pinterest / Anthropic 大量在用。</p>
+
+      <h3 id="s-8-5"><span class="num">§8.5</span>Autoscaling LLM 推理 · 4 个挑战</h3>
+      <ol>
+        <li><strong>启动慢</strong>——70B 模型权重 140GB，从对象存储拉到 GPU 要 3-10 分钟。<strong>解</strong>：预热实例池 / 模型 cache disk</li>
+        <li><strong>显存预热</strong>——CUDA 上下文 + cuDNN 索引也要时间。<strong>解</strong>：keep-alive instance</li>
+        <li><strong>scale-to-zero 不友好</strong>——冷启动 5-10min vs 用户耐心 5s</li>
+        <li><strong>正确的 metric</strong>——不是 CPU 而是 <em>queue depth + TTFT P95</em></li>
+      </ol>
+
+      <h3 id="s-8-6"><span class="num">§8.6</span>Experiment Tracking + Model Registry</h3>
+      <table>
+        <thead><tr><th>能力</th><th>开源</th><th>商业</th></tr></thead>
+        <tbody>
+          <tr><td>Experiment tracking</td><td>MLflow · Aim · Neptune-OSS</td><td>Weights &amp; Biases (W&amp;B) · Comet</td></tr>
+          <tr><td>Model registry</td><td>MLflow Registry</td><td>W&amp;B Artifacts · Vertex AI Model Registry</td></tr>
+          <tr><td>Feature store</td><td>Feast</td><td>Tecton · Hopsworks</td></tr>
+        </tbody>
+      </table>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 8 (Platform)</div>
+        <ul>
+          <li><a href="https://docs.ray.io/en/latest/" target="_blank">Ray 官方文档</a></li>
+          <li><a href="https://kserve.github.io/website/latest/" target="_blank">KServe</a></li>
+          <li><a href="https://kueue.sigs.k8s.io/docs/" target="_blank">Kueue (K8s 批调度)</a></li>
+          <li><a href="https://volcano.sh/en/docs/" target="_blank">Volcano (K8s 批调度)</a></li>
+          <li><a href="https://github.com/NVIDIA/k8s-device-plugin" target="_blank">NVIDIA k8s-device-plugin</a></li>
+          <li><a href="https://slurm.schedmd.com/documentation.html" target="_blank">Slurm 官方文档</a></li>
+          <li class="gh"><a href="https://github.com/ray-project/ray" target="_blank">ray-project/ray</a></li>
+          <li class="gh"><a href="https://github.com/triton-inference-server/server" target="_blank">triton-inference-server/server</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 9 — Vector DB ============== -->
+    <section id="ch-9">
+      <header class="ch-head">
+        <span class="badge">Chapter 9 · 向量库</span>
+        <h2>HNSW / IVF / DiskANN / PQ · 向量库内部</h2>
+        <p class="lede">RAG 时代的"OLAP 数据库"——Vector DB 子方向必学</p>
+      </header>
+
+      <h3 id="s-9-1"><span class="num">§9.1</span>问题定义 · ANN 是什么</h3>
+      <p><strong>给一个 query 向量，从 N 个向量库中找出最相似的 K 个</strong>（典型 N=100M-10B，K=10-100）。
+      暴力算 cosine 相似度 O(N) 太慢——必须近似（ANN, Approximate Nearest Neighbor）。
+      工业界 4 大算法：HNSW / IVF / DiskANN / ScaNN，每个都有自己的 trade-off。</p>
+
+      <h3 id="s-9-2"><span class="num">§9.2</span>HNSW · 当前最流行</h3>
+      <p><strong>Hierarchical Navigable Small World</strong>——多层图，每层稀疏度递减。
+      搜索从顶层开始 greedy walk → 跳到下层细化 → 直到底层。<strong>O(log N)</strong> 的实际复杂度。</p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 760 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="HNSW layered graph">
+          <!-- layer 2 -->
+          <text class="fig-t-label fig-t-rust" x="40" y="40">Layer 2 (稀疏)</text>
+          <circle cx="200" cy="40" r="6" fill="#c44d2a"/>
+          <circle cx="380" cy="40" r="6" fill="#c44d2a"/>
+          <circle cx="560" cy="40" r="6" fill="#c44d2a"/>
+          <line class="fig-line-rust" x1="200" y1="40" x2="380" y2="40"/>
+          <line class="fig-line-rust" x1="380" y1="40" x2="560" y2="40"/>
+
+          <!-- layer 1 -->
+          <text class="fig-t-label fig-t-sky" x="40" y="120">Layer 1</text>
+          <circle cx="160" cy="120" r="5" fill="#2c6ca8"/>
+          <circle cx="240" cy="120" r="5" fill="#2c6ca8"/>
+          <circle cx="320" cy="120" r="5" fill="#2c6ca8"/>
+          <circle cx="400" cy="120" r="5" fill="#2c6ca8"/>
+          <circle cx="480" cy="120" r="5" fill="#2c6ca8"/>
+          <circle cx="560" cy="120" r="5" fill="#2c6ca8"/>
+          <circle cx="640" cy="120" r="5" fill="#2c6ca8"/>
+          <line class="fig-line" x1="160" y1="120" x2="240" y2="120"/>
+          <line class="fig-line" x1="240" y1="120" x2="320" y2="120"/>
+          <line class="fig-line" x1="320" y1="120" x2="400" y2="120"/>
+          <line class="fig-line" x1="400" y1="120" x2="480" y2="120"/>
+          <line class="fig-line" x1="480" y1="120" x2="560" y2="120"/>
+          <line class="fig-line" x1="560" y1="120" x2="640" y2="120"/>
+
+          <!-- vertical connections -->
+          <line class="fig-dash-leaf" x1="200" y1="46" x2="240" y2="115"/>
+          <line class="fig-dash-leaf" x1="380" y1="46" x2="400" y2="115"/>
+          <line class="fig-dash-leaf" x1="560" y1="46" x2="560" y2="115"/>
+
+          <!-- layer 0 (dense) -->
+          <text class="fig-t-label fig-t-leaf" x="40" y="210">Layer 0 (密集 · 全部点)</text>
+          <g fill="#4a8a4a">
+            <circle cx="120" cy="210" r="4"/>
+            <circle cx="160" cy="210" r="4"/>
+            <circle cx="200" cy="210" r="4"/>
+            <circle cx="240" cy="210" r="4"/>
+            <circle cx="280" cy="210" r="4"/>
+            <circle cx="320" cy="210" r="4"/>
+            <circle cx="360" cy="210" r="4"/>
+            <circle cx="400" cy="210" r="4"/>
+            <circle cx="440" cy="210" r="4"/>
+            <circle cx="480" cy="210" r="4"/>
+            <circle cx="520" cy="210" r="4"/>
+            <circle cx="560" cy="210" r="4"/>
+            <circle cx="600" cy="210" r="4"/>
+            <circle cx="640" cy="210" r="4"/>
+            <circle cx="680" cy="210" r="4"/>
+          </g>
+          <line class="fig-dash-leaf" x1="240" y1="125" x2="280" y2="205"/>
+          <line class="fig-dash-leaf" x1="400" y1="125" x2="440" y2="205"/>
+
+          <!-- arrow showing search path -->
+          <path d="M 200 30 Q 250 80 320 110 Q 380 160 440 200" stroke="#864c8e" stroke-width="2" fill="none" stroke-dasharray="4 3"/>
+          <text class="fig-t-sm fig-t-plum" x="40" y="260">搜索路径：从顶层 entry → 每层 greedy walk → 进下一层 → 找到底层 K-NN</text>
+        </svg>
+        <figcaption><strong>Figure 9.2</strong> · HNSW · 多层 small-world graph · 类似跳表的 O(log N) 检索</figcaption>
+      </figure>
+
+      <p><strong>关键参数</strong>：</p>
+      <ul>
+        <li><code>M</code>——每个节点最多连边数（典型 16-64）</li>
+        <li><code>ef_construction</code>——建图时探索的候选数（影响建图质量，典型 200-400）</li>
+        <li><code>ef_search</code>——查询时探索的候选数（影响 recall vs latency，典型 50-300）</li>
+      </ul>
+      <p><strong>优势</strong>：高 recall + 快 query · <strong>劣势</strong>：建图慢 + 全 in-memory · 删除复杂</p>
+
+      <h3 id="s-9-3"><span class="num">§9.3</span>IVF · 倒排文件</h3>
+      <p><strong>Inverted File Index</strong>——先用 K-means 把所有向量聚 N 个 cluster（centroid），
+      query 来了先找最近的 <code>nprobe</code> 个 cluster，再在这些 cluster 内 brute force。
+      <strong>Faiss 默认实现 IVF + PQ 是经典组合</strong>。</p>
+
+      <h3 id="s-9-4"><span class="num">§9.4</span>PQ · 把向量压小</h3>
+      <p><strong>Product Quantization</strong>——把 768 维向量切成 8 段（每段 96 维），每段独立用 K-means 量化成 8 bit code。
+      <strong>768 × 4B = 3KB → 8B</strong>，<strong>压缩 384 倍</strong>。距离计算用查表（precomputed centroid distances）非常快。</p>
+      <p>变种：OPQ（旋转后再 PQ，提高质量）、SQ (Scalar Quantization, 简单但效果差)。</p>
+
+      <h3 id="s-9-5"><span class="num">§9.5</span>DiskANN · 大数据量首选</h3>
+      <p>Microsoft 2019。当向量量大到 <strong>装不进 RAM</strong>（&gt; 1B 向量），HNSW 就废了——DiskANN 把图主体放<strong>SSD</strong>，
+      用<strong>Vamana 算法</strong>构图（比 HNSW 更紧凑），加 PQ 把 in-memory 部分压缩到能放 RAM。
+      <strong>10B 向量单机搜索 P99 &lt; 50ms</strong>。Microsoft Bing / OpenAI / 字节都用类似方案。</p>
+
+      <h3 id="s-9-6"><span class="num">§9.6</span>主流向量库横向对比</h3>
+      <table>
+        <thead><tr><th>系统</th><th>底层算法</th><th>适合场景</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Pinecone</strong></td><td>专有（基于 HNSW + 优化）</td><td>SaaS · 零运维</td></tr>
+          <tr><td><strong>Qdrant</strong></td><td>HNSW</td><td>Rust 写的 · 单机性能猛 · 自部署友好</td></tr>
+          <tr><td><strong>Milvus / Zilliz</strong></td><td>多种 (HNSW / IVF / DiskANN / ScaNN)</td><td>大规模分布式 · 国内主流</td></tr>
+          <tr><td><strong>Weaviate</strong></td><td>HNSW</td><td>Schema 友好 · 多模态</td></tr>
+          <tr><td><strong>pgvector</strong></td><td>HNSW (Postgres extension)</td><td>已有 PG 栈 · 中小数据</td></tr>
+          <tr><td><strong>LanceDB</strong></td><td>IVF-PQ</td><td>多模态 · 嵌入式 · serverless</td></tr>
+          <tr><td><strong>Faiss</strong></td><td>library (HNSW / IVF / PQ)</td><td>研究 · 离线 · 自己装服务</td></tr>
+          <tr><td><strong>Vespa</strong></td><td>HNSW + 文本检索融合</td><td>Yahoo 出品 · hybrid search 强</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-9-7"><span class="num">§9.7</span>Hybrid Search · 关键词 + 向量</h3>
+      <p>纯向量召回对<strong>关键词精确匹配</strong>不友好（ID / 名字 / 数字）。
+      生产 RAG 几乎都用 <strong>BM25 + dense vector + 重排序</strong>的 hybrid 方案。
+      代表：Elastic + ES Vector / OpenSearch / Vespa / Weaviate hybrid mode / Qdrant fusion。</p>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 9 (Vector DB)</div>
+        <ul>
+          <li class="paper"><a href="https://arxiv.org/abs/1603.09320" target="_blank">HNSW (Malkov &amp; Yashunin, 2016)</a></li>
+          <li class="paper"><a href="https://www.microsoft.com/en-us/research/publication/diskann-fast-accurate-billion-point-nearest-neighbor-search-on-a-single-node/" target="_blank">DiskANN (NeurIPS 2019)</a></li>
+          <li class="paper"><a href="https://lear.inrialpes.fr/pubs/2011/JDS11/jegou_searching_with_quantization.pdf" target="_blank">Product Quantization (Jegou et al.)</a></li>
+          <li class="paper"><a href="https://arxiv.org/abs/1908.10396" target="_blank">ScaNN (Google, 2020)</a></li>
+          <li><a href="https://www.pinecone.io/learn/" target="_blank">Pinecone Learn</a> ——向量检索入门最好的资料</li>
+          <li class="gh"><a href="https://github.com/facebookresearch/faiss" target="_blank">facebookresearch/faiss</a></li>
+          <li class="gh"><a href="https://github.com/qdrant/qdrant" target="_blank">qdrant/qdrant</a></li>
+          <li class="gh"><a href="https://github.com/milvus-io/milvus" target="_blank">milvus-io/milvus</a></li>
+          <li class="gh"><a href="https://github.com/microsoft/DiskANN" target="_blank">microsoft/DiskANN</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 10 — Performance ============== -->
+    <section id="ch-10">
+      <header class="ch-head">
+        <span class="badge">Chapter 10 · 性能</span>
+        <h2>性能与 Profiling · MFU / TTFT / DCGM / Nsys</h2>
+        <p class="lede">不会读 profiler 输出 = 不会优化 · 这章把指标 + 工具一次讲清</p>
+      </header>
+
+      <h3 id="s-10-1"><span class="num">§10.1</span>训练核心指标 · MFU / HFU</h3>
+      <div class="box formula">
+        <div class="box-label">MFU (Model FLOPs Utilization)</div>
+        <p><code>MFU = 实测 throughput × 每 token 的 model FLOPs / 硬件峰值 FLOPs</code></p>
+        <p>例：H100 BF16 峰值 989 TFLOPS。Llama-3 8B 训练实测 200 TFLOPS/GPU → MFU = 200/989 ≈ 20.2%</p>
+      </div>
+      <p><strong>典型 MFU 范围</strong>：</p>
+      <ul>
+        <li><strong>30-50%</strong>：优秀（GPT-3 论文 21.3% · Llama-3 论文 38-43%）</li>
+        <li><strong>15-30%</strong>：合格</li>
+        <li><strong>&lt; 10%</strong>：有大问题（通信瓶颈 / 算子没融合 / batch 太小）</li>
+      </ul>
+      <p><strong>HFU (Hardware FLOPs Utilization)</strong>：把 activation recompute 多算的也计入分子，比 MFU 高一些。
+      Meta 报论文都用 MFU，因为它反映"真实有效产出"。</p>
+
+      <h3 id="s-10-2"><span class="num">§10.2</span>推理核心指标 · TTFT / TPOT / Throughput</h3>
+      <table>
+        <thead><tr><th>指标</th><th>含义</th><th>典型 SLO（GPT-4 class）</th></tr></thead>
+        <tbody>
+          <tr><td><strong>TTFT</strong></td><td>首 token 延迟</td><td>P50 &lt; 500ms · P95 &lt; 1s</td></tr>
+          <tr><td><strong>TPOT / ITL</strong></td><td>每后续 token 间隔</td><td>P50 &lt; 50ms · P95 &lt; 100ms（≈ 20 token/s）</td></tr>
+          <tr><td><strong>Throughput (token/s)</strong></td><td>聚合 output token/s</td><td>越大越好（成本指标）</td></tr>
+          <tr><td><strong>Goodput</strong></td><td>满足 SLO 的 throughput</td><td>真正的产能指标</td></tr>
+          <tr><td><strong>Capacity (concurrent users)</strong></td><td>同时服务用户数</td><td>容量规划用</td></tr>
+          <tr><td><strong>$/1M token</strong></td><td>单价</td><td>商业指标</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-10-3"><span class="num">§10.3</span>Profiling 工具 · 4 件套</h3>
+      <table>
+        <thead><tr><th>工具</th><th>看什么</th><th>典型用法</th></tr></thead>
+        <tbody>
+          <tr><td><code>nvidia-smi</code></td><td>GPU util / 显存 / 温度</td><td>1 行命令快速看</td></tr>
+          <tr><td><strong>DCGM</strong></td><td>SM util / mem util / NVLink BW · 集群级监控</td><td>Prometheus exporter 接 Grafana</td></tr>
+          <tr><td><strong>PyTorch Profiler</strong></td><td>每个 op 时间 + GPU/CPU 分配</td><td><code>torch.profiler.profile()</code> + Chrome trace</td></tr>
+          <tr><td><strong>Nsight Systems (nsys)</strong></td><td>整个 timeline · CPU/GPU 同步 · CUDA kernel</td><td><code>nsys profile python train.py</code></td></tr>
+          <tr><td><strong>Nsight Compute (ncu)</strong></td><td>单 kernel 内部 · SM 利用率 · memory throughput</td><td>调单算子时</td></tr>
+        </tbody>
+      </table>
+
+      <div class="box concept">
+        <div class="box-label">读 nvidia-smi 3 个数</div>
+        <ol>
+          <li><strong>GPU-Util</strong>——SM 在跑的比例。&lt; 50% 几乎肯定有问题（dataloader 慢 / batch 小 / 通信卡）</li>
+          <li><strong>Memory-Usage</strong>——显存占用。接近 80GB 但 OOM 频繁说明碎片严重</li>
+          <li><strong>Power</strong>——功耗。跑满训练应该接近 TDP（H100 700W）。明显低说明 idle</li>
+        </ol>
+      </div>
+
+      <h3 id="s-10-4"><span class="num">§10.4</span>常见瓶颈诊断 5 步法</h3>
+      <ol>
+        <li><strong>看 GPU util</strong> &lt; 80%？ → CPU/dataloader 瓶颈，加 worker / prefetch / pin_memory</li>
+        <li><strong>看 NCCL all-reduce 时间</strong>占比 &gt; 30%？ → 通信瓶颈，开 ZeRO / 增大 batch / 跨节点用 PP 替代 DP</li>
+        <li><strong>看 attention kernel 时间</strong>占比 &gt; 40%？ → 上 FlashAttention 2/3</li>
+        <li><strong>看 launch overhead</strong>（kernel 数 ÷ 总时间）？ → 上 CUDA Graph / torch.compile</li>
+        <li><strong>看 OOM</strong>？ → 开 activation recompute / mixed precision / ZeRO-3</li>
+      </ol>
+
+      <h3 id="s-10-5"><span class="num">§10.5</span>容量规划 · 简单公式</h3>
+      <div class="box formula">
+        <div class="box-label">推理容量估算（简化）</div>
+        <p><code>QPS = (GPU 数 × 单 GPU throughput tok/s) / (avg input + avg output tokens)</code></p>
+        <p>例：8 卡 H100 跑 Llama-3 70B FP16，单卡实测 60 token/s decode，请求平均 1500 input + 500 output = 2000 token：</p>
+        <p><code>QPS = (8 × 60) / 2000 = 0.24</code> → 平均 4.2s/req · 高峰要排队</p>
+        <p>如果加 spec decoding 2x + AWQ INT4 + disaggregated 2x → 实际 throughput 4-8x → QPS 可达 1+</p>
+      </div>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 10 (Profiling)</div>
+        <ul>
+          <li><a href="https://pytorch.org/docs/stable/profiler.html" target="_blank">PyTorch Profiler 文档</a></li>
+          <li><a href="https://docs.nvidia.com/nsight-systems/UserGuide/" target="_blank">Nsight Systems UserGuide</a></li>
+          <li><a href="https://github.com/NVIDIA/dcgm-exporter" target="_blank">DCGM Exporter (Prometheus)</a></li>
+          <li><a href="https://horace.io/brrr_intro.html" target="_blank">Horace He · Making DL Go Brrrr</a></li>
+          <li class="paper"><a href="https://arxiv.org/abs/2104.04473" target="_blank">Megatron Scaling 论文</a> ——MFU 概念出处</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 11 — Reliability ============== -->
+    <section id="ch-11">
+      <header class="ch-head">
+        <span class="badge">Chapter 11 · 可靠性</span>
+        <h2>训练 fault tolerance · 推理 SLO</h2>
+        <p class="lede">10000 张 GPU 跑 30 天 — 平均每天挂几张 — 还能继续训才是真本事</p>
+      </header>
+
+      <h3 id="s-11-1"><span class="num">§11.1</span>大集群训练 · 故障是常态</h3>
+      <p>Llama 3 论文披露：16k GPU 训练 54 天，<strong>共 419 次中断，平均每 3 小时一次</strong>。
+      故障来源：GPU 硬件 (58%)、network (16%)、CPU/host (4%)、software bug (rest)。</p>
+      <p>结论：<strong>fault tolerance 不是 nice-to-have 而是 must-have</strong>，否则训练永远跑不完。</p>
+
+      <h3 id="s-11-2"><span class="num">§11.2</span>3 大 fault tolerance 技术</h3>
+      <ol>
+        <li><strong>Checkpoint 频繁化</strong>——每 30min-2h 一次。
+          <ul>
+            <li>异步 checkpoint：写盘不阻塞训练（PyTorch DCP / Megatron）</li>
+            <li>分层 checkpoint：内存 → SSD → 对象存储（多层冗余）</li>
+            <li>增量 checkpoint：只存变化的（早期 less common，2024+ 流行）</li>
+          </ul>
+        </li>
+        <li><strong>故障检测 + 自动重启</strong>——监控 NCCL hang / GPU XID error / 温度异常 → 自动 evict 坏节点 + reschedule</li>
+        <li><strong>Hot spare</strong>——预留若干 spare 节点，故障时立刻顶上而不是从 checkpoint 重启</li>
+      </ol>
+
+      <h3 id="s-11-3"><span class="num">§11.3</span>推理 SLO + 可观测</h3>
+      <ul>
+        <li><strong>SLO 定义</strong>：如 P95 TTFT &lt; 1s · P95 TPOT &lt; 100ms · Availability &gt; 99.9%</li>
+        <li><strong>必要 metric</strong>：QPS · queue depth · GPU util · KV cache 占用率 · TTFT/TPOT 分位 · 错误率</li>
+        <li><strong>必要 alert</strong>：TTFT P95 超阈值 · queue depth &gt; X · GPU 健康度异常 · 模型推理报错率突增</li>
+        <li><strong>必要 dashboard</strong>：单实例视图 + 集群聚合视图 + cost dashboard</li>
+      </ul>
+
+      <h3 id="s-11-4"><span class="num">§11.4</span>容灾 · 跨可用区 / 跨地域</h3>
+      <ul>
+        <li>L4/L7 LB 跨 AZ 路由 · 单 AZ 故障自动 failover</li>
+        <li>模型权重多副本（区域间 sync）</li>
+        <li>区域级故障演练（chaos engineering for inference）</li>
+      </ul>
+
+      <div class="box reading">
+        <div class="box-label">深读资源 · Chapter 11 (Reliability)</div>
+        <ul>
+          <li class="paper"><a href="https://arxiv.org/abs/2407.21783" target="_blank">Llama 3 论文 §6 Infrastructure</a> ——故障数据 + recovery 实战</li>
+          <li><a href="https://pytorch.org/docs/stable/distributed.checkpoint.html" target="_blank">PyTorch Distributed Checkpoint</a></li>
+          <li><a href="https://github.com/NVIDIA/gpu-operator" target="_blank">NVIDIA GPU Operator</a> ——K8s GPU 健康监控</li>
+          <li class="gh"><a href="https://github.com/pytorch/torchsnapshot" target="_blank">pytorch/torchsnapshot</a></li>
+          <li><a href="https://sre.google/sre-book/table-of-contents/" target="_blank">Google SRE Book (free)</a> ——SLO/error budget 圣经</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 12 — Interview Questions ============== -->
+    <section id="ch-12">
+      <header class="ch-head">
+        <span class="badge">Chapter 12 · 面试题</span>
+        <h2>80 道 AI Infra 面试题 + 答题模板</h2>
+        <p class="lede">分 8 大模块 · 都是 2026 年真实出现的题 · 答题模板按 STAR 结构</p>
+      </header>
+
+      <p>以下题目按 8 个模块分组——前 4 个是 <strong>L1-L3 硬核技术</strong>（必会），后 4 个是 <strong>L4-L5 系统/方法论</strong>（加分）。
+      每道题给<strong>关键答题点</strong>而不是完整答案，需要你结合自己经历用 <strong>STAR (Situation / Task / Action / Result)</strong> 包装。</p>
+
+      <h3 id="s-12-1"><span class="num">§A</span>GPU / 网络 / 硬件（10 题）</h3>
+
+      <div class="qa">
+        <div class="q">A1 · 讲讲 GPU 的 memory hierarchy</div>
+        <div class="a">
+          <p><strong>关键点</strong>：register / SMEM / L2 / HBM 4 层 · 容量越下越大、带宽越下越慢、cycle 越下越多。
+          H100 数字：SMEM ~256KB/SM · L2 50MB · HBM 80GB/3.35TB/s。
+          能讲出"<strong>FlashAttention 就是要让数据尽量留在 SMEM 不去 HBM</strong>"就过。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">A2 · NVLink 跟 PCIe 跟 InfiniBand 区别</div>
+        <div class="a">
+          <p><strong>关键点</strong>：NVLink = 同机 GPU 互联，900GB/s（H100），是 PCIe 5（120GB/s）的 ~7x；
+          InfiniBand = 跨机网络，NDR 400Gb=50GB/s，比 NVLink 慢 18x；
+          所以 TP 必须放 NVLink 内、DP/PP 才能跨节点。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">A3 · GPUDirect 是什么 · 为什么必要</div>
+        <div class="a">
+          <p>跨机 GPU 显存可<strong>直接互传不经 CPU 也不经 host RAM</strong>。
+          没有它的话 NCCL 通信要走 GPU→host RAM→网卡→对端 host RAM→GPU，多 2 次拷贝带宽减半。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">A4 · H100 vs B200 主要差别</div>
+        <div class="a">
+          <p>FLOPs ~2x · HBM 80→192GB · HBM 带宽 3.35→8 TB/s · NVLink5 双倍 · FP8 性能 2x · FP4 原生支持。
+          重点在<strong>显存带宽翻倍</strong>——decode memory-bound 阶段直接受益。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">A5 · 推理 70B 模型显存怎么算？</div>
+        <div class="a">
+          <p>权重 70B × 2B = 140GB · KV cache = 2 × layer × heads × head_dim × seq × batch × bytes。
+          1 张 80GB H100 装不下 → TP=2 切。<strong>能现场算这个就过了</strong>。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">A6 · Memory-bound vs Compute-bound 怎么判断？</div>
+        <div class="a">
+          <p>看 <strong>arithmetic intensity</strong>（FLOPs / bytes accessed）。
+          高于硬件 ridge point（H100 BF16 ≈ 200）就 compute-bound，否则 memory-bound。
+          典型：matrix-matrix multiply (高) compute-bound · matrix-vector (低) memory-bound · LLM decode 是后者。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">A7 · NCCL 4 个核心原语</div>
+        <div class="a">
+          <p>all-reduce / all-gather / reduce-scatter / broadcast。
+          能讲清"all-reduce = reduce-scatter + all-gather"以及"<strong>ring vs tree</strong>" topology 区别加分。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">A8 · MIG 是什么 · 什么场景用</div>
+        <div class="a">
+          <p>Multi-Instance GPU。H100 可硬切成 7 个独立 instance（计算/显存/带宽都隔离），
+          适合多租户、小模型推理共享 GPU。<em>不</em>适合大训练（不能跨 instance）。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">A9 · 训练 Llama-70B 单 step 的瓶颈通常是什么</div>
+        <div class="a">
+          <p>三个候选：① attention（FlashAttention 解）② all-reduce gradient（ZeRO/拓扑解）③ activation 显存（recompute 解）。
+          典型大集群训练，<strong>跨节点通信就是大头</strong>，所以 rail-optimized 拓扑那么重要。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">A10 · Rail-optimized 拓扑是什么</div>
+        <div class="a">
+          <p>把同 rank 的 GPU（每节点 GPU0、每节点 GPU1...）放同一 rail（同一组 IB switch），
+          all-reduce 几乎不撞包。NVIDIA SuperPOD / xAI Colossus / 字节大集群都用。</p>
+        </div>
+      </div>
+
+      <h3 id="s-12-2"><span class="num">§B</span>LLM 推理引擎（15 题）</h3>
+
+      <div class="qa">
+        <div class="q">B1 · PagedAttention 解决什么问题</div>
+        <div class="a"><p>见 §3.2 完整答案。<strong>必须 30 秒讲完</strong>。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">B2 · Continuous batching 跟 static batching 区别</div>
+        <div class="a"><p>见 §3.3。关键词：iteration-level scheduling · 短请求不等长请求 · throughput 5-10x。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">B3 · Prefill 和 Decode 计算特征区别</div>
+        <div class="a"><p>见 §3.1。Prefill = matrix-matrix = compute-bound · Decode = matrix-vector = memory-bound。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">B4 · Speculative decoding 原理</div>
+        <div class="a">
+          <p>用小 drafter 模型猜未来 N 个 token · 大模型一次性 verify · 命中赚 N-1 步、错了浪费 1 步。
+          因为 verify 阶段是 batched matrix multiply（compute-bound 不是 memory-bound），
+          相当于<strong>用 GPU 闲置算力换掉 HBM 带宽</strong>。能讲到这一层就是真懂。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">B5 · 为什么 spec decoding 对 decode 加速但对 prefill 没用</div>
+        <div class="a">
+          <p>Prefill 已经是 compute-bound，没多少 GPU 闲置算力可换。Decode 是 memory-bound，GPU 大量空算力，spec 才划算。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">B6 · KV cache 怎么算大小 · 怎么省</div>
+        <div class="a">
+          <p>大小：<code>2 × L × H × D × seq × batch × bytes</code>（2=K和V）。
+          省的方法：① GQA/MQA（减 H）② 量化 KV（fp8/int4）③ KV offload to CPU/SSD（StreamingLLM）④ prefix sharing。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">B7 · GQA / MQA 区别</div>
+        <div class="a">
+          <p>MHA: Q heads = KV heads。MQA: 所有 Q 共享 1 组 KV（KV cache 缩 H 倍但质量明显掉）。
+          GQA: Q heads 分成 G 组，每组共享 KV（折中，质量几乎不掉）。Llama 系列从 Llama-2 70B 开始用 GQA(8)。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">B8 · vLLM / SGLang / TRT-LLM 主要区别</div>
+        <div class="a"><p>见 §3.7 表格。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">B9 · Disaggregated serving 是什么 · 什么时候值得</div>
+        <div class="a">
+          <p>把 prefill / decode 分到不同 GPU pool。值得的场景：长 prompt + 短 response（典型 RAG）。
+          代价：架构复杂 + KV cache 跨 pool 传（要 RDMA）。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">B10 · Prefix caching / RadixAttention 怎么工作</div>
+        <div class="a">
+          <p>用 radix tree 索引历史 KV cache 的 prefix。新 request 进来先 longest-prefix-match，命中段直接复用。
+          多轮对话 / agent / 共 system prompt 场景特别有效。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">B11 · Chunked prefill 是什么</div>
+        <div class="a">
+          <p>把超长 prompt 的 prefill 切成 chunk，跟 decode token 一起 batch。
+          解决"长 prefill 阻塞短 decode"的 head-of-line blocking。
+          vLLM / SGLang 默认开。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">B12 · TTFT 突然变高怎么排查</div>
+        <div class="a">
+          <p>① queue depth 上升（请求堆积）② prefix cache miss 率突变 ③ KV cache 占满触发 evict ④ 某个 request 超长 prompt 占满 prefill window。
+          看 vLLM/SGLang metric 即可定位。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">B13 · Long context (1M) 推理怎么做</div>
+        <div class="a">
+          <p>① attention：用 FlashAttention 或 Ring Attention ② KV cache：太大要 offload (CPU/SSD) ③ position：YaRN / NTK-aware RoPE ④ 工程：streaming output 让用户感知不到等待。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">B14 · 推理时如何同时支持 OpenAI / Anthropic / 自部署后端</div>
+        <div class="a">
+          <p>用 LiteLLM / OpenRouter 这种 router，统一 OpenAI 兼容协议，按需路由。
+          SGLang / vLLM serve 也都暴露 OpenAI 兼容 API。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">B15 · 评估推理引擎选型 · 你看哪些指标</div>
+        <div class="a">
+          <p>① throughput (tok/s) under SLO · ② TTFT/TPOT P50/P95 · ③ 模型支持广度 · ④ 是否支持 spec / quant / disaggregated · ⑤ 社区活跃度（PR 频率、release cadence） · ⑥ ops 友好度（metrics、log、debug）。</p>
+        </div>
+      </div>
+
+      <h3 id="s-12-3"><span class="num">§C</span>分布式训练（15 题）</h3>
+
+      <div class="qa">
+        <div class="q">C1 · ZeRO 1/2/3 区别</div>
+        <div class="a"><p>见 §5.3。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">C2 · FSDP 跟 ZeRO-3 是同一回事吗</div>
+        <div class="a"><p>本质相同。FSDP 是 PyTorch 原生实现，跟 TP / DTensor 集成更好。新项目首选 FSDP2。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">C3 · TP / PP / DP 各自什么时候用</div>
+        <div class="a"><p>见 §5.2 表格 + §5.7 实战组合。能现场为 70B / 175B / 671B 设计 3D 并行配置就过了。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">C4 · TP 为什么不能跨节点</div>
+        <div class="a"><p>每层 2 次 all-reduce activation · 跨节点 IB 比 NVLink 慢 18x · 整个训练就被通信拖住。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">C5 · 1F1B vs interleaved pipeline schedule</div>
+        <div class="a"><p>1F1B：交替 forward/backward 跑，bubble ~10%。Interleaved：每 GPU 拿不连续的几段层，bubble 进一步缩小但通信增加。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">C6 · Activation recompute 是什么 · 怎么权衡</div>
+        <div class="a"><p>反向时不存 activation 而是重算。典型省 50% 显存代价 25-30% 多算。Selective recompute 只重算最贵的（attention）。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">C7 · Mixed precision 训练 · 为什么 master weight 用 fp32</div>
+        <div class="a">
+          <p>BF16 forward / backward 节省带宽和显存。但 Adam state 累加要 fp32 精度（防止小梯度累加为 0）。这就是 master weight。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">C8 · FP8 训练有哪些坑</div>
+        <div class="a">
+          <p>① 动态范围窄 → 需要 per-tensor / per-tile scaling ② 梯度用 E5M2 forward 用 E4M3 ③ Loss scale 调整 ④ 某些 op (LayerNorm) 仍用 BF16/FP32。
+          DeepSeek-V3 报告是最详细 reference。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">C9 · NCCL all-reduce 内部怎么实现</div>
+        <div class="a">
+          <p>大消息：ring all-reduce（reduce-scatter + all-gather，O(2(N-1)/N × M) 通信）。
+          小消息：tree all-reduce（O(log N) 延迟）。NCCL 自动按消息大小选。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">C10 · Gradient accumulation 是什么 · 怎么影响 throughput</div>
+        <div class="a">
+          <p>显存装不下大 batch 时，分 N 个 micro-batch 跑，梯度累加后再 step。
+          副作用：通信量减少（all-reduce 频率 ÷ N），所以<strong>大 grad accum 反而提升 throughput</strong>（在通信瓶颈场景）。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">C11 · 训练 OOM 怎么排查</div>
+        <div class="a">
+          <p>顺序：① 减 batch ② 开 activation recompute ③ 开 ZeRO 2/3 ④ 开 FlashAttention ⑤ 切 TP ⑥ offload optimizer to CPU。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">C12 · Loss spike 怎么处理</div>
+        <div class="a">
+          <p>① 检查 grad norm（一般 spike 时 grad 爆炸）② 降 LR ③ 用 grad clip ④ skip 这个 batch（rewind to checkpoint）⑤ 永久解法：调 mixed precision / 加 z-loss。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">C13 · 大集群 train 故障率 · 怎么 fault tolerance</div>
+        <div class="a"><p>见 §11.1-11.2。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">C14 · Checkpoint 写得太慢怎么办</div>
+        <div class="a">
+          <p>① 异步 checkpoint（PyTorch DCP）② sharded checkpoint（每 GPU 只写自己那份）③ 写到本地 SSD 再异步 sync 到对象存储 ④ 增量 checkpoint。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">C15 · 怎么估算 70B 训练总成本</div>
+        <div class="a">
+          <p>FLOPs ≈ 6 × params × tokens（Chinchilla 系数）。70B × 15T tokens = 6.3e24 FLOPs。
+          H100 BF16 989 TFLOPS × MFU 40% = 4e14 useful FLOPs/s/GPU。
+          GPU-hours = 6.3e24 / 4e14 / 3600 ≈ 4.4M GPU-hours。$2/h × 4.4M = $8.8M。</p>
+        </div>
+      </div>
+
+      <h3 id="s-12-4"><span class="num">§D</span>算子 / 量化 / MoE（15 题）</h3>
+
+      <div class="qa">
+        <div class="q">D1 · FlashAttention 解决什么问题 · 怎么解</div>
+        <div class="a"><p>见 §6.1。关键词：HBM I/O 从 O(N²) 降到 O(N) · tiling + online softmax · never materialize N×N matrix。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">D2 · FlashAttn 1/2/3 演进</div>
+        <div class="a"><p>见 §6.2。FA2: 更好 work partition + causal mask 优化。FA3: H100 async + WGMMA + FP8。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">D3 · 为什么 attention 是 memory-bound</div>
+        <div class="a"><p>arithmetic intensity 低 · 大量 HBM 读 KV · ridge point 之下。这是<em>大部分</em>场景，但 prefill 长 seq 时因为 N² 关系会变 compute-bound。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">D4 · Triton 跟 CUDA 区别</div>
+        <div class="a">
+          <p>Triton 是 Python DSL · 自动 tile + memory coalescing · 不需手写 PTX · 写 1/10 代码达 80-95% CUDA 性能。
+          CUDA 给极致控制（warp 级原语）但学习曲线陡。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">D5 · 算子融合为什么能省时间</div>
+        <div class="a"><p>见 §6.6。多算子合一 → 减少 HBM 读写次数 → memory-bound 场景直接 N-1 倍加速。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">D6 · CUDA Graph 是什么 · 什么场景值得</div>
+        <div class="a"><p>见 §6.4。launch overhead 占比高时（decode 小算子）值得。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">D7 · GPTQ vs AWQ 哪个好</div>
+        <div class="a"><p>见 §4.5 面试题。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">D8 · INT4 量化为什么不掉点很多</div>
+        <div class="a">
+          <p>① 权重分布通常对称 + 集中 ② 用 group-wise scale（每 64-128 元素一个 scale）保留分辨率 ③ 重要 weight (high-activation) 保持高精度（AWQ）。
+          代价主要在<strong>极端 outlier 任务</strong>（数学 / 代码长链推理）会有 1-3 分掉。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">D9 · FP8 训练为什么可行 · 难点是什么</div>
+        <div class="a"><p>见 §4.6 + DeepSeek-V3。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">D10 · MoE 是什么 · 跟 dense 的 trade-off</div>
+        <div class="a">
+          <p>稀疏激活 = 总参数大但每 token FLOPs 小 = 训练快 + 推理便宜，但<strong>显存巨大 + all-to-all 通信瓶颈</strong>。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">D11 · MoE 负载不均怎么处理</div>
+        <div class="a">
+          <p>① auxiliary loss 鼓励 router 均衡 ② capacity factor 限流 ③ 监控每 expert 流量、调路由温度 ④ 部署时 EP 副本数 / placement 优化。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">D12 · MoE 推理为什么比训练更难</div>
+        <div class="a">
+          <p>训练 batch 大，每 expert 都能拿到足够 token；推理 decode 时每 token 走的 expert 不同，无法 batch 起来 → expert 频繁 idle / launch overhead 高。
+          解：grouped GEMM / spec routing。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">D13 · DeepSeek-V3 为什么这么便宜</div>
+        <div class="a">
+          <p>① MoE 671B/37B 激活 ② FP8 训练省 2x compute ③ MTP 推理加速 1.8x ④ Multi-head Latent Attention 减 KV cache ⑤ 工程极致优化（NVLink + IB + 自研 NCCL 替代 DeepEP）。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">D14 · Speculative routing 是什么</div>
+        <div class="a"><p>见 §7.5。猜下一 token 路由到哪些 expert，提前预热（载入 weight / 准备 batch）。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">D15 · 你写过最复杂的 Triton kernel 是什么</div>
+        <div class="a">
+          <p>这是<strong>"判断你真假"</strong>的题。如果没写过，老老实实说"读过 vLLM 的 attention kernel + 跟过 Triton tutorial 实现 flash attention 简化版"。</p>
+        </div>
+      </div>
+
+      <h3 id="s-12-5"><span class="num">§E</span>平台 / MLOps（10 题）</h3>
+
+      <div class="qa">
+        <div class="q">E1 · K8s vs Slurm 训练</div>
+        <div class="a"><p>见 §8.1。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">E2 · K8s 上调度多机多卡训练 · 怎么避免半 pod 等死</div>
+        <div class="a"><p>用 gang scheduling（Volcano / Kueue）。要么全部 pod 起、要么都不起。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">E3 · Topology-aware scheduling 是什么</div>
+        <div class="a"><p>调度器感知 NVLink / 节点 / rail 亲和度，把一个 job 的 GPU 放在同一 NVLink island 里。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">E4 · LLM 推理 autoscaling 难点</div>
+        <div class="a"><p>见 §8.5。冷启动 5-10min vs 用户耐心 5s。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">E5 · scale-to-zero 推理可行吗</div>
+        <div class="a"><p>大模型几乎不行（冷启动太慢）。小模型（&lt; 7B）+ pre-warmed image + 模型 cache disk 可以做到 &lt; 30s。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">E6 · 多租户 GPU · 怎么隔离</div>
+        <div class="a">
+          <p>① MIG（硬隔离）② time-slicing（软共享）③ MPS（多进程共享）。
+          MIG 适合稳定多租户、time-slicing 适合开发、MPS 适合同 user 多 job。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">E7 · Ray 跟 K8s 关系</div>
+        <div class="a">
+          <p>Ray 是<strong>distributed Python framework</strong>，K8s 是<strong>infra orchestrator</strong>。
+          Ray 通常<em>跑在</em> K8s 上（KubeRay operator）。Ray 提供 task/actor 抽象，K8s 提供节点/资源管理。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">E8 · 模型怎么从训练交付到推理</div>
+        <div class="a">
+          <p>典型流水线：训练 done → 写 model registry（W&amp;B / MLflow）→ 转换 + 量化（trtllm-build / vllm convert）→
+          打包 docker → 上推理平台（vLLM Serve / KServe）→ canary → 全量。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">E9 · GPU 监控你看哪些指标</div>
+        <div class="a"><p>见 §10.3 DCGM。GPU util / SM occupancy / mem util / NVLink BW / power / temp / XID errors。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">E10 · 你怎么设计公司内部 LLM gateway</div>
+        <div class="a">
+          <p>① 统一 OpenAI 兼容 API ② 多 provider 路由（自部署 + 云）③ 配额 + cost tracking ④ prompt cache（语义级）⑤ guardrail（PII / toxicity）⑥ observability（log + trace）。
+          能讲出这 6 层就稳。</p>
+        </div>
+      </div>
+
+      <h3 id="s-12-6"><span class="num">§F</span>向量库 / RAG infra（8 题）</h3>
+
+      <div class="qa">
+        <div class="q">F1 · HNSW 怎么工作</div>
+        <div class="a"><p>见 §9.2。多层 small-world graph + greedy walk + O(log N) 检索。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">F2 · IVF + PQ 组合工作流</div>
+        <div class="a">
+          <p>建索引：① K-means 聚 N 个 cluster ② 每 cluster 内向量做 PQ 量化。
+          查询：① 找 top nprobe cluster ② 在这些 cluster 内用 PQ 加速距离计算 ③ rerank top-k 用原始向量。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">F3 · DiskANN 跟 HNSW 区别 · 什么场景用</div>
+        <div class="a"><p>见 §9.5。&gt; 1B 向量装不进 RAM 时用 DiskANN。否则 HNSW 更快。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">F4 · 向量库怎么支持过滤（metadata filtering）</div>
+        <div class="a">
+          <p>3 种思路：① <strong>pre-filter</strong>（先按 metadata 筛子集再 ANN，子集大时快）② <strong>post-filter</strong>（先 ANN 再筛，质量差）
+          ③ <strong>integrated</strong>（边搜边过滤，HNSW 改造，Qdrant / Milvus 支持）。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">F5 · 增量更新怎么处理</div>
+        <div class="a">
+          <p>HNSW 删除是<em>软删除</em>（标记 + 跳过），周期性 rebuild。
+          IVF 增量：直接加到对应 cluster，定期重 cluster。
+          高频写场景一般用 LSM-style：MemTable + SSTable 多层。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">F6 · Hybrid search · 怎么 fuse BM25 + vector</div>
+        <div class="a">
+          <p>① RRF (Reciprocal Rank Fusion) — 简单且效果好，<code>score = sum(1/(k+rank_i))</code>
+          ② 加权和（normalized score 加权）
+          ③ 学一个 reranker（cross-encoder / 模型）做最终排序。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">F7 · 向量库怎么做分布式</div>
+        <div class="a">
+          <p>① Sharding by hash / range ② 每 shard 独立 HNSW/IVF index ③ query fan-out + 聚合 top-k
+          ④ replication for HA。Milvus 是这套架构的开源标准实现。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">F8 · Embedding model 选型 · 你看什么</div>
+        <div class="a">
+          <p>① <strong>MTEB benchmark</strong>看任务相关榜（retrieval / clustering）
+          ② 维度（小维度便宜大维度更准，384/768/1024 是常见）
+          ③ 多语言支持
+          ④ 是否支持 instruction-aware（query / doc 用不同 prompt）
+          ⑤ 自部署 vs API 成本。</p>
+        </div>
+      </div>
+
+      <h3 id="s-12-7"><span class="num">§G</span>性能 / Profiling（5 题）</h3>
+
+      <div class="qa">
+        <div class="q">G1 · MFU 是什么 · 怎么算</div>
+        <div class="a"><p>见 §10.1。能现场算就过。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">G2 · TTFT vs TPOT</div>
+        <div class="a"><p>见 §3.1 + §10.2。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">G3 · 训练 GPU util 50% · 怎么排查</div>
+        <div class="a"><p>见 §10.4 5 步法。第一步看 dataloader / CPU 是不是瓶颈。</p></div>
+      </div>
+
+      <div class="qa">
+        <div class="q">G4 · 怎么用 nsys / pytorch profiler</div>
+        <div class="a">
+          <p>nsys profile 录 timeline · 看 GPU/CPU 同步点 · NCCL kernel 占比 · launch overhead。
+          PyTorch profiler 看 op 级时间 · 导出 chrome trace。</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">G5 · ridge point 是什么</div>
+        <div class="a">
+          <p>roofline 模型里 compute 和 bandwidth 两条线交点。
+          H100 BF16 = 989 TFLOPS / 3.35 TB/s = 295 FLOPs/byte。
+          算子 arithmetic intensity 高于这个就 compute-bound。</p>
+        </div>
+      </div>
+
+      <h3 id="s-12-8"><span class="num">§H</span>系统设计 / 开放题（2 题）</h3>
+
+      <div class="qa">
+        <div class="q">H1 · 设计一个 LLM 推理集群 · 服务 1000 QPS · Llama-3 70B</div>
+        <div class="a">
+          <p><strong>骨架</strong>：① 算容量需求 → 估单实例 throughput → 算实例数 → ×1.5 buffer
+          ② 选 vLLM 或 SGLang + AWQ INT4 + spec decoding
+          ③ TP=2 切 70B（INT4 36GB 单卡也能但 TP=2 latency 更好）
+          ④ K8s + Volcano + topology-aware
+          ⑤ 前面 Envoy/L7 LB + queue + autoscaler（看 queue depth）
+          ⑥ 监控 DCGM + TTFT/TPOT P95 + cost dashboard
+          ⑦ 容灾跨 AZ + 模型多副本
+          ⑧ Stage rollout（canary 10% → 50% → 100%）</p>
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="q">H2 · 设计一个 train 5000 张 H100 跑 60 天的 fault-tolerant 系统</div>
+        <div class="a">
+          <p>① rail-optimized 集群拓扑
+          ② Slurm + topology aware + gang scheduling
+          ③ NCCL with sharp + adaptive routing
+          ④ 异步 checkpoint 每 30min · 多副本（local SSD + 对象存储）
+          ⑤ 节点健康监控（DCGM + 自定义 health check） · auto evict + reschedule
+          ⑥ Hot spare 5% 节点
+          ⑦ Loss 监控 · spike 自动 rollback to last good checkpoint
+          ⑧ Slack/PagerDuty alert
+          ⑨ Postmortem 模板（每次 incident 复盘）</p>
+        </div>
+      </div>
+
+      <div class="box tip">
+        <div class="box-label">面试通用建议</div>
+        <ol>
+          <li><strong>不会就承认</strong>。"这块我没深入做过，但理解是 X，请你纠正"——加分。</li>
+          <li><strong>带数字</strong>。"70B FP16 140GB" "H100 989 TFLOPS" "MFU 40% 算优秀"。
+          数字一出口面试官就知道你是否真做过。</li>
+          <li><strong>讲 trade-off 不讲 best</strong>。"PagedAttention 收益是 X 代价是 Y" 优于 "PagedAttention 最好"。</li>
+          <li><strong>用真名词</strong>。说 "ZeRO-3" 而不是"那个 sharding"，说 "all-to-all" 而不是"GPU 之间通信"。</li>
+          <li><strong>给 reference</strong>。"vLLM 论文是这么说的" "DeepSeek-V3 报告 §3.2"。</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 13 — 12 weeks roadmap + Resources ============== -->
+    <section id="ch-13">
+      <header class="ch-head">
+        <span class="badge">Chapter 13 · 路线 + 资源</span>
+        <h2>12 周学习路线 + 必读资源清单</h2>
+        <p class="lede">从 0 到能进 AI Infra 面试 — 把每周该读什么、动手做什么、要 ship 什么列出来</p>
+      </header>
+
+      <h3 id="s-13-0"><span class="num">§13.0</span>说明 · 谁适合用这份路线</h3>
+      <ul>
+        <li><strong>背景</strong>：会 Python · 用过 PyTorch · 看过 transformer 架构（不会就先 Karpathy nanoGPT 1 周）</li>
+        <li><strong>目标</strong>：3 个月内能去面试 AI Infra junior-mid 岗位</li>
+        <li><strong>每周投入</strong>：15-20h（业余）或 40h（脱产）</li>
+        <li><strong>输出</strong>：12 周后能拿出 3-5 个 demo + GitHub 提交几个 PR + 能讲 2-3 篇核心论文</li>
+      </ul>
+
+      <h3 id="s-13-1"><span class="num">§13.1</span>12 周日历</h3>
+
+      <ol class="weeks">
+        <li>
+          <div class="wk-num"><span class="lbl">Week</span><span class="n">1</span></div>
+          <div>
+            <h4>Transformer 内核 + nanoGPT 完整跑通</h4>
+            <div class="wk-do"><strong>读</strong>：Attention is All You Need · Karpathy 《let's build GPT》视频 · Lilian Weng 《Attention?》</div>
+            <div class="wk-do"><strong>做</strong>：clone karpathy/nanoGPT · 在自己 GPU 上 train 一遍 · 改一个 hparam 看 loss 变化</div>
+            <div class="wk-ship">→ 提交：自己 fork 加注释的 nanoGPT 仓库</div>
+          </div>
+        </li>
+
+        <li>
+          <div class="wk-num"><span class="lbl">Week</span><span class="n">2</span></div>
+          <div>
+            <h4>GPU + 内存层级 + roofline</h4>
+            <div class="wk-do"><strong>读</strong>：Horace 《making DL go brrrr》 · CUDA C Programming Guide ch1-5 · H100 white paper</div>
+            <div class="wk-do"><strong>做</strong>：用 nvidia-smi / nvprof 看 nanoGPT 训练 GPU util · 算 MFU</div>
+            <div class="wk-ship">→ blog post：分析 "我跑 nanoGPT MFU 多少 · 为什么"</div>
+          </div>
+        </li>
+
+        <li>
+          <div class="wk-num"><span class="lbl">Week</span><span class="n">3</span></div>
+          <div>
+            <h4>FlashAttention + Triton 入门</h4>
+            <div class="wk-do"><strong>读</strong>：FlashAttention 论文 + 2/3 摘要 · Triton tutorial 1-3</div>
+            <div class="wk-do"><strong>做</strong>：跟 Triton tutorial 写 vector add + softmax + matmul · 看 FA Triton 实现源码</div>
+            <div class="wk-ship">→ GitHub repo：自己实现的 simplified flash attention triton kernel + benchmark</div>
+          </div>
+        </li>
+
+        <li>
+          <div class="wk-num"><span class="lbl">Week</span><span class="n">4</span></div>
+          <div>
+            <h4>vLLM 源码精读 + PagedAttention</h4>
+            <div class="wk-do"><strong>读</strong>：vLLM 论文 · vLLM 源码 <code>core/scheduler.py</code> + <code>worker/model_runner.py</code> · vLLM 官方 blog</div>
+            <div class="wk-do"><strong>做</strong>：本地 vLLM serve Llama-3 8B · 测 throughput vs HF transformers · 加自定义 metric</div>
+            <div class="wk-ship">→ 提交：能讲清 vLLM 一次 forward 的完整调用栈</div>
+          </div>
+        </li>
+
+        <li>
+          <div class="wk-num"><span class="lbl">Week</span><span class="n">5</span></div>
+          <div>
+            <h4>分布式训练 1 · DDP / FSDP / ZeRO</h4>
+            <div class="wk-do"><strong>读</strong>：ZeRO 论文 · FSDP 论文 · HuggingFace multi-GPU training 文档</div>
+            <div class="wk-do"><strong>做</strong>：在 2-4 GPU 上跑 FSDP 训 7B 模型 · 改 sharding 策略观察显存</div>
+            <div class="wk-ship">→ blog post：FSDP vs DeepSpeed ZeRO-3 实测对比</div>
+          </div>
+        </li>
+
+        <li>
+          <div class="wk-num"><span class="lbl">Week</span><span class="n">6</span></div>
+          <div>
+            <h4>分布式训练 2 · Megatron 3D + 通信优化</h4>
+            <div class="wk-do"><strong>读</strong>：Megatron-LM 论文 + Megatron-LM scaling 论文 · NCCL user guide</div>
+            <div class="wk-do"><strong>做</strong>：跑 torchtitan · 试 TP=2 + FSDP 组合 · 用 nsys 看通信占比</div>
+            <div class="wk-ship">→ 在 torchtitan 找一个 good first issue 提 PR</div>
+          </div>
+        </li>
+
+        <li>
+          <div class="wk-num"><span class="lbl">Week</span><span class="n">7</span></div>
+          <div>
+            <h4>量化 · GPTQ / AWQ / FP8</h4>
+            <div class="wk-do"><strong>读</strong>：GPTQ 论文 · AWQ 论文 · DeepSeek-V3 §3 (FP8 训练)</div>
+            <div class="wk-do"><strong>做</strong>：用 AutoAWQ 量化 Llama-3 8B → 跑 vLLM 测延迟 + 准确率</div>
+            <div class="wk-ship">→ blog post：W4A16 vs W8A8 vs FP16 推理性能对比</div>
+          </div>
+        </li>
+
+        <li>
+          <div class="wk-num"><span class="lbl">Week</span><span class="n">8</span></div>
+          <div>
+            <h4>SGLang + Spec Decoding + Long context</h4>
+            <div class="wk-do"><strong>读</strong>：SGLang 论文 · EAGLE 论文 · Mooncake / DistServe 论文</div>
+            <div class="wk-do"><strong>做</strong>：用 SGLang 起 server · 开 spec decoding · 测 1M context 性能</div>
+            <div class="wk-ship">→ 提交：能讲清 spec decoding 数学原理</div>
+          </div>
+        </li>
+
+        <li>
+          <div class="wk-num"><span class="lbl">Week</span><span class="n">9</span></div>
+          <div>
+            <h4>MoE 训练 + 推理</h4>
+            <div class="wk-do"><strong>读</strong>：Switch Transformer · Mixtral 论文 · DeepSeek-V3 全文 · MegaBlocks 论文</div>
+            <div class="wk-do"><strong>做</strong>：vLLM 起 Mixtral 8x7B · 看 expert routing 分布</div>
+            <div class="wk-ship">→ blog post：MoE 推理为什么这么难</div>
+          </div>
+        </li>
+
+        <li>
+          <div class="wk-num"><span class="lbl">Week</span><span class="n">10</span></div>
+          <div>
+            <h4>向量库 + RAG infra</h4>
+            <div class="wk-do"><strong>读</strong>：HNSW / DiskANN / PQ 论文 · Pinecone Learn 全部</div>
+            <div class="wk-do"><strong>做</strong>：用 Faiss 在 1M 向量上跑 IVF-PQ + HNSW · 用 Qdrant 起服务 · 接 LangChain</div>
+            <div class="wk-ship">→ GitHub demo：1M chunks 的 RAG pipeline · 端到端</div>
+          </div>
+        </li>
+
+        <li>
+          <div class="wk-num"><span class="lbl">Week</span><span class="n">11</span></div>
+          <div>
+            <h4>平台 · K8s / Ray / 调度</h4>
+            <div class="wk-do"><strong>读</strong>：Ray 文档 · KubeRay · Kueue / Volcano 文档</div>
+            <div class="wk-do"><strong>做</strong>：minikube + KubeRay 跑 Ray Serve 部署 vLLM · 配 HPA</div>
+            <div class="wk-ship">→ 提交：能画出 K8s GPU pod 调度全流程图</div>
+          </div>
+        </li>
+
+        <li>
+          <div class="wk-num"><span class="lbl">Week</span><span class="n">12</span></div>
+          <div>
+            <h4>系统设计 + 模拟面试</h4>
+            <div class="wk-do"><strong>读</strong>：本手册 §12 通读 3 遍 · 找 3 个朋友模拟面试</div>
+            <div class="wk-do"><strong>做</strong>：完整复盘前 11 周所有项目 · 整理成 GitHub README + Notion 学习笔记</div>
+            <div class="wk-ship">→ 投简历 · 第一次真面试</div>
+          </div>
+        </li>
+      </ol>
+
+      <h3 id="s-13-2"><span class="num">§13.2</span>必读 25 篇论文（按重要性排序）</h3>
+      <ol>
+        <li><strong>Attention is All You Need</strong> (Vaswani 2017) — transformer 起点</li>
+        <li><strong>FlashAttention</strong> (Dao 2022) + <strong>FA-2</strong> (2023) + <strong>FA-3</strong> (2024)</li>
+        <li><strong>vLLM / PagedAttention</strong> (Kwon 2023) — 推理界改变格局之作</li>
+        <li><strong>SGLang / RadixAttention</strong> (Zheng 2024)</li>
+        <li><strong>ZeRO</strong> (Rajbhandari 2020) — 训练显存优化奠基</li>
+        <li><strong>Megatron-LM</strong> (Shoeybi 2019) + <strong>Megatron Scaling</strong> (2021)</li>
+        <li><strong>FSDP</strong> (Zhao 2023)</li>
+        <li><strong>Llama 3</strong> (2024) — 最完整工程报告</li>
+        <li><strong>DeepSeek-V3</strong> (2024) — FP8 + MoE 工程典范</li>
+        <li><strong>Orca / Continuous Batching</strong> (OSDI 2022)</li>
+        <li><strong>Mooncake</strong> (Moonshot 2024) — Disaggregated 实战</li>
+        <li><strong>EAGLE</strong> (Li 2024) — Spec decoding 当下 SOTA</li>
+        <li><strong>GPTQ</strong> (Frantar 2022) + <strong>AWQ</strong> (Lin 2023)</li>
+        <li><strong>SmoothQuant</strong> (Xiao 2022)</li>
+        <li><strong>QLoRA</strong> (Dettmers 2023)</li>
+        <li><strong>Mixtral / Switch Transformer</strong> (MoE 经典)</li>
+        <li><strong>Ring Attention</strong> (Liu 2023) — 长 context</li>
+        <li><strong>HNSW</strong> (Malkov 2016)</li>
+        <li><strong>DiskANN</strong> (NeurIPS 2019)</li>
+        <li><strong>Product Quantization</strong> (Jegou 2011)</li>
+        <li><strong>GShard</strong> (Lepikhin 2020) — 稀疏模型并行</li>
+        <li><strong>Pathways</strong> (Barham 2022) — Google 大规模训练系统</li>
+        <li><strong>StreamingLLM</strong> (Xiao 2023) — KV cache offload</li>
+      </ol>
+
+      <h3 id="s-13-3"><span class="num">§13.3</span>必读源码 6 个</h3>
+      <ol>
+        <li><a href="https://github.com/karpathy/nanoGPT" target="_blank">karpathy/nanoGPT</a> — 看完知道训练循环长啥样</li>
+        <li><a href="https://github.com/Dao-AILab/flash-attention" target="_blank">Dao-AILab/flash-attention</a> — Triton + CUDA 实现都有</li>
+        <li><a href="https://github.com/vllm-project/vllm" target="_blank">vllm-project/vllm</a> — 重点看 <code>core/scheduler.py</code> + <code>attention/</code> + <code>model_executor/</code></li>
+        <li><a href="https://github.com/sgl-project/sglang" target="_blank">sgl-project/sglang</a> — RadixAttention 实现</li>
+        <li><a href="https://github.com/pytorch/torchtitan" target="_blank">pytorch/torchtitan</a> — FSDP2 + TP 现代示范</li>
+        <li><a href="https://github.com/NVIDIA/Megatron-LM" target="_blank">NVIDIA/Megatron-LM</a> — 工业级 3D parallelism</li>
+      </ol>
+
+      <h3 id="s-13-4"><span class="num">§13.4</span>必看视频 / blog 渠道</h3>
+      <ul>
+        <li class="video"><a href="https://www.youtube.com/@AndrejKarpathy" target="_blank">Andrej Karpathy YouTube</a> — 入门必看</li>
+        <li class="video"><a href="https://www.youtube.com/playlist?list=PLAMHV77MSKJ4Z4OXqao1gRdfQK7VQYAXb" target="_blank">GPU Mode</a> — CUDA / Triton / kernel 实战社群</li>
+        <li><a href="https://www.semianalysis.com/" target="_blank">SemiAnalysis</a> — AI 硬件 / infra 行业最权威分析</li>
+        <li><a href="https://blog.vllm.ai/" target="_blank">vLLM blog</a></li>
+        <li><a href="https://lmsys.org/blog/" target="_blank">LMSYS blog</a></li>
+        <li><a href="https://lilianweng.github.io/" target="_blank">Lilian Weng's blog</a> — 概念深入易懂</li>
+        <li><a href="https://horace.io/" target="_blank">Horace He's blog</a> — PyTorch 性能内行</li>
+        <li><a href="https://thonking.substack.com/" target="_blank">Thonking</a> — Horace 的 substack · 性能优化深度文</li>
+        <li><a href="https://blog.eleuther.ai/" target="_blank">EleutherAI blog</a> — 开源训练经验</li>
+        <li><a href="https://huggingface.co/blog" target="_blank">HuggingFace blog</a></li>
+      </ul>
+
+      <h3 id="s-13-5"><span class="num">§13.5</span>实战项目库（找 issue / 提 PR）</h3>
+      <p>不要只读，<strong>到这些 repo 找 "good first issue"</strong>—— 提个 PR 比 100 篇 blog 简历加分。</p>
+      <ul>
+        <li><a href="https://github.com/vllm-project/vllm/labels/good%20first%20issue" target="_blank">vLLM good first issues</a></li>
+        <li><a href="https://github.com/sgl-project/sglang/labels/good%20first%20issue" target="_blank">SGLang good first issues</a></li>
+        <li><a href="https://github.com/pytorch/torchtitan/issues" target="_blank">torchtitan issues</a></li>
+        <li><a href="https://github.com/huggingface/transformers/labels/Good%20First%20Issue" target="_blank">transformers good first issues</a></li>
+        <li><a href="https://github.com/NVIDIA/TensorRT-LLM/issues" target="_blank">TensorRT-LLM issues</a></li>
+      </ul>
+
+      <h3 id="s-13-6"><span class="num">§13.6</span>面试公司情报</h3>
+      <table>
+        <thead><tr><th>公司类型</th><th>侧重</th><th>典型公司</th></tr></thead>
+        <tbody>
+          <tr><td>Foundation Model</td><td>训练 infra · MoE · FP8 · 大集群</td><td>OpenAI · Anthropic · DeepSeek · 月之暗面 · 智谱 · MiniMax</td></tr>
+          <tr><td>Inference Infra</td><td>vLLM 内部 · 量化 · spec · disaggregated</td><td>OpenAI Inference · Anthropic · 字节 ByteServing · 阿里 DashScope</td></tr>
+          <tr><td>云厂 AI Platform</td><td>K8s · 调度 · 多租户 · MLOps</td><td>AWS SageMaker · GCP Vertex · 阿里 PAI · 腾讯 TI</td></tr>
+          <tr><td>Vector DB / RAG</td><td>HNSW / DiskANN · 检索算法 · 分布式</td><td>Pinecone · Qdrant · Milvus · Weaviate · 字节 Veloce</td></tr>
+          <tr><td>HW + System</td><td>GPU kernel · 编译器 · 协设计</td><td>NVIDIA · AMD · 寒武纪 · 摩尔线程</td></tr>
+        </tbody>
+      </table>
+
+      <div class="pull">
+        AI Infra 不是用 LLM，是<strong>造让 LLM 能跑</strong>的脚手架。
+        <cite>—— 这本手册</cite>
+      </div>
+    </section>
+
+    <!-- ============== Glossary ============== -->
+    <section id="glossary">
+      <header class="ch-head">
+        <span class="badge">附录 · 术语</span>
+        <h2>100 词术语表</h2>
+        <p class="lede">面试听到任何一个不认识立刻查回来 · 按字母序</p>
+      </header>
+
+      <dl class="glossary">
+        <dt>Activation Recompute <small>activation checkpointing</small></dt>
+        <dd>反向时不存 activation 而是重算，省显存换计算时间</dd>
+
+        <dt>All-Reduce <small>NCCL primitive</small></dt>
+        <dd>每节点贡献一份数据，最终所有节点都拿到归约结果</dd>
+
+        <dt>All-to-All <small>NCCL primitive</small></dt>
+        <dd>每节点把自己的数据按目标分块发送 · MoE expert routing 必备</dd>
+
+        <dt>ANN <small>Approximate Nearest Neighbor</small></dt>
+        <dd>近似最近邻搜索 · HNSW / IVF / DiskANN 都是 ANN 算法</dd>
+
+        <dt>AWQ <small>Activation-aware Weight Quantization</small></dt>
+        <dd>2023 SOTA 4-bit 量化 · 给重要 weight 更高精度</dd>
+
+        <dt>BF16 <small>Brain Float 16</small></dt>
+        <dd>16 位浮点 · 跟 FP32 同范围但精度低 · 训练默认</dd>
+
+        <dt>Capacity Factor <small>MoE</small></dt>
+        <dd>每 expert 最多接收的 token 数 · 防止热点</dd>
+
+        <dt>Continuous Batching <small>iter-level scheduling</small></dt>
+        <dd>每 step 重组 batch · 短请求不等长请求 · throughput 5-10x</dd>
+
+        <dt>CUDA Graph <small>kernel batching</small></dt>
+        <dd>把 N 个 kernel launch 录成 1 个 graph · 减少 launch overhead</dd>
+
+        <dt>DCGM <small>Data Center GPU Manager</small></dt>
+        <dd>NVIDIA 出品的集群级 GPU 监控 · Prometheus 兼容</dd>
+
+        <dt>DeepSpeed <small>Microsoft</small></dt>
+        <dd>微软的分布式训练库 · ZeRO 出处</dd>
+
+        <dt>DiskANN <small>Microsoft 2019</small></dt>
+        <dd>SSD-resident graph index · 10B 向量单机搜索</dd>
+
+        <dt>Disaggregated Serving <small>prefill/decode split</small></dt>
+        <dd>把 prefill 和 decode 跑在不同 GPU pool · throughput 2-5x</dd>
+
+        <dt>DTensor <small>PyTorch distributed tensor</small></dt>
+        <dd>带分布式 layout 元信息的 tensor · FSDP2 / TP 共同 backbone</dd>
+
+        <dt>EAGLE <small>2024</small></dt>
+        <dd>当前 SOTA spec decoding 算法之一 · 用 hidden state 预测</dd>
+
+        <dt>Expert Parallelism <small>EP</small></dt>
+        <dd>把 MoE expert 切到不同 GPU · 配 all-to-all 通信</dd>
+
+        <dt>FlashAttention <small>Tri Dao 2022</small></dt>
+        <dd>tiling + online softmax · HBM I/O 从 O(N²) 降到 O(N)</dd>
+
+        <dt>FP8 <small>E4M3 / E5M2</small></dt>
+        <dd>8 位浮点 · H100/B200 原生支持 · DeepSeek-V3 训练用</dd>
+
+        <dt>FSDP <small>Fully Sharded Data Parallel</small></dt>
+        <dd>PyTorch 原生 ZeRO-3 · 2026 新项目首选 FSDP2</dd>
+
+        <dt>GGUF <small>llama.cpp format</small></dt>
+        <dd>边缘部署量化模型容器格式 · Ollama 用</dd>
+
+        <dt>Gang Scheduling <small>K8s</small></dt>
+        <dd>要么全部 pod 起、要么都不起 · 多机训练必备</dd>
+
+        <dt>Goodput <small>SLO-meeting throughput</small></dt>
+        <dd>满足 SLO 的有效 throughput · 比 throughput 更准</dd>
+
+        <dt>GPTQ <small>2022</small></dt>
+        <dd>逐列量化 + 误差补偿 · 4-bit 推理经典</dd>
+
+        <dt>GPUDirect RDMA</dt>
+        <dd>跨机 GPU 显存直接互传 · 不经 CPU 不经 host RAM</dd>
+
+        <dt>GQA <small>Grouped Query Attention</small></dt>
+        <dd>Q heads 分组共享 KV · 缩 KV cache 不掉质量</dd>
+
+        <dt>HBM <small>High Bandwidth Memory</small></dt>
+        <dd>GPU 显存 · H100 80GB / 3.35TB/s · B200 192GB / 8TB/s</dd>
+
+        <dt>HFU <small>Hardware FLOPs Utilization</small></dt>
+        <dd>含 recompute 的 FLOPs 利用率 · 比 MFU 高</dd>
+
+        <dt>HNSW <small>Hierarchical Navigable Small World</small></dt>
+        <dd>当前最流行向量索引算法 · O(log N) 检索</dd>
+
+        <dt>IB <small>InfiniBand</small></dt>
+        <dd>专用低延迟高带宽网络 · 跨机 GPU 互联首选 · NDR 400Gb</dd>
+
+        <dt>ITL <small>Inter-Token Latency</small></dt>
+        <dd>同 TPOT · decode 阶段每 token 间隔</dd>
+
+        <dt>IVF <small>Inverted File Index</small></dt>
+        <dd>K-means 聚簇 + 倒排 · Faiss 经典实现</dd>
+
+        <dt>K-V Cache</dt>
+        <dd>已计算 token 的 K/V 张量缓存 · decode 必读 · 大头显存</dd>
+
+        <dt>Kueue <small>K8s batch scheduler</small></dt>
+        <dd>K8s 上的批/队列调度 · 配 PyTorch operator 用</dd>
+
+        <dt>Launch Overhead</dt>
+        <dd>每 CUDA kernel 启动 5-10μs CPU 开销 · CUDA Graph 解</dd>
+
+        <dt>Load Balancing Loss <small>MoE aux loss</small></dt>
+        <dd>鼓励 router 把 token 均衡分给 experts</dd>
+
+        <dt>LoRA <small>Low-Rank Adaptation</small></dt>
+        <dd>只训练 low-rank 增量矩阵 · 微调省显存</dd>
+
+        <dt>Master Weight</dt>
+        <dd>FP32 副本 · BF16 训练时累加梯度用 · 防 underflow</dd>
+
+        <dt>Medusa <small>spec decoding</small></dt>
+        <dd>主模型加多个 prediction head 直接预测后续 token</dd>
+
+        <dt>MFU <small>Model FLOPs Utilization</small></dt>
+        <dd>实测 FLOPs / 硬件峰值 · 30-50% 算优秀</dd>
+
+        <dt>MIG <small>Multi-Instance GPU</small></dt>
+        <dd>H100 硬切成 7 个独立 instance · 多租户隔离</dd>
+
+        <dt>Mixed Precision</dt>
+        <dd>BF16 forward/backward + FP32 master weight</dd>
+
+        <dt>MoE <small>Mixture of Experts</small></dt>
+        <dd>稀疏激活 · 总参大但每 token FLOPs 小 · DeepSeek-V3 / Mixtral</dd>
+
+        <dt>MTP <small>Multi-Token Prediction</small></dt>
+        <dd>训练时直接学多 token 预测 · DeepSeek-V3 推理 1.8x 加速</dd>
+
+        <dt>NCCL <small>NVIDIA Collective</small></dt>
+        <dd>NVIDIA 集合通信库 · all-reduce / all-gather 等</dd>
+
+        <dt>Nsight Systems <small>nsys</small></dt>
+        <dd>NVIDIA timeline profiler · 看 CPU/GPU 同步 + kernel</dd>
+
+        <dt>NVLink</dt>
+        <dd>同机 GPU 直连 · H100 900GB/s · B200 1.8TB/s</dd>
+
+        <dt>NVSwitch</dt>
+        <dd>NVLink 交换芯片 · 让任意两 GPU full-mesh</dd>
+
+        <dt>Online Softmax</dt>
+        <dd>流式算 softmax 维护 running max + sum · FlashAttention 关键</dd>
+
+        <dt>OPQ <small>Optimized PQ</small></dt>
+        <dd>旋转后 PQ · 提高量化质量</dd>
+
+        <dt>PagedAttention <small>vLLM</small></dt>
+        <dd>类 OS 虚拟内存的 KV cache 分页 · 显存利用率 96%+</dd>
+
+        <dt>Pipeline Parallel <small>PP</small></dt>
+        <dd>按 layer 切到不同 GPU · 跨节点 friendly</dd>
+
+        <dt>PQ <small>Product Quantization</small></dt>
+        <dd>向量切段独立量化 · 384x 压缩</dd>
+
+        <dt>Prefill</dt>
+        <dd>处理 prompt 全部 token · compute-bound · 决定 TTFT</dd>
+
+        <dt>Prefix Caching <small>vLLM APC</small></dt>
+        <dd>跨 request 复用 system prompt 的 KV cache</dd>
+
+        <dt>QLoRA</dt>
+        <dd>4-bit 量化 + LoRA 微调 · 单 GPU 微调 65B</dd>
+
+        <dt>RadixAttention <small>SGLang</small></dt>
+        <dd>用 radix tree 索引历史 prefix · 比 vLLM APC 更激进</dd>
+
+        <dt>Rail-Optimized <small>cluster topology</small></dt>
+        <dd>同 rank GPU 走同 IB rail · 减少 all-reduce 撞包</dd>
+
+        <dt>RDMA <small>Remote Direct Memory Access</small></dt>
+        <dd>CPU 不参与的内存到内存传输 · IB / RoCE 都支持</dd>
+
+        <dt>Recompute <small>activation</small></dt>
+        <dd>见 Activation Recompute</dd>
+
+        <dt>Ridge Point <small>roofline</small></dt>
+        <dd>compute 和 bandwidth 平衡点 · H100 BF16 ≈ 295 FLOPs/byte</dd>
+
+        <dt>Ring Attention</dt>
+        <dd>Attention 按 seq 切 + KV ring 传 · 1M+ context</dd>
+
+        <dt>RoCE <small>RDMA over Converged Ethernet</small></dt>
+        <dd>RDMA 跑在以太网上 · IB 替代品</dd>
+
+        <dt>Roofline Model</dt>
+        <dd>用 arithmetic intensity 区分 compute / memory bound</dd>
+
+        <dt>Sequence Parallel <small>SP</small></dt>
+        <dd>按 seq 维度切 activation · Megatron 节省 activation 显存</dd>
+
+        <dt>SLO <small>Service Level Objective</small></dt>
+        <dd>性能/可用性目标 · 推理常用 P95 TTFT &lt; 1s</dd>
+
+        <dt>SM <small>Streaming Multiprocessor</small></dt>
+        <dd>GPU 计算单元 · H100 有 132 个</dd>
+
+        <dt>SMEM <small>Shared Memory</small></dt>
+        <dd>SM 内 ~256KB 高速 scratch · 30 TB/s</dd>
+
+        <dt>SmoothQuant</dt>
+        <dd>把 outlier 从 activation 挪到 weight · W8A8 可行</dd>
+
+        <dt>Speculative Decoding</dt>
+        <dd>小模型猜 N token · 大模型 verify · 1.5-3.5x 加速</dd>
+
+        <dt>SP <small>Sequence Parallel</small></dt>
+        <dd>见上 · 注意别跟 SP=Sequence Parallelism 混淆</dd>
+
+        <dt>Tensor Parallel <small>TP</small></dt>
+        <dd>切层内矩阵 · 必须放 NVLink 内</dd>
+
+        <dt>TP <small>Tensor Parallel</small></dt>
+        <dd>同上</dd>
+
+        <dt>Tile-wise Scaling <small>FP8</small></dt>
+        <dd>每 tile 独立 scale · DeepSeek-V3 FP8 训练关键</dd>
+
+        <dt>TPOT <small>Time Per Output Token</small></dt>
+        <dd>同 ITL · decode 速度</dd>
+
+        <dt>Triton <small>OpenAI</small></dt>
+        <dd>Python DSL 写 GPU kernel · 80-95% CUDA 性能</dd>
+
+        <dt>TRT-LLM <small>TensorRT-LLM</small></dt>
+        <dd>NVIDIA 推理引擎 · FP8 一流 · 极致 NVIDIA stack</dd>
+
+        <dt>TTFT <small>Time To First Token</small></dt>
+        <dd>首 token 延迟 · 由 prefill + queue 决定</dd>
+
+        <dt>Vamana <small>DiskANN graph</small></dt>
+        <dd>DiskANN 用的 graph 构建算法 · 比 HNSW 更紧凑</dd>
+
+        <dt>vLLM <small>UC Berkeley</small></dt>
+        <dd>PagedAttention 鼻祖 · 推理引擎社区标杆</dd>
+
+        <dt>Volcano <small>K8s scheduler</small></dt>
+        <dd>K8s 批调度 · gang scheduling · 国内主流</dd>
+
+        <dt>WGMMA <small>Hopper instruction</small></dt>
+        <dd>H100 warp-group MMA · async tensor core 操作</dd>
+
+        <dt>YaRN <small>position scaling</small></dt>
+        <dd>长 context 用的 RoPE 调整 · 训练时短推理时长</dd>
+
+        <dt>ZeRO <small>Zero Redundancy Optimizer</small></dt>
+        <dd>DeepSpeed 出品 · 在 DP 维度 shard model state</dd>
+
+        <dt>ZeRO-1 / 2 / 3</dt>
+        <dd>分别 shard optim / + grad / + weight</dd>
+
+        <dt>ZeRO-Inference</dt>
+        <dd>把权重 offload 到 CPU · 极小显存推理大模型</dd>
+
+        <dt>ScaNN <small>Google 2020</small></dt>
+        <dd>Anisotropic VQ · Google 出品的 ANN · 适合大量数据</dd>
+
+        <dt>Selective Recompute <small>Megatron</small></dt>
+        <dd>只重算最贵 op (attention) · 比全 recompute 更省时间</dd>
+
+        <dt>Sharded Checkpoint</dt>
+        <dd>每 GPU 只写自己的 shard · 大幅缩短 checkpoint 时间</dd>
+
+        <dt>Streaming LLM</dt>
+        <dd>KV cache 滑动窗口 + sink token · 长对话不爆显存</dd>
+
+        <dt>Switch Transformer</dt>
+        <dd>2021 Google MoE 经典 · top-1 routing</dd>
+
+        <dt>Topology-Aware Scheduling</dt>
+        <dd>调度感知 NVLink/rail 亲和 · 训练性能关键</dd>
+
+        <dt>Throughput</dt>
+        <dd>token/s 总产量 · 跟 latency 是 trade-off</dd>
+
+        <dt>XID Error</dt>
+        <dd>NVIDIA driver 报告的 GPU 错误码 · XID 79 = GPU 掉了</dd>
+
+        <dt>Goodput vs Throughput</dt>
+        <dd>Goodput 只算满足 SLO 的 · 是真正容量指标</dd>
+      </dl>
+    </section>
+
+    <!-- ============== Footer ============== -->
+    <footer class="colophon">
+      <div class="row"><span><strong>AI Infra · 从硬件到面试</strong> · v1.0 · 2026-05</span><span>13 chapters · 80 Qs · 12-week roadmap · 100 terms</span></div>
+      <div class="row">
+        <span>姊妹手册 · <a href="learn.html">应用 · 从 0 到面试</a> · <a href="enterprise.html">企业级交付</a> · <a href="index.html">实现详解 Field Guide</a></span>
+        <span><a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/.../taotao-agent</a></span>
+      </div>
+      <div class="row"><span>用 Fraunces · Lora · Outfit · JetBrains Mono 排版</span><span>构建 / 写于 2026 春</span></div>
+    </footer>
+
+  </main>
+</div>
+
+<script>
+  (function() {
+    var links = document.querySelectorAll('.toc a[href^="#"]');
+    var sections = Array.prototype.map.call(links, function(a) {
+      var el = document.querySelector(a.getAttribute('href'));
+      return { link: a, el: el };
+    }).filter(function(x) { return x.el; });
+    function onScroll() {
+      var y = window.scrollY + 80;
+      var current = sections[0];
+      sections.forEach(function(s) {
+        if (s.el.offsetTop <= y) current = s;
+      });
+      sections.forEach(function(s) { s.link.classList.toggle('active', s === current); });
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+</body>
+</html>
