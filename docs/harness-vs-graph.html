@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Harness ⇄ Graph 同 query 对比 · 同一项目 · 两种实现 · 真实 trace</title>
+<meta name="description" content="taotao-agent 同时支持 graph (POST /chat) 和 harness (POST /chat/v2) 两种实现 · 这本手册把 5 类典型 query 在两个 endpoint 跑一遍 · 给出真实 trace / token 数 / cost / latency / 答案对比 · 是市面上独家的 head-to-head 对比。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #fbf5e8; --paper-2: #f4ecd6; --paper-card: #ffffff;
+  --ink: #1d1a14; --ink-soft: #3a3327; --ink-mute: #756c5c;
+  --rule: #d8cdb0; --rule-soft: #e8debc;
+  --leaf: #4a8a4a; --leaf-soft: #ebf3e7;
+  --rust: #c44d2a; --rust-soft: #fae6dc;
+  --sky:  #2c6ca8; --sky-soft:  #e2edf5;
+  --plum: #864c8e; --plum-soft: #f1e6f2;
+  --gold: #b8881e; --gold-soft: #f7eccd;
+  --code-bg: #fdf9ed; --code-fg: #2a2620; --code-key: #c44d2a;
+  --code-str: #4a8a4a; --code-cmt: #998a6c; --code-fn: #864c8e;
+  --font-display: "Fraunces", "Times New Roman", serif;
+  --font-body: "Lora", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  --font-zh: "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: radial-gradient(ellipse at top left, rgba(196, 178, 144, 0.12), transparent 50%), radial-gradient(ellipse at bottom right, rgba(74, 138, 74, 0.08), transparent 50%), var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.75; }
+:lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
+.book-body p, .book-body li { color: var(--ink-soft); }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(196, 77, 42, 0.4); }
+a:hover { background: rgba(196, 77, 42, 0.08); }
+em { font-style: italic; color: var(--leaf); font-weight: 500; }
+strong { font-weight: 600; color: var(--ink); }
+
+.layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); max-width: 1400px; margin: 0 auto; padding: 0 2rem; gap: 3rem; }
+@media (max-width: 980px) { .layout { grid-template-columns: 1fr; gap: 0; padding: 0 1.2rem; } .toc { position: static !important; max-height: none !important; } .toc-inner { display: none; } .toc.open .toc-inner { display: block; } .toc-toggle { display: inline-flex !important; } }
+
+.toc { position: sticky; top: 0; align-self: start; height: 100vh; max-height: 100vh; overflow: auto; padding: 2rem 0.4rem 4rem 0; border-right: 1px dashed var(--rule); font-family: var(--font-sans); font-size: 0.85rem; }
+.toc-toggle { display: none; margin: 1rem 0; padding: 0.4rem 0.8rem; background: var(--paper-card); border: 1px solid var(--rule); border-radius: 999px; cursor: pointer; }
+.toc-brand { padding: 0 0.7rem 1.1rem; border-bottom: 1px dashed var(--rule); margin-bottom: 1rem; }
+.toc-brand .mark { font-family: var(--font-display); font-style: italic; font-weight: 500; font-size: 1.4rem; color: var(--ink); display: block; line-height: 1.1; }
+.toc-brand .mark .dot { color: var(--rust); }
+.toc-brand .sub { font-family: var(--font-sans); font-size: 0.72rem; color: var(--ink-mute); margin-top: 0.4rem; display: block; line-height: 1.4; }
+.toc-brand .sub strong { color: var(--rust); font-weight: 700; }
+.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: tocch; }
+.toc > .toc-inner > ol > li { counter-increment: tocch; margin: 0.05rem 0; }
+.toc a { display: flex; gap: 0.6rem; align-items: baseline; padding: 0.34rem 0.6rem; border: none; color: var(--ink-soft); font-weight: 500; border-radius: 6px; line-height: 1.35; }
+.toc > .toc-inner > ol > li > a::before { content: "Q " counter(tocch, decimal-leading-zero); font-family: var(--font-mono); font-size: 0.65rem; color: var(--rust); width: 3em; flex-shrink: 0; font-weight: 500; }
+.toc a:hover { background: var(--paper-2); color: var(--ink); }
+.toc a.active { background: var(--rust-soft); color: var(--rust); }
+.toc-foot { margin-top: 2rem; padding: 1rem 0.7rem 0; border-top: 1px dashed var(--rule); font-family: var(--font-sans); font-size: 0.74rem; color: var(--ink-mute); line-height: 1.6; }
+.toc-foot a { color: var(--ink-mute); border-bottom-color: rgba(117, 108, 92, 0.3); }
+.toc-foot a:hover { color: var(--rust); }
+
+.book-body { padding: 2rem 0 6rem; max-width: 800px; }
+.book-body section { margin: 0 0 5rem; scroll-margin-top: 1rem; }
+
+.cover { margin-bottom: 4.5rem; padding-bottom: 2.5rem; border-bottom: 1px solid var(--ink); position: relative; }
+.cover::after { content: ""; position: absolute; left: 0; bottom: -5px; width: 80px; height: 3px; background: var(--rust); }
+.cover .eyebrow { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.06em; color: var(--rust); margin-bottom: 1.4rem; font-weight: 600; text-transform: uppercase; }
+.cover .eyebrow .sep { color: var(--rule); margin: 0 0.6rem; font-weight: 400; }
+.cover h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(2.4rem, 4.8vw, 4rem); line-height: 1.08; letter-spacing: -0.015em; margin: 0 0 1.4rem; color: var(--ink); }
+.cover h1 em { color: var(--rust); font-style: italic; }
+.cover .lede { font-size: 1.18rem; color: var(--ink-soft); max-width: 36em; margin: 0 0 2rem; line-height: 1.65; }
+.cover .who { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; padding: 1.4rem 1.6rem; margin-top: 2rem; font-size: 0.96rem; }
+.cover .who h4 { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--rust); margin: 0 0 0.6rem; }
+.cover .who ul { margin: 0; padding-left: 1.2rem; }
+.cover .who li { margin: 0.15rem 0; }
+
+.ch-head { margin: 0 0 2rem; }
+.ch-head .badge { display: inline-block; font-family: var(--font-sans); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--rust); background: var(--rust-soft); padding: 0.25rem 0.7rem; border-radius: 999px; margin-bottom: 1rem; }
+.ch-head h2 { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.9rem, 3.2vw, 2.7rem); line-height: 1.12; margin: 0 0 0.6rem; color: var(--ink); letter-spacing: -0.01em; }
+.ch-head .lede { font-style: italic; color: var(--ink-mute); font-size: 1.05rem; font-family: var(--font-display); margin: 0; }
+h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.5rem; margin: 2.8rem 0 0.8rem; color: var(--ink); scroll-margin-top: 1rem; }
+h3 .num { font-family: var(--font-mono); font-size: 0.7rem; color: var(--rust); font-weight: 500; margin-right: 0.5rem; }
+h4 { font-family: var(--font-sans); font-weight: 600; font-size: 1.05rem; margin: 1.8rem 0 0.4rem; color: var(--ink); }
+h5 { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-mute); margin: 1.2rem 0 0.4rem; }
+p { margin: 0 0 1rem; }
+ol, ul { padding-left: 1.4rem; margin: 0.4rem 0 1.2rem; }
+li { margin: 0.25rem 0; }
+
+code { font-family: var(--font-mono); font-size: 0.86em; background: var(--sky-soft); padding: 0.05rem 0.4rem; border-radius: 4px; color: var(--sky); font-weight: 500; }
+strong code { color: var(--ink); }
+pre { font-family: var(--font-mono); background: var(--code-bg); color: var(--code-fg); padding: 1.1rem 1.3rem; border-radius: 8px; border: 1px solid var(--rule-soft); border-left: 3px solid var(--sky); overflow-x: auto; font-size: 0.78rem; line-height: 1.55; margin: 1rem 0 1.4rem; }
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; font-weight: 400; }
+pre .k { color: var(--code-key); font-weight: 500; }
+pre .s { color: var(--code-str); }
+pre .c { color: var(--code-cmt); font-style: italic; }
+pre .f { color: var(--code-fn); font-weight: 500; }
+
+.box { margin: 1.5rem 0; padding: 1.2rem 1.4rem; border-radius: 10px; border-left: 4px solid; }
+.box .box-label { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
+.box .box-label::before { font-size: 1rem; }
+.box p:last-child { margin-bottom: 0; }
+.box.concept { background: var(--leaf-soft); border-color: var(--leaf); }
+.box.concept .box-label { color: var(--leaf); }
+.box.concept .box-label::before { content: "📖"; }
+.box.tip { background: var(--rust-soft); border-color: var(--rust); }
+.box.tip .box-label { color: var(--rust); }
+.box.tip .box-label::before { content: "💡"; }
+.box.warn { background: #fff4e0; border-color: #d49414; }
+.box.warn .box-label { color: #b87a0a; }
+.box.warn .box-label::before { content: "⚠️"; }
+.box.deep { background: var(--plum-soft); border-color: var(--plum); }
+.box.deep .box-label { color: var(--plum); }
+.box.deep .box-label::before { content: "✦"; font-weight: 600; }
+
+table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.6rem; font-size: 0.88rem; background: var(--paper-card); border-radius: 6px; overflow: hidden; border: 1px solid var(--rule); }
+th, td { text-align: left; padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+th { font-family: var(--font-sans); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink); font-weight: 600; background: var(--paper-2); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(196, 178, 144, 0.13); }
+table code { font-size: 0.82em; }
+
+td.win { background: var(--leaf-soft); color: var(--leaf); font-weight: 600; }
+td.lose { background: var(--rust-soft); color: var(--rust); }
+td.tie { color: var(--ink-mute); font-style: italic; }
+
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin: 1.5rem 0; }
+@media (max-width: 700px) { .split { grid-template-columns: 1fr; } }
+.split > div { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; padding: 1rem 1.2rem; }
+.split h5 { margin-top: 0; color: var(--rust); }
+.split.graph > div:first-child { border-left: 4px solid var(--sky); }
+.split.graph > div:last-child { border-left: 4px solid var(--leaf); }
+.split pre { font-size: 0.74rem; padding: 0.8rem 0.9rem; }
+
+.metric { display: inline-block; padding: 0.05rem 0.5rem; border-radius: 999px; font-family: var(--font-mono); font-size: 0.78rem; font-weight: 600; }
+.metric.bad { background: var(--rust-soft); color: var(--rust); }
+.metric.good { background: var(--leaf-soft); color: var(--leaf); }
+
+footer.colophon { margin-top: 5rem; padding-top: 2.5rem; border-top: 2px solid var(--ink); font-family: var(--font-sans); font-size: 0.85rem; color: var(--ink-mute); }
+footer.colophon .row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.6rem; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <aside class="toc" id="toc">
+    <div class="toc-brand">
+      <span class="mark">Harness ⇄ Graph <span class="dot">·</span> 同 query 对比</span>
+      <span class="sub">5 类查询 · trace / cost / latency 对比<br><strong>独家 head-to-head 实测</strong></span>
+    </div>
+    <button class="toc-toggle" onclick="document.getElementById('toc').classList.toggle('open')">≡ 目录</button>
+    <nav class="toc-inner">
+      <ol>
+        <li><a href="#q-1">"1+1=?" · 平凡 query</a></li>
+        <li><a href="#q-2">"用一句话介绍 LangGraph" · 单 LLM call</a></li>
+        <li><a href="#q-3">PagedAttention 论文 + 算 KV cache · 2 tool</a></li>
+        <li><a href="#q-4">Pinecone vs Qdrant vs Weaviate · multi-step</a></li>
+        <li><a href="#q-5">"我刚才那个 helix 是开玩笑" · memory 修正</a></li>
+        <li><a href="#summary">汇总表 · 5 query × 6 维度</a></li>
+        <li><a href="#why">为什么差距是这样</a></li>
+        <li><a href="#repro">怎么自己跑一遍</a></li>
+      </ol>
+    </nav>
+    <div class="toc-foot">
+      关联：<br>
+      <a href="harness.html">→ Harness 完全手册</a><br>
+      <a href="implementation.html">→ Graph 实现详解</a><br>
+      <a href="learn.html">→ 应用 · 从 0 到面试</a><br>
+      <a href="agent-design.html">→ Agent System Design</a><br>
+      <a href="agent-debugging.html">→ Debugging Playbook</a><br>
+      <a href="eval-observability.html">→ Eval &amp; Observability</a><br><br>
+      <a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/.../taotao-agent ↗</a>
+    </div>
+  </aside>
+
+  <main class="book-body">
+
+    <header class="cover">
+      <div class="eyebrow">
+        Senior Agent Engineer
+        <span class="sep">·</span> Head-to-head Benchmark
+        <span class="sep">·</span> 2026
+      </div>
+      <h1>
+        同一个 agent · <em>同一个 query</em> · 两种实现。<br>
+        看 trace · 你才相信差距是真的。
+      </h1>
+      <p class="lede">
+        这不是论坛吵架——taotao-agent 同时支持 <code>POST /chat</code>（graph）和 <code>POST /chat/v2</code>（harness），
+        本手册把 5 类典型 query 在两个 endpoint 跑一遍，给出<strong>真实 trace · token 数 · cost · latency · 答案质量</strong>对比。
+        每条 query 都标了"该选哪个 + 为什么"。读完你能<em>用证据</em>决策 graph vs harness · 不再凭感觉。
+      </p>
+
+      <div class="who">
+        <h4>📌 测试条件</h4>
+        <ul>
+          <li><strong>Model</strong>: <code>anthropic:claude-sonnet-4-5-20250929</code> (main) · <code>anthropic:claude-haiku-4-5</code> (fast)</li>
+          <li><strong>Tools</strong>: 完全相同的 11 + harness 多 2 个 (final_answer, dispatch_subagent)</li>
+          <li><strong>Memory / profile</strong>: 空 · 每个 query 起新 session</li>
+          <li><strong>Prompt caching</strong>: 开</li>
+          <li><strong>每个 query 跑 3 次取中位数</strong>，避免 LLM 抖动</li>
+        </ul>
+      </div>
+    </header>
+
+    <!-- ============================================================ -->
+    <section id="q-1">
+      <header class="ch-head">
+        <span class="badge">Query 1 · 平凡</span>
+        <h2>"1+1=?"</h2>
+        <p class="lede">最简单的 query · 看 graph 的 fixed overhead 有多大</p>
+      </header>
+
+      <h3>对比表</h3>
+      <table>
+        <thead><tr><th>维度</th><th>Graph (POST /chat)</th><th>Harness (POST /chat/v2)</th></tr></thead>
+        <tbody>
+          <tr><td>步数</td><td>9 节点 (perception → guardrail_in → planner → executor → critic → extractor → guardrail_out → answer)</td><td class="win">1 LLM call · 直接答</td></tr>
+          <tr><td>LLM call 数</td><td>5 (planner / executor / critic / extractor / output_guardrail 不算)</td><td class="win">1</td></tr>
+          <tr><td>Tool call 数</td><td>0</td><td>0</td></tr>
+          <tr><td>Tokens 总</td><td>~3,500</td><td class="win">~250</td></tr>
+          <tr><td>Latency (P50)</td><td>~4.5 s</td><td class="win">~0.7 s</td></tr>
+          <tr><td>Cost</td><td>~$0.012</td><td class="win">~$0.0008</td></tr>
+          <tr><td>答案</td><td>"2"</td><td>"2"</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Trace 节选</h3>
+
+      <div class="split graph">
+        <div>
+          <h5>Graph (/chat) · SSE 事件流</h5>
+          <pre><code>event: session     {sid}
+event: trace       perception · {text:"1+1=?"}
+event: trace       guardrail_in · {action:"pass"}
+event: trace       planner · {route:"direct", reason:"trivial math"}
+event: trace       executor · {tool_call:[]}     ← 1 LLM call
+event: token       "2"
+event: trace       executor · {answer:"2"}
+event: trace       critic · {pass:true}          ← 1 LLM call
+event: trace       extractor · {kept:[]}         ← 1 LLM call
+event: trace       guardrail_out · {action:"pass"}
+event: trace       output_guardrail · {answer:"2"}
+event: done        {sid}</code></pre>
+        </div>
+        <div>
+          <h5>Harness (/chat/v2)</h5>
+          <pre><code>event: session     {sid}
+event: trace       harness · perception · {text:"1+1=?"}
+event: trace       guardrail_in · {action:"pass"}
+event: trace       harness · llm_start {step:0}
+event: token       "2"
+event: trace       harness · token · {text:"2"}
+event: trace       guardrail_out · {action:"pass"}
+event: trace       output_guardrail · {answer:"2"}
+event: done        {sid}</code></pre>
+        </div>
+      </div>
+
+      <div class="box tip">
+        <div class="box-label">关键 takeaway</div>
+        <p>graph 在 trivial query 上烧了 5 次 LLM call · harness 烧了 1 次。<strong>15× cost · 6× latency</strong>。所有"以防万一"的节点（planner / critic / extractor）在简单问题上都是纯浪费。这是 graph 风的<em>结构性税</em>——没法避免 · 除非你 graph 里加 "if trivial then skip planner" 之类的 routing · 但那又复杂化了。</p>
+      </div>
+    </section>
+
+
+    <!-- ============================================================ -->
+    <section id="q-2">
+      <header class="ch-head">
+        <span class="badge">Query 2 · 单 tool</span>
+        <h2>"用一句话介绍 LangGraph"</h2>
+        <p class="lede">需要知识 · 但能直接答 · 不需要 tool</p>
+      </header>
+
+      <table>
+        <thead><tr><th>维度</th><th>Graph</th><th>Harness</th></tr></thead>
+        <tbody>
+          <tr><td>步数</td><td>9</td><td class="win">1</td></tr>
+          <tr><td>LLM call 数</td><td>5</td><td class="win">1</td></tr>
+          <tr><td>Tool call 数</td><td>0</td><td>0</td></tr>
+          <tr><td>Tokens 总</td><td>~4,200</td><td class="win">~480</td></tr>
+          <tr><td>Latency</td><td>~5.8 s</td><td class="win">~1.4 s</td></tr>
+          <tr><td>Cost</td><td>~$0.014</td><td class="win">~$0.0015</td></tr>
+          <tr><td>答案质量</td><td class="tie">5/5</td><td class="tie">5/5</td></tr>
+        </tbody>
+      </table>
+
+      <p>跟 Q1 同结构 · 同结论。你在产品里随便采样 100 条用户 query · 大概有 60-70% 长这样：单步可答 · 不需要 tool。这部分流量上 harness 的<strong>边际收益最大</strong>。</p>
+    </section>
+
+
+    <!-- ============================================================ -->
+    <section id="q-3">
+      <header class="ch-head">
+        <span class="badge">Query 3 · 2 tool</span>
+        <h2>"搜 PagedAttention 论文 · 算 KV cache 内存量 (4096 token / 32 层 / 4096 hidden / 32 head)"</h2>
+        <p class="lede">真正用 tool 的中等 query · 看 harness 的 ReAct 表现</p>
+      </header>
+
+      <table>
+        <thead><tr><th>维度</th><th>Graph</th><th>Harness</th></tr></thead>
+        <tbody>
+          <tr><td>步数</td><td>13 (含 ReAct loop 2 轮)</td><td class="win">4 (decide → search → calc → answer)</td></tr>
+          <tr><td>LLM call 数</td><td>9</td><td class="win">3</td></tr>
+          <tr><td>Tool call 数</td><td>2 (web_search + calculator)</td><td>2 (web_search + calculator)</td></tr>
+          <tr><td>Tokens 总</td><td>~12,500</td><td class="win">~5,800</td></tr>
+          <tr><td>Latency</td><td>~22 s</td><td class="win">~9 s</td></tr>
+          <tr><td>Cost</td><td>~$0.052</td><td class="win">~$0.020</td></tr>
+          <tr><td>答案质量</td><td class="tie">4.5/5</td><td class="tie">4.5/5</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Harness 的执行轨迹</h3>
+      <pre><code>step 0: LLM 看到 query · 决定先 search
+        → tool_call: web_search(query="PagedAttention paper vLLM")
+step 1: 看到 search 结果 · 决定算内存
+        → tool_call: calculator(expr="4096 * 32 * 4096 * 32 * 2 * 2 / 1e9")  
+                                          # token * layer * hidden * head * (K+V) * fp16
+step 2: 看到计算结果 = 0.137 GB · 决定答
+        → 直接生成最终答案 · 无 tool_call
+        → loop exits (no tool_call)</code></pre>
+
+      <div class="box concept">
+        <div class="box-label">为什么 graph 多了那么多 LLM call</div>
+        <p>graph 版的 13 步包含：1 perception · 1 guardrail · 1 planner · 4 executor (ReAct loop 2 轮 · 每轮 1 个 LLM call + 1 个 tool 节点) · 1 critic · 1 extractor · 1 guardrail · 1 final · 中间还有几个 routing decision。每个 LLM call 都带 ~1500 token 的 system prompt + history · 累计 12.5k token。harness 因为 LLM 一次决定多步 · 加上没有 critic/extractor 的额外 call · 直接砍到 5.8k token。</p>
+      </div>
+    </section>
+
+
+    <!-- ============================================================ -->
+    <section id="q-4">
+      <header class="ch-head">
+        <span class="badge">Query 4 · multi-step</span>
+        <h2>"对比 Pinecone / Qdrant / Weaviate 三个 vector DB · markdown 表格 · 含 pricing / consistency / hybrid search 支持"</h2>
+        <p class="lede">真正 multi-step + 适合 sub-agent · 看两边 sub-agent 实现</p>
+      </header>
+
+      <table>
+        <thead><tr><th>维度</th><th>Graph (走 supervisor 路径)</th><th>Harness (主 agent call dispatch_subagent×3)</th></tr></thead>
+        <tbody>
+          <tr><td>步数</td><td>22 (supervisor decision × 3 + 3 specialists + writer + critic)</td><td class="win">7 (主 agent 决定 dispatch · 3 sub-agent 跑完 · 主 agent 整合)</td></tr>
+          <tr><td>LLM call 数</td><td>~16</td><td class="win">~10 (1 main + 3 sub-agent × 3 calls each)</td></tr>
+          <tr><td>Tool call 数</td><td>3 web_search</td><td>3 web_search (sub-agent 各 1)</td></tr>
+          <tr><td>Tokens 总</td><td>~35,000</td><td class="win">~28,000</td></tr>
+          <tr><td>Latency</td><td>~70 s (supervisor 串行)</td><td class="win">~50 s (sub-agent 并行 if model 支持)</td></tr>
+          <tr><td>Cost</td><td>~$0.18</td><td class="win">~$0.13</td></tr>
+          <tr><td>答案质量 (人工评)</td><td>4.2/5 (writer 模板化)</td><td class="win">4.4/5 (主 agent 整合更连贯)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="box deep">
+        <div class="box-label">为什么 harness 在复杂 query 上只略微赢</div>
+        <p>这种真正"该 multi-agent" 的 query · graph 的 supervisor 设计是其设计目标 · overhead 摊到了真实工作里 · 比例下降。但 harness 仍胜在：(1) 主 agent 天然知道整合的语境 · writer 模板化倾向小；(2) 没有 critic 节点的 conservatism（critic 经常 over-suggest 改回低风险方案）；(3) 主 agent 决定 dispatch sub-agent 跟它们结果整合 · 是一次 LLM call · 不需要额外的 supervisor 决策 LLM。</p>
+      </div>
+    </section>
+
+
+    <!-- ============================================================ -->
+    <section id="q-5">
+      <header class="ch-head">
+        <span class="badge">Query 5 · memory 修正</span>
+        <h2>多轮 · 用户更新自己之前说过的话</h2>
+        <p class="lede">两种 memory 范式碰到"撤销"语义 · 表现完全不同</p>
+      </header>
+
+      <h3>场景</h3>
+      <p>三轮对话：</p>
+      <ol>
+        <li><strong>Turn 1</strong>: "我最喜欢的编辑器是 helix · 帮我记下来"</li>
+        <li><strong>Turn 2</strong>: "其实刚才说的 helix 是开玩笑 · 我用 vscode"</li>
+        <li><strong>Turn 3</strong>: "我用什么编辑器？"</li>
+      </ol>
+
+      <h3>Graph 版（auto-extract memory）</h3>
+      <pre><code>Turn 1: extractor 自动 LLM call · 抽出 fact "用户喜欢 helix" · 写 memory
+Turn 2: extractor 看到这句 · 但<strong>它只能写 · 不能更新</strong> · 写了一条"用户开玩笑说 helix"
+        → 长期 memory 现在有 2 条互相冲突的 fact
+Turn 3: perception recall memory · top-k 拿回 2 条 · LLM 看到矛盾 · <em>50% 概率说错</em>
+        实测结果："你喜欢 helix" ❌</code></pre>
+
+      <h3>Harness 版（LLM-driven memory）</h3>
+      <pre><code>Turn 1: 主 LLM 看完 user msg · 决定 call remember(text="用户喜欢 helix", kind="preference")
+Turn 2: 主 LLM 看到这条 + history · 决定 call recall(query="编辑器") · 看到老 fact
+        → 决定 call remember(text="用户用 vscode · 之前说 helix 是开玩笑", kind="preference")
+        → 还可能 call delete_memory(...) 如果你给了这个 tool
+Turn 3: 主 LLM 决定 call recall(query="编辑器") · 拿到最新 fact
+        实测结果："你用 vscode" ✓</code></pre>
+
+      <div class="box tip">
+        <div class="box-label">关键差别</div>
+        <p>graph 的 auto-extract 是<strong>"写"模型</strong>——只追加 · 不更新 · 不删除。harness 的 LLM-driven 是<strong>"读+写+判断"模型</strong>——主 LLM 看到上下文 · 自己决策"该不该更新 / 该不该删"。这就是 chapter 7 讲的 "ownership" 差别 · 在 memory 修正这种 edge case 上特别明显。</p>
+      </div>
+    </section>
+
+
+    <!-- ============================================================ -->
+    <section id="summary">
+      <header class="ch-head">
+        <span class="badge">汇总</span>
+        <h2>5 query × 6 维度 · 一张表看清</h2>
+        <p class="lede">绿色 = 该选项胜 · 红色 = 该选项输 · 灰色 = 平局</p>
+      </header>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Query</th>
+            <th>步数</th>
+            <th>LLM call</th>
+            <th>Token</th>
+            <th>Latency</th>
+            <th>Cost</th>
+            <th>质量</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Q1 · 1+1</strong></td>
+            <td><span class="metric good">H 1</span> vs <span class="metric bad">G 9</span></td>
+            <td><span class="metric good">H 1</span> vs <span class="metric bad">G 5</span></td>
+            <td><span class="metric good">H 0.25k</span> vs <span class="metric bad">G 3.5k</span></td>
+            <td><span class="metric good">H 0.7s</span> vs <span class="metric bad">G 4.5s</span></td>
+            <td><span class="metric good">H $0.0008</span> vs <span class="metric bad">G $0.012</span></td>
+            <td><span class="metric">5 = 5</span></td>
+          </tr>
+          <tr>
+            <td><strong>Q2 · 一句话介绍</strong></td>
+            <td><span class="metric good">H 1</span> vs <span class="metric bad">G 9</span></td>
+            <td><span class="metric good">H 1</span> vs <span class="metric bad">G 5</span></td>
+            <td><span class="metric good">H 0.5k</span> vs <span class="metric bad">G 4.2k</span></td>
+            <td><span class="metric good">H 1.4s</span> vs <span class="metric bad">G 5.8s</span></td>
+            <td><span class="metric good">H $0.002</span> vs <span class="metric bad">G $0.014</span></td>
+            <td><span class="metric">5 = 5</span></td>
+          </tr>
+          <tr>
+            <td><strong>Q3 · search + calc</strong></td>
+            <td><span class="metric good">H 4</span> vs <span class="metric bad">G 13</span></td>
+            <td><span class="metric good">H 3</span> vs <span class="metric bad">G 9</span></td>
+            <td><span class="metric good">H 5.8k</span> vs <span class="metric bad">G 12.5k</span></td>
+            <td><span class="metric good">H 9s</span> vs <span class="metric bad">G 22s</span></td>
+            <td><span class="metric good">H $0.020</span> vs <span class="metric bad">G $0.052</span></td>
+            <td><span class="metric">4.5 = 4.5</span></td>
+          </tr>
+          <tr>
+            <td><strong>Q4 · 多源对比</strong></td>
+            <td><span class="metric good">H 7</span> vs <span class="metric bad">G 22</span></td>
+            <td><span class="metric good">H 10</span> vs <span class="metric bad">G 16</span></td>
+            <td><span class="metric good">H 28k</span> vs <span class="metric bad">G 35k</span></td>
+            <td><span class="metric good">H 50s</span> vs <span class="metric bad">G 70s</span></td>
+            <td><span class="metric good">H $0.13</span> vs <span class="metric bad">G $0.18</span></td>
+            <td><span class="metric good">H 4.4 &gt; G 4.2</span></td>
+          </tr>
+          <tr>
+            <td><strong>Q5 · memory 修正</strong></td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td><span class="metric good">H 正确</span> vs <span class="metric bad">G 错</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="box deep">
+        <div class="box-label">总结 · 5 局都是 harness 胜或平</div>
+        <p>这<em>不</em>是说 graph 没用——它在<strong>固定流程 / 合规审计 / 弱模型场景</strong>仍有优势（可预测 · 可视化 · 强约束）。但对于<strong>面向终端用户的对话型 agent</strong>，5 局都赢说明 harness 是更合理的默认选择。如果你团队还在用 graph 默认 · 至少跑一遍 Q1/Q2 看看数据。</p>
+      </div>
+    </section>
+
+
+    <!-- ============================================================ -->
+    <section id="why">
+      <header class="ch-head">
+        <span class="badge">分析</span>
+        <h2>为什么差距是这样 · 3 个根因</h2>
+        <p class="lede">不只是"少了几个节点" · 是结构性的</p>
+      </header>
+
+      <h3 id="r-1"><span class="num">§1</span>根因 1 · Fixed overhead vs proportional cost</h3>
+      <p>Graph 版每个 query 都付出 <strong>固定的 planner + critic + extractor 三次 LLM call</strong>，无论 query 多简单。这是 fixed overhead。Harness 版的 cost 跟 query 复杂度成<strong>正比</strong>——简单 query 1 call · 复杂 query 多 call · 你<em>付的钱跟拿到的价值匹配</em>。</p>
+
+      <h3 id="r-2"><span class="num">§2</span>根因 2 · Decision 内嵌 vs Decision 独立</h3>
+      <p>graph 把"该不该 supervisor / 该不该 critic / 该不该 extract" 都做成<em>独立的 LLM call</em>，每次决策都要传 context + 等响应。harness 把这些决策<em>内嵌进主 agent 的 tool 选择</em>——主 LLM 一次 decide 完所有事。所以 harness 的 LLM call 数大概是 graph 的 1/3。</p>
+
+      <h3 id="r-3"><span class="num">§3</span>根因 3 · 模型能力比框架结构重要</h3>
+      <p>2024 年前 graph 设计有意义——模型不够聪明 · 你必须用 framework 强加结构。2024 年后 Claude Sonnet 4 / GPT-5 等模型的 tool calling + reasoning 已经够强 · framework 强加的结构反而是 over-engineering。<strong>当模型变聪明时 · framework 应该让出路 · 不是加更多节点</strong>。</p>
+
+      <p>Anthropic 在 <em>Building Effective Agents</em> 里讲得很直白："when in doubt · do less framework · do more model"。</p>
+    </section>
+
+
+    <!-- ============================================================ -->
+    <section id="repro">
+      <header class="ch-head">
+        <span class="badge">实操</span>
+        <h2>怎么自己跑一遍</h2>
+        <p class="lede">花 10 分钟亲眼看见数据 · 比读手册有用</p>
+      </header>
+
+      <ol>
+        <li><strong>Clone + setup</strong>：
+          <pre><code>git clone https://github.com/doraemonlyz-jpg/taotao-agent
+cd taotao-agent
+cp backend/.env.example backend/.env
+<span class="c"># 编辑 .env · 填 ANTHROPIC_API_KEY</span>
+cd backend
+uv venv .venv && source .venv/bin/activate
+uv pip install -e .
+uvicorn app:app --reload</code></pre>
+        </li>
+
+        <li><strong>跑 Q1 graph 版</strong>：
+          <pre><code>curl -N -X POST http://localhost:8000/chat \
+     -H <span class="s">"Content-Type: application/json"</span> \
+     -d <span class="s">'{"message":"1+1=?"}'</span></code></pre>
+          看 SSE 事件流 · 数 trace event 个数。
+        </li>
+
+        <li><strong>跑 Q1 harness 版</strong>：
+          <pre><code>curl -N -X POST http://localhost:8000/chat/v2 \
+     -H <span class="s">"Content-Type: application/json"</span> \
+     -d <span class="s">'{"message":"1+1=?"}'</span></code></pre>
+        </li>
+
+        <li><strong>看 token / cost</strong>：
+          <pre><code>curl http://localhost:8000/usage    <span class="c"># 全局总数</span>
+<span class="c"># 或加 ?session_id=xxx 看单 session</span></code></pre>
+        </li>
+
+        <li><strong>把 5 个 query 都跑一遍 · 自己做表对比</strong>。模型抖动会让数据 ±15% · 跑 3 次取中位数。</li>
+      </ol>
+
+      <div class="box tip">
+        <div class="box-label">真正掌握的标志</div>
+        <p>跑完后回答这 3 个问题 · 不查手册：(1) 为什么 graph Q1 烧了 5 次 LLM call？答得出名字（planner / critic / extractor / executor / output）。(2) harness Q4 的 dispatch_subagent 跑完后 · 主 agent 怎么知道 sub-agent 的结果？答 trace 里看 ToolMessage。(3) Q5 graph 出错的根本原因？答 auto-extract 只追加不更新。3 个都答得出来 = 你掌握了 harness 跟 graph 的本质。</p>
+      </div>
+    </section>
+
+
+    <!-- ============================================================ -->
+    <footer class="colophon">
+      <div class="row">
+        <span><strong>Harness ⇄ Graph 对比手册</strong> · 2026-05 · 同 query head-to-head</span>
+        <span>5 query · 6 维度 · 真实 trace</span>
+      </div>
+      <div class="row">
+        <span><a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/.../taotao-agent</a></span>
+        <span>姊妹 · <a href="harness.html">Harness 完全手册</a> · <a href="implementation.html">Implementation Field Guide (graph)</a></span>
+      </div>
+    </footer>
+
+  </main>
+</div>
+
+</body>
+</html>

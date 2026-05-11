@@ -14,6 +14,9 @@ from sse_starlette.sse import EventSourceResponse
 
 from agent.config import get_settings, update_runtime_model
 from agent.graph import get_graph
+from agent.harness import run_harness
+from agent.harness.persistence import get_store as get_harness_store
+from agent.harness.tools import tool_descriptions as harness_tool_descriptions
 from agent.memory import get_memory, get_profile, get_reflections, list_skills
 from agent.models_catalog import auto_pair_fast, list_all as list_models_all, model_supports_tools
 from agent.nodes.llm import reset_llm_cache
@@ -196,6 +199,84 @@ async def chat(payload: ChatIn):
                 runner.cancel()
 
     return EventSourceResponse(event_stream())
+
+
+# ---------------------------------------------------------------- /chat/v2 (HARNESS · SSE)
+@app.post("/chat/v2")
+async def chat_v2(payload: ChatIn):
+    """Same wire format as /chat · runs the HARNESS implementation instead
+    of the LangGraph multi-node graph.  Both endpoints share:
+      - request shape (ChatIn)
+      - SSE event shape (session / token / trace / done)
+      - tools, memory, profile, observability bus
+
+    Differences:
+      - /chat    → 13-node LangGraph · routing decided by edges
+      - /chat/v2 → single while-loop · routing decided by the LLM via tool_calls
+
+    See docs/harness.html for the full design walkthrough."""
+    sid = payload.session_id or str(uuid.uuid4())
+    user_text = payload.message.strip()
+    if not user_text:
+        raise HTTPException(400, "empty message")
+
+    queue = event_bus.subscribe(sid)
+    runner: asyncio.Task | None = None
+
+    async def run_loop():
+        try:
+            async for _ev in run_harness(user_text, sid):
+                # Loop yields are mirrored on event_bus already · the iter
+                # is consumed only to drive the loop (and surface errors).
+                pass
+        except Exception as e:
+            event_bus.publish(sid, {
+                "ts": 0, "node": "harness", "kind": "error",
+                "payload": {"error": repr(e)},
+            })
+        finally:
+            event_bus.publish(sid, {
+                "ts": 0, "node": "harness", "kind": "_done",
+                "payload": {"session_id": sid},
+            })
+
+    async def event_stream():
+        nonlocal runner
+        runner = asyncio.create_task(run_loop())
+        try:
+            yield {"event": "session", "data": json.dumps({"session_id": sid})}
+            while True:
+                evt = await queue.get()
+                kind = evt.get("kind")
+                if kind == "_done":
+                    yield {"event": "done", "data": json.dumps(evt["payload"])}
+                    return
+                if kind == "token":
+                    yield {"event": "token", "data": json.dumps(evt["payload"])}
+                    continue
+                yield {"event": "trace", "data": json.dumps(evt, default=str)}
+        finally:
+            event_bus.unsubscribe(sid, queue)
+            if runner and not runner.done():
+                runner.cancel()
+
+    return EventSourceResponse(event_stream())
+
+
+# ---------------------------------------------------------------- /chat/v2/tools
+@app.get("/chat/v2/tools")
+def harness_tools() -> list[dict]:
+    """Tool descriptions exposed by the HARNESS (vs /tools which lists
+    the graph's registry)."""
+    return harness_tool_descriptions()
+
+
+# ---------------------------------------------------------------- /chat/v2/sessions
+@app.delete("/chat/v2/session/{session_id}")
+def reset_harness_session(session_id: str) -> dict:
+    """Wipe a harness session's persisted message list."""
+    get_harness_store().clear(session_id)
+    return {"ok": True, "session_id": session_id}
 
 
 # ---------------------------------------------------------------- /traces

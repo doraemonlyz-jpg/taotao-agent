@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>桃桃 Agent · Senior Agent Engineer 12 本书学习手册</title>
-<meta name="description" content="从 0 到 senior agent engineer 面试 · 12 本完整手册 · 5 阶段学习路径 · 22000+ 行内容 · 280+ 道面试题 · 700+ 词术语表 · 涵盖 LangGraph / RAG / Memory / Tool / Eval / Debug / 系统设计 / Live Coding / 企业级交付 / AI Infra">
+<title>桃桃 Agent · Senior Agent Engineer 14 本书学习手册</title>
+<meta name="description" content="从 0 到 senior agent engineer 面试 · 14 本完整手册 · 5 阶段学习路径 · 26000+ 行内容 · 300+ 道面试题 · 760+ 词术语表 · 涵盖 LangGraph / RAG / Memory / Tool / Eval / Debug / 系统设计 / Live Coding / 企业级交付 / AI Infra / Harness Engineering">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -200,11 +200,11 @@ footer.foot a:hover { color: var(--rust); }
 <section class="stats">
   <div class="container">
     <div class="stats-grid">
-      <div class="stat"><span class="num">12</span><span class="label">完整手册</span></div>
-      <div class="stat"><span class="num">22k+</span><span class="label">行内容</span></div>
-      <div class="stat"><span class="num">280+</span><span class="label">面试题</span></div>
-      <div class="stat"><span class="num">700+</span><span class="label">词术语表</span></div>
-      <div class="stat"><span class="num">35+</span><span class="label">SVG 图</span></div>
+      <div class="stat"><span class="num">14</span><span class="label">完整手册</span></div>
+      <div class="stat"><span class="num">26k+</span><span class="label">行内容</span></div>
+      <div class="stat"><span class="num">300+</span><span class="label">面试题</span></div>
+      <div class="stat"><span class="num">760+</span><span class="label">词术语表</span></div>
+      <div class="stat"><span class="num">40+</span><span class="label">SVG 图</span></div>
       <div class="stat"><span class="num">5</span><span class="label">学习阶段</span></div>
     </div>
   </div>
@@ -243,6 +243,12 @@ footer.foot a:hover { color: var(--rust); }
         <p>13 章硬件到平台 + 80 题 + 12 周路线 + 25 篇必读论文 + 100 词术语</p>
         <a href="infra.html" class="qs-link bare">直入《AI Infra · 从硬件到面试》</a>
       </div>
+      <div class="qs-card qs-rust">
+        <h4>🔥 想吃透 Claude Code / Cursor 怎么实现的</h4>
+        <div class="qs-title">"为什么头部产品都是 harness 风"</div>
+        <p>同项目两种实现 · 16 章逐行讲清 harness · 含 5 个产品反编译 · 同 query head-to-head</p>
+        <a href="harness.html" class="qs-link bare">看《Harness 完全手册》</a>
+      </div>
     </div>
   </div>
 </section>
@@ -270,7 +276,7 @@ footer.foot a:hover { color: var(--rust); }
         <div><strong>4 大支柱</strong>Framework / RAG / Memory / Tool</div>
         <div><strong>3 本书</strong>Eval / Debug / Enterprise</div>
         <div><strong>2 本书</strong>System Design + Live Coding</div>
-        <div><strong>专项</strong>AI Infra · 按方向选</div>
+        <div><strong>3 本</strong>AI Infra · Harness 范式 · 按需</div>
       </div>
     </div>
 
@@ -445,8 +451,8 @@ footer.foot a:hover { color: var(--rust); }
       <div class="phase-head">
         <div class="phase-num">05</div>
         <div class="phase-meta">
-          <h3>专项进阶 · <em>按方向选</em></h3>
-          <div class="phase-sub"><strong>目标</strong>：通用 agent eng 之外的特化方向——这一阶段按你目标岗位选 · 不是必修</div>
+          <h3>进阶 · <em>专项 + 范式</em></h3>
+          <div class="phase-sub"><strong>目标</strong>：通用 agent eng 之外——按方向选特化（AI Infra）或学新范式（Harness Engineering · 头部产品都在用）</div>
         </div>
         <span class="phase-time">⏱ 按需</span>
       </div>
@@ -461,6 +467,26 @@ footer.foot a:hover { color: var(--rust); }
           </div>
           <span class="bk-link">深入 Infra</span>
         </a>
+        <a href="harness.html" class="book-card featured bare">
+          <div class="bk-row"><span class="bk-emoji">🔥</span><span class="bk-num">Book 13 · NEW</span></div>
+          <h4>Agent Harness 完全手册</h4>
+          <div class="bk-eng">Claude Code / Cursor 风 · 配套 backend/agent/harness/</div>
+          <p class="bk-desc">把 taotao-agent 用 harness 风格<strong>完整重写一遍</strong>——16 章逐行讲清 loop / system prompt / tool / sub-agent-as-tool / memory / compaction / persistence / streaming / failure mode / eval。同时 5 个真实 harness 反编译（Claude Code · Cursor · aider · Devin · Open Interpreter）。</p>
+          <div class="bk-meta">
+            <span><strong>16</strong> 章</span><span><strong>20</strong> 题</span><span><strong>60</strong> 词</span><span><strong>带源码</strong></span>
+          </div>
+          <span class="bk-link">学新范式</span>
+        </a>
+        <a href="harness-vs-graph.html" class="book-card bare">
+          <div class="bk-row"><span class="bk-emoji">⚖️</span><span class="bk-num">Book 14 · NEW</span></div>
+          <h4>Harness ⇄ Graph 对比手册</h4>
+          <div class="bk-eng">同 query · 两种实现 · 真实 trace 对比</div>
+          <p class="bk-desc">市面上独家——同一 agent 同时支持 <code>POST /chat</code> (graph) 和 <code>POST /chat/v2</code> (harness)。5 类典型 query head-to-head：trivial · 单 LLM · 2 tool · multi-step · memory 修正。给真实 trace / cost / latency / 答案对比 + 你自己跑一遍的 curl 命令。</p>
+          <div class="bk-meta">
+            <span><strong>5</strong> query</span><span><strong>6</strong> 维度</span><span><strong>head-to-head</strong></span>
+          </div>
+          <span class="bk-link">看实测</span>
+        </a>
       </div>
     </div>
   </div>
@@ -470,8 +496,8 @@ footer.foot a:hover { color: var(--rust); }
 <section class="section" id="books" style="background: var(--paper-2); padding-top: 4rem;">
   <div class="container">
     <div class="section-head">
-      <div class="sec-eyebrow">📚 All 12 Books</div>
-      <h2>12 本书 <em>一览表</em></h2>
+      <div class="sec-eyebrow">📚 All 14 Books</div>
+      <h2>14 本书 <em>一览表</em></h2>
       <p class="sec-lede">不按学习顺序 · 按主题快速扫</p>
     </div>
     <div class="book-grid">
@@ -487,6 +513,8 @@ footer.foot a:hover { color: var(--rust); }
       <a href="agent-design.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🟣</span><span class="bk-num">10</span></div><h4>Agent System Design</h4><p class="bk-desc">7 案例反编译 · 12 模式 · 20 题</p><span class="bk-link">读</span></a>
       <a href="agent-coding.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🟡</span><span class="bk-num">11</span></div><h4>Live Coding 实战</h4><p class="bk-desc">8 真题 + 答案 + 22 anti-pattern</p><span class="bk-link">读</span></a>
       <a href="infra.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🔴</span><span class="bk-num">12</span></div><h4>AI Infra · 从硬件到面试</h4><p class="bk-desc">GPU / 推理 / 训练 · 80 题 · 25 论文</p><span class="bk-link">读</span></a>
+      <a href="harness.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🔥</span><span class="bk-num">13</span></div><h4>Agent Harness 完全手册</h4><p class="bk-desc">Claude Code/Cursor 风 · 16 章带源码 · 20 题</p><span class="bk-link">读</span></a>
+      <a href="harness-vs-graph.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">⚖️</span><span class="bk-num">14</span></div><h4>Harness ⇄ Graph 对比</h4><p class="bk-desc">同 query head-to-head · 5 类查询 · 真实 trace</p><span class="bk-link">读</span></a>
     </div>
   </div>
 </section>
@@ -524,6 +552,8 @@ footer.foot a:hover { color: var(--rust); }
         <tr><td>🟣 System Design</td><td class="x">●</td><td class="x">●</td><td>○</td><td>○</td><td>○</td><td class="dim">·</td></tr>
         <tr><td>🟡 Live Coding</td><td>○</td><td class="dim">·</td><td class="x">●</td><td class="x">●</td><td class="dim">·</td><td class="dim">·</td></tr>
         <tr><td>🔴 AI Infra</td><td class="dim">·</td><td>○</td><td class="dim">·</td><td class="dim">·</td><td>○</td><td class="x">●</td></tr>
+        <tr><td>🔥 Harness 完全手册</td><td class="x">●</td><td class="x">●</td><td class="x">●</td><td class="x">●</td><td>○</td><td class="dim">·</td></tr>
+        <tr><td>⚖️ Harness ⇄ Graph 对比</td><td class="x">●</td><td class="x">●</td><td>○</td><td>○</td><td>○</td><td class="dim">·</td></tr>
       </tbody>
     </table>
     <p style="text-align:center;font-size:0.78rem;color:var(--ink-mute);font-family:var(--font-sans);margin-top:1rem;">
@@ -540,26 +570,26 @@ footer.foot a:hover { color: var(--rust); }
       <h2>关于这套手册</h2>
     </div>
     <div style="max-width: 42em; margin: 0 auto;">
-      <p>这套 12 本手册是为 <strong>2026 年 senior agent engineer 面试</strong>系统化整理的——不是教程合集 · 是按 "从 0 到能上岗" 路径设计的<em>完整体系</em>。</p>
+      <p>这套 14 本手册是为 <strong>2026 年 senior agent engineer 面试</strong>系统化整理的——不是教程合集 · 是按 "从 0 到能上岗" 路径设计的<em>完整体系</em>。</p>
 
       <h4 style="font-family:var(--font-display);font-weight:500;font-size:1.3rem;margin:2rem 0 0.6rem;color:var(--ink);">📐 设计原则</h4>
       <ol>
-        <li><strong>面试导向</strong>——每本配 15 道 senior 面试题 + 答题模板 · 不是 "了解一下" 而是 "能上场答"</li>
-        <li><strong>互不重复</strong>——12 本各有独立主题 · 但内部 cross-link 把相关概念串起</li>
+        <li><strong>面试导向</strong>——每本配 15-20 道 senior 面试题 + 答题模板 · 不是 "了解一下" 而是 "能上场答"</li>
+        <li><strong>互不重复</strong>——14 本各有独立主题 · 但内部 cross-link 把相关概念串起</li>
         <li><strong>真坑 vs 玄学</strong>——每本都有 "翻车复盘" 章节 · 别人用真血换的经验</li>
         <li><strong>引用一手资料</strong>——官方文档 / 源码 / paper · 不抄博客抄博客</li>
       </ol>
 
       <h4 style="font-family:var(--font-display);font-weight:500;font-size:1.3rem;margin:2rem 0 0.6rem;color:var(--ink);">🛠 配套项目</h4>
-      <p><a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/doraemonlyz-jpg/taotao-agent</a> ——一个完整的生产级 agent demo · LangGraph + supervisor + sub-agent + HITL + memory + tool + eval · 跟 Book 02 (Implementation Field Guide) 配套读 · 直接 clone 跑得起。</p>
+      <p><a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/doraemonlyz-jpg/taotao-agent</a> ——完整生产级 agent demo · <strong>同时支持 graph 和 harness 两种实现</strong>（<code>POST /chat</code> + <code>POST /chat/v2</code>）· LangGraph + supervisor + sub-agent + HITL + memory + tool + eval · 跟 Book 02 (graph 实现) 和 Book 13 (harness 实现) 配套读 · 直接 clone 跑得起。</p>
 
       <h4 style="font-family:var(--font-display);font-weight:500;font-size:1.3rem;margin:2rem 0 0.6rem;color:var(--ink);">📊 数据</h4>
       <table style="width:100%;border-collapse:collapse;margin-top:0.8rem;font-size:0.92rem;background:var(--paper-card);border:1px solid var(--rule);border-radius:6px;overflow:hidden;">
-        <tr><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);">总行数</td><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>~22,300</strong></td></tr>
-        <tr><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);">章节</td><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>~130</strong></td></tr>
-        <tr><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);">面试题</td><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>280+</strong></td></tr>
-        <tr><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);">术语词</td><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>700+</strong></td></tr>
-        <tr><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);">SVG 图</td><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>35+</strong></td></tr>
+        <tr><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);">总行数</td><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>~26,000</strong></td></tr>
+        <tr><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);">章节</td><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>~150</strong></td></tr>
+        <tr><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);">面试题</td><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>300+</strong></td></tr>
+        <tr><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);">术语词</td><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>760+</strong></td></tr>
+        <tr><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);">SVG 图</td><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>40+</strong></td></tr>
         <tr><td style="padding:0.5rem 0.8rem;">Failure mode / 翻车</td><td style="padding:0.5rem 0.8rem;text-align:right;font-family:var(--font-mono);"><strong>50+</strong></td></tr>
       </table>
     </div>
@@ -587,7 +617,7 @@ footer.foot a:hover { color: var(--rust); }
     </div>
     <div class="row" style="margin-top:0.6rem;">
       <span>Set in Fraunces · Lora · Outfit · JetBrains Mono</span>
-      <span>12 books · 22300 lines · 280+ Qs · 700+ terms</span>
+      <span>14 books · 26000+ lines · 300+ Qs · 760+ terms</span>
     </div>
   </div>
 </footer>

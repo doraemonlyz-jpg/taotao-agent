@@ -10,7 +10,7 @@ Built on **LangGraph 0.6** (orchestration backbone) + **FastAPI** (SSE streaming
 ![stack](https://img.shields.io/badge/backend-LangGraph%200.6%20%2B%20FastAPI-black)
 ![ui](https://img.shields.io/badge/frontend-React%2019%20%2B%20Vite-blue)
 
-> **📚 学习路径 · 十二本书覆盖 agent engineer 全方位面试**
+> **📚 学习路径 · 十四本书覆盖 agent engineer 全方位面试**
 > - 🟢 **完全新手** → [`docs/learn.html`](docs/learn.html) — 《从 0 到面试》13 章 + 110 词术语表 + 60 道面试题 + 8 周路线 + 进阶专题（benchmark / reasoning / async / agentic RAG / vibe coding / security）+ 每节附公开教程 / GitHub demo URL
 > - 🟠 **要做企业级项目** → [`docs/enterprise.html`](docs/enterprise.html) — 《企业级交付手册》10 章 + 5 份 spec 模板（PRD / Tech Design / Eval Plan / Risk Assessment / Runbook）+ 12 层技术栈选型 + 6 大工程能力 + RACI + 5 个翻车复盘 + 50 道企业级面试题 + 50 项上线 checklist
 > - 🟣 **agent system design 面试** → [`docs/agent-design.html`](docs/agent-design.html) — 《Agent System Design · Senior》6 步答题框架 + 7 大产品反编译（Cursor / Claude Code / Devin / Perplexity / Operator / v0 / 企业 multi-agent）+ 12 个 design pattern + 20 道 senior 设计题 + 80 词术语表
@@ -22,11 +22,13 @@ Built on **LangGraph 0.6** (orchestration backbone) + **FastAPI** (SSE streaming
 > - 💜 **Memory & Context 工程** → [`docs/memory-context.html`](docs/memory-context.html) — 《Memory &amp; Context》5 类 memory 分类 + short/long-term 全谱 + Mem0/Zep/Letta/Cognee 4 框架横评 + write/read pipeline + forgetting + multi-user + 1M/2M context 工程 + prompt caching + 5 翻车复盘 + 70 词术语
 > - 🟫 **Tool Design / Function Calling** → [`docs/tool-design.html`](docs/tool-design.html) — 《Tool Design》tool 5 元素 + 100+ tool 4 选择算法 + OpenAI strict + Pydantic + LLM-readable error + 4 structured output 流派（Outlines/Instructor/BAML/xgrammar）+ parallel + result 管理 + MCP server 设计 + 4 层 security + 3 翻车 + 60 词
 > - 🔴 **要面试 AI Infra** → [`docs/infra.html`](docs/infra.html) — 《AI Infra · 从硬件到面试》13 章 (GPU / 推理引擎 / 量化 / 分布式训练 / 算子 / MoE / 平台 / 向量库) + 80 道面试题 + 12 周学习路线 + 25 篇必读论文 + 100 词术语表
-> - 🔵 **想看实现** → [`docs/implementation.html`](docs/implementation.html) — 《Implementation Field Guide》17 章逐节点详解
+> - 🔵 **想看实现** → [`docs/implementation.html`](docs/implementation.html) — 《Implementation Field Guide》17 章逐节点详解 (graph 版)
+> - 🔥 **想吃透 Claude Code / Cursor 怎么实现** → [`docs/harness.html`](docs/harness.html) — 《Agent Harness 完全手册》16 章逐行讲清 loop / system prompt / sub-agent-as-tool / compaction / persistence / failure mode + 5 个真实 harness 反编译 + 20 道 senior 面试题 + 60 词术语 · 配套源码 `backend/agent/harness/`
+> - ⚖️ **想看同 query 两种实现差距** → [`docs/harness-vs-graph.html`](docs/harness-vs-graph.html) — 《Harness ⇄ Graph 对比手册》同项目 head-to-head · 5 类查询 · 真实 trace / cost / latency · 自己跑一遍的 curl 命令
 >
-> **🌐 全部 12 本书入口** → [`docs/index.html`](docs/index.html) — 按 5 阶段学习路径分类的 landing page
+> **🌐 全部 14 本书入口** → [`docs/index.html`](docs/index.html) — 按 5 阶段学习路径分类的 landing page
 >
-> 四本互补：learn 建心智 → enterprise 学交付 → infra 钻底层 → index 看代码。
+> 四本互补：learn 建心智 → enterprise 学交付 → infra 钻底层 → index 看代码 · 加上 harness 范式（Book 13 + 14）= 完整覆盖。
 
 > **🐹 想用 Go 服务调 agent？** → [`clients/go-client/`](clients/go-client/) · 零依赖纯 stdlib SDK · `cli.Chat` 阻塞 / `cli.ChatStream` 流式 · 4 个可跑 demo
 >
@@ -116,10 +118,16 @@ uv run uvicorn app:app --reload --port 8000
 
 The API is now at http://127.0.0.1:8000:
 - `GET /health` — model + flags
-- `GET /tools`  — tool descriptions
-- `POST /chat`  — SSE stream of trace events ending with the answer
+- `GET /tools`  — tool descriptions (graph version)
+- `POST /chat`  — **graph version** · 13-node LangGraph · SSE stream of trace events ending with the answer
+- `POST /chat/v2` — **harness version** 🔥 · single while-loop · `backend/agent/harness/` · same SSE wire format · see [docs/harness.html](docs/harness.html)
+- `GET /chat/v2/tools` — tool descriptions (harness · 14 tools incl. `dispatch_subagent` + `final_answer`)
+- `DELETE /chat/v2/session/{id}` — wipe a harness session's persisted messages
 - `GET /traces` — last 200 events from the JSONL log
 - `GET/POST/DELETE /memory` — long-term memory inspector
+
+> Both endpoints share tools / memory / observability — only the control flow differs.
+> For a head-to-head trace comparison see [docs/harness-vs-graph.html](docs/harness-vs-graph.html).
 
 ### 2 · Frontend
 
@@ -178,8 +186,15 @@ agent-demo/
 │       ├── memory/
 │       │   ├── short_term.py # auto-compaction helper
 │       │   └── long_term.py  # Chroma wrapper
-│       └── observability/
-│           └── tracer.py     # JSONL + SSE pub/sub
+│       ├── observability/
+│       │   └── tracer.py     # JSONL + SSE pub/sub
+│       └── harness/          # 🔥 parallel harness-style impl (POST /chat/v2)
+│           ├── loop.py       #   the while-loop (the whole agent in ~250 lines)
+│           ├── prompt.py     #   system prompt with the workflow taught
+│           ├── tools.py      #   14 tools (11 reused + dispatch_subagent + final_answer)
+│           ├── subagent.py   #   sub-agents-as-tools (anti-Cognition-pattern multi-agent)
+│           ├── compaction.py #   token-budget compaction (vs graph's per-turn)
+│           └── persistence.py#   atomic JSON-per-session (vs graph's checkpointer)
 └── frontend/
     ├── package.json
     ├── vite.config.ts        # /api proxy → localhost:8000
