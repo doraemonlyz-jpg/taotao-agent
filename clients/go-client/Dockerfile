@@ -1,5 +1,5 @@
 # Multi-stage · final image is ~12 MB (distroless static · no shell · no apk)
-FROM golang:1.22-alpine AS build
+FROM golang:1.25-alpine AS build
 
 WORKDIR /src
 

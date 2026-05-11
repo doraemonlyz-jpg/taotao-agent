@@ -23,11 +23,16 @@ import (
 	"syscall"
 	"time"
 
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
+
 	"github.com/doraemonlyz-jpg/taotao-agent/clients/go-client/agent"
+	"github.com/doraemonlyz-jpg/taotao-agent/clients/go-client/internal/server"
+	"github.com/doraemonlyz-jpg/taotao-agent/clients/go-client/proto/taotao/agent/v1/agentv1connect"
 )
 
 func main() {
-	mode := flag.String("mode", "stream", "stream | block | multi-turn | http-server | healthcheck")
+	mode := flag.String("mode", "stream", "stream | block | multi-turn | http-server | grpc | healthcheck")
 	base := flag.String("base", envOr("AGENT_URL", "http://localhost:8000"), "agent base URL")
 	msg := flag.String("msg", "用一句话介绍一下 LangGraph", "message to send")
 	flag.Parse()
@@ -69,8 +74,62 @@ func main() {
 		runMultiTurn(ctx, cli)
 	case "http-server":
 		runHTTPServer(ctx, cli)
+	case "grpc":
+		runGRPCServer(ctx, cli)
 	default:
 		log.Fatalf("unknown mode %q", *mode)
+	}
+}
+
+// ---------- 5. gRPC + gRPC-Web + Connect/JSON server (Connect-Go) ----------
+//
+// One binary · three protocols · same path. Clients pick:
+//
+//   gRPC          → grpc-go / grpc-java / grpc-rust talking application/grpc
+//   gRPC-Web      → browser via Envoy or built-in CORS
+//   Connect/JSON  → curl / any HTTP client · POST .../Chat with JSON body
+
+func runGRPCServer(ctx context.Context, cli *agent.Client) {
+	mux := http.NewServeMux()
+
+	// /health for k8s probes (plain HTTP — not part of the gRPC service).
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		hctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+		defer cancel()
+		if _, err := cli.Health(hctx); err != nil {
+			http.Error(w, "agent unreachable: "+err.Error(), 503)
+			return
+		}
+		w.Write([]byte(`{"ok":true}`))
+	})
+
+	// Mount the AgentService — one call wires up all three protocols.
+	path, handler := agentv1connect.NewAgentServiceHandler(server.New(cli))
+	mux.Handle(path, handler)
+
+	addr := envOr("GRPC_ADDR", ":9090")
+
+	// h2c lets gRPC clients negotiate HTTP/2 over plaintext (cleartext) ·
+	// what every grpc client expects when there's no TLS in front of us.
+	// In production you'd put a TLS-terminating proxy (Envoy, Caddy, ALB)
+	// in front and use h2 (TLS HTTP/2) instead.
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: h2c.NewHandler(mux, &http2.Server{}),
+		// gRPC streams must NOT have a server-side total timeout.
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
+	fmt.Printf("🚀 gRPC + gRPC-Web + Connect listening on %s%s\n", addr, path)
+	fmt.Printf("   try:  curl -X POST -H 'Content-Type: application/json' \\\n")
+	fmt.Printf("           --data '{\"message\":\"hi\"}' http://localhost%s%sChat\n", addr, path)
+
+	go func() {
+		<-ctx.Done()
+		_ = srv.Shutdown(context.Background())
+	}()
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatal(err)
 	}
 }
 

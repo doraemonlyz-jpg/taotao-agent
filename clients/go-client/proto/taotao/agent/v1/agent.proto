@@ -1,0 +1,120 @@
+syntax = "proto3";
+
+// Wire definition for the taotao-agent service.
+//
+// One service · 3 RPCs · same handler serves three protocols at once
+// (gRPC, gRPC-Web, Connect/JSON) when generated with buf + connect-go.
+//
+// Protocol cheatsheet:
+//
+//   gRPC          — high-throughput service-mesh callers (Go/Java/Rust services)
+//   gRPC-Web      — browsers behind an Envoy/proxy
+//   Connect/JSON  — anyone with curl: `POST /taotao.agent.v1.AgentService/Chat`
+//                   with `Content-Type: application/json` and a JSON body
+//
+// All three reuse the same server implementation in internal/server/.
+package taotao.agent.v1;
+
+option go_package = "github.com/doraemonlyz-jpg/taotao-agent/clients/go-client/proto/taotao/agent/v1;agentv1";
+
+// ────────────────────────────────────────────────────────────── service
+
+service AgentService {
+  // Unary · send a message · get the full reply.
+  // Internally collects every token from ChatStream into one string.
+  rpc Chat(ChatRequest) returns (ChatResponse);
+
+  // Server-streaming · sends ChatStreamResponse messages as they happen
+  // (session → tokens → traces → done).  The wire shape mirrors the SSE
+  // events the Python backend publishes — one envelope, oneof payload.
+  rpc ChatStream(ChatStreamRequest) returns (stream ChatStreamResponse);
+
+  // Cheap probe · used by k8s liveness/readiness and the docker healthcheck.
+  // Does NOT touch the LLM.
+  rpc Health(HealthRequest) returns (HealthResponse);
+}
+
+// ────────────────────────────────────────────────────────────── messages
+
+message ChatRequest {
+  // The user's message · required.
+  string message = 1;
+
+  // Session id from a previous response · empty = start a new session.
+  // Reuse to keep multi-turn memory + checkpointer continuity.
+  string session_id = 2;
+}
+
+message ChatResponse {
+  // Server-issued (or echoed) session id · save this for the next turn.
+  string session_id = 1;
+
+  // Full concatenated agent reply · all tokens joined.
+  string reply = 2;
+}
+
+message ChatStreamRequest {
+  string message = 1;
+  string session_id = 2;
+}
+
+// One event in the streaming response · matches the SSE event taxonomy.
+//
+//   kind = SESSION → fired ONCE at start with the server-side session id
+//   kind = TOKEN   → one chunk of the user-facing reply
+//   kind = TRACE   → an internal node event (planner / tool_call / ...)
+//                    payload is opaque JSON for max forward-compat
+//   kind = DONE    → fired ONCE when the graph finishes
+message ChatStreamResponse {
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_SESSION = 1;
+    KIND_TOKEN = 2;
+    KIND_TRACE = 3;
+    KIND_DONE = 4;
+  }
+  Kind kind = 1;
+
+  oneof payload {
+    SessionPayload session = 2;
+    TokenPayload token = 3;
+    TracePayload trace = 4;
+    DonePayload done = 5;
+  }
+}
+
+message SessionPayload {
+  string session_id = 1;
+}
+
+message TokenPayload {
+  string text = 1;
+}
+
+message TracePayload {
+  // Wall-clock seconds since unix epoch · 0 if not set.
+  double ts = 1;
+
+  // Which graph node fired this · executor / planner / tool_router / ...
+  string node = 2;
+
+  // Event kind · tool_call / tool_result / plan / route / error / ...
+  string kind = 3;
+
+  // Opaque JSON-encoded payload · keep flexible across backend changes.
+  // Decode client-side if you actually need fields.
+  string payload_json = 4;
+}
+
+message DonePayload {
+  string session_id = 1;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  bool ok = 1;
+  string model = 2;
+  bool critic_enabled = 3;
+  bool guardrails_enabled = 4;
+}

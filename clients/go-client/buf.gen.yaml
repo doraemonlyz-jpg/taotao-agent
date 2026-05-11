@@ -1,0 +1,15 @@
+version: v2
+inputs:
+  - directory: proto
+plugins:
+  # Standard Go message types · imports as agentv1.
+  - remote: buf.build/protocolbuffers/go:v1.36.5
+    out: proto
+    opt:
+      - paths=source_relative
+  # Connect-Go RPC handlers + clients · imports as agentv1connect.
+  # Connect-Go is a single binary that serves gRPC + gRPC-Web + Connect.
+  - remote: buf.build/connectrpc/go:v1.18.1
+    out: proto
+    opt:
+      - paths=source_relative
