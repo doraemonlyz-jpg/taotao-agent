@@ -92,6 +92,10 @@ def perception(state: AgentState) -> dict:
     emit(
         "perception", "perception",
         {
+            # First 240 chars of the user's text so /chat/replay can find
+            # this turn later by session_id without storing the full body
+            # twice. Keep ASCII-safe for the JSONL line.
+            "text": user_text[:240],
             "chars": len(user_text),
             "n_attachments": len(attachments),
             "facts_recalled": len(facts),

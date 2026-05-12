@@ -54,13 +54,19 @@ def write_jsonl(evt: TraceEvent) -> None:
 
 
 def emit(node: str, kind: str, payload: dict[str, Any], session_id: str | None = None) -> TraceEvent:
-    """Emit a trace event from inside a node. Side effects: JSONL + SSE bus."""
+    """Emit a trace event from inside a node. Side effects: JSONL + SSE bus.
+
+    `session_id` is also written into the persisted event so that the
+    /chat/replay endpoint can later filter by session.
+    """
     evt: TraceEvent = {
         "ts": time.time(),
         "node": node,
         "kind": kind,  # type: ignore[typeddict-item]
         "payload": payload,
     }
+    if session_id:
+        evt["session_id"] = session_id  # type: ignore[typeddict-item]
     write_jsonl(evt)
     if session_id:
         event_bus.publish(session_id, evt)

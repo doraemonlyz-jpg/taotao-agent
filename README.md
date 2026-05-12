@@ -117,17 +117,46 @@ uv run uvicorn app:app --reload --port 8000
 ```
 
 The API is now at http://127.0.0.1:8000:
-- `GET /health` — model + flags
+- `GET /health` — model + flags + security/telemetry status
+- `GET /docs`   — **Swagger UI** · all endpoints grouped by tag (chat / meta / memory / observability)
+- `GET /metrics`— **Prometheus** RED metrics (qps, p50/p95/p99, status code histograms)
 - `GET /tools`  — tool descriptions (graph version)
 - `POST /chat`  — **graph version** · 13-node LangGraph · SSE stream of trace events ending with the answer
 - `POST /chat/v2` — **harness version** 🔥 · single while-loop · `backend/agent/harness/` · same SSE wire format · see [docs/harness.html](docs/harness.html)
+- `POST /chat/replay` — **regression replay** · re-run the first user message of a past session against either engine
+- `GET /chat/replay/sessions` — list replayable session_ids found in the trace log
 - `GET /chat/v2/tools` — tool descriptions (harness · 14 tools incl. `dispatch_subagent` + `final_answer`)
 - `DELETE /chat/v2/session/{id}` — wipe a harness session's persisted messages
 - `GET /traces` — last 200 events from the JSONL log
-- `GET/POST/DELETE /memory` — long-term memory inspector
+- `GET/POST/DELETE /memory` — long-term memory inspector (POST/DELETE require `X-API-Key` if `API_KEY` env is set)
 
 > Both endpoints share tools / memory / observability — only the control flow differs.
 > For a head-to-head trace comparison see [docs/harness-vs-graph.html](docs/harness-vs-graph.html).
+
+### Production hardening (all opt-in via env)
+
+| Knob | Env | Default | Effect |
+|---|---|---|---|
+| Auth | `API_KEY=<value>` | unset | Mutating endpoints require `X-API-Key` header; unset = dev mode |
+| Rate limit | `RATE_LIMIT_ENABLED=1`, `RATE_LIMIT_CHAT=60/minute`, `RATE_LIMIT_READ=600/minute` | on | Per-IP slowapi limiter; 429 on overflow |
+| Sentry | `SENTRY_DSN=<dsn>` | unset | Auto-reports exceptions + 10% perf traces |
+| OTel | `OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317` | unset → console | Auto-traces FastAPI + httpx; tools/sub-agents/LLM via `tool_span()` etc. |
+| Prometheus | always-on at `/metrics` | — | http_requests_total, request_duration_seconds, etc. |
+| CORS | `ALLOWED_ORIGINS=https://app.example.com,...` | `*` | Restrict to known frontends |
+
+### Eval
+
+```bash
+# Run all 50 golden cases against both engines + judge with Sonnet:
+uv run python -m eval.cli
+
+# Quick smoke (no judge, just substring + tool-use checks):
+uv run python -m eval.cli --no-judge --limit 5 --engines harness
+
+# Output:
+#   backend/data/eval/<unix-ts>.jsonl     ← raw rows
+#   docs/eval-report.html                 ← side-by-side A/B report
+```
 
 ### 2 · Frontend
 
@@ -186,6 +215,7 @@ agent-demo/
 │       ├── memory/
 │       │   ├── short_term.py # auto-compaction helper
 │       │   └── long_term.py  # Chroma wrapper
+│       ├── security.py       # auth (X-API-Key) + slowapi rate-limit + sentry init · all env-gated
 │       ├── observability/
 │       │   └── tracer.py     # JSONL + SSE pub/sub
 │       └── harness/          # 🔥 parallel harness-style impl (POST /chat/v2)
@@ -195,19 +225,34 @@ agent-demo/
 │           ├── subagent.py   #   sub-agents-as-tools (anti-Cognition-pattern multi-agent)
 │           ├── compaction.py #   token-budget compaction (vs graph's per-turn)
 │           └── persistence.py#   atomic JSON-per-session (vs graph's checkpointer)
+│       └── observability/
+│           ├── tracer.py     # JSONL + SSE pub/sub
+│           ├── usage.py      # token meter + per-session USD budget
+│           └── telemetry.py  # OpenTelemetry + Prometheus init · tool/subagent/llm spans
+├── eval/                     # 🆕 in-process eval framework
+│   ├── golden/{math,code,search,memory}.jsonl   # 50 cases
+│   ├── runner.py             # drive case → graph or harness, capture answer + tools + cost + latency
+│   ├── judge.py              # LLM-as-judge (correctness / groundedness / efficiency, 0-2 each)
+│   ├── report.py             # render docs/eval-report.html (A/B side-by-side)
+│   └── cli.py                # `python -m eval.cli`
 └── frontend/
     ├── package.json
     ├── vite.config.ts        # /api proxy → localhost:8000
-    ├── index.html
+    ├── index.html            # Klee One + Zen Maru Gothic + JetBrains Mono
     └── src/
         ├── main.tsx
         ├── App.tsx
-        ├── api.ts            # SSE client
-        ├── styles.css        # editorial design system
+        ├── api.ts            # SSE client (engine: 'graph' | 'harness')
+        ├── styles.css        # Studio Ghibli theme · sky + clouds + hills SVG
         └── components/
-            ├── Sidebar.tsx   # Components / Tools / Memory tabs
-            ├── ChatPanel.tsx # streaming chat
-            └── TracePanel.tsx# live trace timeline
+            ├── Sidebar.tsx       # Components / Tools / Memory tabs
+            ├── ChatPanel.tsx     # streaming chat
+            ├── MarkdownBubble.tsx# 🆕 markdown + code highlight + Copy button
+            ├── EngineToggle.tsx  # graph/harness segmented control
+            ├── ModelPicker.tsx
+            ├── TokenMeter.tsx
+            ├── LangToggle.tsx
+            └── TracePanel.tsx    # live trace timeline
 ```
 
 ---
