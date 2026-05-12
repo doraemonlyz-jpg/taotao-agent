@@ -28,26 +28,23 @@ interface BucketProps {
   tips: { up: string; dn: string; cache: string; cost: string; calls: string };
 }
 
+/**
+ * Single horizontal row: `LABEL · ↑in ↓out · cache · $cost · n×`.
+ * Renders nothing when there's no data — saves vertical space and
+ * skips the "— placeholder" row that made the topbar look chunky.
+ */
 function Bucket({ label, b, tips }: BucketProps) {
-  if (!b)
-    return (
-      <div className="meter-bucket">
-        <div className="meter-label">{label}</div>
-        <div className="meter-line muted">—</div>
-      </div>
-    );
+  if (!b || (b.input === 0 && b.output === 0 && b.calls === 0)) return null;
   return (
     <div className="meter-bucket">
-      <div className="meter-label">{label}</div>
-      <div className="meter-line">
-        <span className="up" title={tips.up}>↑ {fmtTokens(b.input)}</span>
-        <span className="dn" title={tips.dn}>↓ {fmtTokens(b.output)}</span>
-        {b.cache_read > 0 && (
-          <span className="cache" title={tips.cache}>cache {fmtTokens(b.cache_read)}</span>
-        )}
-        <span className="cost" title={tips.cost}>{fmtUSD(b.cost_usd)}</span>
-        <span className="calls" title={tips.calls}>{b.calls}×</span>
-      </div>
+      <span className="meter-label">{label}</span>
+      <span className="up" title={tips.up}>↑{fmtTokens(b.input)}</span>
+      <span className="dn" title={tips.dn}>↓{fmtTokens(b.output)}</span>
+      {b.cache_read > 0 && (
+        <span className="cache" title={tips.cache}>⚡{fmtTokens(b.cache_read)}</span>
+      )}
+      <span className="cost" title={tips.cost}>{fmtUSD(b.cost_usd)}</span>
+      <span className="calls" title={tips.calls}>{b.calls}×</span>
     </div>
   );
 }
@@ -87,30 +84,35 @@ export default function TokenMeter({ sessionId, refreshTick }: Props) {
   const pct = budget > 0 ? Math.min(100, Math.round((sessSpent / budget) * 100)) : 0;
   const overBudget = !!snap?.over_budget;
 
+  // Render Bucket→null-aware so we don't leak orphan separators.
+  const turnBucket = <Bucket label={t("meterThisTurn")} b={snap?.session} tips={tips} />;
+  const totalBucket = <Bucket label={t("meterTotal")} b={snap?.global} tips={tips} />;
+  const sections = [turnBucket, totalBucket].filter(Boolean);
+
   return (
     <div
       className={`meter ${overBudget ? "over-budget" : ""}`}
       title={snap?.pricing_known ? "" : t("meterTipNoPricing")}
     >
-      <Bucket label={t("meterThisTurn")} b={snap?.session} tips={tips} />
-      <span className="meter-sep" />
-      <Bucket label={t("meterTotal")} b={snap?.global} tips={tips} />
+      {sections.map((node, i) => (
+        <span key={i} className="meter-section">
+          {i > 0 && <span className="meter-sep" />}
+          {node}
+        </span>
+      ))}
       {budget > 0 && (
-        <>
-          <span className="meter-sep" />
-          <div className="meter-bucket meter-budget" title={t("meterTipBudget")}>
-            <div className="meter-label">
-              {t("meterBudget")} ${budget.toFixed(2)}
-            </div>
-            <div className="meter-budget-bar">
-              <div
-                className="meter-budget-fill"
-                style={{ width: `${pct}%` }}
-                data-state={overBudget ? "over" : pct > 80 ? "warn" : "ok"}
-              />
-            </div>
-          </div>
-        </>
+        <span className="meter-section meter-budget" title={t("meterTipBudget")}>
+          {sections.length > 0 && <span className="meter-sep" />}
+          <span className="meter-label">{t("meterBudget")}</span>
+          <span className="meter-budget-bar">
+            <span
+              className="meter-budget-fill"
+              style={{ width: `${pct}%` }}
+              data-state={overBudget ? "over" : pct > 80 ? "warn" : "ok"}
+            />
+          </span>
+          <span className="meter-budget-num">${budget.toFixed(2)}</span>
+        </span>
       )}
     </div>
   );

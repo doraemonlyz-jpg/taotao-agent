@@ -183,20 +183,30 @@ export interface ChatHandlers {
   onError: (err: string) => void;
 }
 
+/** Which control-flow implementation to drive · same SSE wire format. */
+export type Engine = "graph" | "harness";
+
 /**
  * Posts a chat message and consumes the SSE stream of trace events.
  * Returns a function to abort the in-flight request.
+ *
+ * `engine`:
+ *   - "graph"   → POST /chat       · 13-node LangGraph (default)
+ *   - "harness" → POST /chat/v2    · single while-loop · Claude Code style
+ *                 see docs/harness.html for the full design walkthrough
  */
 export function streamChat(
   message: string,
   sessionId: string | null,
-  handlers: ChatHandlers
+  handlers: ChatHandlers,
+  engine: Engine = "graph"
 ): () => void {
   const ctrl = new AbortController();
+  const path = engine === "harness" ? "/chat/v2" : "/chat";
 
   (async () => {
     try {
-      const resp = await fetch(`${BASE}/chat`, {
+      const resp = await fetch(`${BASE}${path}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message, session_id: sessionId }),

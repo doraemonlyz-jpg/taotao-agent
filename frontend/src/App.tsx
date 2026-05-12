@@ -3,6 +3,7 @@ import {
   fetchHealth,
   fetchMemory,
   fetchTools,
+  type Engine,
   type MemoryItem,
   type ToolDesc,
 } from "./api";
@@ -11,9 +12,18 @@ import TracePanel from "./components/TracePanel";
 import Sidebar from "./components/Sidebar";
 import TokenMeter from "./components/TokenMeter";
 import LangToggle from "./components/LangToggle";
+import EngineToggle from "./components/EngineToggle";
 import ModelPicker from "./components/ModelPicker";
 import type { TraceEvent } from "./api";
 import { useLang } from "./i18n";
+
+const ENGINE_KEY = "agent-demo-engine";
+
+function initialEngine(): Engine {
+  if (typeof window === "undefined") return "graph";
+  const v = window.localStorage.getItem(ENGINE_KEY);
+  return v === "harness" ? "harness" : "graph";
+}
 
 export default function App() {
   const { t } = useLang();
@@ -25,6 +35,21 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [turnTick, setTurnTick] = useState(0);
+  const [engine, setEngine] = useState<Engine>(initialEngine);
+
+  /**
+   * Engines have INDEPENDENT session stores (graph: SQLite checkpointer ·
+   * harness: JSON-per-session in data/harness/). Carrying a session_id
+   * across a switch would break tool_call/result pairing on the new side ·
+   * so we explicitly drop session + traces on every flip.
+   */
+  const switchEngine = (next: Engine) => {
+    if (next === engine) return;
+    setEngine(next);
+    setSessionId(null);
+    setTraces([]);
+    window.localStorage.setItem(ENGINE_KEY, next);
+  };
 
   useEffect(() => {
     fetchHealth()
@@ -63,6 +88,7 @@ export default function App() {
           onChange={(m) => setModel(m)}
         />
         <TokenMeter sessionId={sessionId} refreshTick={turnTick} />
+        <EngineToggle engine={engine} onChange={switchEngine} />
         <LangToggle />
         <a
           className="repo-link"
@@ -90,6 +116,7 @@ export default function App() {
             onTurnComplete={onTurnComplete}
             sessionId={sessionId}
             setSessionId={setSessionId}
+            engine={engine}
           />
         </section>
 

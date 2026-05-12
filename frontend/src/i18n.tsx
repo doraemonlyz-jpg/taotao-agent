@@ -26,6 +26,24 @@ export const ui: Dict = {
   githubLink:   { en: "github →",                                  zh: "Github →" },
   langToggleA11y: { en: "Switch language",                         zh: "切换语言" },
 
+  // engine (graph vs harness) toggle
+  engineLabel:    { en: "engine",                                  zh: "架构" },
+  engineGraph:    { en: "Graph",                                   zh: "Graph" },
+  engineHarness:  { en: "Harness",                                 zh: "Harness" },
+  engineToggleA11y: { en: "Switch agent architecture",             zh: "切换 agent 架构" },
+  engineGraphTip: {
+    en: "POST /chat · 13-node LangGraph · framework decides routing",
+    zh: "POST /chat · 13 节点 LangGraph · 框架决定路由",
+  },
+  engineHarnessTip: {
+    en: "POST /chat/v2 · single while-loop · LLM decides via tool_call (Claude Code / Cursor style)",
+    zh: "POST /chat/v2 · 单 while-loop · LLM 通过 tool_call 决定（Claude Code / Cursor 风格）",
+  },
+  engineSwitchedToast: {
+    en: "Switched to {engine} · session reset (each engine has its own state store)",
+    zh: "已切换到 {engine} · 会话已重置（两种架构存储不同）",
+  },
+
   // model picker
   modelPickerHint:    { en: "Click to switch model",                zh: "点击切换模型" },
   modelPickerTitle:   { en: "Choose a model",                       zh: "选择模型" },
