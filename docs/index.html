@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>桃桃 Agent · Senior Agent Engineer 24 本书学习手册</title>
+<title>桃桃 Agent · Senior Agent Engineer 27 本书学习手册</title>
 <meta name="description" content="从 0 到 senior agent engineer 面试 · 24 本完整手册 · 8 阶段学习路径 · 40000+ 行内容 · 550+ 道面试题 · 1280+ 词术语表 · 涵盖 LangGraph / RAG / Memory / Tool / Eval / Debug / 系统设计 / Live Coding / 企业级交付 / AI Infra / Harness Engineering / Hermes / MCP / P1 生产化加固 / 行为面 / Post-Training / Multimodal &amp; Voice / Agent Benchmarks / Industrial 工业基建 / Multi-Agent 架构 / SaaS 产品化 · 含 LLM 基础 30 题 / Cost-Latency 5 case / Security 30 招攻防 三大补丁">
 <!-- Favicon · Petit Prince's gold star -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230f1d35'/%3E%3Cpath d='M32 10 L 36 26 L 54 28 L 40 38 L 44 54 L 32 44 L 20 54 L 24 38 L 10 28 L 28 26 Z' fill='%23f4c95a' stroke='%23fff5d8' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E">
@@ -311,7 +311,7 @@ footer.foot a:hover { color: var(--rust); }
     </a>
     <div class="nav-links">
       <a href="#path">学习路径</a>
-      <a href="#books">24 本书</a>
+      <a href="#books">27 本书</a>
       <a href="#coverage">面试覆盖</a>
       <a href="#about">关于</a>
       <a href="multi-agent.html">Multi-Agent</a>
@@ -958,6 +958,36 @@ footer.foot a:hover { color: var(--rust); }
           </div>
           <span class="bk-link">学产品化</span>
         </a>
+        <a href="safety.html" class="book-card featured bare">
+          <div class="bk-row"><span class="bk-emoji">🛡️</span><span class="bk-num has-new">Book 25 · NEW</span></div>
+          <h4>AI Safety · Alignment · Red-teaming · 安全手册</h4>
+          <div class="bk-eng">三层框架 + OWASP LLM Top-10 + jailbreak 7 流派 + Constitutional AI + 1 周红队 sprint</div>
+          <p class="bk-desc">Agent 比 LLM 多 4 个攻击面（tool result · file content · memory poisoning · sub-agent）。本书把 alignment 拆成可执行的<strong>三层框架</strong>（policy / capability / oversight）+ OWASP LLM Top-10 每条一句话+一招 + 4 类 agent 特有风险（prompt injection 5 招 · jailbreak 7 流派 · tool abuse 三道防线 · data exfil 9 漏点）+ Constitutional critic 推理期实现 + 一份 1 周可照抄的红队 sprint 模板 + 4 个真实事故复盘（ChatGPT browse · Slack AI · Devin · Bing Sydney）+ safety eval harness CI 集成。30 题 · 60 词。</p>
+          <div class="bk-meta">
+            <span><strong>11</strong> 章</span><span><strong>7</strong> 风险 ×5</span><span><strong>30</strong> 题</span>
+          </div>
+          <span class="bk-link">学安全</span>
+        </a>
+        <a href="background-agents.html" class="book-card featured bare">
+          <div class="bk-row"><span class="bk-emoji">⏰</span><span class="bk-num has-new">Book 26 · NEW</span></div>
+          <h4>Background · Scheduled · Webhook Agents · 非交互手册</h4>
+          <div class="bk-eng">cron / queue / webhook / event-stream + idempotency + retry + DLQ + checkpoint resume</div>
+          <p class="bk-desc">Cursor BA · Devin · Claude Code <code>--continue</code> · GitHub Action · cron daily report · webhook PR review · MQ 消费 ticket —— 都是 background agent。本书把它们按 <strong>4 触发模式</strong>展开（cron / queue / webhook / event-stream），讲清楚跟 chat agent 的<em>6 大本质区别</em>，再给状态持久化（checkpoint / resume / time travel）· idempotency 三档 · retry 5 策略 · DLQ 设计 · cost / observability 5 指标 SLO。配套 <code>backend/agent/background/</code> ~400 行可跑代码。30 题 · 60 词。</p>
+          <div class="bk-meta">
+            <span><strong>12</strong> 章</span><span><strong>4</strong> 触发模式</span><span><strong>30</strong> 题</span>
+          </div>
+          <span class="bk-link">学非交互</span>
+        </a>
+        <a href="agentic-ux.html" class="book-card featured bare">
+          <div class="bk-row"><span class="bk-emoji">🎨</span><span class="bk-num has-new">Book 27 · NEW</span></div>
+          <h4>Agentic UX Patterns · 用户体验手册</h4>
+          <div class="bk-eng">12 模式 + 5 产品反编译（Cursor / Claude Code / Devin / Perplexity / Linear）+ 12 反例红黑榜</div>
+          <p class="bk-desc">Agent 跟传统 SaaS 核心差异：<strong>响应不可预测 + 不可逆 + cost 透明</strong>，UI 必须做透明 + 可逆。本书 12 个模式按用户旅程贴位（onboarding · streaming · trace · cite · cost · plan-confirm · diff · undo · interrupt · suggestions · error recovery · share）。每个模式给"什么时候用 / 用户脑回路 / 实现要点 / 红黑榜"。再反编译 5 真产品的 UX 选择，配 12 个 UI fail-mode 反例红黑榜。30 题 · 60 词。</p>
+          <div class="bk-meta">
+            <span><strong>13</strong> 章</span><span><strong>12</strong> 模式</span><span><strong>30</strong> 题</span>
+          </div>
+          <span class="bk-link">学 UX</span>
+        </a>
       </div>
     </div>
   </div>
@@ -967,8 +997,8 @@ footer.foot a:hover { color: var(--rust); }
 <section class="section" id="books" style="background: var(--paper-2); padding-top: 4rem;">
   <div class="container">
     <div class="section-head">
-      <div class="sec-eyebrow">📚 All 24 Books</div>
-      <h2>24 本书 <em>一览表</em></h2>
+      <div class="sec-eyebrow">📚 All 27 Books</div>
+      <h2>27 本书 <em>一览表</em></h2>
       <p class="sec-lede">不按学习顺序 · 按主题快速扫 · ★ = 2026-05 必补</p>
     </div>
     <div class="book-grid">
@@ -996,6 +1026,9 @@ footer.foot a:hover { color: var(--rust); }
       <a href="industrial.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🛠️</span><span class="bk-num has-new">22 ★</span></div><h4>工业化基建手册 · 反编译 Claude Code</h4><p class="bk-desc">17 features 全讲 · plan mode / permission / hooks / AGENTS.md / slash / diff preview / subagent.md / tool offset / 3-tier settings · 8 反编译结论 · 30 题</p><span class="bk-link">读</span></a>
       <a href="multi-agent.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🤝</span><span class="bk-num has-new">23 ★</span></div><h4>Multi-Agent Architecture</h4><p class="bk-desc">5 大模式（hierarchical / hub-and-spoke / debate / vote / handoff / reflection）+ 4 框架横评（LangGraph / AutoGen / CrewAI / Swarm）+ "默认别用" 判断框架 + 4 大共性难题 · 30 题 · 60 词 · 配套 600 行可跑代码</p><span class="bk-link">读</span></a>
       <a href="saas.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🪐</span><span class="bk-num has-new">24 ★</span></div><h4>From Demo to Public SaaS</h4><p class="bk-desc">11 phase 产品化路线图 · auth/JWT · 多租户隔离 · TLS+反代 · 前端 prod build · 外存化(pg+vector cloud+S3) · 横向扩展 · 沙箱(gVisor/Firecracker) · Stripe 计费 · GDPR/SOC2 合规 · 多区 DR · CI/CD+on-call · 50 项上线 checklist · 30 题 · 60 词 · 配套 4 starter impl</p><span class="bk-link">读</span></a>
+      <a href="safety.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🛡️</span><span class="bk-num has-new">25 ★</span></div><h4>AI Safety · Alignment · Red-teaming</h4><p class="bk-desc">Alignment 三层（policy / capability / oversight）· OWASP LLM Top-10 一句话+一招 · prompt injection 5 招 · jailbreak 7 流派 · tool abuse 三道防线 · data exfil 9 漏点 · Constitutional critic 推理期 · 1 周红队 sprint 模板 · 4 真实事故复盘 · safety eval harness · 30 题 · 60 词</p><span class="bk-link">读</span></a>
+      <a href="background-agents.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">⏰</span><span class="bk-num has-new">26 ★</span></div><h4>Background · Scheduled · Webhook Agents</h4><p class="bk-desc">非交互式 agent 完全手册 · 4 触发模式（cron / queue / webhook / event-stream）+ 状态持久化（checkpoint / resume / time travel）+ idempotency 三档 + retry 5 策略 + DLQ + 4 真产品反编译（Cursor BA / Devin / Claude Code resume / GH Action）+ cost / observability 5 指标 · 配套 ~400 行可跑代码 · 30 题 · 60 词</p><span class="bk-link">读</span></a>
+      <a href="agentic-ux.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🎨</span><span class="bk-num has-new">27 ★</span></div><h4>Agentic UX Patterns</h4><p class="bk-desc">12 大模式（streaming / trace 透明 / plan-confirm / interrupt / cite / diff preview / undo / cost meter / suggestions / empty state / error recovery / share）+ 5 真产品反编译（Cursor / Claude Code / Devin / Perplexity / Linear）+ UI fail-mode 12 反例红黑榜 + 信任曲线心智模型 · 30 题 · 60 词</p><span class="bk-link">读</span></a>
     </div>
   </div>
 </section>
@@ -1136,7 +1169,7 @@ footer.foot a:hover { color: var(--rust); }
     </div>
     <div class="row" style="margin-top:0.6rem;">
       <span>Set in Fraunces · Lora · Outfit · Caveat · JetBrains Mono</span>
-      <span>24 books · 40000+ lines · 550+ Qs · 1280+ terms</span>
+      <span>27 books · 40000+ lines · 550+ Qs · 1280+ terms</span>
     </div>
   </div>
 </footer>

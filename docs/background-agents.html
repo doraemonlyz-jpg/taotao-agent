@@ -1,0 +1,1025 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Book 26 · Background · Scheduled · Webhook Agents · 桃桃 Agent</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230f1d35'/%3E%3Cpath d='M32 10 L 36 26 L 54 28 L 40 38 L 44 54 L 32 44 L 20 54 L 24 38 L 10 28 L 28 26 Z' fill='%23f4c95a' stroke='%23fff5d8' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E">
+<meta name="description" content="非交互式 agent 完全手册 · cron / queue / webhook / event-driven · 状态持久化 · 失败重试 · idempotency · GitHub Action / Cursor Background Agent / Devin / Claude Code 反编译 · 12 章 + 30 题 + 60 词 + 配套代码 ~400 行">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap&family=Fredoka:wght@500;600;700" rel="stylesheet">
+<style>
+:root {
+  --paper: #0f1d35; --paper-2: #162844; --paper-card: #1c3155;
+  --ink: #f5ecd2; --ink-soft: #c8be9b; --ink-mute: #7e8aa6;
+  --rule: #2c4570; --rule-soft: #1f3458;
+  --leaf: #8eb58f; --leaf-soft: #1d3a38;
+  --rust: #e08e6f; --rust-soft: #3a2a22;
+  --sky:  #6a96bc; --sky-soft:  #1f3050;
+  --gold: #f4c95a; --gold-soft: #3a2f1f;
+  --plum: #c0a3d1; --plum-soft: #2a1f3a;
+  --font-display: "Fraunces", "Times New Roman", serif;
+  --font-body: "Lora", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  --font-zh: "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: radial-gradient(ellipse at top left, rgba(140,180,220,.10), transparent 50%), radial-gradient(ellipse at bottom right, rgba(244,201,90,.08), transparent 50%), var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.75; }
+:lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(244,201,90,.4); transition: all .15s; }
+a:hover { background: rgba(244,201,90,.08); }
+a.bare { border-bottom: none; }
+strong { font-weight: 600; color: var(--ink); }
+em { font-style: italic; color: var(--leaf); font-weight: 500; }
+code { font-family: var(--font-mono); font-size: 0.85em; background: var(--paper-2); padding: 0.08rem 0.35rem; border-radius: 4px; color: var(--rust); border: 1px solid var(--rule-soft); }
+pre { font-family: var(--font-mono); background: #0a1628; color: #e8e3d4; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; font-size: 0.84rem; line-height: 1.55; border: 1px solid var(--rule); }
+pre code { background: none; color: inherit; padding: 0; border: 0; font-size: inherit; }
+.container { max-width: 920px; margin: 0 auto; padding: 0 2rem; }
+@media (max-width: 720px) { .container { padding: 0 1.2rem; } }
+.nav { padding: 1.4rem 0; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: rgba(15,29,53,.88); backdrop-filter: blur(8px); z-index: 100; }
+.nav-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.nav-brand { font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 1.2rem; color: var(--ink); border: none; }
+.nav-brand .dot { color: var(--gold); }
+.nav-links { display: flex; gap: 1.4rem; font-family: var(--font-sans); font-size: 0.88rem; }
+.nav-links a { color: var(--ink-mute); border-bottom: none; font-weight: 500; }
+.nav-links a:hover { color: var(--rust); background: none; }
+.hero { padding: 4rem 0 2.6rem; border-bottom: 1px solid var(--ink); position: relative; }
+.hero::after { content: ""; position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%); width: 90px; height: 4px; background: var(--rust); }
+.eyebrow { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.08em; color: var(--rust); margin-bottom: 1.2rem; font-weight: 600; text-transform: uppercase; }
+.hero h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 1.4rem; color: var(--ink); }
+.hero h1 em { color: var(--rust); font-style: italic; }
+.hero-lede { font-size: 1.12rem; color: var(--ink-soft); max-width: 36em; margin: 0 0 1rem; line-height: 1.65; }
+.hero-meta { font-family: var(--font-sans); font-size: 0.84rem; color: var(--ink-mute); margin-top: 1.2rem; }
+.hero-meta strong { color: var(--gold); }
+.section { padding: 3.4rem 0; border-bottom: 1px dashed var(--rule); }
+.section:last-of-type { border-bottom: none; }
+.section h2 { font-family: var(--font-display); font-weight: 500; font-size: 1.85rem; letter-spacing: -0.01em; margin: 0 0 1.4rem; color: var(--ink); display: flex; align-items: baseline; gap: 0.7rem; }
+.section h2 .num { font-family: var(--font-mono); font-weight: 400; font-size: 0.9rem; color: var(--rust); letter-spacing: 0.06em; }
+.section h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.2rem; margin: 2rem 0 0.6rem; color: var(--ink); }
+.section h4 { font-family: var(--font-sans); font-weight: 600; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gold); margin: 1.4rem 0 0.4rem; }
+.section p { margin: 0 0 1rem; }
+.section ul { padding-left: 1.4rem; margin: 0.6rem 0 1rem; }
+.section li { margin: 0.4rem 0; }
+.section ol { padding-left: 1.4rem; margin: 0.6rem 0 1rem; }
+.section ol li { margin: 0.5rem 0; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0 1.4rem; background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; font-size: 0.9rem; }
+th, td { padding: 0.7rem 0.85rem; text-align: left; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+th { background: var(--leaf-soft); color: var(--ink); font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td code { font-size: 0.82rem; }
+.cb { background: var(--paper-card); border: 1px solid var(--rule); border-left: 4px solid var(--rust); border-radius: 8px; padding: 1rem 1.2rem; margin: 1.2rem 0; font-size: 0.96rem; }
+.cb.leaf { border-left-color: var(--leaf); background: var(--leaf-soft); }
+.cb.gold { border-left-color: var(--gold); background: var(--gold-soft); }
+.cb.sky { border-left-color: var(--sky); background: var(--sky-soft); }
+.cb.plum { border-left-color: var(--plum); background: var(--plum-soft); }
+.cb-h { font-family: var(--font-sans); font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: var(--ink-mute); margin: 0 0 0.3rem; }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.2rem 0; }
+@media (max-width: 720px) { .split { grid-template-columns: 1fr; } }
+.split > div { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; padding: 1rem 1.1rem; }
+.split h4 { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin: 0 0 0.6rem; font-weight: 600; }
+.qbank { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 12px; padding: 1.4rem 1.6rem; margin: 1.4rem 0; }
+.qbank h3 { margin-top: 0.6rem; color: var(--gold); font-size: 1.05rem; border-bottom: 1px solid var(--rule); padding-bottom: 0.5rem; }
+.qbank h3:first-child { margin-top: 0; }
+.qbank ol { margin: 0.4rem 0 1rem; padding-left: 1.4rem; }
+.qbank ol li { margin: 0.45rem 0; font-size: 0.94rem; }
+.qbank .qhint { color: var(--ink-mute); font-size: 0.82rem; font-style: italic; }
+.glossary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem 1.4rem; font-size: 0.88rem; margin: 1rem 0; }
+@media (max-width: 720px) { .glossary { grid-template-columns: 1fr; } }
+.glossary div { padding: 0.4rem 0; border-bottom: 1px dashed var(--rule-soft); }
+.glossary strong { color: var(--gold); }
+.foot { padding: 3rem 0 4rem; text-align: center; font-family: var(--font-sans); color: var(--ink-mute); font-size: 0.88rem; }
+.foot a { color: var(--ink-mute); border-bottom: 1px solid rgba(44,69,112,.3); }
+.toc { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 12px; padding: 1.2rem 1.6rem; margin: 1.4rem 0; }
+.toc h4 { color: var(--gold); margin: 0 0 0.6rem; }
+.toc ol { columns: 2; column-gap: 2rem; padding-left: 1.4rem; }
+@media (max-width: 720px) { .toc ol { columns: 1; } }
+.toc ol li { font-size: 0.9rem; margin: 0.25rem 0; }
+.toc a { border-bottom: none; color: var(--ink-soft); }
+.toc a:hover { color: var(--rust); }
+.ttap-link { font-family: "Fredoka", "Comfortaa", "Quicksand", system-ui, sans-serif !important; font-weight: 600 !important; color: var(--gold, #f4c95a) !important; letter-spacing: -0.005em; transition: color .15s ease, opacity .15s ease, transform .15s ease; }
+.ttap-link:hover { color: var(--rust, #e08e6f) !important; opacity: 0.95; background: none !important; transform: translateY(-1px); }
+.ttap-link .ttap-mark { display: inline-block; margin-right: 0.32em; color: var(--gold, #f4c95a); font-size: 0.85em; transform: translateY(-1px); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-row">
+    <a class="nav-brand" href="index.html"><span class="dot">★</span> 桃桃 Agent</a>
+    <div class="nav-links">
+      <a href="index.html">首页</a>
+      <a href="industrial.html">Industrial</a>
+      <a href="multi-agent.html">Multi-Agent</a>
+      <a href="safety.html">Safety</a>
+      <a class="ttap-link" href="http://localhost:5180/" target="_blank" rel="noopener" title="打开配套 demo · 在线试玩 agent"><span class="ttap-mark">✦</span>TaotaoAgent</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <div class="eyebrow">Book 26 · Background · Scheduled · Webhook Agents · 非交互手册</div>
+    <h1>当 agent <em>没有 user 在等</em> · 跑几小时 · 自己决定何时停 · 状态自己存</h1>
+    <p class="hero-lede">
+      Cursor Background Agent · Devin · Claude Code <code>--continue</code> · GitHub
+      Action 里跑 agent · cron 触发 daily report · webhook 触发 PR review · MQ 消费
+      ticket · 这些都是<strong>非交互式 agent</strong> —— 没有人在 chat 框等回答 · 没有 SSE
+      flush · 但<em>状态、超时、重试、idempotency、可恢复</em>每一个都比聊天版严格 10 倍。
+    </p>
+    <p class="hero-lede">
+      本书把这一类 agent 拆 4 种触发模式（cron / queue / webhook / event-stream）+ 给一份
+      <strong>可以照抄的 minimal worker 实现</strong>（~400 行 · sqlite job table · poll loop ·
+      LangGraph checkpoint 持久化 · graceful shutdown）+ 反编译<em>4 个真实产品</em>（Cursor BA · Devin ·
+      Claude Code resume · GitHub Action）的差异点 + 30 道面试题。
+    </p>
+    <p class="hero-meta">
+      <strong>12 章 · 30 题 · 60 词术语 · 4 模式 × 6 横评 · 4 产品反编译</strong>
+    </p>
+  </div>
+</header>
+
+<main class="container">
+
+<section class="section">
+  <h2><span class="num">§0</span> 目录 · 为什么"chat agent → background agent"是质变</h2>
+  <div class="toc">
+    <h4>本书章节</h4>
+    <ol>
+      <li><a href="#ch1">§1 chat agent 跟 background agent 的 6 大本质区别</a></li>
+      <li><a href="#ch2">§2 4 种触发模式 · cron / queue / webhook / event-stream</a></li>
+      <li><a href="#ch3">§3 模式 1 · Scheduled · cron / APScheduler / Temporal</a></li>
+      <li><a href="#ch4">§4 模式 2 · Queue · Celery / RQ / SQS</a></li>
+      <li><a href="#ch5">§5 模式 3 · Webhook · GitHub / Slack / Stripe</a></li>
+      <li><a href="#ch6">§6 模式 4 · Event-stream · Kafka / NATS / Pulsar</a></li>
+      <li><a href="#ch7">§7 状态持久化 · checkpoint / resume / time-travel</a></li>
+      <li><a href="#ch8">§8 Idempotency · 同一 event 触发 N 次只执行 1 次</a></li>
+      <li><a href="#ch9">§9 Failure / retry / backoff · 5 种策略 · DLQ</a></li>
+      <li><a href="#ch10">§10 反编译 · Cursor BA · Devin · Claude Code · GitHub Action</a></li>
+      <li><a href="#ch11">§11 Cost / observability · trace 没人看也要存</a></li>
+      <li><a href="#ch12">§12 我们的实现 · backend/agent/background/ ~400 行</a></li>
+      <li><a href="#qa">问题速查 · 30 题</a></li>
+      <li><a href="#glossary">术语速查 · 60 词</a></li>
+    </ol>
+  </div>
+
+  <h3>1 张图 · chat vs background · 时间线对比</h3>
+  <div class="diagram">
+    <pre class="mermaid">
+sequenceDiagram
+    participant U as 👤 user
+    participant C as 💬 chat agent
+    participant B as ⚙ background agent
+    participant DB as 🗄 state store
+    participant T as ⏰ trigger
+
+    Note over U,C: chat (sec 级 · user 在等)
+    U->>C: prompt
+    C-->>U: SSE token (live)
+    C-->>U: final + done
+
+    Note over T,B: background (min/小时 级 · user 不在)
+    T->>B: cron / msg / webhook
+    B->>DB: load state (or new)
+    loop iterate
+        B->>B: think + act
+        B->>DB: checkpoint
+    end
+    B->>DB: write final
+    B-->>U: notify (email / slack / pr / event)
+    </pre>
+    <div class="diagram-cap">chat 用 SSE flush · background 用 checkpoint + notify 异步通知</div>
+  </div>
+
+  <div class="cb gold">
+    <p class="cb-h">读法</p>
+    <p>第 1-2 章建心智 · 第 3-6 章四种触发模式各一章（每章给最小可跑实现）· 第 7-9 章是
+    <strong>横切难题</strong>（状态 · 幂等 · 失败处理）· 第 10 章反编译 4 个真实产品 ·
+    第 11-12 章是观测 + 我们的实现。</p>
+  </div>
+</section>
+
+<section class="section" id="ch1">
+  <h2><span class="num">§1</span> chat agent 跟 background agent 的 6 大本质区别</h2>
+
+  <table>
+    <thead><tr><th>维度</th><th>chat agent</th><th>background agent</th><th>影响</th></tr></thead>
+    <tbody>
+      <tr><td>触发方</td><td>user 直接 POST</td><td>cron / MQ / webhook / event</td><td>需要触发器抽象 + 调度器</td></tr>
+      <tr><td>等待方</td><td>user 在前端 SSE 流</td><td>没人 · 结果异步通知</td><td>不需要 stream · 需要 notify channel（email / slack / pr）</td></tr>
+      <tr><td>时间尺度</td><td>秒-分</td><td>分-小时-天</td><td>不能塞内存 · checkpoint 必须每步持久化</td></tr>
+      <tr><td>失败可恢复</td><td>用户重试就好</td><td>必须自己 resume</td><td>需要 idempotency key + state save</td></tr>
+      <tr><td>可观测</td><td>有 user 反馈</td><td>没人看 trace · 只看 metric</td><td>SLO + alert 是唯一信号</td></tr>
+      <tr><td>cost 控制</td><td>per-session budget</td><td>per-job + per-tenant 双层</td><td>一个失控 job 能烧账户 24h 不被发现</td></tr>
+    </tbody>
+  </table>
+
+  <h3>"等不到 user 反馈"是设计约束的核心</h3>
+  <p>chat agent 出错了，user 看到 "[Error]" 会自己 retry 或反馈。background agent 出错了，
+  默认<strong>没人发现</strong>。所以你必须：</p>
+  <ul>
+    <li><strong>主动发声</strong> · 失败 → 写 DLQ + page on-call · 不依赖 user 报</li>
+    <li><strong>每步留痕</strong> · trace + checkpoint · 失败后能 replay 到失败点</li>
+    <li><strong>cost 硬上限</strong> · 单 job 不能花 &gt; X · 不然失控不知道</li>
+    <li><strong>幂等</strong> · MQ at-least-once · 同 msg 可能投 2-10 次</li>
+  </ul>
+
+  <h3>"没有 SSE"反而简化了一些事</h3>
+  <p>chat agent 的<strong>"streaming + 中断 + reconnect"</strong>是一个非常烦的设计 ·
+  background 完全没这事。你只需要：</p>
+  <ul>
+    <li>start → 跑完 → 写结果 · 不需要中途 yield</li>
+    <li>失败 → 重试整个或从 checkpoint resume</li>
+    <li>不存在 "user 关了浏览器" 的边界 case</li>
+  </ul>
+</section>
+
+<section class="section" id="ch2">
+  <h2><span class="num">§2</span> 4 种触发模式 · 一图选型</h2>
+
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TB
+    Q{"我什么时候要 agent 跑?"}
+    Q -->|"固定时间 / 周期"| C["⏰ Scheduled<br/>cron / APScheduler / Temporal"]
+    Q -->|"有任务积压<br/>需要削峰 + 重试"| MQ["📥 Queue<br/>Celery / RQ / SQS / Redis"]
+    Q -->|"外部系统 push 给我"| W["🪝 Webhook<br/>GitHub / Slack / Stripe"]
+    Q -->|"持续事件流<br/>实时反应"| E["🌊 Event-stream<br/>Kafka / NATS / Pulsar"]
+
+    C -->|"daily 报告 · 周报 · 缓存预热"| EX1["每天 9 点扫昨日工单 · 写报告"]
+    MQ -->|"用户提交 · async 处理"| EX2["上传 100 份合同 · queue + worker 跑"]
+    W -->|"事件触发"| EX3["新 PR → review · Issue → 分类"]
+    E -->|"实时流"| EX4["客服消息流 → triage → escalate"]
+    classDef q fill:#3a2f1f,stroke:#f4c95a,color:#f5ecd2;
+    classDef m fill:#1d3a38,stroke:#8eb58f,color:#f5ecd2;
+    classDef e fill:#1f3050,stroke:#6a96bc,color:#f5ecd2;
+    class Q,C,MQ,W,E q;
+    class EX1,EX2,EX3,EX4 e;
+    </pre>
+    <div class="diagram-cap">90% 的真实需求落在前 3 种 · event-stream 用得少 · 但量上来后必走</div>
+  </div>
+
+  <h3>一表对比</h3>
+  <table>
+    <thead><tr><th>模式</th><th>延迟</th><th>throughput</th><th>典型规模</th><th>容错难度</th></tr></thead>
+    <tbody>
+      <tr><td>Scheduled</td><td>分-小时</td><td>低（每周期 1-N 次）</td><td>1-10 jobs/day</td><td>低 · 错过下个周期再来</td></tr>
+      <tr><td>Queue</td><td>秒-分</td><td>中-高（需 worker 池）</td><td>100-10k jobs/day</td><td>中 · 需 idempotency + DLQ</td></tr>
+      <tr><td>Webhook</td><td>秒</td><td>中（被动）</td><td>10-1000 events/day</td><td>中 · 必须 ack 快 · 真活推 queue</td></tr>
+      <tr><td>Event-stream</td><td>毫秒-秒</td><td>极高</td><td>10k-1M events/day</td><td>高 · partition · ordering · exactly-once</td></tr>
+    </tbody>
+  </table>
+
+  <div class="cb sky">
+    <p class="cb-h">默认建议</p>
+    <p>没有量 · 用<strong>scheduled (cron)</strong>。有 backlog · 用<strong>queue (Redis/Celery)</strong>。
+    被外部 push · 用<strong>webhook + queue</strong>（webhook 入口 ack 200，把活塞 queue）。
+    真到实时 · 才用 Kafka。<em>不要一上来就 Kafka</em>。</p>
+  </div>
+</section>
+
+<section class="section" id="ch3">
+  <h2><span class="num">§3</span> 模式 1 · Scheduled · cron / APScheduler / Temporal</h2>
+
+  <h3>典型场景</h3>
+  <ul>
+    <li><strong>Daily/weekly report</strong>：每天 9 点把昨天的 ticket / commit / metric 用 agent 总结成 1 页 brief</li>
+    <li><strong>缓存预热</strong>：每小时 prefetch top-100 query 的 RAG embedding</li>
+    <li><strong>数据质量巡检</strong>：每天扫 schema 漂移 / 异常值 · agent 写 ticket</li>
+    <li><strong>背景索引</strong>：每周 reindex 整个 doc base · 失败 fall back 上版本</li>
+  </ul>
+
+  <h3>3 档实现 · 按规模选</h3>
+  <table>
+    <thead><tr><th>规模</th><th>方案</th><th>优点</th><th>限制</th></tr></thead>
+    <tbody>
+      <tr><td>开发 / 单机</td><td><strong>Linux cron</strong> + <code>uv run</code></td><td>0 依赖 · 0 服务 · 1 行 crontab</td><td>没监控 · 没重试 · machine reboot 丢</td></tr>
+      <tr><td>小生产</td><td><strong>APScheduler</strong> + Postgres jobstore</td><td>Python 内嵌 · jobstore 持久 · 简单</td><td>单点 · scheduler crash = 错过</td></tr>
+      <tr><td>大生产</td><td><strong>Temporal</strong> / <strong>Airflow</strong> / <strong>Prefect</strong></td><td>HA · retry · time-travel · UI</td><td>运维重 · 学习曲线</td></tr>
+    </tbody>
+  </table>
+
+  <h3>最小可跑 · cron + python · 30 行</h3>
+  <pre><code># /etc/cron.d/taotao-daily
+# 每天 09:00 跑 daily report
+0 9 * * * agent  cd /opt/taotao && uv run python -m background.daily_report
+</code></pre>
+  <pre><code># backend/background/daily_report.py
+import asyncio, json, time, pathlib
+from agent.graph import compile_async  # 复用主 graph
+
+async def main():
+    graph = await compile_async()
+    job_id = f"daily-{time.strftime('%Y%m%d')}"
+    cfg = {"configurable": {"thread_id": job_id}}
+    state = {"messages": [
+        {"role": "system", "content": "You write a 1-page daily brief."},
+        {"role": "user", "content": "Pull yesterday's commits/issues/metrics and brief."},
+    ]}
+    final = await graph.ainvoke(state, config=cfg)
+    pathlib.Path(f"/var/reports/{job_id}.md").write_text(final["answer"])
+    print(json.dumps({"job": job_id, "ok": True}))
+
+if __name__ == "__main__":
+    asyncio.run(main())
+</code></pre>
+
+  <p>关键点：<code>thread_id = job_id</code> · LangGraph checkpointer 自动按 thread 存状态 ·
+  下一次同 job 重跑会复用 state（如果你想从 checkpoint resume；不想就用每天新 thread_id）。</p>
+
+  <div class="cb gold">
+    <p class="cb-h">陷阱 · cron 不会通知你失败</p>
+    <p>cron 默认 stdout/stderr 走 mail · 多数生产机器没装 mail。建议：脚本结尾<strong>主动 POST</strong>
+    给一个 <code>/health/cron</code> · 监控这个 endpoint 是否每 24h 收到一次。没收到就 alert ·
+    这是 dead-man's switch 模式。</p>
+  </div>
+</section>
+
+<section class="section" id="ch4">
+  <h2><span class="num">§4</span> 模式 2 · Queue · Celery / RQ / SQS</h2>
+
+  <h3>什么时候上 queue</h3>
+  <p>当出现以下任意一种 · 别再裸 cron / 同步 endpoint：</p>
+  <ul>
+    <li>请求量瞬时大于 worker 处理能力（削峰）</li>
+    <li>需要重试（任务可能因临时故障失败）</li>
+    <li>需要异步（请求方不想等几分钟）</li>
+    <li>需要可见性（队列长度、堆积、worker 数）</li>
+  </ul>
+
+  <h3>3 档选型</h3>
+  <div class="split">
+    <div>
+      <h4>RQ (Redis Queue)</h4>
+      <p>极简 · Python only · Redis backend · 100 行 worker 自己能写。1k jobs/day 以内不疼。
+      <strong>缺</strong>：没有 chord/group · 复杂 workflow 难。</p>
+    </div>
+    <div>
+      <h4>Celery</h4>
+      <p>Python 生态事实标准 · Redis/RabbitMQ/SQS broker · chord/group/canvas 完整 · monitoring（Flower）成熟。
+      <strong>缺</strong>：配置复杂 · 文档老 · 调试痛。</p>
+    </div>
+    <div>
+      <h4>AWS SQS</h4>
+      <p>云原生 · 0 运维 · at-least-once · 自动 DLQ。<strong>缺</strong>：lock-in · 没有原生 chord ·
+      message size limit 256KB。</p>
+    </div>
+    <div>
+      <h4>Temporal</h4>
+      <p>不只是 queue · 是 workflow engine · 内置 retry / time-travel / human-in-the-loop / saga。
+      <strong>缺</strong>：自己运维成本高 · cloud 版贵。</p>
+    </div>
+  </div>
+
+  <h3>Worker · 100 行雏形</h3>
+  <pre><code># backend/background/worker.py
+import asyncio, json, sqlite3, signal, time, uuid
+from agent.graph import compile_async
+
+DB = "/var/lib/taotao/jobs.db"
+
+def init():
+    with sqlite3.connect(DB) as c:
+        c.execute("""CREATE TABLE IF NOT EXISTS jobs (
+            id TEXT PRIMARY KEY,
+            status TEXT NOT NULL CHECK(status IN ('queued','running','done','failed')),
+            payload TEXT NOT NULL,
+            result TEXT,
+            attempts INT DEFAULT 0,
+            created_at REAL,
+            updated_at REAL
+        )""")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_status ON jobs(status, created_at)")
+
+def claim_one(worker_id: str) -> dict | None:
+    """SELECT ... FOR UPDATE-equivalent in SQLite"""
+    with sqlite3.connect(DB, isolation_level="IMMEDIATE") as c:
+        row = c.execute("""SELECT id, payload FROM jobs
+                           WHERE status='queued' OR (status='running' AND updated_at < ?)
+                           ORDER BY created_at LIMIT 1""",
+                        (time.time() - 600,)).fetchone()
+        if not row: return None
+        c.execute("UPDATE jobs SET status='running', updated_at=?, attempts=attempts+1 WHERE id=?",
+                  (time.time(), row[0]))
+        return {"id": row[0], "payload": json.loads(row[1])}
+
+def finish(job_id: str, status: str, result: str):
+    with sqlite3.connect(DB) as c:
+        c.execute("UPDATE jobs SET status=?, result=?, updated_at=? WHERE id=?",
+                  (status, result, time.time(), job_id))
+
+async def run_loop():
+    init()
+    graph = await compile_async()
+    worker_id = f"w-{uuid.uuid4().hex[:6]}"
+    stop = asyncio.Event()
+    signal.signal(signal.SIGTERM, lambda *_: stop.set())
+
+    while not stop.is_set():
+        job = claim_one(worker_id)
+        if not job:
+            await asyncio.sleep(2)
+            continue
+        try:
+            cfg = {"configurable": {"thread_id": job["id"]}}
+            final = await graph.ainvoke(job["payload"], config=cfg)
+            finish(job["id"], "done", json.dumps(final))
+        except Exception as e:
+            finish(job["id"], "failed", str(e))
+
+if __name__ == "__main__":
+    asyncio.run(run_loop())
+</code></pre>
+
+  <p>核心点 4 个：</p>
+  <ol>
+    <li><strong>claim_one</strong> 用 IMMEDIATE 事务 + 时间戳 · 实现 visibility timeout（10min 没更新就视为 worker 死，重新可被 claim）</li>
+    <li><strong>thread_id = job_id</strong> · LangGraph checkpoint 帮 resume</li>
+    <li><strong>SIGTERM graceful</strong> · 收到信号不接新活，但跑完手头的</li>
+    <li><strong>attempts</strong> 字段 · 配 dispatcher 决定 retry vs DLQ</li>
+  </ol>
+</section>
+
+<section class="section" id="ch5">
+  <h2><span class="num">§5</span> 模式 3 · Webhook · GitHub / Slack / Stripe</h2>
+
+  <h3>核心约束 · webhook 必须 200 快</h3>
+  <p>所有主流 webhook（GitHub / Slack / Stripe / Linear / Notion）都<strong>3-5s 内必须 200</strong>，
+  否则视为失败、retry。agent 可能要跑 30s-30min。所以：</p>
+
+  <div class="cb leaf">
+    <p class="cb-h">铁律</p>
+    <p>Webhook handler <strong>只做 4 件事</strong>：(1) 验签名 (2) idempotency check (3) enqueue
+    (4) 200 OK · 全部 &lt; 100ms。<em>真活让 worker 跑</em>。</p>
+  </div>
+
+  <h3>例 · GitHub PR review agent</h3>
+  <pre><code># backend/routers/webhooks.py
+from fastapi import APIRouter, Header, HTTPException, Request
+import hmac, hashlib, json
+from agent.background import enqueue
+
+router = APIRouter(prefix="/webhooks", tags=["webhook"])
+
+def verify_github(body: bytes, sig: str, secret: str) -> bool:
+    mac = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(f"sha256={mac}", sig or "")
+
+@router.post("/github")
+async def github(
+    request: Request,
+    x_github_event: str = Header(...),
+    x_hub_signature_256: str = Header(...),
+    x_github_delivery: str = Header(...),
+):
+    body = await request.body()
+    if not verify_github(body, x_hub_signature_256, GH_SECRET):
+        raise HTTPException(401, "bad signature")
+    payload = json.loads(body)
+    if x_github_event == "pull_request" and payload["action"] in ("opened", "synchronize"):
+        # idempotency: x-github-delivery is unique per delivery; re-deliveries reuse it
+        enqueue(
+            kind="pr_review",
+            id=x_github_delivery,
+            payload={"pr_url": payload["pull_request"]["url"]},
+        )
+    return {"ok": True}  # always 200 fast
+</code></pre>
+
+  <h3>5 个 webhook 必做 check</h3>
+  <ol>
+    <li><strong>签名验证</strong>：GitHub/Stripe/Slack 都给 HMAC · 没有就拒</li>
+    <li><strong>idempotency key</strong>：用 delivery_id / event_id · 同 id 重复来视为已处理</li>
+    <li><strong>事件白名单</strong>：只处理你需要的 action · 别 catch-all</li>
+    <li><strong>立刻 200</strong>：永远不在 handler 里跑业务逻辑</li>
+    <li><strong>replay 友好</strong>：你应该能从 trace 找到原始 payload + 重新跑</li>
+  </ol>
+</section>
+
+<section class="section" id="ch6">
+  <h2><span class="num">§6</span> 模式 4 · Event-stream · Kafka / NATS / Pulsar</h2>
+
+  <p>当吞吐过 10k events/day 或者要做<strong>实时反应</strong>（&lt;1s）· webhook + queue 撑不住 ·
+  上 stream。这一档跟前面三个有<em>本质</em>区别：</p>
+
+  <ul>
+    <li><strong>Partition</strong>：相同 key 的 event 必到同一 partition · 保证顺序</li>
+    <li><strong>Consumer group</strong>：N 个 worker 自动分担 partition</li>
+    <li><strong>Offset</strong>：消费进度保存在 broker · 重启从 offset 继续</li>
+    <li><strong>Replay</strong>：从历史 offset 重消费 · debug / migration 利器</li>
+  </ul>
+
+  <h3>典型 agent 应用</h3>
+  <ul>
+    <li><strong>客服 triage</strong>：每条 customer message 进 Kafka · agent 决定路由（FAQ / human / refund flow）</li>
+    <li><strong>fraud scoring</strong>：每个 transaction event · agent + 规则混合打分</li>
+    <li><strong>RAG ingestion</strong>：doc 变更 event → 切 chunk → embed → 写 vector store</li>
+  </ul>
+
+  <h3>Kafka consumer · 雏形</h3>
+  <pre><code>from aiokafka import AIOKafkaConsumer
+import asyncio, json
+from agent.graph import compile_async
+
+async def consume():
+    graph = await compile_async()
+    consumer = AIOKafkaConsumer(
+        "customer-messages",
+        bootstrap_servers="kafka:9092",
+        group_id="taotao-triage",
+        enable_auto_commit=False,
+        auto_offset_reset="latest",
+    )
+    await consumer.start()
+    try:
+        async for msg in consumer:
+            event = json.loads(msg.value)
+            cfg = {"configurable": {"thread_id": f"triage-{event['conversation_id']}"}}
+            try:
+                await graph.ainvoke({"messages": event["history"]}, config=cfg)
+                await consumer.commit()  # 仅成功才提交 offset
+            except Exception as e:
+                # 不 commit · 下次重消费
+                # 也可以发到 DLQ topic
+                await dlq(msg, str(e))
+    finally:
+        await consumer.stop()
+</code></pre>
+
+  <p><strong>提交 offset 的纪律</strong> · "成功才 commit" 是 at-least-once 的核心。如果你
+  agent 是幂等的（§8）· 这就够了。如果不幂等 · 你需要 exactly-once（事务性 producer + consumer
+  读 + DB 事务一起 commit · 复杂得多 · 90% 场景不需要）。</p>
+
+  <div class="cb sky">
+    <p class="cb-h">小公司不要上 Kafka 的 3 个理由</p>
+    <p>(1) Kafka 自己运维成本 = 1 个 SRE FTE。(2) 你的 throughput 99% 不需要 partition。
+    (3) Redis Streams + RQ 撑得了 5k events/day。<strong>非要实时 + &gt;10k/day 才 justify</strong>。</p>
+  </div>
+</section>
+
+<section class="section" id="ch7">
+  <h2><span class="num">§7</span> 状态持久化 · checkpoint / resume / time-travel</h2>
+
+  <p>chat agent 状态丢了 · user 重 ask 一遍。background agent 状态丢了 · 你<strong>不知道丢了</strong>。
+  所以持久化是核心约束。</p>
+
+  <h3>3 层 state · 每层一个存储</h3>
+  <table>
+    <thead><tr><th>层</th><th>存什么</th><th>哪里</th><th>lifetime</th></tr></thead>
+    <tbody>
+      <tr><td>Job</td><td>id / status / payload / result / attempts</td><td>SQLite/Postgres jobs 表</td><td>永久（含 audit）</td></tr>
+      <tr><td>Conversation</td><td>messages / tool calls 历史</td><td>LangGraph checkpointer (Postgres)</td><td>job 期 + 30d 留痕</td></tr>
+      <tr><td>Long-term memory</td><td>fact / reflection / profile</td><td>Chroma / Postgres pgvector</td><td>per-tenant 永久</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Resume from checkpoint · 实操</h3>
+  <p>LangGraph 的强：每个 node 跑完自动 checkpoint。失败重启时<strong>从最后一个成功 node 继续</strong> ·
+  不需要重头跑。</p>
+  <pre><code># 失败后从 checkpoint resume
+from agent.graph import compile_async
+
+async def resume_job(job_id: str):
+    graph = await compile_async()
+    cfg = {"configurable": {"thread_id": job_id}}
+    # state=None · graph 自动 load 上次 checkpoint 继续
+    final = await graph.ainvoke(None, config=cfg)
+    return final
+</code></pre>
+
+  <h3>Time travel · 调试利器</h3>
+  <p>LangGraph checkpointer 不是覆盖式 · 是 append-only。你可以：</p>
+  <ul>
+    <li><code>graph.get_state_history(cfg)</code> · 看每个 step 的 state 快照</li>
+    <li>选某个历史 checkpoint · 改一个字段 · 从那点 fork 出新分支重跑</li>
+    <li>专门用来定位 "为什么 agent 在第 5 步走偏" · 在第 4 步换个 prompt 重跑</li>
+  </ul>
+
+  <h3>Cursor BG / Claude Code 的等效</h3>
+  <ul>
+    <li>Cursor BA · checkpoint 是 git commit + chat session JSON</li>
+    <li>Claude Code · <code>--continue</code> 读 <code>~/.claude/sessions/&lt;id&gt;.jsonl</code> · 把 message history 重灌</li>
+    <li>Devin · 自家 worker + state 在自有 DB · UI 给你 "rewind" 按钮</li>
+  </ul>
+</section>
+
+<section class="section" id="ch8">
+  <h2><span class="num">§8</span> Idempotency · 同一 event 触发 N 次只执行 1 次</h2>
+
+  <p>所有 MQ / webhook 都是 <strong>at-least-once</strong>。你必须假设同一 event 可能投 2-10 次。
+  没做幂等 · 用户会被重复扣款 / 重复发邮件 / PR 被 review 5 遍。</p>
+
+  <h3>3 档实现 · 按代价排</h3>
+  <div class="split">
+    <div>
+      <h4>① Idempotency key in DB</h4>
+      <p>每个外部 event 给一个稳定 key（GitHub delivery_id / Stripe event_id / message_id）·
+      jobs 表 PK 就用它 · 重复 INSERT 走 ON CONFLICT IGNORE。</p>
+      <pre><code>INSERT INTO jobs(id, ...) VALUES(?, ...)
+ON CONFLICT(id) DO NOTHING;</code></pre>
+    </div>
+    <div>
+      <h4>② 内容哈希</h4>
+      <p>没有外部 ID 时 · 用 <code>sha256(payload)</code> 当 idempotency key。代价是<em>真不同
+      但内容一样</em>的请求会被合并 · 通常无害。</p>
+    </div>
+    <div>
+      <h4>③ 业务级 idempotency</h4>
+      <p>"send_email" tool 自己记 sent_emails(message_id) · 同 id 二次调用直接 return cached。
+      这是<strong>最稳</strong>的 · 也最贵（每个 side-effect tool 都要写）。</p>
+    </div>
+    <div>
+      <h4>额外 · 时间窗</h4>
+      <p>"同一 user 30s 内同 query 视为重复" · 适合 button 防误点 · 不适合真业务幂等。</p>
+    </div>
+  </div>
+
+  <h3>"幂等" 不只 enqueue · 还要 effect 幂等</h3>
+  <p>常见错误：enqueue 做了去重，但 worker 跑两次都发了邮件。<strong>idempotency 必须延伸到 side-effect</strong>。
+  规则：所有"对外发号施令"的 tool（send_email · charge · publish）都自带 idempotency key 参数 ·
+  上游 event_id 透传到这个参数。</p>
+</section>
+
+<section class="section" id="ch9">
+  <h2><span class="num">§9</span> Failure / retry / backoff · 5 种策略 · DLQ</h2>
+
+  <h3>Retry 5 种策略</h3>
+  <table>
+    <thead><tr><th>策略</th><th>公式</th><th>用在</th></tr></thead>
+    <tbody>
+      <tr><td>Constant</td><td>每次 30s</td><td>简单 transient · LLM rate limit</td></tr>
+      <tr><td>Linear</td><td>30s · 60s · 90s · ...</td><td>慢恢复服务</td></tr>
+      <tr><td>Exponential</td><td>1 · 2 · 4 · 8 · ... (cap)</td><td>大多数 · 默认</td></tr>
+      <tr><td>Exp + jitter</td><td>exp ± random</td><td>大并发 · 防 thundering herd</td></tr>
+      <tr><td>Adaptive</td><td>看 server 返回的 Retry-After header</td><td>有 rate limit 头的 API</td></tr>
+    </tbody>
+  </table>
+
+  <p>推荐：<strong>exponential + jitter</strong> · cap 5min · max 5 次 · 之后 DLQ。</p>
+
+  <pre><code>import asyncio, random
+
+async def with_retry(fn, max_attempts=5, base=1.0, cap=300.0):
+    for attempt in range(max_attempts):
+        try:
+            return await fn()
+        except Retryable as e:
+            if attempt == max_attempts - 1: raise
+            sleep = min(cap, base * 2 ** attempt) + random.uniform(0, base)
+            await asyncio.sleep(sleep)
+        except FatalError:
+            raise  # 不重试 · 比如 401
+</code></pre>
+
+  <h3>区分 Retryable vs Fatal</h3>
+  <ul>
+    <li><strong>Retryable</strong>：429 · 5xx · 网络超时 · LLM ratelimit · DB lock</li>
+    <li><strong>Fatal</strong>：4xx (除 429) · validation error · auth 失败 · NotFound</li>
+  </ul>
+  <p>把这个判断放在<strong>error class hierarchy</strong> · 不要每个调用点都写 if。</p>
+
+  <h3>DLQ · 死信队列</h3>
+  <p>跑 5 次还失败的 job · 不能再 retry 也不能丢 · 进 DLQ 等人 review。DLQ 设计 3 要点：</p>
+  <ol>
+    <li><strong>独立 store</strong>（jobs 表 status=dead 或单独 dlq 表）</li>
+    <li><strong>原因结构化</strong>：分 transient_exhausted / permanent / poison_pill 三类</li>
+    <li><strong>有 UI/CLI replay</strong>：手工 review 后能一键重投</li>
+  </ol>
+
+  <div class="cb">
+    <p class="cb-h">真实坑 · poison pill</p>
+    <p>某条 message 触发了 worker 的 bug · worker crash · 重新 dequeue 还是它 · 又 crash · 死循环。
+    缓解：每 message 设 max_attempts (5)，超过 → DLQ + alert。SQS 自带 redrive policy 干这事。</p>
+  </div>
+</section>
+
+<section class="section" id="ch10">
+  <h2><span class="num">§10</span> 反编译 · Cursor BA · Devin · Claude Code · GitHub Action</h2>
+
+  <h3>Cursor Background Agent (2025)</h3>
+  <ul>
+    <li><strong>触发</strong>：UI 按钮 / GitHub PR 评论 / 定时</li>
+    <li><strong>容器</strong>：每个 BA 一个隔离 dev container（Cursor cloud or 自托管）</li>
+    <li><strong>状态</strong>：git branch + chat session JSON · 全部用 git 留痕</li>
+    <li><strong>结束</strong>：自己 commit + push + 开 PR · UI 通知</li>
+    <li><strong>恢复</strong>：UI "continue" → 同一容器或拉新容器 from git state</li>
+    <li><strong>cost cap</strong>：per-BA 默认 cap，超额停（公开文档没具体数）</li>
+  </ul>
+
+  <h3>Devin (Cognition 2024)</h3>
+  <ul>
+    <li><strong>触发</strong>：Slack 消息 / web UI / API</li>
+    <li><strong>容器</strong>：每 task 一个 VM，浏览器 + shell + IDE 共存</li>
+    <li><strong>状态</strong>：Cognition 自有 state DB · UI 显示 timeline + rewind</li>
+    <li><strong>结束</strong>：PR + Slack 通知 · 中途要确认会主动问</li>
+    <li><strong>恢复</strong>：rewind 到任一历史步骤 · 改 prompt 继续</li>
+  </ul>
+
+  <h3>Claude Code <code>--continue</code> / <code>--resume</code></h3>
+  <ul>
+    <li><strong>触发</strong>：CLI · 用户主动 invoke</li>
+    <li><strong>状态</strong>：本地 <code>~/.claude/sessions/&lt;id&gt;.jsonl</code> · 一个 session 一个文件</li>
+    <li><strong>resume</strong>：<code>claude --resume &lt;id&gt;</code> 或 <code>--continue</code> 接最近 · 重灌 message 历史</li>
+    <li><strong>plan mode</strong>：跑前可"先 plan 再确认 / 修改 / commit"</li>
+    <li><strong>区别</strong>：技术上还是 chat agent · 但提供了"暂停/继续"的<em>会话级</em> background 体验</li>
+  </ul>
+
+  <h3>GitHub Action 跑 agent</h3>
+  <ul>
+    <li><strong>触发</strong>：push / PR / schedule / workflow_dispatch / repository_dispatch</li>
+    <li><strong>容器</strong>：GitHub-hosted runner 或自托管</li>
+    <li><strong>状态</strong>：job 内 ephemeral · 跨 job 用 actions/cache · 跨 run 用 artifact</li>
+    <li><strong>恢复</strong>：原生不支持 · 你得自己存 state（artifact / GitHub Issue body）</li>
+    <li><strong>使用</strong>：minimal cost 的 daily/weekly agent · PR review · auto-fix lint</li>
+  </ul>
+
+  <h3>横评</h3>
+  <table>
+    <thead><tr><th></th><th>Cursor BA</th><th>Devin</th><th>Claude Code</th><th>GH Action</th></tr></thead>
+    <tbody>
+      <tr><td>触发</td><td>UI / PR / cron</td><td>Slack / API</td><td>CLI 手动</td><td>git event / cron</td></tr>
+      <tr><td>容器</td><td>cloud / self-host</td><td>云 VM</td><td>本地 shell</td><td>GH runner</td></tr>
+      <tr><td>状态</td><td>git + JSON</td><td>自有 DB</td><td>本地 jsonl</td><td>artifact / issue</td></tr>
+      <tr><td>resume</td><td>UI 一键</td><td>UI rewind</td><td><code>--continue</code></td><td>手工拼</td></tr>
+      <tr><td>跨 user</td><td>有</td><td>有</td><td>无</td><td>repo 级</td></tr>
+      <tr><td>code 介入</td><td>commit</td><td>PR + Slack</td><td>edit local files</td><td>commit / PR</td></tr>
+    </tbody>
+  </table>
+
+  <div class="cb gold">
+    <p class="cb-h">面试角度</p>
+    <p>这 4 个产品对应了 4 种 background agent 形态。<strong>Cursor BA = "git-based long-running agent"</strong>，
+    <strong>Devin = "VM-based 自治 agent"</strong>，<strong>Claude Code resume = "本地会话保持"</strong>，
+    <strong>GH Action = "CI 里塞 agent"</strong>。被问到 "你怎么实现长跑 agent"，先问：是哪种形态？</p>
+  </div>
+</section>
+
+<section class="section" id="ch11">
+  <h2><span class="num">§11</span> Cost / observability · trace 没人看也要存</h2>
+
+  <p>chat agent 一次 $0.05 · 用户感知。background agent 单 job $5-50，跑 1000 个 job/day = $5-50k/day ·
+  上线第 1 个月你就破产。所以：</p>
+
+  <h3>Cost 三层硬上限</h3>
+  <ol>
+    <li><strong>Per-job cap</strong>：单 job &gt; $X 强制中止 · 写 dlq + alert</li>
+    <li><strong>Per-tenant daily cap</strong>：每 tenant 每天 &gt; $Y 暂停所有该 tenant 的 background</li>
+    <li><strong>Global daily cap</strong>：所有 background 总额 &gt; $Z 全停 · 通常你没钱再 expose</li>
+  </ol>
+
+  <h3>Observability 必备 · 5 指标</h3>
+  <table>
+    <thead><tr><th>指标</th><th>SLO 例</th><th>alert 条件</th></tr></thead>
+    <tbody>
+      <tr><td>queue_depth</td><td>&lt; 100</td><td>&gt; 1000 持续 5min</td></tr>
+      <tr><td>job_duration_p95</td><td>&lt; 10min</td><td>&gt; 30min · 单 job hung</td></tr>
+      <tr><td>failure_rate</td><td>&lt; 2%</td><td>&gt; 5% / hour</td></tr>
+      <tr><td>cost_per_hour</td><td>&lt; $X</td><td>burn rate &gt; 2× baseline</td></tr>
+      <tr><td>dlq_size</td><td>&lt; 10</td><td>新增 &gt; 0 立刻 page</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Trace 留多久</h3>
+  <p>Background agent 出事的复盘窗口比 chat 长。<strong>建议 30 天 hot · 1 年 cold (S3 + glacier)</strong>。
+  保留期短了你出 incident 调不出原始 trace · 长了 trace store 爆账单。</p>
+
+  <div class="cb sky">
+    <p class="cb-h">本仓库实现</p>
+    <p><code>backend/agent/observability/usage.py</code> 已经记录每次 LLM 调用 cost。
+    把它 + per-job 标签 · 加 alert（Datadog / Honeycomb）即可。background 模式下
+    尤其建议把 OTel 接 sink · 因为<em>没有 user 帮你发现问题</em>。</p>
+  </div>
+</section>
+
+<section class="section" id="ch12">
+  <h2><span class="num">§12</span> 我们的实现 · backend/agent/background/</h2>
+
+  <p>把这一本书涉及的 4 模式 + retry + idempotency + cost cap 浓缩成 ~400 行可跑代码：</p>
+
+  <pre><code>backend/agent/background/
+├── __init__.py
+├── models.py          # SQLite jobs 表 schema + ORM
+├── enqueue.py         # idempotent enqueue (key + payload + max_attempts)
+├── worker.py          # poll loop + claim_one + visibility timeout + SIGTERM
+├── retry.py           # exp + jitter + Retryable/Fatal 分类
+├── triggers/
+│   ├── cron.py        # APScheduler in-process · prod 接 cron
+│   ├── webhook.py     # FastAPI router · GitHub/Stripe/Slack 验签 + enqueue
+│   └── kafka.py       # aiokafka consumer · group_id + manual commit
+└── tests/
+    ├── test_idempotency.py
+    ├── test_retry.py
+    └── test_worker.py
+</code></pre>
+
+  <p>使用：</p>
+  <pre><code># 1. cron · /etc/cron.d/taotao
+*/15 * * * * agent uv run python -m agent.background.triggers.cron tick
+
+# 2. queue · 在 supervisor / systemd 起 N 个 worker
+[program:taotao-worker]
+command=uv run python -m agent.background.worker
+numprocs=4
+
+# 3. webhook · 在 FastAPI 注册
+from agent.background.triggers import webhook
+app.include_router(webhook.router)
+
+# 4. kafka (可选)
+[program:taotao-kafka]
+command=uv run python -m agent.background.triggers.kafka
+</code></pre>
+
+  <p>所有 4 种触发<strong>共用同一个 worker pool</strong>。这是关键 ·
+  不要每种触发一套独立 worker · 那样 worker 数量爆炸 · 也无法做统一 cost cap。</p>
+
+  <div class="cb leaf">
+    <p class="cb-h">下一步可以加</p>
+    <ol>
+      <li>每 job <code>cost_used_cents</code> 字段 · LLM 调用时累加 · 超 cap 抛 BudgetExceeded</li>
+      <li>jobs UI · /admin/jobs 列表 + filter + replay 按钮</li>
+      <li>per-tenant queue · tenant_id 加 partition key · 防 tenant 互饿</li>
+      <li>Postgres 替代 SQLite (production)</li>
+      <li>Prometheus exporter · queue_depth / job_duration / cost · 接 Grafana</li>
+    </ol>
+  </div>
+</section>
+
+<section class="section qbank" id="qa">
+  <h2><span class="num">§Q</span> 30 题速查</h2>
+
+  <h3>概念（10 题）</h3>
+  <ol>
+    <li>Background agent 跟 chat agent 6 个本质差异是什么？</li>
+    <li>4 种触发模式各在什么 throughput 区间合适？</li>
+    <li>"webhook handler 必须 &lt; 5s 200" 的根因是什么？怎么设计？</li>
+    <li>at-least-once vs exactly-once vs at-most-once 区别？哪种最常见？</li>
+    <li>什么是 visibility timeout？为什么 SQS 默认 30s？</li>
+    <li>什么是 dead-man's switch？为什么 cron 必须配？</li>
+    <li>poison pill 是什么？怎么防？</li>
+    <li>Idempotency key 的 3 种实现 · 各自的代价？</li>
+    <li>retry 5 种策略 · 你默认选哪种？为什么？</li>
+    <li>Time travel debugging 在 background agent 里特别有用 · 为什么？</li>
+  </ol>
+
+  <h3>实战（10 题）</h3>
+  <ol>
+    <li>设计 daily report agent · cron 还是 queue？为什么？</li>
+    <li>设计 PR review agent · webhook 入口怎么写？给签名 + idempotency 代码。</li>
+    <li>worker SIGTERM graceful shutdown · 给伪代码。</li>
+    <li>queue_depth 一直涨 · 你的诊断 5 步。</li>
+    <li>给一个 LangGraph agent · 失败 resume 实操步骤。</li>
+    <li>Kafka consumer 提交 offset 写法 · "成功才 commit" 的边界 case 是什么？</li>
+    <li>per-job cost cap 怎么实现？什么时候中止？</li>
+    <li>DLQ 设计 3 要点 + 谁来 replay？</li>
+    <li>SQLite jobs 表 vs Postgres · 什么时候必须切？</li>
+    <li>给一个 background agent 上线 · observability 5 指标 + 各自 SLO 推荐。</li>
+  </ol>
+
+  <h3>系统设计（10 题）</h3>
+  <ol>
+    <li>设计一个 customer-support triage system · 1k 工单/天 · 触发模式 + 架构。</li>
+    <li>设计 daily code review bot · GH webhook 触发 · 重启不丢 in-flight · 怎么搞？</li>
+    <li>设计 multi-tenant background agent · 防一个大 tenant 把所有 worker 占满。</li>
+    <li>设计 background research agent · 跑 6 小时 · UI 怎么显示进度？</li>
+    <li>对比 Cursor BA / Devin / Claude Code resume / GH Action · 哪种适合 internal devtool？</li>
+    <li>设计 cost cap · 单 job + 单 tenant + 全局 三层 · 哪一档先 trip？</li>
+    <li>设计 Kafka 接入 · 100k events/day · partition 数 + worker 数怎么算？</li>
+    <li>worker 池调度 · 长任务 5h 跟短任务 30s 共用 pool 的问题 · 你的解？</li>
+    <li>有个 agent 跑了 4 小时被 kill · 你能从哪开始恢复？需要的 3 个东西是什么？</li>
+    <li>给 5 人 startup · 第一个 background agent 上线的 P0 checklist (8 项)。</li>
+  </ol>
+</section>
+
+<section class="section" id="glossary">
+  <h2><span class="num">§G</span> 术语速查 · 60 词</h2>
+  <div class="glossary">
+    <div><strong>Background agent</strong> · 无人交互的 agent</div>
+    <div><strong>Chat agent</strong> · user-in-the-loop</div>
+    <div><strong>Trigger</strong> · 触发 agent 跑的源</div>
+    <div><strong>Scheduled</strong> · 定时触发</div>
+    <div><strong>Cron</strong> · unix 定时</div>
+    <div><strong>APScheduler</strong> · python 内嵌调度</div>
+    <div><strong>Temporal</strong> · workflow engine</div>
+    <div><strong>Airflow</strong> · DAG workflow</div>
+    <div><strong>Prefect</strong> · python workflow</div>
+    <div><strong>Queue</strong> · 任务队列</div>
+    <div><strong>Celery</strong> · python queue 老牌</div>
+    <div><strong>RQ</strong> · Redis Queue</div>
+    <div><strong>SQS</strong> · AWS 队列</div>
+    <div><strong>Webhook</strong> · 被动 push 端点</div>
+    <div><strong>Event-stream</strong> · 持续事件流</div>
+    <div><strong>Kafka</strong> · 主流 event bus</div>
+    <div><strong>NATS</strong> · 轻量 pub-sub</div>
+    <div><strong>Pulsar</strong> · 多租户 stream</div>
+    <div><strong>Partition</strong> · 同 key 同 partition</div>
+    <div><strong>Consumer group</strong> · worker 集合</div>
+    <div><strong>Offset</strong> · 消费位点</div>
+    <div><strong>Replay</strong> · 历史消息重消费</div>
+    <div><strong>Worker</strong> · 跑 job 的进程</div>
+    <div><strong>Worker pool</strong> · 一组 worker</div>
+    <div><strong>Visibility timeout</strong> · 占用超时</div>
+    <div><strong>Lease</strong> · 租期机制</div>
+    <div><strong>Idempotency</strong> · 重复无副作用</div>
+    <div><strong>Idempotency key</strong> · 去重 key</div>
+    <div><strong>At-least-once</strong> · 至少一次投递</div>
+    <div><strong>At-most-once</strong> · 至多一次</div>
+    <div><strong>Exactly-once</strong> · 恰好一次（贵）</div>
+    <div><strong>DLQ</strong> · 死信队列</div>
+    <div><strong>Poison pill</strong> · 让 worker 死循环的 msg</div>
+    <div><strong>Retry</strong> · 失败重试</div>
+    <div><strong>Backoff</strong> · 重试间隔</div>
+    <div><strong>Exp + jitter</strong> · 指数+随机抖动</div>
+    <div><strong>Retryable</strong> · 可重试错误</div>
+    <div><strong>Fatal error</strong> · 不可重试</div>
+    <div><strong>Max attempts</strong> · 重试上限</div>
+    <div><strong>Checkpoint</strong> · 状态快照</div>
+    <div><strong>Resume</strong> · 从 checkpoint 续</div>
+    <div><strong>Time travel</strong> · 历史 state 查询</div>
+    <div><strong>Fork</strong> · 从历史点分叉</div>
+    <div><strong>Thread id</strong> · LangGraph 会话 key</div>
+    <div><strong>Job table</strong> · 任务持久化表</div>
+    <div><strong>Status enum</strong> · queued/running/done/failed</div>
+    <div><strong>Cost cap</strong> · 成本上限</div>
+    <div><strong>Per-job cap</strong> · 单 job 上限</div>
+    <div><strong>Per-tenant cap</strong> · 单 tenant 上限</div>
+    <div><strong>Burn rate</strong> · 烧钱速率</div>
+    <div><strong>Queue depth</strong> · 队列长度</div>
+    <div><strong>P95 latency</strong> · 95 分位延时</div>
+    <div><strong>Failure rate</strong> · 失败率</div>
+    <div><strong>Dead-man's switch</strong> · 没 ping 即报警</div>
+    <div><strong>Cursor BA</strong> · Cursor Background Agent</div>
+    <div><strong>Devin</strong> · Cognition 长跑 agent</div>
+    <div><strong>Claude Code</strong> · Anthropic CLI agent</div>
+    <div><strong>GitHub Action</strong> · CI 工作流</div>
+    <div><strong>Workflow dispatch</strong> · 手动触发 GH Action</div>
+    <div><strong>Repository dispatch</strong> · 外部触发 GH Action</div>
+    <div><strong>Saga</strong> · 多步事务补偿模式</div>
+  </div>
+</section>
+
+<section class="section">
+  <h2><span class="num">§∎</span> 收尾 · 下一步</h2>
+  <p>你现在可以：</p>
+  <ol>
+    <li>把 §3 的 30 行 cron 例子贴到自己机器跑一遍 · 看 LangGraph thread_id resume 的效果</li>
+    <li>读 §10 的 4 产品反编译 · 在面试里用一句话区分各自定位</li>
+    <li>给 <code>backend/agent/background/</code> 加上你最缺的一档（建议 worker.py · cron 已 trivially 上）</li>
+    <li>面试里把 §1 的 6 大差异 + §8 的 idempotency 三档讲一遍 · 这是 senior signal</li>
+  </ol>
+
+  <h3>相关阅读</h3>
+  <ul>
+    <li><a href="harness.html">Book 02 · Harness</a> · while-loop · 是 background worker 的核心</li>
+    <li><a href="industrial.html">Book 22 · Industrial</a> · plan mode / permission gate 在长跑里更重要</li>
+    <li><a href="multi-agent.html">Book 23 · Multi-Agent</a> · background 容易上 multi-agent · 注意 cost</li>
+    <li><a href="saas.html">Book 24 · SaaS</a> · 计费 / 多租户 / cost cap 配套</li>
+    <li><a href="safety.html">Book 25 · Safety</a> · background 没人盯 · safety SLO 更要紧</li>
+  </ul>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p>桃桃 Agent · Book 26 · v1.0 · 2026-05 · MIT</p>
+    <p><a href="index.html">← 回到首页</a> · <a href="https://github.com/doraemonlyz-jpg/taotao-agent">GitHub</a></p>
+  </div>
+</footer>
+
+<style>
+  .diagram { background: var(--paper-card, #1c3155); border: 1px solid var(--rule, #2c4570); border-radius: 12px; padding: 1.4rem 1rem; margin: 1.4rem 0; overflow-x: auto; text-align: center; }
+  .diagram pre.mermaid { background: transparent !important; border: none !important; padding: 0 !important; margin: 0; font-family: inherit; line-height: inherit; text-align: center; min-height: 60px; }
+  .diagram pre.mermaid svg { max-width: 100%; height: auto; }
+  .diagram-cap { font-family: var(--font-sans, system-ui); font-size: 0.78rem; color: var(--ink-mute, #7e8aa6); margin-top: 0.7rem; letter-spacing: 0.03em; text-transform: uppercase; }
+</style>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    securityLevel: 'loose',
+    themeVariables: {
+      background: '#0f1d35', mainBkg: '#1c3155', secondBkg: '#1d3a38', tertiaryBkg: '#3a2a22',
+      primaryBorderColor: '#f4c95a', secondaryBorderColor: '#8eb58f', tertiaryBorderColor: '#e08e6f',
+      clusterBkg: '#162844', clusterBorder: '#2c4570',
+      primaryTextColor: '#f5ecd2', secondaryTextColor: '#f5ecd2', tertiaryTextColor: '#f5ecd2',
+      textColor: '#f5ecd2', titleColor: '#f4c95a',
+      lineColor: '#c8be9b', edgeLabelBackground: '#162844', arrowheadColor: '#f4c95a',
+      noteBkgColor: '#3a2f1f', noteTextColor: '#f5ecd2', noteBorderColor: '#f4c95a',
+      actorBkg: '#1c3155', actorBorder: '#f4c95a', actorTextColor: '#f5ecd2', actorLineColor: '#c8be9b',
+      signalColor: '#f5ecd2', signalTextColor: '#f5ecd2',
+      labelBoxBkgColor: '#1d3a38', labelBoxBorderColor: '#8eb58f', labelTextColor: '#f5ecd2',
+      loopTextColor: '#f5ecd2',
+      activationBorderColor: '#f4c95a', activationBkgColor: '#3a2f1f',
+      sequenceNumberColor: '#0f1d35',
+      fontFamily: '"Outfit", "Lora", system-ui, sans-serif', fontSize: '14px',
+    },
+    flowchart: { curve: 'basis', padding: 16, htmlLabels: true, useMaxWidth: true },
+    sequence: { actorMargin: 60, boxMargin: 8, messageMargin: 30, useMaxWidth: true, mirrorActors: false, wrap: true },
+  });
+</script>
+</body>
+</html>

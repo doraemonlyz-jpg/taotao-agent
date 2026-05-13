@@ -10,13 +10,13 @@ Built on **LangGraph 0.6** (orchestration backbone) + **FastAPI** (SSE streaming
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12+-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
 [![Node](https://img.shields.io/badge/node-22+-339933.svg?logo=node.js&logoColor=white)](https://nodejs.org/)
-[![Docs · 24 books](https://img.shields.io/badge/docs-24%20books-orange.svg)](docs/index.html)
+[![Docs · 27 books](https://img.shields.io/badge/docs-27%20books-orange.svg)](docs/index.html)
 [![Code style: ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 ![status](https://img.shields.io/badge/status-v0.1-tomato)
 ![stack](https://img.shields.io/badge/backend-LangGraph%200.6%20%2B%20FastAPI-black)
 ![ui](https://img.shields.io/badge/frontend-React%2019%20%2B%20Vite-blue)
 
-> **📚 学习路径 · 24 本书覆盖 senior agent engineer 全方位面试（含行为面 + post-training + 多模态/语音 + benchmarks + 工业基建 + multi-agent + SaaS 产品化）**
+> **📚 学习路径 · 27 本书覆盖 senior agent engineer 全方位面试（含行为面 + post-training + 多模态/语音 + benchmarks + 工业基建 + multi-agent + SaaS 产品化）**
 > - 🟢 **完全新手** → [`docs/learn.html`](docs/learn.html) — 《从 0 到面试》13 章 + 110 词术语表 + 60 道面试题 + 8 周路线 + 进阶专题（benchmark / reasoning / async / agentic RAG / vibe coding / security）+ 每节附公开教程 / GitHub demo URL
 > - 🟠 **要做企业级项目** → [`docs/enterprise.html`](docs/enterprise.html) — 《企业级交付手册》10 章 + 5 份 spec 模板（PRD / Tech Design / Eval Plan / Risk Assessment / Runbook）+ 12 层技术栈选型 + 6 大工程能力 + RACI + 5 个翻车复盘 + 50 道企业级面试题 + 50 项上线 checklist
 > - 🟣 **agent system design 面试** → [`docs/agent-design.html`](docs/agent-design.html) — 《Agent System Design · Senior》6 步答题框架 + 7 大产品反编译（Cursor / Claude Code / Devin / Perplexity / Operator / v0 / 企业 multi-agent）+ 12 个 design pattern + 20 道 senior 设计题 + 80 词术语表
@@ -47,9 +47,14 @@ Built on **LangGraph 0.6** (orchestration backbone) + **FastAPI** (SSE streaming
 > - 🤝 **Book 23 · Multi-Agent Architecture** → [`docs/multi-agent.html`](docs/multi-agent.html) — 5 大模式（hierarchical / hub-and-spoke / debate / vote / handoff / reflection）+ 4 框架横评（LangGraph / AutoGen / CrewAI / OpenAI Swarm）+ "默认别用" 判断框架 + 4 大共性难题（state / 通信 / 终止 / 评估）+ 30 题 + 60 词 · 配套 `backend/agent/multi_agent/` 4 个模式 ~600 行可跑代码 + `multi_agent_run` harness tool
 > - 🪐 **Book 24 · From Demo to Public SaaS** → [`docs/saas.html`](docs/saas.html) — 把 demo 推到任意陌生人能注册付费的程度 · 11 phase 路线图（auth/JWT/多租户/TLS/前端构建/外存化/横向扩展/沙箱/计费/合规/多区域/运维）+ 50 项上线 checklist + 30 题 + 60 词 · 配套 4 个 starter implementation：`backend/agent/auth/` (JWT + tenant resolver) · 多租户 memory namespacing · `deploy/nginx/taotao.conf.example` (TLS+反代+安全 header) · `frontend/Dockerfile.prod` (多阶段 nginx 静态托管)
 >
-> **🌐 全部 24 本书入口** → [`docs/index.html`](docs/index.html) — 按 8 阶段学习路径分类的 landing page · 40000+ 行 · 550+ 题 · 1280+ 词
+> **🆕 2026-05 第二批必补（3 本）· 把 senior 面试覆盖率从 95% 提到 99%+**
+> - 🛡️ **Book 25 · AI Safety · Alignment · Red-teaming** → [`docs/safety.html`](docs/safety.html) — agent 比 LLM 多 4 个攻击面 · alignment 三层（policy / capability / oversight）+ OWASP LLM Top-10 一句话+一招 + 4 类 agent 特有风险（prompt injection 5 招 / jailbreak 7 流派 / tool abuse 三道防线 / data exfil 9 漏点）+ Constitutional critic 推理期实现 + 1 周可照抄红队 sprint + 4 真实事故复盘（ChatGPT browse / Slack AI / Devin / Bing Sydney）+ safety eval harness CI · 11 章 + 30 题 + 60 词
+> - ⏰ **Book 26 · Background · Scheduled · Webhook Agents** → [`docs/background-agents.html`](docs/background-agents.html) — 非交互式 agent 完全手册 · 4 触发模式（cron / queue / webhook / event-stream）+ 状态持久化（checkpoint / resume / time travel）+ idempotency 三档 + retry 5 策略 + DLQ + 4 真产品反编译（Cursor BA / Devin / Claude Code resume / GH Action）+ cost / observability 5 指标 SLO · 12 章 + 30 题 + 60 词 · 配套 `backend/agent/background/` ~400 行可跑代码
+> - 🎨 **Book 27 · Agentic UX Patterns** → [`docs/agentic-ux.html`](docs/agentic-ux.html) — 12 大模式（streaming / trace 透明 / plan-confirm / interrupt / cite / diff preview / undo / cost meter / suggestions / empty state / error recovery / share）+ 5 真产品反编译（Cursor / Claude Code / Devin / Perplexity / Linear）+ UI fail-mode 12 反例红黑榜 + "信任曲线" 心智模型 · 13 章 + 30 题 + 60 词
 >
-> 完整覆盖：learn 建心智 → 4 大支柱（framework/RAG/memory/tool）→ 3 本工程实战（eval/debug/enterprise）→ 3 本面试冲刺（system design + live coding + behavioral）→ 3 本进阶专项（infra/harness/对比）→ 3 本扩展速读（hermes/mcp/p1）→ 3 本必补（post-training/multimodal/benchmarks）→ 3 本架构封顶（industrial 工业基建 + multi-agent 多智能体 + saas 产品化）。
+> **🌐 全部 27 本书入口** → [`docs/index.html`](docs/index.html) — 按 8 阶段学习路径分类的 landing page · 40000+ 行 · 550+ 题 · 1280+ 词
+>
+> 完整覆盖：learn 建心智 → 4 大支柱（framework/RAG/memory/tool）→ 3 本工程实战（eval/debug/enterprise）→ 3 本面试冲刺（system design + live coding + behavioral）→ 3 本进阶专项（infra/harness/对比）→ 3 本扩展速读（hermes/mcp/p1）→ 3 本必补（post-training/multimodal/benchmarks）→ 3 本架构封顶（industrial 工业基建 + multi-agent 多智能体 + saas 产品化）→ 3 本运营封顶（safety 安全 + background 非交互 + agentic-ux 用户体验）。
 
 > **🐹 想用 Go 服务调 agent？** → [`clients/go-client/`](clients/go-client/) · 零依赖纯 stdlib SDK · `cli.Chat` 阻塞 / `cli.ChatStream` 流式 · 4 个可跑 demo
 >
