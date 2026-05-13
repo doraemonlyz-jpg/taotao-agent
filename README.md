@@ -147,6 +147,26 @@ The API is now at http://127.0.0.1:8000:
 | MCP server (HTTP) | `MCP_HTTP_ENABLED=1`, `MCP_EXPOSED_TOOLS=calculator,web_search,...` (or `*`) | on, safe-set | Mounts an MCP server at `/mcp/` so Claude Desktop / Cursor / any MCP client can call our whitelisted tools |
 | MCP server (stdio) | `uv run python -m agent.mcp` | — | Launches the same server over stdio for Claude-Desktop-spawned subprocess |
 | MCP client | `MCP_CLIENT_CONFIG=./mcp_servers.json` | unset | Load tools from external MCP servers (filesystem, fetch, …); they're merged into both registries as `<server>_<tool>` |
+| **Cost guardrail** | `AGENT_SESSION_BUDGET_USD=5` | `0` (off) | Per-session USD ceiling; `/chat` returns `402 Payment Required` once exceeded. Local models are always zero-cost so the rail stays transparent in dev. |
+| **Memory decay** | `AGENT_MEM_HALF_LIFE_DAYS=14`, `AGENT_MEM_PRUNE_MAX_KEEP=500`, `AGENT_MEM_PRUNE_DROP_FRACTION=0.2` | 14 / 500 / 0.2 | `POST /memory/prune` ranks by `0.7·exp(-age/half_life) + 0.3·log1p(use_count)/log1p(max)` and drops the bottom (with `dry_run=true` to preview, plus a hard "never delete more than 50%" floor). |
+| **Parallel tool exec** | always-on (harness only) | — | Same-turn tool calls run via `asyncio.gather` + `asyncio.to_thread`; results are **re-ordered to input order** so prompt-cache stays hot. Lets one assistant turn fan out N `dispatch_subagent` / `web_search` calls in parallel. |
+
+### P1 hardening · 5 changes that take demo → product
+
+The **Cost guardrail / Memory decay / Parallel exec** entries above are the
+backend half. The frontend half is two more changes:
+
+- **OpenAPI → TypeScript codegen** · `cd frontend && npm run gen:api` dumps
+  `app.openapi()` and runs `openapi-typescript`, regenerating
+  `src/api/schema.gen.ts`. Backend Pydantic shape changes now break frontend
+  `tsc` rather than 422-ing in production.
+- **Multi-session sidebar** · the new "Sessions" tab in the UI lists past
+  conversations from the trace JSONL (`GET /chat/replay/sessions`) and lets
+  you switch session by flipping a single React state — backend stays
+  stateless, `session_id` is just a pointer into the checkpointer.
+
+Full deep-dive (theory + code + tradeoffs + 12 senior interview questions):
+**[docs/p1-hardening.html](docs/p1-hardening.html) · Book 17**.
 
 ### MCP · expose / consume tools over Model Context Protocol
 

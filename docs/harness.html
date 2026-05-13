@@ -569,6 +569,92 @@ footer.colophon .row { display: flex; justify-content: space-between; flex-wrap:
         </svg>
         <figcaption><strong>Figure 3.1</strong> · graph 8 个节点 → harness 8 个角色 · 每个都有去处 · 不是"省了功能" 是"换了承载方式"</figcaption>
       </div>
+
+      <h3 id="s-3-3"><span class="num">§3.3</span>P1 升级 · 把 tool 执行从串行改成并行</h3>
+
+      <p>
+        上面 §3 列的代码是<em>历史版本</em>的循环 —— <code>for tc in tool_calls: await asyncio.to_thread(...)</code> 一个接一个跑。
+        模型一轮发 3 个 <code>web_search</code>，每个 1.5s，总耗时 4.5s，主 event loop 干等。
+      </p>
+
+      <p>
+        当前 <code>loop.py</code> 已经把这一段升级成并发：
+      </p>
+
+<pre><code><span class="k">async def</span> <span class="f">_run_one</span>(tc):
+    name = tc[<span class="s">"name"</span>]
+    tool = tools_by_name.<span class="f">get</span>(name)
+    <span class="k">if</span> tool <span class="k">is</span> <span class="k">None</span>:
+        <span class="k">return</span> tc, f<span class="s">"[error] unknown tool {name!r}"</span>
+    args = tc.<span class="f">get</span>(<span class="s">"args"</span>, {}) <span class="k">or</span> {}
+    content = <span class="k">await</span> asyncio.<span class="f">to_thread</span>(safe_run_tool, tool, args)
+    <span class="k">return</span> tc, content
+
+results = <span class="k">await</span> asyncio.<span class="f">gather</span>(*[<span class="f">_run_one</span>(tc) <span class="k">for</span> tc <span class="k">in</span> tool_calls])
+
+<span class="c"># 关键 · 按入参顺序回写 · 不是按完成顺序</span>
+<span class="k">for</span> tc, content <span class="k">in</span> results:
+    messages.<span class="f">append</span>(ToolMessage(content=content, name=tc[<span class="s">"name"</span>],
+                                tool_call_id=tc[<span class="s">"id"</span>]))
+    <span class="k">self</span>.store.<span class="f">save</span>(sid, messages)
+</code></pre>
+
+      <p>三个细节决定了这是 senior 实现而不是天真实现：</p>
+
+      <h4>① <code>asyncio.gather</code> 配 <code>asyncio.to_thread</code> · 兼容 sync tool</h4>
+      <p>
+        我们绝大多数 tool（<code>web_search</code>、<code>read_file</code>、<code>python_repl</code>...）写的时候是 sync 函数。
+        <code>to_thread</code> 把它们扔进默认 ThreadPoolExecutor 跑，主 event loop 不阻塞。
+        <code>gather</code> 把这些 future 一起 await。<strong>不需要把 tool 改成 async</strong> —— 这个组合让我们零成本拥有并发。
+      </p>
+
+      <h4>② 结果按入参顺序回写 · prompt cache 命中的关键</h4>
+      <p>
+        <code>asyncio.gather</code> 返回值<em>本身</em>就是按入参顺序排列的，但每个 task 的<em>完成时间</em>不一样。
+        如果你写成 <code>for done in asyncio.as_completed(...)</code>，append 顺序就成了"谁先跑完谁先入"，
+        同一组 tool call 每次拼出来的 message 序列都不一样 → <strong>Anthropic / OpenAI / Gemini 的 prompt cache 全部 miss</strong> → 多付钱。
+      </p>
+      <p>
+        我们用 <code>(tc, content)</code> 元组把入参信息跟结果绑一起，回写时 <code>for tc, content in results</code> 自然就是确定性顺序。
+      </p>
+
+      <h4>③ GIL · I/O 释放 · CPU 不释放</h4>
+      <p>
+        Python 的 GIL 让人误以为多线程是假的。其实 GIL 只在执行<em>纯 Python 字节码</em>时持有；
+        一旦进入 socket / 文件 / numpy / Chroma 等 C 扩展层做 I/O 或重算，GIL 自动释放，别的线程能跑。
+        Agent tool 99% 是 I/O，所以这套机制真并发。<em>纯 Python 重 CPU</em>的 tool 才需要换 multiprocessing —— 我们暂时没这种 tool。
+      </p>
+
+      <h3 id="s-3-4"><span class="num">§3.4</span>怎么让 LLM 知道"可以并发"</h3>
+
+      <p>
+        模型不知道你的 harness 长什么样 —— 它只看 tool docstring。所以我们在 <code>dispatch_subagent</code> 的 docstring 里加了：
+      </p>
+<pre><code><span class="s">"""...
+
+PARALLELISM · IMPORTANT.
+The harness runs all your tool calls in a single turn CONCURRENTLY,
+so if you have 3 independent research questions, emit 3 dispatch_subagent
+calls in the SAME assistant turn · they will run side-by-side instead
+of sequentially.  Don't fan them out one per turn.
+..."""</span>
+</code></pre>
+
+      <p>
+        效果可观察：query "对比 LangGraph / FlashAttention / vLLM 最近进展" 现在会触发 3 个 sub-agent 并发 dispatch，trace 里能看到 <code>parallel: true</code>，总时长从 ~30s 降到 ~12s。
+      </p>
+
+      <h3 id="s-3-5"><span class="num">§3.5</span>什么时候<em>不要</em>并发</h3>
+      <ul>
+        <li><strong>tool 之间有数据依赖</strong>（先 list 再 read）—— 模型自然分两轮发，不混在一轮。OK。</li>
+        <li><strong>tool 写共享状态</strong>（5 个 <code>remember</code> 同时写 Chroma）—— SQLite 锁可能竞争。我们 <code>safe_run_tool</code> 用上限 8 的线程池，问题不大；真要多就给 tool 加内部 semaphore。</li>
+        <li><strong>限流敏感的外部 API</strong> —— web_search 已有 retry-with-backoff 兜 429；接 hard QPS 的 API 必须 tool 内 semaphore。</li>
+      </ul>
+
+      <div class="box reading">
+        <div class="box-label">深读</div>
+        <p>本节是 Book 17 第 3 章的浓缩。完整推导（含图、所有 senior 取舍点、面试题三档答案）见 <a href="p1-hardening.html#ch-3">p1-hardening.html · Chapter 3</a>。</p>
+      </div>
     </section>
 
 

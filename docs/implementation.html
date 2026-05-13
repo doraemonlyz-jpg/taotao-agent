@@ -1970,6 +1970,58 @@ KEEP_RECENT = 8
 
       <p>初始语言通过 <code>navigator.language</code> 检测，用户切换后存 localStorage。
       40 行代码替代了 i18next + 5 个依赖。</p>
+
+      <h3 id="openapi-codegen"><span class="anchor">§13.6</span>OpenAPI codegen · 让前后端契约自己骂人</h3>
+
+      <p>
+        前后端分离的<strong>静默漂移</strong>（silent drift）：后端改 <code>ChatIn.session_id</code> → <code>sessionId</code>，前端没人发现，上线 422。
+        我们用 <code>openapi-typescript</code> 把 FastAPI 自动生成的 OpenAPI 3.1 schema 转成 TypeScript 类型，让<strong>编译期</strong>而不是<em>运行期</em>报红。
+      </p>
+
+      <p class="code-cap"><a href="../frontend/package.json">frontend/package.json</a></p>
+<pre><span class="s">"scripts"</span>: {
+  <span class="s">"gen:api"</span>: <span class="s">"cd ../backend &amp;&amp; uv run python -c \"import json; from app import app; open('../frontend/openapi.json','w').write(json.dumps(app.openapi(), indent=2))\" &amp;&amp; openapi-typescript ./openapi.json -o ./src/api/schema.gen.ts"</span>
+}
+</pre>
+
+      <p>三步：</p>
+      <ol>
+        <li>用 backend venv 跑一行 Python，把 <code>app.openapi()</code> dump 到 <code>frontend/openapi.json</code></li>
+        <li><code>openapi-typescript</code> 把它转成 1100+ 行 <code>schema.gen.ts</code></li>
+        <li>前端用 <code>Schemas["ChatIn"]</code> 这种<em>派生类型</em>，不再手写</li>
+      </ol>
+
+      <p class="code-cap"><a href="../frontend/src/api.ts">frontend/src/api.ts</a></p>
+<pre><span class="k">import type</span> { Schemas } <span class="k">from</span> <span class="s">"./api/index"</span>;
+
+<span class="k">export type</span> ChatIn      = Schemas[<span class="s">"ChatIn"</span>];
+<span class="k">export type</span> PruneIn     = Schemas[<span class="s">"PruneIn"</span>];
+<span class="k">export type</span> ReplayIn    = Schemas[<span class="s">"ReplayIn"</span>];
+</pre>
+
+      <p>实际收益的三个常见场景：</p>
+      <ul>
+        <li><strong>后端改字段名</strong> · <code>npm run gen:api</code> 后所有用旧名的地方编译失败 · 安全重命名</li>
+        <li><strong>后端加端点</strong> · <code>Schemas["NewModel"]</code> 自动出现，IDE 智能提示有所有字段</li>
+        <li><strong>后端改字段类型</strong>（<code>float → Decimal</code>）· OpenAPI 类型从 <code>number</code> 变 <code>string</code> · 所有当数字用的地方编译失败提醒你转换</li>
+      </ul>
+
+      <div class="box warn">
+        <div class="box-label">细节 · response 类型不准的根因</div>
+        <p>
+          <code>openapi-typescript</code> 只能精确出 <em>request</em> 类型 —— 因为 FastAPI 只在 endpoint 显式标 <code>response_model=SomeModel</code> 时才把 response schema 写进 OpenAPI。
+          我们大多数端点返回 raw <code>dict</code>，所以 schema.gen.ts 里 response 是 <code>unknown</code> / 含糊 union。短期：response 类型继续手写并注释对齐哪个端点；长期：给关键端点逐步加 <code>response_model=</code>，下一次 codegen 自动收紧。
+        </p>
+      </div>
+
+      <p>
+        什么时候<em>不要</em> codegen：API 极不稳定（每天改、生成文件 review 比手写还累）、多 client 用不同 schema 子集（一刀切类型反而碍事）、已经有 BFF 层做翻译。
+      </p>
+
+      <div class="box reading">
+        <div class="box-label">深读</div>
+        <p>背景、对比、面试题三档答案见 <a href="p1-hardening.html#ch-5">p1-hardening.html · Chapter 5</a>。</p>
+      </div>
     </section>
 
     <!-- ============ PART XIV — Tradeoffs ============ -->

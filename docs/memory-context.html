@@ -506,6 +506,50 @@ Conversation:
         <li>定期归档（&gt; 1 年）到冷存储 · 不立刻物理删</li>
         <li>合规要求 (GDPR) → 用户主动 request 时<em>真</em>删</li>
       </ul>
+
+      <h3 id="s-7-4"><span class="num">§7.4</span>本项目实践 · <code>recency × usage</code> 复合分 prune</h3>
+      <p>
+        我们的 <code>backend/agent/memory/long_term.py</code> 实现了 §7.1 表里第二档（recency decay）+ 一点 LFU 思想的混合：
+      </p>
+<pre><code><span class="c"># 写入 · 多两个 metadata 字段</span>
+<span class="k">def</span> <span class="f">remember</span>(self, text, ...):
+    self.collection.<span class="f">add</span>(metadatas=[{
+        ..., <span class="s">"last_used_at"</span>: now, <span class="s">"use_count"</span>: <span class="s">0</span>,
+    }])
+
+<span class="c"># 读 · 每次 recall 自动 bump 命中行</span>
+<span class="k">def</span> <span class="f">recall</span>(self, query, k=<span class="s">4</span>):
+    result = self.collection.<span class="f">query</span>(...)
+    self.<span class="f">_bump_usage</span>(result[<span class="s">"ids"</span>][<span class="s">0</span>])      <span class="c"># use_count++ · last_used_at = now</span>
+    <span class="k">return</span> result[<span class="s">"documents"</span>][<span class="s">0</span>]
+
+<span class="c"># 定期清 · 复合分排序砍底部</span>
+<span class="k">def</span> <span class="f">prune</span>(self, *, max_keep=<span class="s">500</span>, half_life_days=<span class="s">14</span>, dry_run=<span class="k">False</span>):
+    <span class="c"># score = 0.7 * exp(-age/half_life) + 0.3 * log1p(use)/log1p(max_use)</span>
+    scored = <span class="f">sorted</span>(<span class="f">zip</span>(ids, metas),
+                    key=<span class="k">lambda</span> p: self.<span class="f">_score</span>(p[<span class="s">1</span>], max_use, half_life_days))
+    n_drop = <span class="f">min</span>(total - max_keep, total // <span class="s">2</span>)   <span class="c"># 永远不删超过一半 · blast radius limit</span>
+    victims = [pid <span class="k">for</span> pid, _ <span class="k">in</span> scored[:n_drop]]
+    <span class="k">if</span> <span class="k">not</span> dry_run:
+        self.collection.<span class="f">delete</span>(ids=victims)
+</code></pre>
+
+      <p>三个 senior 取舍点：</p>
+      <ul>
+        <li><strong>recency 用<em>指数衰减</em></strong>不是线性 · 14 天后还剩 37% 价值、56 天剩 2% · 半衰期物理直觉</li>
+        <li><strong>usage 用 <code>log1p</code> 归一</strong>避免热门 fact 把冷门压成 0 · 长尾分布的常用归一手法</li>
+        <li><strong>权重 7:3 偏 recency</strong> · 因为"用户偏好会变"是 agent 场景的最大 risk · 做 docs RAG 应该反过来 3:7</li>
+      </ul>
+
+      <p>
+        暴露为 <code>POST /memory/prune</code>，必须支持 <code>dry_run=true</code> 让用户预览 victim 再决定 —— 这跟 <code>terraform plan</code> / <code>kubectl --dry-run</code> 同源。
+        生产挂 cron 周日凌晨跑一次。
+      </p>
+
+      <div class="box reading">
+        <div class="box-label">深读</div>
+        <p>这一节是 Book 17 第 2 章的浓缩版。完整推导（包括为什么不用纯 LRU/LFU、tz-naive 兼容坑、读路径不该同步写）见 <a href="p1-hardening.html#ch-2">p1-hardening.html · Chapter 2</a>。</p>
+      </div>
     </section>
 
     <!-- ============== Chapter 8 ============== -->

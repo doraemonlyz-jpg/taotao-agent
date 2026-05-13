@@ -1,0 +1,1094 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P1 生产化加固 · 5 个改动 · 5 套工程哲学 · taotao-agent Book 17</title>
+<meta name="description" content="Memory decay/prune（LRU + 半衰期）· 并行 tool 执行（asyncio.gather + I/O 重叠）· cost-budget guardrail（fail-fast + 状态共享）· OpenAPI codegen（schema-driven 前后端契约）· multi-session UI（stateless HTTP + checkpoint）· 一本读懂 5 个改动背后的工程取舍 + 12 道 senior 面试题">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root { --paper:#fbf5e8;--paper-2:#f4ecd6;--paper-card:#fff;--ink:#1d1a14;--ink-soft:#3a3327;--ink-mute:#756c5c;--rule:#d8cdb0;--rule-soft:#e8debc;--leaf:#4a8a4a;--leaf-soft:#ebf3e7;--rust:#c44d2a;--rust-soft:#fae6dc;--sky:#2c6ca8;--sky-soft:#e2edf5;--plum:#864c8e;--plum-soft:#f1e6f2;--gold:#b8881e;--gold-soft:#f7eccd;--code-bg:#fdf9ed;--code-fg:#2a2620;--code-key:#c44d2a;--code-str:#4a8a4a;--code-cmt:#998a6c;--code-fn:#864c8e;--font-display:"Fraunces","Times New Roman",serif;--font-body:"Lora","Iowan Old Style",Georgia,serif;--font-sans:"Outfit",system-ui,-apple-system,sans-serif;--font-mono:"JetBrains Mono","SF Mono",Menlo,monospace;--font-zh:"Songti SC","Source Han Serif SC","Noto Serif CJK SC",serif;}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at top left,rgba(196,178,144,.12),transparent 50%),radial-gradient(ellipse at bottom right,rgba(74,138,74,.08),transparent 50%),var(--paper);color:var(--ink);font-family:var(--font-body);font-size:17px;line-height:1.75}:lang(zh){font-family:var(--font-zh);line-height:1.85}.book-body p,.book-body li{color:var(--ink-soft)}a{color:var(--rust);text-decoration:none;border-bottom:1px solid rgba(196,77,42,.4)}a:hover{background:rgba(196,77,42,.08)}em{font-style:italic;color:var(--leaf);font-weight:500}strong{font-weight:600;color:var(--ink)}
+.layout{display:grid;grid-template-columns:290px minmax(0,1fr);max-width:1400px;margin:0 auto;padding:0 2rem;gap:3rem}@media (max-width:980px){.layout{grid-template-columns:1fr;gap:0;padding:0 1.2rem}.toc{position:static!important;max-height:none!important}.toc-inner{display:none}.toc.open .toc-inner{display:block}.toc-toggle{display:inline-flex!important}}
+.toc{position:sticky;top:0;align-self:start;height:100vh;max-height:100vh;overflow:auto;padding:2rem .4rem 4rem 0;border-right:1px dashed var(--rule);font-family:var(--font-sans);font-size:.85rem}.toc-toggle{display:none;margin:1rem 0;padding:.4rem .8rem;background:var(--paper-card);border:1px solid var(--rule);border-radius:999px;cursor:pointer}.toc-brand{padding:0 .7rem 1.1rem;border-bottom:1px dashed var(--rule);margin-bottom:1rem}.toc-brand .mark{font-family:var(--font-display);font-style:italic;font-weight:500;font-size:1.4rem;color:var(--ink);display:block;line-height:1.1}.toc-brand .mark .dot{color:var(--rust)}.toc-brand .sub{font-family:var(--font-sans);font-size:.72rem;color:var(--ink-mute);margin-top:.4rem;display:block;line-height:1.4}.toc-brand .sub strong{color:var(--rust);font-weight:700}.toc ol{list-style:none;margin:0;padding:0;counter-reset:tocch}.toc>.toc-inner>ol>li{counter-increment:tocch;margin:.05rem 0}.toc a{display:flex;gap:.6rem;align-items:baseline;padding:.34rem .6rem;border:none;color:var(--ink-soft);font-weight:500;border-radius:6px;line-height:1.35}.toc>.toc-inner>ol>li>a::before{content:"Ch " counter(tocch,decimal-leading-zero);font-family:var(--font-mono);font-size:.65rem;color:var(--rust);width:3.4em;flex-shrink:0;font-weight:500}.toc a:hover{background:var(--paper-2);color:var(--ink)}.toc a.active{background:var(--rust-soft);color:var(--rust)}.toc-foot{margin-top:2rem;padding:1rem .7rem 0;border-top:1px dashed var(--rule);font-family:var(--font-sans);font-size:.74rem;color:var(--ink-mute);line-height:1.6}.toc-foot a{color:var(--ink-mute);border-bottom-color:rgba(117,108,92,.3)}.toc-foot a:hover{color:var(--rust)}
+.book-body{padding:2rem 0 6rem;max-width:800px}.book-body section{margin:0 0 5rem;scroll-margin-top:1rem}
+.cover{margin-bottom:4.5rem;padding-bottom:2.5rem;border-bottom:1px solid var(--ink);position:relative}.cover::after{content:"";position:absolute;left:0;bottom:-5px;width:80px;height:3px;background:var(--rust)}.cover .eyebrow{font-family:var(--font-sans);font-size:.78rem;letter-spacing:.06em;color:var(--rust);margin-bottom:1.4rem;font-weight:600;text-transform:uppercase}.cover .eyebrow .sep{color:var(--rule);margin:0 .6rem;font-weight:400}.cover h1{font-family:var(--font-display);font-weight:500;font-size:clamp(2.4rem,4.8vw,4rem);line-height:1.08;letter-spacing:-.015em;margin:0 0 1.4rem;color:var(--ink)}.cover h1 em{color:var(--rust);font-style:italic}.cover .lede{font-size:1.18rem;color:var(--ink-soft);max-width:36em;margin:0 0 2rem;line-height:1.65}.cover .who{background:var(--paper-card);border:1px solid var(--rule);border-radius:10px;padding:1.4rem 1.6rem;margin-top:2rem;font-size:.96rem}.cover .who h4{font-family:var(--font-sans);font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--rust);margin:0 0 .6rem}.cover .who ul{margin:0;padding-left:1.2rem}.cover .who li{margin:.15rem 0}
+.ch-head{margin:0 0 2rem}.ch-head .badge{display:inline-block;font-family:var(--font-sans);font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--rust);background:var(--rust-soft);padding:.25rem .7rem;border-radius:999px;margin-bottom:1rem}.ch-head h2{font-family:var(--font-display);font-weight:500;font-size:clamp(1.9rem,3.2vw,2.7rem);line-height:1.12;margin:0 0 .6rem;color:var(--ink);letter-spacing:-.01em}.ch-head .lede{font-style:italic;color:var(--ink-mute);font-size:1.05rem;font-family:var(--font-display);margin:0}h3{font-family:var(--font-display);font-weight:500;font-size:1.5rem;margin:2.8rem 0 .8rem;color:var(--ink);scroll-margin-top:1rem}h3 .num{font-family:var(--font-mono);font-size:.7rem;color:var(--rust);font-weight:500;margin-right:.5rem}h4{font-family:var(--font-sans);font-weight:600;font-size:1.05rem;margin:1.8rem 0 .4rem;color:var(--ink)}h5{font-family:var(--font-sans);font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-mute);margin:1.2rem 0 .4rem}p{margin:0 0 1rem}ol,ul{padding-left:1.4rem;margin:.4rem 0 1.2rem}li{margin:.25rem 0}
+code{font-family:var(--font-mono);font-size:.86em;background:var(--sky-soft);padding:.05rem .4rem;border-radius:4px;color:var(--sky);font-weight:500}strong code{color:var(--ink)}pre{font-family:var(--font-mono);background:var(--code-bg);color:var(--code-fg);padding:1.1rem 1.3rem;border-radius:8px;border:1px solid var(--rule-soft);border-left:3px solid var(--sky);overflow-x:auto;font-size:.81rem;line-height:1.6;margin:1rem 0 1.4rem}pre code{background:none;padding:0;color:inherit;font-size:inherit;font-weight:400}pre .k{color:var(--code-key);font-weight:500}pre .s{color:var(--code-str)}pre .c{color:var(--code-cmt);font-style:italic}pre .f{color:var(--code-fn);font-weight:500}
+.box{margin:1.5rem 0;padding:1.2rem 1.4rem;border-radius:10px;border-left:4px solid}.box .box-label{font-family:var(--font-sans);font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem}.box .box-label::before{font-size:1rem}.box p:last-child{margin-bottom:0}.box.concept{background:var(--leaf-soft);border-color:var(--leaf)}.box.concept .box-label{color:var(--leaf)}.box.concept .box-label::before{content:"📖"}.box.tip{background:var(--rust-soft);border-color:var(--rust)}.box.tip .box-label{color:var(--rust)}.box.tip .box-label::before{content:"💡"}.box.warn{background:#fff4e0;border-color:#d49414}.box.warn .box-label{color:#b87a0a}.box.warn .box-label::before{content:"⚠️"}.box.deep{background:var(--plum-soft);border-color:var(--plum)}.box.deep .box-label{color:var(--plum)}.box.deep .box-label::before{content:"✦";font-weight:600}.box.interview{background:var(--gold-soft);border-color:var(--gold)}.box.interview .box-label{color:var(--gold)}.box.interview .box-label::before{content:"🎯"}.box.reading{background:var(--sky-soft);border-color:var(--sky)}.box.reading .box-label{color:var(--sky)}.box.reading .box-label::before{content:"📚"}
+table{width:100%;border-collapse:collapse;margin:1rem 0 1.6rem;font-size:.9rem;background:var(--paper-card);border-radius:6px;overflow:hidden;border:1px solid var(--rule)}th,td{text-align:left;padding:.6rem .8rem;border-bottom:1px solid var(--rule-soft);vertical-align:top}th{font-family:var(--font-sans);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink);font-weight:600;background:var(--paper-2)}tr:last-child td{border-bottom:none}tr:hover td{background:rgba(196,178,144,.13)}table code{font-size:.82em}
+.figure{background:var(--paper-card);border:1px solid var(--rule);border-radius:12px;padding:1.6rem 1.4rem 1.2rem;margin:1.4rem 0 1.8rem;box-shadow:0 1px 3px rgba(29,26,20,.04)}.figure svg{display:block;width:100%;height:auto;max-width:760px;margin:0 auto}.figure figcaption{text-align:center;font-family:var(--font-sans);font-size:.82rem;letter-spacing:.05em;color:var(--ink-mute);text-transform:uppercase;margin-top:.9rem}.figure figcaption strong{color:var(--ink-soft);font-weight:600;text-transform:none;letter-spacing:0}
+.fig-box{fill:var(--paper-card);stroke:var(--ink-soft);stroke-width:1.5}.fig-box-soft{fill:#fdf9ed;stroke:var(--rule);stroke-width:1.2}.fig-box-leaf{fill:var(--leaf-soft);stroke:var(--leaf);stroke-width:1.5}.fig-box-rust{fill:var(--rust-soft);stroke:var(--rust);stroke-width:1.5}.fig-box-sky{fill:var(--sky-soft);stroke:var(--sky);stroke-width:1.5}.fig-box-plum{fill:var(--plum-soft);stroke:var(--plum);stroke-width:1.5}.fig-box-gold{fill:var(--gold-soft);stroke:var(--gold);stroke-width:1.5}.fig-line{fill:none;stroke:var(--ink-mute);stroke-width:1.4}.fig-line-rust{fill:none;stroke:var(--rust);stroke-width:1.6}.fig-line-leaf{fill:none;stroke:var(--leaf);stroke-width:1.6}.fig-dash{fill:none;stroke:var(--ink-mute);stroke-width:1.2;stroke-dasharray:4 3}.fig-t{font-family:var(--font-sans);font-size:13px;fill:var(--ink);font-weight:500}.fig-t-lg{font-family:var(--font-display);font-size:15px;fill:var(--ink);font-weight:600;font-style:italic}.fig-t-sm{font-family:var(--font-sans);font-size:11px;fill:var(--ink-mute)}.fig-t-mono{font-family:var(--font-mono);font-size:11px;fill:var(--ink-soft)}.fig-t-label{font-family:var(--font-sans);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}.fig-t-leaf{fill:var(--leaf)}.fig-t-rust{fill:var(--rust)}.fig-t-sky{fill:var(--sky)}.fig-t-plum{fill:var(--plum)}.fig-t-mute{fill:var(--ink-mute)}
+.pull{margin:3rem 0;padding:1.8rem 2rem;font-family:var(--font-display);font-style:italic;font-size:1.5rem;line-height:1.4;color:var(--ink);border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);position:relative;text-align:center}.pull::before{content:"“";position:absolute;top:-.2rem;left:1.2rem;font-family:var(--font-display);font-size:4.5rem;color:var(--rust);line-height:1}.pull cite{display:block;margin-top:.6rem;font-style:normal;font-family:var(--font-sans);font-size:.78rem;color:var(--ink-mute);letter-spacing:.06em;text-transform:uppercase;font-weight:500}
+footer.colophon{margin-top:5rem;padding-top:2.5rem;border-top:2px solid var(--ink);font-family:var(--font-sans);font-size:.85rem;color:var(--ink-mute)}footer.colophon .row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:.6rem}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="toc" id="toc">
+    <div class="toc-brand">
+      <span class="mark">P1 Hardening <span class="dot">·</span></span>
+      <span class="sub">5 个改动 · 5 套工程哲学 · 把"能跑"做成"能撑住"<br><strong>7 章 · 12 道面试题 · 30 词术语</strong></span>
+    </div>
+    <button class="toc-toggle" onclick="document.getElementById('toc').classList.toggle('open')">≡ 目录</button>
+    <nav class="toc-inner">
+      <ol>
+        <li><a href="#ch-1">总览 · 为什么这 5 件而不是别的</a></li>
+        <li><a href="#ch-2">Memory decay · LRU + 半衰期 · 别让记忆变垃圾</a></li>
+        <li><a href="#ch-3">Parallel tool exec · asyncio.gather · 3x 提速</a></li>
+        <li><a href="#ch-4">Cost guardrail · fail-fast 之美 · 状态共享</a></li>
+        <li><a href="#ch-5">OpenAPI codegen · 前后端契约自动化</a></li>
+        <li><a href="#ch-6">Multi-session UI · stateless HTTP + checkpoint</a></li>
+        <li><a href="#ch-7">5 件事的共同主题 · 默认安全 · 显式可观测</a></li>
+        <li><a href="#qa">12 道面试题</a></li>
+        <li><a href="#glossary">术语表 (30 词)</a></li>
+      </ol>
+    </nav>
+    <div class="toc-foot">
+      配套：<br>
+      <a href="learn.html">→ 学习</a><br>
+      <a href="memory-context.html">→ Memory</a><br>
+      <a href="harness.html">→ Harness</a><br>
+      <a href="implementation.html">→ 实现</a><br>
+      <a href="infra.html">→ Infra</a><br>
+      <a href="mcp.html">→ MCP</a><br><br>
+      <a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/.../taotao-agent ↗</a>
+    </div>
+  </aside>
+
+  <main class="book-body">
+    <header class="cover">
+      <div class="eyebrow">Production Hardening<span class="sep">·</span>P1 Sweep<span class="sep">·</span>2026</div>
+      <h1>"能跑" 到 "能撑住" <em>之间</em>，<br>差的就是这 5 件事。</h1>
+      <p class="lede">
+        一个 demo 到一个产品的距离，往往不是再加几个 feature，而是把<strong>边界条件</strong>处理好：内存会涨、I/O 会等、钱会烧、契约会变、用户会切会话。
+        这本把 taotao-agent 在一次 sweep 里加进去的 5 个改动逐一拆开 —— 不只讲"我们做了什么"，
+        更讲<em>背后的工程哲学</em>、<em>为什么这种实现而不是另一种</em>、<em>面试官追问会怎么问</em>。读完你能把"P1 加固"作为一种<strong>可迁移的方法论</strong>用到任何 service 上。
+      </p>
+      <div class="who">
+        <h4>📌 学完你能</h4>
+        <ul>
+          <li>用<strong>recency × usage</strong> 复合分实现 memory pruning · 知道为什么不用纯 LRU、纯 LFU</li>
+          <li>用 <code>asyncio.gather</code> 把同一轮 N 个 tool 调用并行化 · 知道为什么<em>顺序还要保留</em></li>
+          <li>设计 cost-budget guardrail · 知道为什么放在 dependency 而不是 middleware</li>
+          <li>跑通 OpenAPI → TypeScript codegen 链 · 知道 schema-driven 开发的真正收益在哪</li>
+          <li>设计 multi-session UI · 知道为什么"切 session"在 stateless HTTP 下其实是个错觉</li>
+          <li>讲清楚这 5 件背后的<strong>同一个原则</strong> · 默认安全 + 显式可观测 + fail-fast</li>
+          <li>回答 12 道围绕这些 feature 的 senior 面试题</li>
+        </ul>
+      </div>
+    </header>
+
+    <!-- ============== Chapter 1 · 总览 ============== -->
+    <section id="ch-1">
+      <header class="ch-head">
+        <span class="badge">Chapter 1 · 总览</span>
+        <h2>为什么这 5 件 · 而不是别的 50 件</h2>
+        <p class="lede">P1 不是新功能 · 是把现有功能"撑得住"</p>
+      </header>
+
+      <p>
+        Agent 项目从 demo 到产品的常见死法 —— 不是"功能不够"，是"用着用着就烂"：
+        memory 越查越脏、tool 串行卡住整个对话、长会话烧空预算、前端跟后端的字段对不上、用户找不到自己昨天聊过的内容。
+        我们这次 sweep 选的 5 件，都不是<em>新增能力</em>，全是<em>给已有能力加底裤</em>。
+      </p>
+
+      <h3 id="s-1-1"><span class="num">§1.1</span>5 个改动 · 一张表盘点</h3>
+      <table>
+        <thead><tr><th>改动</th><th>解决的痛</th><th>关键技术</th><th>放在哪</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Memory decay</strong></td>
+            <td>长期 memory 只增不删 · recall 噪音越来越大</td>
+            <td>LRU + 时间半衰期 · 加权评分</td>
+            <td><code>memory/long_term.py</code></td>
+          </tr>
+          <tr>
+            <td><strong>Parallel tool exec</strong></td>
+            <td>同一轮 5 个 tool 顺序跑 · 等到天荒地老</td>
+            <td><code>asyncio.gather</code> · I/O overlap</td>
+            <td><code>harness/loop.py</code></td>
+          </tr>
+          <tr>
+            <td><strong>Cost guardrail</strong></td>
+            <td>烧光 API 额度才发现 · 没有预设上限</td>
+            <td>FastAPI dependency · 状态共享</td>
+            <td><code>security.py</code> + <code>app.py</code></td>
+          </tr>
+          <tr>
+            <td><strong>OpenAPI codegen</strong></td>
+            <td>后端改 ChatIn 字段 · 前端默默坏掉</td>
+            <td>OpenAPI 3.1 → TypeScript 生成</td>
+            <td><code>frontend/src/api/schema.gen.ts</code></td>
+          </tr>
+          <tr>
+            <td><strong>Multi-session UI</strong></td>
+            <td>用户找不到上次聊到哪 · 只有当前对话</td>
+            <td>trace JSONL 索引 · sidebar tab</td>
+            <td><code>Sidebar.tsx</code> + 后端 <code>/chat/replay/sessions</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 id="s-1-2"><span class="num">§1.2</span>P0 / P1 / P2 怎么排</h3>
+      <p>
+        我自己内部的优先级框架（推荐 senior 用）：<strong>"如果不做，多久会爆"</strong>。
+      </p>
+      <ul>
+        <li><strong>P0</strong> · 不做 = 上线一周内必爆。<em>例</em>：没有测试、没有 CI、没有 stop button、没有真流式。</li>
+        <li><strong>P1</strong> · 不做 = 上线一个月内开始烂。<em>例</em>：memory decay、cost guard、parallel exec、契约自动化、多会话 UI。</li>
+        <li><strong>P2</strong> · 不做 = 上线半年才显出来。<em>例</em>：多模型路由、暗色模式、WebSocket 替代 SSE、trace 时间轴可视化。</li>
+      </ul>
+      <p>
+        这本盯的是 P1。P0 还有空缺（没有 pytest、没有 CI、没有 graph 侧 token-by-token 流），下一轮 sweep 会补。
+      </p>
+
+      <div class="box concept">
+        <div class="box-label">概念 · "Production-shape" 不是状态 · 是<em>方向</em></div>
+        <p>
+          没有"我的服务现在是 production-ready 的"这种说法 —— 只有"我离 production 还差几步"。每次 sweep 把当前最痛的 N 件解决掉，让<em>掉档时间</em>从一周推到一个月、再推到半年。
+          这是<strong>渐进式硬化</strong>（progressive hardening），是 SRE 圈一个非常 senior 的姿态。
+        </p>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 2 · Memory decay ============== -->
+    <section id="ch-2">
+      <header class="ch-head">
+        <span class="badge">Chapter 2 · 记忆衰减</span>
+        <h2>Memory decay · 不会忘的系统是个烂系统</h2>
+        <p class="lede">人脑每天忘 90%，是 feature 不是 bug · 我们的 memory 也得</p>
+      </header>
+
+      <p>
+        Long-term memory（我们用 Chroma 存 vector）的最常见翻车 —— 跑得久了就<em>变垃圾</em>。
+        用户随口说一句"记下我喜欢深色主题"，agent 写了；明天用户改主意"还是浅色吧"，agent 又写一条；一个月后 vector store 里一堆互相矛盾的 fact，recall 出来全是噪音。
+      </p>
+
+      <h3 id="s-2-1"><span class="num">§2.1</span>痛点 · 三种"脏"</h3>
+      <table>
+        <thead><tr><th>类型</th><th>例子</th><th>后果</th></tr></thead>
+        <tbody>
+          <tr><td>过时</td><td>2 年前用户喜欢 Vue · 现在改 React</td><td>recall 出旧偏好 · 答错</td></tr>
+          <tr><td>低价值</td><td>"今天天气真好" 这种闲聊也写进去</td><td>稀释相关结果 · 召回率下降</td></tr>
+          <tr><td>重复</td><td>"我在字节" / "我是字节员工" / "字节是我公司"</td><td>3 倍占位 · 1 倍信息</td></tr>
+        </tbody>
+      </table>
+      <p>
+        我们已经有 <code>remember_if_new()</code> 用 cosine similarity 在写入时去近重（threshold 0.92）。但 dedup 只解决"重复"，不解决"过时"和"低价值"。需要一套<strong>主动遗忘</strong>机制。
+      </p>
+
+      <h3 id="s-2-2"><span class="num">§2.2</span>4 种主流 forgetting 策略 · 我们选哪个</h3>
+      <table>
+        <thead><tr><th>策略</th><th>原理</th><th>优点</th><th>缺点</th></tr></thead>
+        <tbody>
+          <tr><td><strong>TTL</strong></td><td>固定过期时间</td><td>简单、可证明</td><td>一刀切 · 重要的 fact 也会被砍</td></tr>
+          <tr><td><strong>LRU</strong></td><td>最久没用的先扔</td><td>好实现 · 跟 cache 一脉相承</td><td>新存的总输给旧的（即使重要）</td></tr>
+          <tr><td><strong>LFU</strong></td><td>用得最少的先扔</td><td>"重要 = 常用" 直觉</td><td>新 fact 永远 use_count=0 · 一存就被砍</td></tr>
+          <tr><td><strong>Recency × Usage 复合</strong></td><td>时间衰减 + 调用频率 加权</td><td>同时考虑"新鲜度"和"价值"</td><td>需要两个 metadata 字段 · 两个权重要调</td></tr>
+        </tbody>
+      </table>
+
+      <p>我们选了第 4 个。公式：</p>
+
+<pre><code><span class="c"># 越高 = 越值得留</span>
+score = <span class="s">0.7</span> * recency + <span class="s">0.3</span> * usage
+
+recency = exp(-age_days / half_life_days)            <span class="c"># 半衰期衰减</span>
+usage   = log1p(use_count) / log1p(max_use_count)    <span class="c"># 对数归一化</span>
+</code></pre>
+
+      <p>这两条公式背后的 senior 取舍：</p>
+
+      <ul>
+        <li>
+          <strong>recency 用<em>指数衰减</em>不是线性</strong>：新 fact 价值下降快、老 fact 已经稳定了不该急着扔。
+          <code>exp(-age/14)</code> 表示 14 天后还剩 37% 价值、28 天剩 14%、56 天剩 2%。这就是<strong>半衰期</strong>（half-life）的物理直觉。
+        </li>
+        <li>
+          <strong>usage 用 <code>log1p</code> 归一化</strong>：use_count 是长尾分布（大多数 fact 是 1-2 次，少数热门是 50 次）。
+          直接除会让热门 fact 把所有冷门压到 0。<code>log1p</code> 把 50 压到 ~3.9、1 压到 ~0.7，差距合理。
+        </li>
+        <li>
+          <strong>权重 7:3 偏向 recency</strong>：因为"用户偏好会变"是 agent 场景的最大 risk。如果做 docs RAG 反过来 3:7（旧文档反而权威）。
+        </li>
+      </ul>
+
+      <h3 id="s-2-3"><span class="num">§2.3</span>实现 · 60 行讲完</h3>
+
+      <p>三个改动点，每个都有意思：</p>
+
+      <h4>① 写入时多两个字段</h4>
+<pre><code><span class="k">def</span> <span class="f">remember</span>(self, text, kind=<span class="s">"fact"</span>, session_id=<span class="k">None</span>):
+    now = <span class="f">_utc_now_iso</span>()
+    self.collection.<span class="f">add</span>(
+        ids=[mem_id], documents=[text],
+        metadatas=[{
+            <span class="s">"kind"</span>: kind, <span class="s">"session_id"</span>: session_id <span class="k">or</span> <span class="s">""</span>,
+            <span class="s">"ts"</span>: now,
+            <span class="s">"last_used_at"</span>: now,    <span class="c"># ← 新增</span>
+            <span class="s">"use_count"</span>: <span class="s">0</span>,        <span class="c"># ← 新增</span>
+        }],
+    )
+</code></pre>
+
+      <h4>② recall 时 bump 这两个字段</h4>
+<pre><code><span class="k">def</span> <span class="f">recall</span>(self, query, k=<span class="s">4</span>):
+    result = self.collection.<span class="f">query</span>(query_texts=[query], n_results=k,
+                                  include=[<span class="s">"documents"</span>, <span class="s">"metadatas"</span>])
+    ids = (result.<span class="f">get</span>(<span class="s">"ids"</span>) <span class="k">or</span> [[]])[<span class="s">0</span>]
+    docs = (result.<span class="f">get</span>(<span class="s">"documents"</span>) <span class="k">or</span> [[]])[<span class="s">0</span>]
+    self.<span class="f">_bump_usage</span>(ids)              <span class="c"># ← 新增</span>
+    <span class="k">return</span> docs
+
+<span class="k">def</span> <span class="f">_bump_usage</span>(self, ids):
+    current = self.collection.<span class="f">get</span>(ids=ids, include=[<span class="s">"metadatas"</span>])
+    new_metas = []
+    <span class="k">for</span> meta <span class="k">in</span> current[<span class="s">"metadatas"</span>]:
+        m = <span class="f">dict</span>(meta <span class="k">or</span> {})
+        m[<span class="s">"use_count"</span>] = <span class="f">int</span>(m.<span class="f">get</span>(<span class="s">"use_count"</span>, <span class="s">0</span>) <span class="k">or</span> <span class="s">0</span>) + <span class="s">1</span>
+        m[<span class="s">"last_used_at"</span>] = <span class="f">_utc_now_iso</span>()
+        new_metas.<span class="f">append</span>(m)
+    self.collection.<span class="f">update</span>(ids=current[<span class="s">"ids"</span>], metadatas=new_metas)
+</code></pre>
+
+      <h4>③ prune · 复合分排序后砍底部</h4>
+<pre><code><span class="k">def</span> <span class="f">prune</span>(self, *, max_keep=<span class="k">None</span>, drop_fraction=<span class="k">None</span>,
+          half_life_days=<span class="k">None</span>, dry_run=<span class="k">False</span>):
+    out = self.collection.<span class="f">get</span>(include=[<span class="s">"metadatas"</span>])
+    ids, metas = out[<span class="s">"ids"</span>], out[<span class="s">"metadatas"</span>]
+    max_use = <span class="f">max</span>((<span class="f">int</span>(m.<span class="f">get</span>(<span class="s">"use_count"</span>, <span class="s">0</span>)) <span class="k">for</span> m <span class="k">in</span> metas), default=<span class="s">1</span>)
+
+    scored = <span class="f">sorted</span>(
+        <span class="f">zip</span>(ids, metas),
+        key=<span class="k">lambda</span> p: self.<span class="f">_score</span>(p[<span class="s">1</span>], max_use, half_life_days),
+    )
+
+    n_drop = total - max_keep <span class="k">if</span> max_keep <span class="k">else</span> <span class="f">int</span>(total * drop_fraction)
+    n_drop = <span class="f">min</span>(n_drop, total // <span class="s">2</span>)         <span class="c"># ← 安全 floor</span>
+
+    victims = [pid <span class="k">for</span> pid, _ <span class="k">in</span> scored[:n_drop]]
+    <span class="k">if</span> <span class="k">not</span> dry_run:
+        self.collection.<span class="f">delete</span>(ids=victims)
+    <span class="k">return</span> {<span class="s">"total"</span>: total, <span class="s">"kept"</span>: total - <span class="f">len</span>(victims), ...}
+</code></pre>
+
+      <div class="box deep">
+        <div class="box-label">细节 · "永远不删超过 50%" 的安全 floor</div>
+        <p>
+          很容易写出 <code>prune(max_keep=10)</code> 但忘记现在有 1000 条 —— 一刀砍 990。
+          我们硬编码 <code>n_drop = min(n_drop, total // 2)</code> 永远不允许单次调用删超过一半。
+          这是 <strong>blast radius limit</strong>（爆炸半径限制）—— SRE 圈的标准做法。同样的思路在数据库迁移、batch delete、feature flag rollout 里到处出现。
+        </p>
+      </div>
+
+      <h3 id="s-2-4"><span class="num">§2.4</span>非显然的工程坑</h3>
+
+      <h4>坑 1 · 时区 naive vs aware</h4>
+      <p>
+        老 memory 是 <code>datetime.utcnow().isoformat()</code> 写进去的（tz-naive）。新代码用 <code>datetime.now(timezone.utc)</code>（tz-aware）。
+        第一次跑 prune 直接 <code>TypeError: can't subtract offset-naive and offset-aware datetimes</code>。
+        修复：parse 完之后 <code>if last.tzinfo is None: last = last.replace(tzinfo=timezone.utc)</code>。
+        <strong>升级数据格式时永远要兼容老数据</strong>，这是 schema migration 的基本功。
+      </p>
+
+      <h4>坑 2 · dry_run 必须先实现</h4>
+      <p>
+        prune 是不可逆操作 —— 写完了一定先支持 <code>dry_run=true</code> 让用户看 victim 列表再决定。
+        我们 endpoint 直接暴露这个开关。这跟 <code>terraform plan</code> / <code>kubectl --dry-run</code> 的设计哲学一致。
+      </p>
+
+      <h4>坑 3 · 不要在 recall 路径里同步写</h4>
+      <p>
+        我们的 <code>_bump_usage</code> 是同步的，紧贴在 <code>recall()</code> 后面。<em>当前实现可以接受</em>，因为 Chroma 是本地 SQLite + ONNX，<code>update</code> 微秒级。
+        但如果换成远程 vector DB（Pinecone / Qdrant）就要改成异步（fire-and-forget queue），不然每次 recall 多 100ms 网络延迟很难看。这是<strong>"读路径不该同步写"</strong>的经典原则。
+      </p>
+
+      <h3 id="s-2-5"><span class="num">§2.5</span>怎么用</h3>
+<pre><code><span class="c"># dry-run · 看砍谁</span>
+curl -X POST :8000/memory/prune -d <span class="s">'{"dry_run":true,"max_keep":50}'</span>
+
+<span class="c"># 真砍 · 留 50 条</span>
+curl -X POST :8000/memory/prune -d <span class="s">'{"max_keep":50}'</span>
+
+<span class="c"># 调半衰期 · 短期项目用 7 天 · 长期项目用 90 天</span>
+curl -X POST :8000/memory/prune -d <span class="s">'{"half_life_days":7,"max_keep":100}'</span>
+</code></pre>
+
+      <p>
+        生产建议挂 cron · 每周日凌晨 3 点跑一次 <code>{"max_keep": 500}</code>，配 Slack webhook 报告战果。
+      </p>
+
+      <div class="box interview">
+        <div class="box-label">面试题 · M.1</div>
+        <p>
+          "你的 agent 长期 memory 怎么避免变垃圾？"<br>
+          <strong>L4 答</strong>："加 TTL 过期"——只解决过时，不解决低价值，掉档。<br>
+          <strong>L5 答</strong>："写入时去重 + 定期 LRU 清理"——比 L4 好，但 LRU 让新 fact 永远输给旧的。<br>
+          <strong>L6 答</strong>：分写入和读取两条路径。写入用 cosine similarity 去近重；读取每次 bump <code>last_used_at</code> + <code>use_count</code>；定期 prune 用 <code>0.7×exp(-age/half_life) + 0.3×log1p(use_count)/log1p(max)</code> 复合分。半衰期按业务调（用户偏好 14 天、技术文档 90 天）。dry_run 必须支持。永远不一次删超过 50%。
+        </p>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 3 · Parallel tool exec ============== -->
+    <section id="ch-3">
+      <header class="ch-head">
+        <span class="badge">Chapter 3 · 并发</span>
+        <h2>Parallel tool exec · 三行代码 3x 加速</h2>
+        <p class="lede">改对一行 · 比换模型省钱多了</p>
+      </header>
+
+      <p>
+        Harness 主循环（<code>backend/agent/harness/loop.py</code>）以前长这样：
+      </p>
+<pre><code><span class="k">for</span> tc <span class="k">in</span> tool_calls:
+    content = <span class="k">await</span> asyncio.<span class="f">to_thread</span>(safe_run_tool, tool, tc[<span class="s">"args"</span>])
+    messages.<span class="f">append</span>(ToolMessage(content=content, ...))
+</code></pre>
+
+      <p>
+        看上去没毛病——<code>asyncio.to_thread</code> 把 sync tool 扔到线程跑，主 event loop 不阻塞。
+        但<strong>这个循环是顺序的</strong>。同一轮 LLM 一次发了 3 个 tool call（典型场景：<code>web_search("X")</code> + <code>web_search("Y")</code> + <code>read_file("Z")</code>），它们一个接一个跑。
+        每个 web_search 1.5 秒，3 个就是 4.5 秒。LLM 干等。
+      </p>
+
+      <h3 id="s-3-1"><span class="num">§3.1</span>原理 · 为什么 I/O 密集型并行收益巨大</h3>
+
+      <p>
+        对 web_search、file_ops、MCP-client tool 这种<strong>等网络 / 等磁盘</strong>的工具，CPU 99% 时间空着。
+        线程模型（asyncio + thread pool）下，N 个并发任务的总时长 ≈ 单个最慢的那个，不是 N 倍。
+      </p>
+
+      <div class="figure">
+        <svg viewBox="0 0 720 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="serial vs parallel timeline">
+          <text class="fig-t-label fig-t-rust" x="360" y="22" text-anchor="middle">3 个 1 秒工具 · 顺序 vs 并行</text>
+
+          <!-- 顺序 -->
+          <text class="fig-t-label fig-t-mute" x="50" y="55">顺序</text>
+          <rect class="fig-box-rust" x="100" y="42" width="180" height="22" rx="4"/>
+          <text class="fig-t-sm" x="190" y="58" text-anchor="middle">tool A · 1s</text>
+          <rect class="fig-box-rust" x="280" y="42" width="180" height="22" rx="4"/>
+          <text class="fig-t-sm" x="370" y="58" text-anchor="middle">tool B · 1s</text>
+          <rect class="fig-box-rust" x="460" y="42" width="180" height="22" rx="4"/>
+          <text class="fig-t-sm" x="550" y="58" text-anchor="middle">tool C · 1s</text>
+          <text class="fig-t-sm fig-t-mute" x="660" y="58">3.0s</text>
+
+          <!-- 并行 -->
+          <text class="fig-t-label fig-t-mute" x="50" y="115">并行</text>
+          <rect class="fig-box-leaf" x="100" y="92"  width="180" height="22" rx="4"/>
+          <text class="fig-t-sm" x="190" y="108" text-anchor="middle">tool A · 1s</text>
+          <rect class="fig-box-leaf" x="100" y="118" width="180" height="22" rx="4"/>
+          <text class="fig-t-sm" x="190" y="134" text-anchor="middle">tool B · 1s</text>
+          <rect class="fig-box-leaf" x="100" y="144" width="180" height="22" rx="4"/>
+          <text class="fig-t-sm" x="190" y="160" text-anchor="middle">tool C · 1s</text>
+          <text class="fig-t-sm fig-t-leaf" x="660" y="135">1.0s</text>
+
+          <text class="fig-t-sm fig-t-mute" x="360" y="200" text-anchor="middle" font-style="italic">省的不是 CPU · 是<em>等</em>的时间</text>
+        </svg>
+        <figcaption><strong>Figure 3.1</strong> · 同样的 CPU 工作，asyncio.gather 让 3 段"等"折叠到 1 段</figcaption>
+      </div>
+
+      <h3 id="s-3-2"><span class="num">§3.2</span>实现 · 三行 diff</h3>
+<pre><code><span class="c"># 旧 · 顺序 for-loop</span>
+<span class="k">for</span> tc <span class="k">in</span> tool_calls:
+    content = <span class="k">await</span> asyncio.<span class="f">to_thread</span>(safe_run_tool, tool, tc[<span class="s">"args"</span>])
+    messages.<span class="f">append</span>(...)
+
+<span class="c"># 新 · gather 并发</span>
+<span class="k">async</span> <span class="k">def</span> <span class="f">_run_one</span>(tc):
+    name = tc[<span class="s">"name"</span>]
+    tool = tools_by_name.<span class="f">get</span>(name)
+    <span class="k">if</span> tool <span class="k">is</span> <span class="k">None</span>:
+        <span class="k">return</span> tc, f<span class="s">"[error] unknown tool {name!r}"</span>
+    content = <span class="k">await</span> asyncio.<span class="f">to_thread</span>(safe_run_tool, tool, tc.<span class="f">get</span>(<span class="s">"args"</span>, {}))
+    <span class="k">return</span> tc, content
+
+results = <span class="k">await</span> asyncio.<span class="f">gather</span>(*[<span class="f">_run_one</span>(tc) <span class="k">for</span> tc <span class="k">in</span> tool_calls])
+
+<span class="c"># 关键 · 按原顺序 append · 不按完成顺序</span>
+<span class="k">for</span> tc, content <span class="k">in</span> results:
+    messages.<span class="f">append</span>(ToolMessage(content=content, name=tc[<span class="s">"name"</span>],
+                                tool_call_id=tc[<span class="s">"id"</span>]))
+</code></pre>
+
+      <div class="box deep">
+        <div class="box-label">细节 · 为什么"按原顺序 append" 那么重要</div>
+        <p>
+          三个 tool 完成时间不同 —— 如果你按完成顺序 append，每次同一组 tool call 拼出来的 message 序列就不一样。
+          这会<strong>破坏 prompt cache</strong>（Anthropic / OpenAI / Gemini 都按 prefix hash 命中缓存），让你白白多付钱。
+          <code>asyncio.gather</code> 返回值<em>本身就是按入参顺序</em>，所以我们用 <code>(tc, content)</code> 元组配对，遍历时就是确定性序列。
+        </p>
+      </div>
+
+      <h3 id="s-3-3"><span class="num">§3.3</span>关于 GIL · senior 必懂的细节</h3>
+      <p>
+        有人会问：Python 不是有 GIL 吗，开多线程不也是假的并行？
+      </p>
+      <p>
+        答案：<strong>I/O 释放 GIL，CPU 不释放</strong>。
+        <code>requests.get()</code>、<code>open(f).read()</code>、socket 读写、Chroma 查 embedding —— 这些进入 C 层的 I/O 调用<em>会主动释放 GIL</em>，让别的线程跑。
+        所以 N 个 web_search 真能 N 倍并发。
+      </p>
+      <p>
+        如果是<em>纯 Python CPU</em> 任务（比如 numpy 不参与的循环），GIL 确实让多线程退化成串行。这种情况要用 multiprocessing 或者 asyncio.to_process_pool。
+        Agent 里的 tool 99% 是 I/O，所以 thread pool 是合适的选择。
+      </p>
+
+      <h3 id="s-3-4"><span class="num">§3.4</span>提示 LLM "可以并发" · 改 docstring</h3>
+      <p>
+        模型不知道"我们的 harness 能并发"——它只看 tool docstring。
+        所以我们在 <code>dispatch_subagent</code> 的 docstring 里加了：
+      </p>
+<pre><code><span class="s">"""...
+PARALLELISM · IMPORTANT.
+The harness runs all your tool calls in a single turn CONCURRENTLY, so
+if you have 3 independent research questions, emit 3 dispatch_subagent
+calls in the SAME assistant turn · they will run side-by-side instead
+of sequentially.  Don't fan them out one per turn.
+..."""</span>
+</code></pre>
+
+      <p>
+        效果：模型学会一次发多个 call。一个真实 query 例子：
+      </p>
+<pre><code><span class="s">"对比 LangGraph 0.6 / FlashAttention 3 / vLLM 最新进展，每个三句话总结"</span>
+
+<span class="c"># 旧 · 一轮一个 sub-agent · 总耗时 = 3 × (research + LLM)</span>
+<span class="c"># 新 · 一轮 3 个 sub-agent 并发 · 总耗时 ≈ 1 × (research + LLM)</span>
+</code></pre>
+
+      <h3 id="s-3-5"><span class="num">§3.5</span>取舍 · 什么时候<em>不要</em>并发</h3>
+      <ul>
+        <li>
+          <strong>tool 之间有数据依赖</strong>：先 <code>list_files()</code> 再 <code>read_file(picked)</code>，模型已经知道分两轮发，不会混在一轮。OK。
+        </li>
+        <li>
+          <strong>tool 写共享状态</strong>：5 个 <code>remember()</code> 同时写 Chroma 可能竞争 SQLite 锁。
+          我们的 safe_run_tool 用 ThreadPoolExecutor(max_workers=8)，并发度有上限，问题不大；但如果 tool 是<em>非线程安全</em>的（rare），要么改 tool 要么按名字 group 串行执行。
+        </li>
+        <li>
+          <strong>限流敏感</strong>：5 个 <code>web_search()</code> 同时打 DDG 容易 429。我们 web_search 已经有 retry-with-backoff，自动处理。但如果你接的 API 有 hard QPS，要在 tool 内部加 semaphore。
+        </li>
+      </ul>
+
+      <div class="box interview">
+        <div class="box-label">面试题 · P.1</div>
+        <p>
+          "agent 一轮发多个 tool · 怎么并发？"<br>
+          <strong>关键点</strong>：(1) <code>asyncio.gather</code> 而不是 for-loop；(2) 每个 tool 用 <code>asyncio.to_thread</code> 进线程池（兼容 sync tool）；(3) <strong>结果按入参顺序回写</strong>保证 prompt cache 命中；(4) GIL 在 I/O 时释放所以真并发；(5) 在 tool docstring 里教 LLM "可以一轮多发"。能讲到第 3 点 = senior 信号。
+        </p>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 4 · Cost guardrail ============== -->
+    <section id="ch-4">
+      <header class="ch-head">
+        <span class="badge">Chapter 4 · 预算护栏</span>
+        <h2>Cost guardrail · fail-fast 之美</h2>
+        <p class="lede">烧光额度才发现 = 一次 PR 直接被 P0 召回</p>
+      </header>
+
+      <p>
+        有了 demo 后第一周大家随便玩，第二周收到账单 $500，老板黑脸。这是 agent 项目的<strong>典型黑天鹅</strong>。
+        防御方式分三层：监控（看到）、告警（被通知）、护栏（直接被拒）。
+        前两个我们之前已有（Prometheus + cost_per_session 在 <code>/usage</code> 里）。这次补的是<strong>第三层</strong>。
+      </p>
+
+      <h3 id="s-4-1"><span class="num">§4.1</span>原理 · "状态共享" 的设计美感</h3>
+      <p>
+        我们已经有 <code>UsageCallback</code> 在每次 LLM 调用后更新一个全局 <code>_per_session</code> 字典：
+      </p>
+<pre><code><span class="c"># observability/usage.py</span>
+_per_session: <span class="f">dict</span>[str, <span class="f">dict</span>[str, int]] = <span class="f">defaultdict</span>(<span class="k">lambda</span>: <span class="f">dict</span>(_ZERO))
+
+<span class="k">def</span> <span class="f">add</span>(usage_metadata, session_id):
+    <span class="k">with</span> _lock:
+        _add_locked(_global, ...)
+        <span class="k">if</span> session_id:
+            _add_locked(_per_session[session_id], ...)
+</code></pre>
+      <p>
+        关键洞察：<strong>guardrail 不需要新数据源</strong>。它只需要在请求<em>进来</em>的时候、在 LLM 跑<em>之前</em>，
+        读一下 <code>_per_session[sid]</code> 跟预算比一比。这就是<strong>"single source of truth"</strong> 的实践 —— 监控、告警、护栏共享同一份状态。
+      </p>
+
+      <h3 id="s-4-2"><span class="num">§4.2</span>实现 · FastAPI dependency · 不是 middleware</h3>
+
+<pre><code><span class="k">async</span> <span class="k">def</span> <span class="f">enforce_session_budget</span>(payload_session_id: str | <span class="k">None</span> = <span class="k">None</span>) -> <span class="k">None</span>:
+    <span class="k">if</span> <span class="k">not</span> payload_session_id:
+        <span class="k">return</span>  <span class="c"># 新 session 还没花钱</span>
+    <span class="k">from</span> .observability <span class="k">import</span> usage <span class="k">as</span> usage_tracker
+    snap = usage_tracker.<span class="f">snapshot</span>(payload_session_id)
+    <span class="k">if</span> snap.<span class="f">get</span>(<span class="s">"over_budget"</span>):
+        <span class="k">raise</span> <span class="f">HTTPException</span>(
+            status_code=<span class="s">402</span>,
+            detail={
+                <span class="s">"error"</span>: <span class="s">"session budget exhausted"</span>,
+                <span class="s">"session_id"</span>: payload_session_id,
+                <span class="s">"spent_usd"</span>: snap[<span class="s">"session"</span>][<span class="s">"cost_usd"</span>],
+                <span class="s">"budget_usd"</span>: snap[<span class="s">"budget_usd"</span>],
+                <span class="s">"hint"</span>: <span class="s">"Start a new session_id, raise AGENT_SESSION_BUDGET_USD, or =0 to disable."</span>,
+            },
+        )
+
+<span class="c"># app.py · 在 /chat 里手动调（dependency 链限制 · 见 §4.3）</span>
+<span class="k">@app.post</span>(<span class="s">"/chat"</span>, dependencies=[<span class="f">Depends</span>(require_api_key)])
+<span class="k">async</span> <span class="k">def</span> <span class="f">chat</span>(request: Request, payload: ChatIn):
+    <span class="k">await</span> <span class="f">enforce_session_budget</span>(payload.session_id)
+    ...
+</code></pre>
+
+      <div class="box deep">
+        <div class="box-label">细节 · 为什么是 dependency 而不是 middleware</div>
+        <p>
+          Middleware 在<strong>路由解析之前</strong>跑，拿不到 parsed body（<code>payload.session_id</code>）。
+          要么手动 <code>await request.json()</code> 然后<em>消费掉</em> body stream（导致后面 endpoint 拿不到 body），要么 buffer 后回灌（复杂）。
+          <strong>FastAPI dependency 在路由解析<em>之后</em>跑</strong>，直接拿到 typed payload，最干净。
+        </p>
+        <p>
+          代价：dependency 不能跨 endpoint 自动应用（middleware 可以），所以每个 chat-like 端点要手动调一次。我们目前只有 <code>/chat</code> 和 <code>/chat/v2</code>，手动 OK。如果有 10 个就考虑写一个 router-level dependency。
+        </p>
+      </div>
+
+      <h3 id="s-4-3"><span class="num">§4.3</span>状态码选 402 不是 429</h3>
+      <table>
+        <thead><tr><th>code</th><th>语义</th><th>什么时候用</th></tr></thead>
+        <tbody>
+          <tr><td><code>429</code> Too Many Requests</td><td>调用频率太高 · 等会儿再试</td><td>rate limit · 请求来太快</td></tr>
+          <tr><td><strong><code>402</code></strong> Payment Required</td><td>需要付费 · 等不会有用</td><td>budget exhausted · 钱花完了</td></tr>
+          <tr><td><code>403</code> Forbidden</td><td>无权访问 · 跟身份相关</td><td>auth 失败 · 403 不是 budget 场景</td></tr>
+        </tbody>
+      </table>
+      <p>
+        402 是 HTTP 标准里专门留给"钱"的状态码，<em>2025 年开始</em>因为 Stripe 和 Anthropic API 用它代表 quota 问题，业界终于在 agent 场景达成共识。用 402 客户端能立刻分辨"是付费问题"而不是"是 rate limit 等等就好"。
+      </p>
+
+      <h3 id="s-4-4"><span class="num">§4.4</span>护栏的执行顺序 · auth → rate-limit → budget</h3>
+
+      <div class="figure">
+        <svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg" role="img">
+          <text class="fig-t-label fig-t-rust" x="360" y="22" text-anchor="middle">/chat 请求生命周期</text>
+          <rect class="fig-box-soft" x="40" y="50" width="120" height="40" rx="6"/>
+          <text class="fig-t-sm" x="100" y="75" text-anchor="middle">CORS</text>
+          <text class="fig-t-sm fig-t-mute" x="160" y="75">→</text>
+          <rect class="fig-box-rust" x="180" y="50" width="120" height="40" rx="6"/>
+          <text class="fig-t-sm" x="240" y="73" text-anchor="middle">auth</text>
+          <text class="fig-t-sm fig-t-mute" x="240" y="86" text-anchor="middle">401?</text>
+          <text class="fig-t-sm fig-t-mute" x="300" y="75">→</text>
+          <rect class="fig-box-rust" x="320" y="50" width="120" height="40" rx="6"/>
+          <text class="fig-t-sm" x="380" y="73" text-anchor="middle">rate-limit</text>
+          <text class="fig-t-sm fig-t-mute" x="380" y="86" text-anchor="middle">429?</text>
+          <text class="fig-t-sm fig-t-mute" x="440" y="75">→</text>
+          <rect class="fig-box-rust" x="460" y="50" width="120" height="40" rx="6"/>
+          <text class="fig-t-sm" x="520" y="73" text-anchor="middle">budget</text>
+          <text class="fig-t-sm fig-t-mute" x="520" y="86" text-anchor="middle">402?</text>
+          <text class="fig-t-sm fig-t-mute" x="580" y="75">→</text>
+          <rect class="fig-box-leaf" x="600" y="50" width="80" height="40" rx="6"/>
+          <text class="fig-t-sm" x="640" y="75" text-anchor="middle">LLM</text>
+
+          <text class="fig-t-sm fig-t-mute" x="360" y="135" text-anchor="middle" font-style="italic">越便宜的检查越早 · 越贵的越晚 · LLM 永远是最贵的</text>
+          <text class="fig-t-sm fig-t-mute" x="360" y="160" text-anchor="middle">每一层都是 fail-fast · 不让任何无效请求触发 LLM</text>
+        </svg>
+        <figcaption><strong>Figure 4.1</strong> · "fail fast, fail cheap" · 三层护栏顺序不能反</figcaption>
+      </div>
+
+      <p>
+        如果把 budget 放在 auth 之前，还没认证就告诉攻击者"这个 session 钱花完了"——信息泄露。
+        如果把 rate-limit 放在 budget 之后，恶意攻击会先消耗你的 LLM 调用配额（因为 budget 检查需要 lookup 状态，本身比 IP 计数贵）。
+        <strong>顺序 = 检查成本递增</strong> 是这类设计的通用原则。
+      </p>
+
+      <h3 id="s-4-5"><span class="num">§4.5</span>本地模型 = 0 成本 · 怎么处理</h3>
+      <p>
+        Ollama / LM Studio / vLLM 跑本地模型，token 不计费。我们 <code>usage.py</code> 用前缀匹配判断：
+      </p>
+<pre><code>_LOCAL_PREFIXES = (<span class="s">"ollama:"</span>, <span class="s">"lmstudio:"</span>, <span class="s">"local:"</span>, <span class="s">"llamacpp:"</span>, <span class="s">"mlx:"</span>)
+<span class="k">def</span> <span class="f">_is_local</span>(model):
+    <span class="k">return</span> <span class="f">any</span>(model.<span class="f">startswith</span>(p) <span class="k">for</span> p <span class="k">in</span> _LOCAL_PREFIXES)
+</code></pre>
+      <p>
+        local model 永远 <code>cost_usd=0</code>，永远不 over_budget，guardrail 自动失效。
+        这是<strong>"feature 默认无害"</strong>的实践 —— 用本地模型的 dev 不会被一个他没碰过的预算护栏卡住。
+      </p>
+
+      <div class="box interview">
+        <div class="box-label">面试题 · C.1</div>
+        <p>
+          "agent 服务怎么防止单 session 烧爆 LLM 预算？"<br>
+          <strong>关键点</strong>：(1) <em>共享同一个 usage 状态</em> · 监控/告警/护栏不要各开各的 metric；(2) 用 <strong>FastAPI dependency 而不是 middleware</strong>，因为要看 parsed body；(3) 状态码选 <strong>402</strong>，让客户端能分辨是 quota 不是 rate limit；(4) 检查顺序 <em>auth → rate-limit → budget → LLM</em>，按"检查成本递增"排；(5) local model 自动 zero-cost，护栏对 dev 透明。能讲到第 4 点 = 系统设计 senior 信号。
+        </p>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 5 · OpenAPI codegen ============== -->
+    <section id="ch-5">
+      <header class="ch-head">
+        <span class="badge">Chapter 5 · 契约</span>
+        <h2>OpenAPI codegen · 让契约会自己骂人</h2>
+        <p class="lede">后端改字段 · 前端编译就报红 · 不用等 QA</p>
+      </header>
+
+      <p>
+        前后端分离的最大失败模式：<strong>静默漂移</strong>（silent drift）。后端 PM 上去把 <code>session_id</code> 改成 <code>sessionId</code>，前端 PR 没人提 review，CI 没炸（因为前端不知道后端改了），上线之后用户发 message 直接 422，回滚。
+        类似的故事每个有真实用户的 service 都有过 1 次以上。
+      </p>
+
+      <h3 id="s-5-1"><span class="num">§5.1</span>4 种解法 · 谁更稳</h3>
+      <table>
+        <thead><tr><th>方案</th><th>原理</th><th>稳定度</th></tr></thead>
+        <tbody>
+          <tr><td><strong>共识 + reviewer 把关</strong></td><td>每次后端改 API · 找前端 review</td><td>★ · 累、容易漏</td></tr>
+          <tr><td><strong>手写 contract test</strong></td><td>e2e 测每个端点</td><td>★★ · 跑得慢、easily out of date</td></tr>
+          <tr><td><strong>Protobuf / gRPC</strong></td><td>共享 schema · 各语言生成 client</td><td>★★★★ · 但要换协议</td></tr>
+          <tr><td><strong>OpenAPI codegen</strong></td><td>FastAPI 自动生成 OpenAPI · 前端 codegen TypeScript</td><td>★★★★ · 工作量小</td></tr>
+        </tbody>
+      </table>
+      <p>
+        FastAPI 因为用了 Pydantic，"自动生成 OpenAPI" 本来就是免费功能（访问 <code>/openapi.json</code> 就有）。
+        我们要做的是把那个 schema 喂进 <code>openapi-typescript</code>，让前端 TypeScript 类型<strong>跟后端 Pydantic 同源</strong>。
+      </p>
+
+      <h3 id="s-5-2"><span class="num">§5.2</span>实现 · 一个 npm script</h3>
+<pre><code><span class="c">// frontend/package.json</span>
+<span class="s">"scripts"</span>: {
+  <span class="s">"gen:api"</span>: <span class="s">"cd ../backend && uv run python -c \"import json; from app import app; open('../frontend/openapi.json','w').write(json.dumps(app.openapi(), indent=2))\" && openapi-typescript ./openapi.json -o ./src/api/schema.gen.ts && echo '✓ schema.gen.ts updated'"</span>
+}
+</code></pre>
+
+      <p>这一行干了三件事：</p>
+      <ol>
+        <li>用 backend 的 venv 跑一行 Python，把 FastAPI 的 <code>app.openapi()</code> dump 到 <code>frontend/openapi.json</code></li>
+        <li>调 <code>openapi-typescript</code> 把它转成 1100 行的 <code>schema.gen.ts</code></li>
+        <li>echo 提示完成</li>
+      </ol>
+
+      <h3 id="s-5-3"><span class="num">§5.3</span>生成出来长啥样</h3>
+<pre><code><span class="c">// schema.gen.ts · 摘录</span>
+<span class="k">export interface</span> components {
+    schemas: {
+        ChatIn: {
+            message: string;
+            session_id?: string | <span class="k">null</span>;
+        };
+        PruneIn: {
+            max_keep?: number | <span class="k">null</span>;
+            drop_fraction?: number | <span class="k">null</span>;
+            half_life_days?: number | <span class="k">null</span>;
+            dry_run: boolean;        <span class="c">// ← 必填 · 因为后端默认值在 Pydantic level</span>
+        };
+        ...
+    };
+}
+</code></pre>
+
+      <p>然后我们在 <code>api.ts</code> 里这样用：</p>
+<pre><code><span class="k">import type</span> { Schemas } <span class="k">from</span> <span class="s">"./api/index"</span>;
+
+<span class="k">export type</span> ChatIn = Schemas[<span class="s">"ChatIn"</span>];
+<span class="k">export type</span> PruneIn = Schemas[<span class="s">"PruneIn"</span>];
+...
+
+<span class="k">export async function</span> pruneMemory(p: <span class="k">Partial</span>&lt;PruneIn&gt; = {}) {
+    <span class="k">const</span> r = <span class="k">await</span> <span class="f">fetch</span>(<span class="s">"/api/memory/prune"</span>, {
+        method: <span class="s">"POST"</span>,
+        body: <span class="f">JSON.stringify</span>(p),
+        headers: { <span class="s">"Content-Type"</span>: <span class="s">"application/json"</span> },
+    });
+    <span class="k">return</span> r.<span class="f">json</span>();
+}
+</code></pre>
+
+      <h3 id="s-5-4"><span class="num">§5.4</span>真正的收益 · 三个例子</h3>
+
+      <h4>例 1 · 后端改字段名</h4>
+      <p>后端 PM 把 <code>ChatIn.session_id</code> 改成 <code>ChatIn.sessionId</code>。</p>
+      <ol>
+        <li>跑 <code>npm run gen:api</code>，<code>schema.gen.ts</code> 立刻更新</li>
+        <li>前端所有用 <code>payload.session_id</code> 的地方<strong>编译失败</strong></li>
+        <li>修过来 = 字段名重命名安全</li>
+      </ol>
+
+      <h4>例 2 · 后端加新端点</h4>
+      <p>新加 <code>POST /memory/prune</code>，前端要用：</p>
+      <ol>
+        <li>跑 <code>npm run gen:api</code></li>
+        <li><code>Schemas["PruneIn"]</code> 自动出现，TypeScript 智能提示有 <code>max_keep</code> / <code>drop_fraction</code> 等字段</li>
+        <li>不需要查文档</li>
+      </ol>
+
+      <h4>例 3 · 后端改字段类型</h4>
+      <p>后端把 <code>budget_usd</code> 从 <code>float</code> 改成 <code>Decimal</code>。</p>
+      <ol>
+        <li>OpenAPI 里类型从 <code>number</code> 变成 <code>string</code>（JSON 不支持 Decimal）</li>
+        <li>前端拿 <code>budget_usd</code> 当数字用的地方编译失败 · 提醒你加 <code>Number(...)</code> 或者 BigDecimal lib</li>
+      </ol>
+
+      <div class="box deep">
+        <div class="box-label">细节 · response 类型为什么我们没自动生成</div>
+        <p>
+          OpenAPI codegen 只在<em>后端 endpoint 用 <code>response_model=...</code> 注解</em>时才能精确出 response 类型。
+          我们大多数 endpoint 返回 raw <code>dict</code>（图省事），所以 schema.gen.ts 里 response 类型是 <code>unknown</code> / 含糊的 union。
+          短期：response 类型继续手写，<em>注释里标明跟哪个端点对齐</em>。长期：给关键 endpoint 加 <code>response_model=</code>，下一次 codegen 就自动收紧。
+        </p>
+      </div>
+
+      <h3 id="s-5-5"><span class="num">§5.5</span>什么时候<em>不要</em> codegen</h3>
+      <ul>
+        <li>API 极不稳定 · 每天改几次 schema · 生成的文件 review 比手写还累</li>
+        <li>多 client 用不同 schema 子集 · codegen 一刀切的全量类型反而碍事</li>
+        <li>已经有 BFF（backend-for-frontend）层做翻译 · 那一层负责契约</li>
+      </ul>
+
+      <div class="box interview">
+        <div class="box-label">面试题 · O.1</div>
+        <p>
+          "前后端分离怎么避免 API 字段对不上的 silent drift？"<br>
+          <strong>L4</strong>："共识 + 联调"——掉档。<br>
+          <strong>L5</strong>："写 e2e contract test" —— OK 但慢。<br>
+          <strong>L6</strong>：用<strong>schema-driven</strong>开发。后端用 Pydantic / Protobuf 定义 schema，自动生成 OpenAPI / .proto；前端 codegen 出 TypeScript 类型；任何字段变更触发前端编译失败。Trade-off：codegen 文件不要手改、要进 git；不稳的 API 早期可能不适合（每次重生 review 累）；response 类型要后端写 <code>response_model=</code> 才能精确。
+        </p>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 6 · Multi-session UI ============== -->
+    <section id="ch-6">
+      <header class="ch-head">
+        <span class="badge">Chapter 6 · 会话</span>
+        <h2>Multi-session UI · "切会话" 是个错觉</h2>
+        <p class="lede">HTTP 是 stateless · 真正的状态在 checkpoint 里 · UI 只是过滤器</p>
+      </header>
+
+      <p>
+        加完前面几件，最缺的就是用户感知 —— "我昨天聊到哪了？"。
+        Sidebar 加一个会话列表，看上去是个 UI 改动。但理解它在 stateless HTTP 下到底意味着什么，是面试题里被低估的考点。
+      </p>
+
+      <h3 id="s-6-1"><span class="num">§6.1</span>三层"会话"概念 · 别混</h3>
+      <table>
+        <thead><tr><th>层</th><th>是什么</th><th>谁管</th></tr></thead>
+        <tbody>
+          <tr><td><strong>HTTP session</strong></td><td>cookie / token 标识身份</td><td>auth 层（我们没用，用 X-API-Key）</td></tr>
+          <tr><td><strong>Conversation session</strong></td><td>一段连续对话 · 有 session_id</td><td>backend checkpoint（LangGraph SQLite）</td></tr>
+          <tr><td><strong>UI session</strong></td><td>用户在前端"打开的对话"</td><td>frontend state · 只是个 filter</td></tr>
+        </tbody>
+      </table>
+      <p>
+        关键洞察：<strong>backend 永远不知道"用户切了 session"</strong>。
+        backend 只知道<em>每个请求带的 session_id 是什么</em>。如果两个请求带同一个 sid，它们共享 checkpoint；如果带不同 sid，就是两条独立对话。
+      </p>
+      <p>
+        所以"切 session" 在 frontend 就是<strong>把 React state 里的 sessionId 字段换一个值</strong>。下一次 <code>/chat</code> 带新 sid，backend 自动从 checkpointer 里拉对应的 message history。
+      </p>
+
+      <div class="box concept">
+        <div class="box-label">概念 · stateless backend + stateful storage</div>
+        <p>
+          这是 web service 的<strong>黄金范式</strong>。HTTP handler 本身不持有任何 in-memory user state（可以随时重启、scale-out 加 replica），
+          所有状态外置到 SQLite / Redis / S3。<em>frontend 持有的不是"状态"</em>，是<em>"指向状态的指针"</em>（session_id）。
+        </p>
+        <p>
+          切换 UI session = 换个指针 = backend 从存储拉新的状态。这跟 Vim buffer / 浏览器 tab / IDE workspace 都是同一个 pattern。
+        </p>
+      </div>
+
+      <h3 id="s-6-2"><span class="num">§6.2</span>列表数据从哪来</h3>
+      <p>
+        Backend 早就有 <code>/chat/replay/sessions</code> endpoint —— 扫 <code>data/traces.jsonl</code>，按 <code>session_id</code> group，每个返回 <code>(sid, first_user_message, last_ts)</code>：
+      </p>
+<pre><code><span class="k">@app.get</span>(<span class="s">"/chat/replay/sessions"</span>)
+<span class="k">def</span> <span class="f">list_replayable_sessions</span>(limit: int = <span class="s">50</span>) -> <span class="f">list</span>[<span class="f">dict</span>]:
+    path = <span class="f">get_settings</span>().trace_file
+    seen: <span class="f">dict</span>[str, <span class="f">dict</span>] = {}
+    <span class="k">for</span> line <span class="k">in</span> path.<span class="f">read_text</span>().<span class="f">splitlines</span>():
+        evt = json.<span class="f">loads</span>(line)
+        sid = evt.<span class="f">get</span>(<span class="s">"session_id"</span>) <span class="k">or</span> (evt.<span class="f">get</span>(<span class="s">"payload"</span>) <span class="k">or</span> {}).<span class="f">get</span>(<span class="s">"session_id"</span>)
+        <span class="k">if</span> <span class="k">not</span> sid: <span class="k">continue</span>
+        info = seen.<span class="f">setdefault</span>(sid, {<span class="s">"session_id"</span>: sid, <span class="s">"first_user"</span>: <span class="k">None</span>, <span class="s">"last_ts"</span>: <span class="s">0</span>})
+        info[<span class="s">"last_ts"</span>] = <span class="f">max</span>(info[<span class="s">"last_ts"</span>], <span class="f">float</span>(evt.<span class="f">get</span>(<span class="s">"ts"</span>, <span class="s">0</span>)))
+        <span class="k">if</span> info[<span class="s">"first_user"</span>] <span class="k">is</span> <span class="k">None</span>:
+            txt = <span class="f">_trace_payload_text</span>(evt.<span class="f">get</span>(<span class="s">"payload"</span>))
+            <span class="k">if</span> txt:
+                info[<span class="s">"first_user"</span>] = txt[:<span class="s">160</span>]
+    <span class="k">return</span> <span class="f">sorted</span>(seen.<span class="f">values</span>(), key=<span class="k">lambda</span> x: x[<span class="s">"last_ts"</span>], reverse=<span class="k">True</span>)[:limit]
+</code></pre>
+
+      <p>
+        Trace JSONL 是真理 —— 因为<em>所有</em>事件都通过 <code>tracer.emit()</code> 写进去，不会有"漏掉一条 session" 的可能。
+        没有专门的"sessions table"，避免了双写不一致。
+      </p>
+
+      <h3 id="s-6-3"><span class="num">§6.3</span>前端 · 4 行 state · 1 个 effect</h3>
+
+<pre><code><span class="c">// Sidebar.tsx</span>
+<span class="k">const</span> [sessions, setSessions] = <span class="f">useState</span>&lt;SessionSummary[]&gt;([]);
+
+<span class="f">useEffect</span>(() =&gt; {
+    <span class="f">listSessions</span>(<span class="s">50</span>).<span class="f">then</span>(setSessions);
+}, [refreshTick]);              <span class="c">// 每次 turn 完都刷新</span>
+
+<span class="c">// 用户点哪一行 → 把 sessionId 换成它</span>
+&lt;button onClick={() =&gt; <span class="f">onSwitchSession</span>(s.session_id)}&gt;...&lt;/button&gt;
+
+<span class="c">// + 新对话按钮 = 把 sessionId 设成 null · 下一条消息后端会生成新 uuid</span>
+&lt;button onClick={() =&gt; <span class="f">onSwitchSession</span>(<span class="k">null</span>)}&gt;+ new&lt;/button&gt;
+</code></pre>
+
+      <p>
+        App.tsx 持有 <code>sessionId</code> state，<code>onSwitchSession</code> 同时清空 trace 面板（旧事件属于旧 session，留着会误导）。<em>就这么简单</em>。
+      </p>
+
+      <h3 id="s-6-4"><span class="num">§6.4</span>三个非显然的 UX 决策</h3>
+      <ul>
+        <li>
+          <strong>"+ 新对话" 不是"清空当前"</strong>。两者语义不同 —— 新对话是<em>开启新 session_id</em>（旧会话保留在历史），清空当前是<em>删除当前 session 的 messages</em>（破坏性）。我们只提供前者，避免误删。
+        </li>
+        <li>
+          <strong>列表用<em>第一句用户消息</em>当标题</strong>，不是"对话 #14"。原因：人类靠内容回忆，不靠序号。这跟 Cursor / ChatGPT / Claude 的 sidebar 设计一致。
+        </li>
+        <li>
+          <strong>active 标记用红色 badge</strong>，跟 Ghibli 主色一致。点别的会话不需要确认弹窗 —— 因为切换是非破坏的，犯错代价低。
+        </li>
+      </ul>
+
+      <h3 id="s-6-5"><span class="num">§6.5</span>留给以后的坑</h3>
+      <ul>
+        <li>
+          <strong>Trace 文件会涨</strong>。每个 turn 写 30+ 事件，每条事件几百字节，1000 个 session 后 trace.jsonl 会到 10MB 级。需要做 rotation（按周分文件）+ 一个 sessions index（专门一行/session 的总结表，省扫描）。
+        </li>
+        <li>
+          <strong>Multi-user 隔离没做</strong>。当前所有 user 共享同一个 trace 文件。生产前必须给每个 trace 事件加 <code>user_id</code>，按 user filter。
+        </li>
+        <li>
+          <strong>没有"删除会话"</strong>。需要的话写一个 <code>DELETE /chat/sessions/{sid}</code> · 同时清 trace 行 + checkpoint 行 + harness store 文件。GDPR 场景必须有。
+        </li>
+      </ul>
+
+      <div class="box interview">
+        <div class="box-label">面试题 · S.1</div>
+        <p>
+          "怎么实现 ChatGPT 那种 sidebar 历史会话？"<br>
+          <strong>关键点</strong>：(1) backend stateless，状态全在 checkpointer / 存储 · session_id 是<em>指针</em>；(2) 列表数据来源<em>不要双写</em> · 从 trace 或 checkpoint 派生；(3) "切" session 在前端就是改 React state，下一个请求带新 sid 即可；(4) "+ 新对话" 跟 "清空当前" 语义不同 · 不要混；(5) multi-user 必须在 trace 事件里加 <code>user_id</code>，否则数据串号。
+        </p>
+      </div>
+    </section>
+
+    <!-- ============== Chapter 7 · 共同主题 ============== -->
+    <section id="ch-7">
+      <header class="ch-head">
+        <span class="badge">Chapter 7 · 哲学</span>
+        <h2>5 件事的共同主题 · senior 工程的 DNA</h2>
+        <p class="lede">把每个改动单独看是 feature · 一起看是<em>姿态</em></p>
+      </header>
+
+      <p>
+        回头看这 5 个 P1 改动，背后其实是同一套工程姿态。把它说清楚，比把任何单个 feature 讲清楚都重要 —— 因为<em>姿态可以迁移</em>，feature 不行。
+      </p>
+
+      <h3 id="s-7-1"><span class="num">§7.1</span>三条贯穿的原则</h3>
+
+      <h4>原则 1 · 默认安全 · 显式开放</h4>
+      <p>
+        每个新能力都默认<em>不会破坏老用法</em>：
+      </p>
+      <ul>
+        <li>Memory decay 默认<strong>不</strong>自动 prune · 必须手动调端点</li>
+        <li>Parallel tool exec 默认所有 tool 都安全（safe_run_tool 已在线程池）</li>
+        <li>Cost guardrail 默认 budget=0（不限）· 本地 Ollama 永远 zero-cost</li>
+        <li>OpenAPI codegen 默认手写类型不动 · 你想用就用 <code>Schemas["..."]</code></li>
+        <li>Multi-session UI 默认显示当前 session · 切换是用户主动行为</li>
+      </ul>
+      <p>
+        反过来：每个能力都<strong>显式</strong>提供"开到底"的开关：<code>MCP_EXPOSED_TOOLS=*</code>、<code>AGENT_SESSION_BUDGET_USD=10</code>、<code>npm run gen:api</code>。
+        SRE 圈这叫<strong>"safe defaults, easy escalation"</strong>。
+      </p>
+
+      <h4>原则 2 · 状态共享 · 不开新孔</h4>
+      <p>
+        新功能尽量复用已有数据源：
+      </p>
+      <ul>
+        <li>Cost guardrail 复用 <code>UsageCallback</code> 的 <code>_per_session</code> 状态 · 不另开计数</li>
+        <li>Multi-session UI 复用 <code>traces.jsonl</code> · 不专门写 sessions table</li>
+        <li>Memory decay 复用 Chroma metadata · 不另开计数表</li>
+      </ul>
+      <p>
+        这叫<strong>"single source of truth"</strong>。每多一个数据源就多一处可能不一致的地方。
+      </p>
+
+      <h4>原则 3 · Fail fast · 在最便宜的层失败</h4>
+      <p>
+        <em>auth → rate-limit → budget → LLM</em> 顺序不是随便排的 —— 是按"检查成本递增"。
+        <em>dry_run</em> 必须在 prune 之前提供。<em>tsc 编译失败</em> 必须在 runtime 之前发生。
+      </p>
+      <p>
+        每一层都问自己一个问题：<strong>"这个错误能不能在更便宜的地方发现？"</strong> 能 = 把检查往前挪一层。这是 senior 工程师的肌肉记忆。
+      </p>
+
+      <h3 id="s-7-2"><span class="num">§7.2</span>5 件事跟其他领域的对应</h3>
+      <table>
+        <thead><tr><th>P1 改动</th><th>同类思想在哪也出现</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Memory decay (recency × usage)</td>
+            <td>Linux page cache · Redis maxmemory-policy · CDN edge eviction</td>
+          </tr>
+          <tr>
+            <td>Parallel tool exec (asyncio.gather)</td>
+            <td>Promise.all · Go goroutine + sync.WaitGroup · Java CompletableFuture</td>
+          </tr>
+          <tr>
+            <td>Cost guardrail (fail-fast dependency)</td>
+            <td>Kubernetes ResourceQuota · AWS Budget alarm · Stripe metered billing</td>
+          </tr>
+          <tr>
+            <td>OpenAPI codegen</td>
+            <td>gRPC + protoc · GraphQL Code Generator · OpenAPI generators 整个 ecosystem</td>
+          </tr>
+          <tr>
+            <td>Multi-session UI</td>
+            <td>Vim buffers · 浏览器 tab session · IDE workspace · K8s namespace</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        看到没 —— 这些都不是 agent 圈独有的发明。Agent 圈只是在重复发现 web / OS / 数据库圈这 30 年踩过的坑。
+        senior 的核心能力是<strong>把已知 pattern 嫁接到新领域</strong>，不是发明新东西。
+      </p>
+
+      <div class="pull">
+        Production engineering 90% 的工作是<br>把别的领域的智慧嫁接过来。
+        <cite>— this book, ch 7</cite>
+      </div>
+    </section>
+
+    <!-- ============== QA ============== -->
+    <section id="qa">
+      <header class="ch-head">
+        <span class="badge">12 道面试题</span>
+        <h2>P1 加固 · senior 必答</h2>
+        <p class="lede">每题给三档答案 · 自查现在能答到哪一档</p>
+      </header>
+
+      <p>共 12 题 · 5 个主题各 2 题 + 跨主题综合 2 题。</p>
+
+      <h3>Memory · M.1 · 长期 memory 怎么避免变垃圾？</h3>
+      <p>见 <a href="#s-2-5">§2.5</a> 末尾。</p>
+
+      <h3>Memory · M.2 · 为什么 prune 不能用纯 LRU？</h3>
+      <p>
+        纯 LRU = 按 <code>last_used_at</code> 排序砍最老的。问题：刚写入的<em>新</em>fact <code>use_count</code> 也是 0、<code>last_used_at</code> 跟时间戳一样新；老的高价值 fact（被反复 recall）<code>use_count</code> 高但 <code>last_used_at</code> 也新。<strong>纯 LRU 没法区分"新但没用过" 和"老但常用"</strong>。
+        正解：复合分把 recency 和 usage 都算进去（recency 主导，usage 调味）。
+      </p>
+
+      <h3>Parallel · P.1 · agent 一轮发多个 tool · 怎么并发？</h3>
+      <p>见 <a href="#s-3-5">§3.5</a> 末尾。</p>
+
+      <h3>Parallel · P.2 · Python GIL 不是会让多线程退化成串行吗？</h3>
+      <p>
+        只对<em>纯 Python CPU 任务</em>退化。<strong>I/O 调用（socket / 文件 / C extension）会主动释放 GIL</strong>，让别的线程跑。
+        Agent tool 99% 都是 I/O，所以 thread pool 真并发。CPU 重活（嵌入计算、解码）走 numpy/torch 时也会释放 GIL（这些库内部跳出 Python 解释器）。
+        真正中招的是<em>纯 Python 循环</em>（做 JSON 反序列化大文件之类），那种要么换 multiprocessing 要么换 PyO3 / Cython。
+      </p>
+
+      <h3>Cost · C.1 · 怎么防 LLM 单 session 烧爆？</h3>
+      <p>见 <a href="#s-4-5">§4.5</a> 末尾。</p>
+
+      <h3>Cost · C.2 · 为什么用 dependency 而不是 middleware？</h3>
+      <p>
+        Middleware 在路由解析<em>之前</em>跑，拿不到 parsed body（payload.session_id），要么手动 read body stream（破坏后续 endpoint），要么 buffer + 回灌（复杂易错）。
+        FastAPI dependency 在路由解析<em>之后</em>跑，直接收到 typed payload，最干净。代价：dependency 不能跨 endpoint 自动应用，需要每个端点手动挂；endpoint 数量多了考虑 router-level dependency。
+      </p>
+
+      <h3>OpenAPI · O.1 · 前后端怎么避免 silent drift？</h3>
+      <p>见 <a href="#s-5-5">§5.5</a> 末尾。</p>
+
+      <h3>OpenAPI · O.2 · response 类型为什么 codegen 出来不准？</h3>
+      <p>
+        FastAPI 只在 endpoint 显式标 <code>response_model=SomeModel</code> 时才把 response schema 写进 OpenAPI。
+        返回 raw <code>dict</code> 的端点 OpenAPI 里 response 是 <code>{}</code>（任意 object），codegen 出来就是 <code>unknown</code> / 含糊 union。
+        修法：给关键 endpoint 加 <code>response_model=</code>。短期权宜：response 类型继续手写，注释里标对齐哪个端点。
+      </p>
+
+      <h3>Session · S.1 · 怎么实现 ChatGPT 风格 sidebar 历史会话？</h3>
+      <p>见 <a href="#s-6-5">§6.5</a> 末尾。</p>
+
+      <h3>Session · S.2 · session_id 应该谁生成 · 前端还是后端？</h3>
+      <p>
+        <strong>后端生成 + 前端缓存</strong>。前端第一次 <code>POST /chat</code> 不带 session_id，后端 <code>uuid.uuid4()</code> 生成并通过 SSE first event 返回，前端拿到后续请求都带它。
+        <strong>不要前端生成</strong>原因：(1) uuid 算法不一致、碰撞概率难证；(2) 前端 bug 可能让两个 tab 用同一个 sid 串号；(3) 后端可以加签名/校验防伪。
+      </p>
+
+      <h3>综合 · X.1 · 这 5 个改动有什么共同点？</h3>
+      <p>见第 7 章。三条原则：默认安全显式开放、状态共享不开新孔、fail-fast 在最便宜层失败。</p>
+
+      <h3>综合 · X.2 · 如果只能挑 2 个先做，挑哪 2 个？为什么？</h3>
+      <p>
+        <strong>Cost guardrail + Memory decay</strong>。原因：
+      </p>
+      <ul>
+        <li>Cost guardrail 防的是"<em>突发性灾难</em>"——一次脚本失误 burn 几百刀，没护栏没救。</li>
+        <li>Memory decay 防的是"<em>慢性病</em>"——每天烂一点，三个月后 memory 完全无用。</li>
+      </ul>
+      <p>
+        Parallel exec 是性能优化、OpenAPI / Multi-session UI 是开发体验，可以晚一周。两类：<strong>"会死人"先做、"会变烂" 紧跟、"会慢" 和"会累"放后面</strong>。
+      </p>
+    </section>
+
+    <!-- ============== Glossary ============== -->
+    <section id="glossary">
+      <header class="ch-head">
+        <span class="badge">术语表</span>
+        <h2>30 词 · 用对术语 = senior 信号</h2>
+      </header>
+
+      <table>
+        <thead><tr><th>术语</th><th>含义</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Half-life</strong></td><td>价值衰减一半所需时间 · 物理学的指数衰减直觉用在 cache / memory</td></tr>
+          <tr><td><strong>LRU</strong> / <strong>LFU</strong></td><td>Least Recently/Frequently Used · 两种淘汰策略</td></tr>
+          <tr><td><strong>Composite scoring</strong></td><td>多维度加权评分 · 比单一维度（纯 LRU）更鲁棒</td></tr>
+          <tr><td><strong>Dedup at write</strong></td><td>写入时检查是否近重 · 避免后期清理</td></tr>
+          <tr><td><strong>Blast radius</strong></td><td>一次错误操作能破坏的范围 · 加 floor 限制爆炸半径</td></tr>
+          <tr><td><strong>Dry run</strong></td><td>预演不真执行 · terraform plan / kubectl --dry-run 同源</td></tr>
+          <tr><td><strong>Schema migration</strong></td><td>升级数据格式时兼容老数据 · 我们的 tz-naive 兼容是缩水版</td></tr>
+          <tr><td><strong>asyncio.gather</strong></td><td>Python 把多个 awaitable 并发跑，按入参顺序返回结果</td></tr>
+          <tr><td><strong>asyncio.to_thread</strong></td><td>把 sync 函数扔到默认线程池跑 · 不阻塞 event loop</td></tr>
+          <tr><td><strong>GIL</strong></td><td>Global Interpreter Lock · Python 一次只让一个线程跑 Python 字节码 · I/O 时释放</td></tr>
+          <tr><td><strong>Prompt cache</strong></td><td>LLM 提供商对相同 message prefix 的请求收便宜价 · 顺序不能乱</td></tr>
+          <tr><td><strong>Fail fast / fail cheap</strong></td><td>错误尽早发现、在便宜的层失败</td></tr>
+          <tr><td><strong>402 Payment Required</strong></td><td>HTTP 状态码 · 专门给 quota / 付费场景</td></tr>
+          <tr><td><strong>FastAPI dependency</strong></td><td>装饰器形式的可注入逻辑 · 路由解析后跑、能拿 typed body</td></tr>
+          <tr><td><strong>Single source of truth</strong></td><td>同一份状态只有一处权威源 · 监控/告警/护栏共享</td></tr>
+          <tr><td><strong>Safe defaults, easy escalation</strong></td><td>默认安全、想放开有显式开关</td></tr>
+          <tr><td><strong>OpenAPI 3.1</strong></td><td>HTTP API 描述规范 · FastAPI 自动生成 /openapi.json</td></tr>
+          <tr><td><strong>Codegen</strong></td><td>根据 schema 自动生成代码 · openapi-typescript / protoc / graphql-codegen</td></tr>
+          <tr><td><strong>Schema-driven development</strong></td><td>schema 是真理 · 代码从 schema 派生</td></tr>
+          <tr><td><strong>Silent drift</strong></td><td>前后端字段不一致但没人发现 · 上线才炸</td></tr>
+          <tr><td><strong>Pydantic model</strong></td><td>带类型校验的 Python dataclass · FastAPI 用它定义 request/response</td></tr>
+          <tr><td><strong>response_model</strong></td><td>FastAPI endpoint 装饰器参数 · 显式指定 response 的 Pydantic 类型</td></tr>
+          <tr><td><strong>Stateless backend</strong></td><td>HTTP handler 不持有 in-memory user state · 可随时重启 / 横向扩</td></tr>
+          <tr><td><strong>Checkpoint</strong></td><td>LangGraph 的状态持久化机制 · SQLite 表存所有 conversation state</td></tr>
+          <tr><td><strong>session_id 是指针</strong></td><td>HTTP 是 stateless · session_id 只是指向后端存储的 key</td></tr>
+          <tr><td><strong>Trace JSONL</strong></td><td>每条事件一行 JSON · 我们多会话 UI 的数据源</td></tr>
+          <tr><td><strong>BFF</strong></td><td>Backend-For-Frontend · 在前后端之间多一层做翻译 · 可以省 codegen</td></tr>
+          <tr><td><strong>Progressive hardening</strong></td><td>渐进式加固 · 每次 sweep 把"掉档时间"往后推一档</td></tr>
+          <tr><td><strong>P0 / P1 / P2</strong></td><td>"不做多久会爆" 的优先级框架</td></tr>
+          <tr><td><strong>Migration</strong></td><td>升级数据 schema · 必须考虑老数据兼容</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer class="colophon">
+      <div class="row">
+        <div>桃桃 Agent · Book 17 · P1 Hardening · v1.0</div>
+        <div><a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">GitHub</a> · <a href="index.html">回首页</a></div>
+      </div>
+      <div>读完这本能讲清: <em>memory decay · parallel exec · cost guardrail · OpenAPI codegen · multi-session UI</em></div>
+    </footer>
+  </main>
+</div>
+</body>
+</html>
