@@ -10,24 +10,24 @@
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  /* paper · warm afternoon light */
-  --paper: #f9f1de; --paper-2: #f1e7cb; --paper-card: #fffdf6;
-  /* ink · soft, slightly indigo (not pure black) */
-  --ink: #1f1c17; --ink-soft: #3d362a; --ink-mute: #7a705e;
-  --rule: #d8cba6; --rule-soft: #e8debc;
-  /* nature palette · totoro forest */
-  --leaf: #4f8b4f; --leaf-deep: #356b39; --leaf-soft: #e9f1de;
-  --moss: #6b8c5a; --moss-soft: #e3eccd;
-  /* sunset / earth */
-  --rust: #c14a25; --rust-soft: #f9e2d6; --terra: #b85a2c;
-  /* sky · spirited away */
-  --sky:  #4a8fc4; --sky-deep: #2c6ca8; --sky-soft:  #dbeaf5;
-  --night: #1d2f4a; --night-deep: #14213a;
-  /* misc */
-  --plum: #864c8e; --plum-soft: #f1e6f2;
-  --gold: #c9961e; --gold-soft: #f7eccd; --gold-warm: #f4c46a;
-  --teal: #1f7a6b; --teal-soft: #ddeeea;
-  --coral: #d96c5d; --coral-soft: #fae0db;
+  /* paper · clean morning light · soft mint cream (小清新基底) */
+  --paper: #f7faf3; --paper-2: #ebf2e3; --paper-card: #ffffff;
+  /* ink · charcoal with slight cool tint */
+  --ink: #2a322c; --ink-soft: #4a554c; --ink-mute: #8a948a;
+  --rule: #d4dfc8; --rule-soft: #e3ecd8;
+  /* nature palette · sage / pastel forest */
+  --leaf: #7eb287; --leaf-deep: #5a8961; --leaf-soft: #e8f1e0;
+  --moss: #94b48c; --moss-soft: #ecf2e1;
+  /* warm accent · soft coral instead of brick rust */
+  --rust: #e08a6e; --rust-soft: #fae6dc; --terra: #c97357;
+  /* sky · pale watercolor */
+  --sky:  #9ec5dc; --sky-deep: #5e9fc4; --sky-soft:  #e7f1f7;
+  --night: #2a4565; --night-deep: #1d3050;
+  /* misc · all toned down for 小清新 */
+  --plum: #b89bc4; --plum-soft: #f1e8f3;
+  --gold: #e8c46e; --gold-soft: #faecc7; --gold-warm: #f5d68b;
+  --teal: #7ab5a8; --teal-soft: #def0eb;
+  --coral: #e8a195; --coral-soft: #fbe4dd;
 
   --font-display: "Fraunces", "Times New Roman", serif;
   --font-body: "Lora", "Iowan Old Style", Georgia, serif;
@@ -42,20 +42,20 @@
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 
-/* paper texture · faint grain via SVG data URI */
+/* paper texture · whisper-soft grain · cool palette */
 body {
   margin: 0;
   background:
-    radial-gradient(ellipse 60% 40% at 15% 8%, rgba(244,196,106,.18), transparent 60%),
-    radial-gradient(ellipse 50% 35% at 85% 20%, rgba(74,143,196,.10), transparent 60%),
-    radial-gradient(ellipse 70% 50% at 50% 100%, rgba(79,139,79,.10), transparent 55%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.36 0 0 0 0 0.22 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 60% 40% at 15% 8%, rgba(158,197,220,.18), transparent 60%),
+    radial-gradient(ellipse 55% 38% at 85% 18%, rgba(232,161,149,.10), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 50% 100%, rgba(126,178,135,.12), transparent 55%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.50 0 0 0 0 0.42 0 0 0 0.035 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"),
     var(--paper);
   color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.7;
 }
 :lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
-a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(193,74,37,.4); transition: all .15s; }
-a:hover { background: rgba(193,74,37,.08); }
+a { color: var(--terra); text-decoration: none; border-bottom: 1px solid rgba(201,115,87,.45); transition: all .15s; }
+a:hover { background: rgba(201,115,87,.08); }
 a.bare { border-bottom: none; }
 em { font-style: italic; color: var(--leaf-deep); font-weight: 500; }
 strong { font-weight: 600; color: var(--ink); }
@@ -64,7 +64,7 @@ strong { font-weight: 600; color: var(--ink); }
 @media (max-width: 720px) { .container { padding: 0 1.2rem; } }
 
 /* ===== nav bar ===== */
-.nav { padding: 1.2rem 0; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: rgba(249,241,222,.92); backdrop-filter: blur(10px); z-index: 100; }
+.nav { padding: 1.2rem 0; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: rgba(247,250,243,.92); backdrop-filter: blur(10px); z-index: 100; }
 .nav-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
 .nav-brand { font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 1.35rem; color: var(--ink); border: none; display: inline-flex; align-items: center; gap: .55rem; }
 .nav-brand .dot { color: var(--rust); }
@@ -72,8 +72,8 @@ strong { font-weight: 600; color: var(--ink); }
 .nav-links { display: flex; gap: 1.5rem; font-family: var(--font-sans); font-size: 0.9rem; }
 .nav-links a { color: var(--ink-mute); border-bottom: none; font-weight: 500; }
 .nav-links a:hover { color: var(--rust); background: none; }
-.nav-cta { font-family: var(--font-sans); font-size: 0.85rem; padding: 0.45rem 1.1rem; background: var(--rust); color: white !important; border-radius: 999px; border: none; font-weight: 500; box-shadow: 0 2px 6px rgba(193,74,37,.25); }
-.nav-cta:hover { background: #a13d20; }
+.nav-cta { font-family: var(--font-sans); font-size: 0.85rem; padding: 0.45rem 1.1rem; background: var(--terra); color: white !important; border-radius: 999px; border: none; font-weight: 500; box-shadow: 0 2px 6px rgba(201,115,87,.28); }
+.nav-cta:hover { background: #b56344; }
 
 /* ===== hero · totoro sky + rolling hills ===== */
 .hero {
@@ -107,15 +107,15 @@ strong { font-weight: 600; color: var(--ink); }
 .hero h1 em { color: var(--rust); font-style: italic; }
 .hero h1 .strike { position: relative; }
 .hero h1 .strike::after { content: ""; position: absolute; left: -3%; right: -3%; top: 53%; height: 5px; background:
-  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 5' preserveAspectRatio='none'%3E%3Cpath d='M0 3 Q 25 0 50 3 T 100 3 T 150 3 T 200 3' stroke='%23806f54' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") repeat-x; background-size: 200px 5px; transform: rotate(-1.5deg); }
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 5' preserveAspectRatio='none'%3E%3Cpath d='M0 3 Q 25 0 50 3 T 100 3 T 150 3 T 200 3' stroke='%238a948a' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") repeat-x; background-size: 200px 5px; transform: rotate(-1.5deg); }
 .hero h1 .underline-hand { position: relative; color: var(--leaf-deep); font-style: italic; }
 .hero h1 .underline-hand::after { content: ""; position: absolute; left: 0; right: 0; bottom: -10px; height: 8px; background:
-  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 8' preserveAspectRatio='none'%3E%3Cpath d='M2 5 Q 50 0 100 4 T 198 4' stroke='%234f8b4f' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat; background-size: 100% 8px; opacity: .8; }
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 8' preserveAspectRatio='none'%3E%3Cpath d='M2 5 Q 50 0 100 4 T 198 4' stroke='%237eb287' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat; background-size: 100% 8px; opacity: .85; }
 .hero-lede { font-size: 1.18rem; color: var(--ink-soft); max-width: 38em; margin: 0 auto 2.5rem; line-height: 1.65; text-align: center; }
 .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem; }
 .btn { font-family: var(--font-sans); font-weight: 500; font-size: 0.95rem; padding: 0.85rem 1.7rem; border-radius: 999px; border: 2px solid var(--ink); cursor: pointer; transition: all .18s; box-shadow: var(--shadow-soft); }
 .btn-primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-.btn-primary:hover { background: var(--rust); border-color: var(--rust); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(193,74,37,.32); }
+.btn-primary:hover { background: var(--terra); border-color: var(--terra); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(201,115,87,.32); }
 .btn-secondary { background: rgba(255,253,246,.85); color: var(--ink); }
 .btn-secondary:hover { background: var(--ink); color: var(--paper); transform: translateY(-2px); }
 
@@ -157,7 +157,7 @@ strong { font-weight: 600; color: var(--ink); }
 /* ===== phase ===== */
 .phase { margin-bottom: 4rem; position: relative; }
 .phase-head { display: flex; align-items: baseline; gap: 1.2rem; padding-bottom: 1rem; border-bottom: 2px solid var(--ink); margin-bottom: 1.8rem; flex-wrap: wrap; }
-.phase-num { font-family: var(--font-display); font-weight: 700; font-size: 3rem; line-height: 1; color: var(--rust); font-style: italic; text-shadow: 1px 1px 0 rgba(244,196,106,.35); }
+.phase-num { font-family: var(--font-display); font-weight: 700; font-size: 3rem; line-height: 1; color: var(--terra); font-style: italic; text-shadow: 1px 1px 0 rgba(158,197,220,.45); }
 .phase-meta { flex: 1; min-width: 220px; }
 .phase-meta h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.7rem; margin: 0 0 0.3rem; color: var(--ink); letter-spacing: -0.005em; }
 .phase-meta h3 em { color: var(--rust); font-style: italic; font-weight: 500; }
@@ -188,7 +188,8 @@ strong { font-weight: 600; color: var(--ink); }
 
 /* ===== Roadmap progress ===== */
 .roadmap { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 18px; padding: 2.4rem; margin: 0 0 4rem; box-shadow: var(--shadow-soft); position: relative; overflow: hidden; }
-.roadmap::before { content: ""; position: absolute; top: -30px; right: -30px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(244,196,106,.35), transparent 70%); pointer-events: none; }
+.roadmap::before { content: ""; position: absolute; top: -30px; right: -30px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(158,197,220,.40), transparent 70%); pointer-events: none; }
+.roadmap::after { content: ""; position: absolute; bottom: -40px; left: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(126,178,135,.28), transparent 70%); pointer-events: none; }
 .roadmap h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.55rem; margin: 0 0 1.6rem; color: var(--ink); text-align: center; }
 .roadmap-bar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.55rem; margin-bottom: 1.2rem; }
 .roadmap-step { text-align: center; padding: 0.7rem 0.4rem; border-radius: 10px; font-family: var(--font-sans); font-size: 0.74rem; font-weight: 600; color: white; box-shadow: 0 2px 5px rgba(0,0,0,.1); }
@@ -209,7 +210,7 @@ strong { font-weight: 600; color: var(--ink); }
 .coverage td:first-child { text-align: left; font-family: var(--font-display); font-weight: 500; color: var(--ink); }
 .coverage td.x { color: var(--rust); font-weight: 700; font-size: 1.05rem; }
 .coverage td.dim { color: var(--rule); }
-.coverage tr:hover td { background: rgba(196,178,144,.13); }
+.coverage tr:hover td { background: rgba(126,178,135,.10); }
 
 /* ===== Final CTA · spirited away night sky ===== */
 .final-cta { background: linear-gradient(180deg, var(--night) 0%, var(--night-deep) 100%); color: var(--paper); padding: 5rem 0 5.5rem; margin-top: 4rem; position: relative; overflow: hidden; }
