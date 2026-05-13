@@ -252,14 +252,14 @@ td code { font-size: 0.82rem; }
   <div class="diagram">
     <pre class="mermaid">
 flowchart TD
-    U((👤 user)) -->|message| S{{💼 supervisor<br/>decides next}}
-    S -.->|next: research| R[🔍 researcher]
-    S -.->|next: code|     C[💻 coder]
-    S -.->|next: write|    W[✍️ writer]
-    R -->|result| S
-    C -->|result| S
-    W --> K(👁 critic)
-    K -.->|approve / fail| S
+    U(("👤 user")) -->|"message"| S{{"💼 supervisor<br/>decides next"}}
+    S -.->|"next · research"| R["🔍 researcher"]
+    S -.->|"next · code"| C["💻 coder"]
+    S -.->|"next · write"| W["✍️ writer"]
+    R -->|"result"| S
+    C -->|"result"| S
+    W --> K(("👁 critic"))
+    K -.->|"approve / fail"| S
     classDef sup fill:#3a2f1f,stroke:#f4c95a,stroke-width:2px,color:#f5ecd2;
     classDef worker fill:#1d3a38,stroke:#8eb58f,color:#f5ecd2;
     classDef quality fill:#3a2a22,stroke:#e08e6f,color:#f5ecd2;
@@ -551,19 +551,19 @@ def run_vote(task, *, n=5, temperature=0.7, session_id=""):
     <pre class="mermaid">
 sequenceDiagram
     autonumber
-    participant U as 👤 user
-    participant A as ✍️ Actor<br/>(main model)
-    participant C as 👁 Critic<br/>(fast model)
+    participant U as "👤 user"
+    participant A as "✍️ Actor (main model)"
+    participant C as "👁 Critic (fast model)"
     U->>A: task
     rect rgb(40, 56, 90)
       Note over A,C: Round 1
       A->>+C: draft v1
-      C-->>-A: SCORE 6 · ISSUES + FIXES
+      C-->>-A: SCORE 6 - issues + fixes
     end
     rect rgb(56, 76, 50)
       Note over A,C: Round 2
       A->>+C: draft v2 (incorporates feedback)
-      C-->>-A: SCORE 8 ✅ pass_score
+      C-->>-A: SCORE 8 - pass_score reached
     end
     A-->>U: final draft (latest version)
     </pre>

@@ -168,13 +168,13 @@ td code { font-size: 0.82rem; }
     <div class="diagram">
       <pre class="mermaid">
 flowchart LR
-    IMG[🖼 image<br/>224² / 336² / 1024²]
-    ENC[ViT vision encoder<br/>patch & embed]
-    PATCH[patch embeddings<br/>~576 tokens<br/>24×24 patch]
-    PROJ[projector<br/>MLP / Q-Former /<br/>Perceiver Resampler]
-    CONCAT[/concat with text tokens/]
-    TFM{{transformer forward<br/>autoregressive}}
-    OUT[📝 text output]
+    IMG["🖼 image<br/>224² · 336² · 1024²"]
+    ENC["ViT vision encoder<br/>patch &amp; embed"]
+    PATCH["patch embeddings<br/>~576 tokens<br/>24×24 patch"]
+    PROJ["projector<br/>MLP · Q-Former ·<br/>Perceiver Resampler"]
+    CONCAT[/"concat with text tokens"/]
+    TFM{{"transformer forward<br/>autoregressive"}}
+    OUT["📝 text output"]
     IMG --> ENC --> PATCH --> PROJ --> CONCAT --> TFM --> OUT
     classDef in fill:#1d3a38,stroke:#8eb58f,color:#f5ecd2;
     classDef proc fill:#1c3155,stroke:#6a96bc,color:#f5ecd2;
@@ -320,17 +320,17 @@ flowchart LR
     <div class="diagram">
       <pre class="mermaid">
 flowchart TD
-    U1([🎙 user speaks])
-    VAD{{① VAD<br/>still talking?<br/>finished?}}
-    STT[② STT<br/>stream → text]
-    LLM[/③ LLM<br/>stream tokens/]
-    TTS[④ TTS<br/>stream audio]
-    U2([👂 user hears])
+    U1(["🎙 user speaks"])
+    VAD{{"① VAD<br/>still talking?<br/>finished?"}}
+    STT["② STT<br/>stream to text"]
+    LLM[/"③ LLM<br/>stream tokens"/]
+    TTS["④ TTS<br/>stream audio"]
+    U2(["👂 user hears"])
     U1 --> VAD
-    VAD -- "still" --> VAD
-    VAD -- "finished" --> STT
-    STT -->|partials| LLM
-    LLM -->|first sentence| TTS
+    VAD -->|"still"| VAD
+    VAD -->|"finished"| STT
+    STT -->|"partials"| LLM
+    LLM -->|"first sentence"| TTS
     TTS --> U2
     classDef io fill:#1d3a38,stroke:#8eb58f,color:#f5ecd2;
     classDef gate fill:#3a2f1f,stroke:#f4c95a,color:#f5ecd2;
