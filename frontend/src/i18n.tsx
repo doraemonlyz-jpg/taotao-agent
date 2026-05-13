@@ -100,7 +100,17 @@ export const ui: Dict = {
   tabComponents: { en: "Components", zh: "组件" },
   tabTools:      { en: "Tools",      zh: "工具" },
   tabMemory:     { en: "Memory",     zh: "记忆" },
+  tabSessions:   { en: "Sessions",   zh: "会话" },
   sideOffline:   { en: "(backend offline)", zh: "(后端未启动)" },
+
+  // sessions tab
+  sessEmpty:     { en: "(no past sessions yet — chat once and they'll show up)",
+                   zh: "(暂无历史会话 — 发送一次消息后会出现)" },
+  sessNew:       { en: "+ new", zh: "+ 新对话" },
+  sessReplay:    { en: "replay", zh: "回放" },
+  sessActive:    { en: "active", zh: "当前" },
+  sessNewConfirm:{ en: "Start a fresh session? The current chat will stay in history.",
+                   zh: "开启新对话？当前对话会保留在历史里。" },
 
   // memory sub-tabs
   memSubFacts:       { en: "Facts",       zh: "事实" },

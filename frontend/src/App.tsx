@@ -106,6 +106,14 @@ export default function App() {
           memory={memory}
           onMemoryChange={refreshMemory}
           refreshTick={turnTick}
+          sessionId={sessionId}
+          onSwitchSession={(sid) => {
+            setSessionId(sid);
+            // Clear traces so the user sees a clean slate when they pick
+            // a different session · the existing trace events belong to
+            // whichever session was just open.
+            setTraces([]);
+          }}
         />
 
         <section className="center">

@@ -7,7 +7,9 @@ import {
   fetchProfile,
   fetchReflections,
   fetchSkills,
+  listSessions,
   type MemoryItem,
+  type SessionSummary,
   type SkillEntry,
   type ToolDesc,
 } from "../api";
@@ -19,12 +21,22 @@ interface Props {
   onMemoryChange: () => void;
   /** Bumped each time a turn completes, so memory sub-panes refetch. */
   refreshTick: number;
+  sessionId: string | null;
+  /** null = start a fresh session on next /chat. */
+  onSwitchSession: (sid: string | null) => void;
 }
 
-type Tab = "arch" | "tools" | "mem";
+type Tab = "arch" | "tools" | "mem" | "sess";
 type MemSub = "facts" | "reflections" | "profile" | "skills";
 
-export default function Sidebar({ tools, memory, onMemoryChange, refreshTick }: Props) {
+export default function Sidebar({
+  tools,
+  memory,
+  onMemoryChange,
+  refreshTick,
+  sessionId,
+  onSwitchSession,
+}: Props) {
   const { lang, t } = useLang();
   const [tab, setTab] = useState<Tab>("arch");
   const [memSub, setMemSub] = useState<MemSub>("facts");
@@ -33,6 +45,7 @@ export default function Sidebar({ tools, memory, onMemoryChange, refreshTick }: 
   const [reflections, setReflections] = useState<MemoryItem[]>([]);
   const [skills, setSkills] = useState<SkillEntry[]>([]);
   const [openSkill, setOpenSkill] = useState<string | null>(null);
+  const [sessions, setSessions] = useState<SessionSummary[]>([]);
 
   useEffect(() => {
     fetchSkills().then(setSkills).catch(() => setSkills([]));
@@ -40,6 +53,7 @@ export default function Sidebar({ tools, memory, onMemoryChange, refreshTick }: 
   useEffect(() => {
     fetchProfile().then(setProfile).catch(() => setProfile({}));
     fetchReflections().then(setReflections).catch(() => setReflections([]));
+    listSessions(50).then(setSessions).catch(() => setSessions([]));
   }, [refreshTick]);
 
   const refreshAllMem = () => {
@@ -62,6 +76,9 @@ export default function Sidebar({ tools, memory, onMemoryChange, refreshTick }: 
           <span className="count">
             {memory.length + reflections.length + Object.keys(profile).length + skills.length}
           </span>
+        </button>
+        <button className={tab === "sess" ? "on" : ""} onClick={() => setTab("sess")}>
+          {t("tabSessions")} <span className="count">{sessions.length}</span>
         </button>
       </div>
 
@@ -236,6 +253,48 @@ export default function Sidebar({ tools, memory, onMemoryChange, refreshTick }: 
                 })}
               </ul>
             )}
+          </div>
+        )}
+
+        {tab === "sess" && (
+          <div className="sess-pane">
+            <div className="mem-actions">
+              <button
+                className="mem-clear"
+                onClick={() => {
+                  if (confirm(t("sessNewConfirm"))) onSwitchSession(null);
+                }}
+              >
+                {t("sessNew")}
+              </button>
+            </div>
+            <ul className="sess-list">
+              {sessions.length === 0 && <li className="muted">{t("sessEmpty")}</li>}
+              {sessions.map((s) => {
+                const active = s.session_id === sessionId;
+                const ts = s.last_ts
+                  ? new Date(s.last_ts * 1000).toISOString().slice(0, 19).replace("T", " ")
+                  : "";
+                return (
+                  <li key={s.session_id} className={active ? "sess-row on" : "sess-row"}>
+                    <button
+                      className="sess-pick"
+                      onClick={() => onSwitchSession(s.session_id)}
+                      title={s.session_id}
+                    >
+                      <div className="sess-q">
+                        {s.first_user || <em>(no user input recorded)</em>}
+                      </div>
+                      <div className="sess-meta">
+                        <code>{s.session_id.slice(0, 8)}</code>
+                        {ts && <span> · {ts}</span>}
+                        {active && <span className="sess-tag">{t("sessActive")}</span>}
+                      </div>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         )}
       </div>
