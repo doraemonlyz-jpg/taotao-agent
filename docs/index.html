@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>桃桃 Agent · Senior Agent Engineer 17 本书学习手册</title>
-<meta name="description" content="从 0 到 senior agent engineer 面试 · 17 本完整手册 · 6 阶段学习路径 · 30000+ 行内容 · 320+ 道面试题 · 800+ 词术语表 · 涵盖 LangGraph / RAG / Memory / Tool / Eval / Debug / 系统设计 / Live Coding / 企业级交付 / AI Infra / Harness Engineering / Hermes / MCP / P1 生产化加固">
+<title>桃桃 Agent · Senior Agent Engineer 21 本书学习手册</title>
+<meta name="description" content="从 0 到 senior agent engineer 面试 · 21 本完整手册 · 7 阶段学习路径 · 38000+ 行内容 · 460+ 道面试题 · 1100+ 词术语表 · 涵盖 LangGraph / RAG / Memory / Tool / Eval / Debug / 系统设计 / Live Coding / 企业级交付 / AI Infra / Harness Engineering / Hermes / MCP / P1 生产化加固 / 行为面 / Post-Training / Multimodal &amp; Voice / Agent Benchmarks · 含 LLM 基础 30 题 / Cost-Latency 5 case / Security 30 招攻防 三大补丁">
 <!-- Favicon · Petit Prince's gold star -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230f1d35'/%3E%3Cpath d='M32 10 L 36 26 L 54 28 L 40 38 L 44 54 L 32 44 L 20 54 L 24 38 L 10 28 L 28 26 Z' fill='%23f4c95a' stroke='%23fff5d8' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -220,16 +220,18 @@ strong { font-weight: 600; color: var(--ink); }
 .roadmap::before { content: ""; position: absolute; top: -30px; right: -30px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(140,180,220,.40), transparent 70%); pointer-events: none; }
 .roadmap::after { content: ""; position: absolute; bottom: -40px; left: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(215,200,165,.28), transparent 70%); pointer-events: none; }
 .roadmap h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.55rem; margin: 0 0 1.6rem; color: var(--ink); text-align: center; }
-.roadmap-bar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.55rem; margin-bottom: 1.2rem; }
-.roadmap-step { text-align: center; padding: 0.7rem 0.4rem; border-radius: 10px; font-family: var(--font-sans); font-size: 0.74rem; font-weight: 600; color: white; box-shadow: 0 2px 5px rgba(0,0,0,.1); }
-.roadmap-step .rs-time { display: block; font-size: 0.62rem; opacity: 0.85; font-weight: 400; margin-top: 0.2rem; letter-spacing: 0.04em; }
+.roadmap-bar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.45rem; margin-bottom: 1.2rem; }
+@media (max-width: 760px) { .roadmap-bar, .roadmap-labels { grid-template-columns: repeat(2, 1fr) !important; } }
+.roadmap-step { text-align: center; padding: 0.7rem 0.4rem; border-radius: 10px; font-family: var(--font-sans); font-size: 0.72rem; font-weight: 600; color: white; box-shadow: 0 2px 5px rgba(0,0,0,.1); }
+.roadmap-step .rs-time { display: block; font-size: 0.6rem; opacity: 0.85; font-weight: 400; margin-top: 0.2rem; letter-spacing: 0.04em; }
 .rs-1 { background: var(--leaf); }
 .rs-2 { background: var(--sky-deep); }
 .rs-3 { background: var(--plum); }
 .rs-4 { background: var(--rust); }
 .rs-5 { background: var(--gold); }
 .rs-6 { background: var(--teal); }
-.roadmap-labels { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.55rem; font-family: var(--font-sans); font-size: 0.72rem; color: var(--ink-mute); text-align: center; line-height: 1.4; }
+.rs-7 { background: var(--rose); }
+.roadmap-labels { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.45rem; font-family: var(--font-sans); font-size: 0.7rem; color: var(--ink-mute); text-align: center; line-height: 1.4; }
 .roadmap-labels strong { color: var(--ink); display: block; font-size: 0.8rem; }
 
 /* ===== Coverage matrix ===== */
@@ -295,7 +297,7 @@ footer.foot a:hover { color: var(--rust); }
     </a>
     <div class="nav-links">
       <a href="#path">学习路径</a>
-      <a href="#books">17 本书</a>
+      <a href="#books">21 本书</a>
       <a href="#coverage">面试覆盖</a>
       <a href="#about">关于</a>
     </div>
@@ -432,11 +434,12 @@ footer.foot a:hover { color: var(--rust); }
 
   <div class="container hero-inner">
     <div class="hero-eyebrow">Senior Agent Engineer<span class="sep">·</span>Interview Manual<span class="sep">·</span>2026</div>
-    <h1>从 <span class="strike">"会用 LangChain"</span><br>到 <em>"我能 ship 一个生产级 agent"</em><br>的 <span class="underline-hand">17 本</span>完整手册</h1>
+    <h1>从 <span class="strike">"会用 LangChain"</span><br>到 <em>"我能 ship 一个生产级 agent · 也能扛 senior 面"</em><br>的 <span class="underline-hand">21 本</span>完整手册</h1>
     <p class="hero-lede">
-      把 senior agent engineer 面试需要的<em>全部知识</em>系统化整理成 17 本互相关联的手册——
-      <strong>6 阶段学习路径 · 30000+ 行内容 · 320+ 道面试题 · 800+ 词术语</strong>。
-      不是教程合集 · 是按 "从 0 到能上岗" 路径设计的<em>完整体系</em>，
+      把 senior agent engineer 面试需要的<em>全部知识</em>——技术 + 行为 + 项目深挖——系统化成 21 本互相关联的手册：
+      <strong>7 阶段学习路径 · 38000+ 行内容 · 460+ 道面试题 · 1100+ 词术语</strong>。
+      新增 4 本必补章节（<em>行为面 · Post-Training · Multimodal &amp; Voice · Agent Benchmarks</em>）+ 3 大补丁
+      （LLM 基础 30 题速查 / Cost-Latency 5 case / Security 30 招攻防），覆盖 Anthropic / OpenAI / Stripe / Cursor 真实面试流程。
       配套一个真实可跑的 demo（<code>POST /chat</code> graph + <code>POST /chat/v2</code> harness + MCP 双向 + P1 加固）。
     </p>
     <div class="hero-quote">
@@ -445,7 +448,7 @@ footer.foot a:hover { color: var(--rust); }
     </div>
     <div class="hero-cta">
       <a href="#path" class="btn btn-primary bare">★ 按路径开始学</a>
-      <a href="#books" class="btn btn-secondary bare">🗂️ 直接看 17 本</a>
+      <a href="#books" class="btn btn-secondary bare">🗂️ 直接看 21 本</a>
     </div>
   </div>
 </section>
@@ -454,12 +457,12 @@ footer.foot a:hover { color: var(--rust); }
 <section class="stats">
   <div class="container">
     <div class="stats-grid">
-      <div class="stat"><span class="num">17</span><span class="label">完整手册</span><span class="stat-hand">+3 NEW</span></div>
-      <div class="stat"><span class="num">30k+</span><span class="label">行内容</span></div>
-      <div class="stat"><span class="num">320+</span><span class="label">面试题</span></div>
-      <div class="stat"><span class="num">800+</span><span class="label">词术语表</span></div>
-      <div class="stat"><span class="num">50+</span><span class="label">SVG 图</span></div>
-      <div class="stat"><span class="num">6</span><span class="label">学习阶段</span></div>
+      <div class="stat"><span class="num">21</span><span class="label">完整手册</span><span class="stat-hand">+4 必补</span></div>
+      <div class="stat"><span class="num">38k+</span><span class="label">行内容</span></div>
+      <div class="stat"><span class="num">460+</span><span class="label">面试题</span></div>
+      <div class="stat"><span class="num">1.1k+</span><span class="label">词术语表</span></div>
+      <div class="stat"><span class="num">3</span><span class="label">大补丁</span><span class="stat-hand">LLM/Cost/Sec</span></div>
+      <div class="stat"><span class="num">7</span><span class="label">学习阶段</span></div>
     </div>
   </div>
 </section>
@@ -506,8 +509,32 @@ footer.foot a:hover { color: var(--rust); }
       <div class="qs-card qs-gold">
         <h4>🌹 已有 demo · 想做生产化</h4>
         <div class="qs-title">"能跑了 · 怎么撑得住"</div>
-        <p>memory decay · 并行 tool · cost 护栏 · OpenAPI codegen · multi-session — 5 套工程哲学</p>
+        <p>memory decay · 并行 tool · cost 护栏 · OpenAPI codegen · multi-session · §8 Cost-Latency 5 case</p>
         <a href="p1-hardening.html" class="qs-link bare">直接看《P1 生产化加固》</a>
+      </div>
+      <div class="qs-card qs-rust">
+        <h4>🦊 临考前 · 行为面 / 项目深挖怕翻车</h4>
+        <div class="qs-title">"技术轮稳 · 但被问 disagree / failure / impact 就发懵"</div>
+        <p>12 senior signals · 6 STAR 模板 · 30 道 Anthropic / OpenAI / Stripe / Cursor 真题 · 用 taotao-agent 当 demo 项目的 elevator pitch 演练剧本</p>
+        <a href="behavioral.html" class="qs-link bare">直接看《Behavioral &amp; Deep-Dive》</a>
+      </div>
+      <div class="qs-card qs-plum">
+        <h4>🌹 面 Anthropic / OpenAI / Mistral 模型岗</h4>
+        <div class="qs-title">"会被问 SFT vs DPO · LoRA vs full · RLHF 流程"</div>
+        <p>10 章 Post-Training Field Guide · 何时 fine-tune 何时 prompt+RAG · 4 数据 pipeline · 3 真翻车 · 30 题</p>
+        <a href="post-training.html" class="qs-link bare">看《Post-Training Field Guide》</a>
+      </div>
+      <div class="qs-card qs-sky">
+        <h4>🌌 想做语音 / 多模态 / Computer-use agent</h4>
+        <div class="qs-title">"Vapi/Retell/Pipecat 选哪个 · VLM cost 怎么算"</div>
+        <p>VLM 5 模型横评 · Computer Use · STT/LLM/TTS 三层栈 · latency budget 拆 1200ms · 4 真翻车 · 30 题</p>
+        <a href="multimodal-voice.html" class="qs-link bare">看《Multimodal &amp; Voice》</a>
+      </div>
+      <div class="qs-card qs-leaf">
+        <h4>⚖️ 看 leaderboard 不被忽悠</h4>
+        <div class="qs-title">"SWE-bench 65% · 我怎么 verify 真假"</div>
+        <p>SWE-bench / GAIA / BFCL / τ-bench / WebArena / OSWorld 6 大主流 · 5 大读榜陷阱 · 30 题</p>
+        <a href="benchmarks.html" class="qs-link bare">看《Agent Benchmarks 阅读手册》</a>
       </div>
     </div>
   </div>
@@ -518,8 +545,8 @@ footer.foot a:hover { color: var(--rust); }
   <div class="container">
     <div class="section-head">
       <div class="sec-eyebrow">📍 Learning Path</div>
-      <h2>6 阶段 <em>10-15 周</em> 完整路径</h2>
-      <p class="sec-lede">从 0 到能投 senior agent engineer · 每阶段独立可学</p>
+      <h2>7 阶段 <em>12-18 周</em> 完整路径</h2>
+      <p class="sec-lede">从 0 到能投 senior agent engineer · 每阶段独立可学 · 含行为面 + 多模态 + post-training 必补章节</p>
     </div>
 
     <div class="roadmap">
@@ -528,17 +555,19 @@ footer.foot a:hover { color: var(--rust); }
         <div class="roadmap-step rs-1">P1 · 入门<span class="rs-time">1-2 周</span></div>
         <div class="roadmap-step rs-2">P2 · 核心<span class="rs-time">3-5 周</span></div>
         <div class="roadmap-step rs-3">P3 · 工程<span class="rs-time">2-3 周</span></div>
-        <div class="roadmap-step rs-4">P4 · 面试<span class="rs-time">1-2 周</span></div>
+        <div class="roadmap-step rs-4">P4 · 面试<span class="rs-time">2-3 周</span></div>
         <div class="roadmap-step rs-5">P5 · 进阶<span class="rs-time">按需</span></div>
         <div class="roadmap-step rs-6">P6 · 加固<span class="rs-time">按需</span></div>
+        <div class="roadmap-step rs-7">P7 · 必补<span class="rs-time">按需</span></div>
       </div>
       <div class="roadmap-labels">
         <div><strong>2 本</strong>建立认知 + 跑 demo</div>
         <div><strong>4 大支柱</strong>Framework / RAG / Memory / Tool</div>
         <div><strong>3 本</strong>Eval / Debug / Enterprise</div>
-        <div><strong>2 本</strong>System Design + Live Coding</div>
+        <div><strong>3 本</strong>System Design + Live Coding + 行为面</div>
         <div><strong>3 本</strong>Infra · Harness · 对比</div>
         <div><strong>3 本</strong>Hermes · MCP · P1 加固</div>
+        <div><strong>3 本</strong>Post-Training · Multimodal · Benchmarks</div>
       </div>
     </div>
 
@@ -679,10 +708,10 @@ footer.foot a:hover { color: var(--rust); }
       <div class="phase-head">
         <div class="phase-num">04</div>
         <div class="phase-meta">
-          <h3>面试冲刺 · <em>临考前突击</em></h3>
-          <div class="phase-sub"><strong>目标</strong>：把前 3 阶段知识结构化成"答题模板" · 系统设计 + Live Coding 两大题型一周练完</div>
+          <h3>面试冲刺 · <em>三大题型 + 行为面</em></h3>
+          <div class="phase-sub"><strong>目标</strong>：把前 3 阶段知识结构化成"答题模板" · 技术 (System Design + Live Coding) + <em>行为面 / 项目深挖</em>（Anthropic / OpenAI / Stripe 必有 1-2 轮）一起准备</div>
         </div>
-        <span class="phase-time">⏱ 1-2 周</span>
+        <span class="phase-time">⏱ 2-3 周</span>
       </div>
       <div class="book-grid">
         <a href="agent-design.html" class="book-card bare">
@@ -704,6 +733,16 @@ footer.foot a:hover { color: var(--rust); }
             <span><strong>8</strong> 真题</span><span><strong>22</strong> anti-pattern</span><span><strong>带答案</strong></span>
           </div>
           <span class="bk-link">刷题</span>
+        </a>
+        <a href="behavioral.html" class="book-card featured bare">
+          <div class="bk-row"><span class="bk-emoji">🦊</span><span class="bk-num has-new">Book 18 · NEW</span></div>
+          <h4>Behavioral &amp; Project Deep-Dive</h4>
+          <div class="bk-eng">12 senior signals · 6 STAR · 30 真题 · 用 taotao-agent 演练剧本</div>
+          <p class="bk-desc">每场 senior 面都有 1–2 轮非技术——这本把行为面 + 项目深挖按 Anthropic / OpenAI / Stripe / Cursor / 字节真流程拆开。12 senior signals · 6 类 STAR 模板 · 30 道头部公司原题 · 反向提问清单 · 红黑榜 · 用 taotao-agent 当 demo 项目的 5 分钟 elevator pitch 演练。</p>
+          <div class="bk-meta">
+            <span><strong>10</strong> 章</span><span><strong>30</strong> 真题</span><span><strong>50</strong> 词</span><span><strong>必看</strong></span>
+          </div>
+          <span class="bk-link">补行为面</span>
         </a>
       </div>
     </div>
@@ -786,12 +825,56 @@ footer.foot a:hover { color: var(--rust); }
         <a href="p1-hardening.html" class="book-card featured-leaf bare">
           <div class="bk-row"><span class="bk-emoji">🛡️</span><span class="bk-num has-new">Book 17</span></div>
           <h4>P1 生产化加固</h4>
-          <div class="bk-eng">5 个改动 · 5 套工程哲学 · senior 姿态</div>
-          <p class="bk-desc">从 demo 到产品差的 5 件事——memory decay (recency×usage 复合分) · parallel tool exec (asyncio.gather) · cost guardrail (FastAPI dependency) · OpenAPI codegen (schema-driven) · multi-session UI (stateless backend)。每章给原理 / 代码 / 取舍 / 三档面试答案。</p>
+          <div class="bk-eng">5 个改动 · 5 套工程哲学 · 含 §8 Cost/Latency 5 case study</div>
+          <p class="bk-desc">从 demo 到产品差的 5 件事——memory decay · parallel tool exec · cost guardrail · OpenAPI codegen · multi-session UI。每章给原理 / 代码 / 取舍 / 三档面试答案。<strong>2026-05 加 §8</strong>: token 预算切分 / LLMLingua 压缩 / semantic cache / model routing / streaming UX 5 个独立 case study。</p>
           <div class="bk-meta">
-            <span><strong>7</strong> 章</span><span><strong>12</strong> 题</span><span><strong>30</strong> 词</span><span><strong>带源码</strong></span>
+            <span><strong>8</strong> 章</span><span><strong>17</strong> 题</span><span><strong>30</strong> 词</span><span><strong>带源码</strong></span>
           </div>
           <span class="bk-link">学加固</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- ============== Phase 7 · NEW (2026-05) · 必补章节 ============== -->
+    <div class="phase" id="phase-7">
+      <div class="phase-head">
+        <div class="phase-num">07</div>
+        <div class="phase-meta">
+          <h3>必补 · <em>Senior 面试 4 大空缺</em></h3>
+          <div class="phase-sub"><strong>目标</strong>：填上原来没覆盖的 4 块——<em>post-training</em>（Anthropic / OpenAI / Mistral 必问）· <em>多模态 + 语音 agent</em>（2026 越来越常见）· <em>Agent benchmarks</em>（怎么读 leaderboard 不被忽悠）。再加 3 大补丁：infra.html §1.5 LLM 30 题速查 · p1-hardening §8 Cost-Latency · tool-design §11 Security 30 招攻防</div>
+        </div>
+        <span class="phase-time">⏱ 按需 · 各 45-50 分钟</span>
+      </div>
+      <div class="book-grid">
+        <a href="post-training.html" class="book-card featured bare">
+          <div class="bk-row"><span class="bk-emoji">🌹</span><span class="bk-num has-new">Book 19 · NEW</span></div>
+          <h4>Post-Training Field Guide</h4>
+          <div class="bk-eng">SFT · LoRA · QLoRA · DPO · KTO · RLHF · RLAIF · Constitutional</div>
+          <p class="bk-desc">面 Anthropic / OpenAI / Mistral / Cohere / Together / Fireworks 必考。10 章讲清何时 fine-tune 何时 prompt+RAG · LoRA vs Full SFT · QLoRA 4-bit · DPO/KTO/PPO/GRPO 横评 · 4 数据 pipeline · 3 真翻车 (catastrophic forgetting / DPO length hacking / LoRA merge 掉精度) · 30 题 · 60 词。</p>
+          <div class="bk-meta">
+            <span><strong>10</strong> 章</span><span><strong>30</strong> 题</span><span><strong>60</strong> 词</span>
+          </div>
+          <span class="bk-link">学 fine-tune</span>
+        </a>
+        <a href="multimodal-voice.html" class="book-card featured bare">
+          <div class="bk-row"><span class="bk-emoji">🌌</span><span class="bk-num has-new">Book 20 · NEW</span></div>
+          <h4>Multimodal &amp; Voice Agents</h4>
+          <div class="bk-eng">VLM 5 横评 · screen-use · STT/LLM/TTS · Vapi/Retell/Pipecat</div>
+          <p class="bk-desc">2026 senior 必备三件套——VLM 内部 + 5 模型横评 (GPT-4o / Claude / Gemini / Qwen-VL / InternVL) · Computer Use / OmniParser / SeeClick · 语音 agent 三层栈 + latency budget 拆 1200ms · Vapi vs Retell vs Pipecat · GPT-4o Realtime / Moshi 原生多模态 · 4 真翻车 · 30 题 · 60 词。</p>
+          <div class="bk-meta">
+            <span><strong>10</strong> 章</span><span><strong>30</strong> 题</span><span><strong>60</strong> 词</span>
+          </div>
+          <span class="bk-link">学多模态</span>
+        </a>
+        <a href="benchmarks.html" class="book-card featured bare">
+          <div class="bk-row"><span class="bk-emoji">⚖️</span><span class="bk-num has-new">Book 21 · NEW</span></div>
+          <h4>Agent Benchmarks 阅读手册</h4>
+          <div class="bk-eng">SWE-bench / GAIA / BFCL / τ-bench / WebArena / OSWorld + 5 陷阱</div>
+          <p class="bk-desc">"我们家模型 SWE-bench 65% 第一" 怎么验真？11 章讲清 6 大主流 agent benchmark 的设计 + 5 大读 leaderboard 陷阱 (contamination / harness drift / sample selection / oracle context / 没公布 cost) + senior 怎么判断一个新模型在你产品里靠不靠谱 · 30 题 · 60 词。</p>
+          <div class="bk-meta">
+            <span><strong>11</strong> 章</span><span><strong>30</strong> 题</span><span><strong>60</strong> 词</span>
+          </div>
+          <span class="bk-link">学读榜</span>
         </a>
       </div>
     </div>
@@ -802,9 +885,9 @@ footer.foot a:hover { color: var(--rust); }
 <section class="section" id="books" style="background: var(--paper-2); padding-top: 4rem;">
   <div class="container">
     <div class="section-head">
-      <div class="sec-eyebrow">📚 All 17 Books</div>
-      <h2>17 本书 <em>一览表</em></h2>
-      <p class="sec-lede">不按学习顺序 · 按主题快速扫</p>
+      <div class="sec-eyebrow">📚 All 21 Books</div>
+      <h2>21 本书 <em>一览表</em></h2>
+      <p class="sec-lede">不按学习顺序 · 按主题快速扫 · ★ = 2026-05 必补</p>
     </div>
     <div class="book-grid">
       <a href="learn.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🦊</span><span class="bk-num">01</span></div><h4>应用 · 从 0 到面试</h4><p class="bk-desc">入门 + 全谱 · 13 章 / 110 词 / 60 题 / 8 周路线</p><span class="bk-link">读</span></a>
@@ -823,7 +906,11 @@ footer.foot a:hover { color: var(--rust); }
       <a href="harness-vs-graph.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">⚖️</span><span class="bk-num">14</span></div><h4>Harness ⇄ Graph 对比</h4><p class="bk-desc">同 query head-to-head · 5 类查询 · 真实 trace</p><span class="bk-link">读</span></a>
       <a href="hermes.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🪶</span><span class="bk-num">15</span></div><h4>Hermes 速读</h4><p class="bk-desc">Nous Hermes 模型 + XML tool-call 格式 · 5 分钟版</p><span class="bk-link">读</span></a>
       <a href="mcp.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🔌</span><span class="bk-num">16</span></div><h4>MCP · agent 的 USB-C</h4><p class="bk-desc">协议本身 + 双向实现 + Claude Desktop 接入 · 7 分钟版</p><span class="bk-link">读</span></a>
-      <a href="p1-hardening.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🛡️</span><span class="bk-num has-new">17</span></div><h4>P1 生产化加固</h4><p class="bk-desc">memory decay · 并行 tool · cost guardrail · OpenAPI codegen · multi-session · 5 套工程哲学 · 12 题</p><span class="bk-link">读</span></a>
+      <a href="p1-hardening.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🛡️</span><span class="bk-num has-new">17</span></div><h4>P1 生产化加固</h4><p class="bk-desc">memory decay · 并行 tool · cost guardrail · OpenAPI codegen · multi-session · §8 Cost-Latency 5 case · 17 题</p><span class="bk-link">读</span></a>
+      <a href="behavioral.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🦊</span><span class="bk-num has-new">18 ★</span></div><h4>Behavioral &amp; Project Deep-Dive</h4><p class="bk-desc">12 senior signals · 6 STAR · 30 真题 (Anthropic / OpenAI / Stripe / Cursor / 字节) · 反向问问题 · 红黑榜</p><span class="bk-link">读</span></a>
+      <a href="post-training.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🌹</span><span class="bk-num has-new">19 ★</span></div><h4>Post-Training Field Guide</h4><p class="bk-desc">SFT · LoRA · QLoRA · DPO/KTO/PPO/GRPO · RLAIF · Constitutional · 4 数据 pipeline · 3 真翻车 · 30 题 · 60 词</p><span class="bk-link">读</span></a>
+      <a href="multimodal-voice.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🌌</span><span class="bk-num has-new">20 ★</span></div><h4>Multimodal &amp; Voice Agents</h4><p class="bk-desc">VLM 5 模型 · screen-use · 语音 3 层栈 · Vapi/Retell/Pipecat · GPT-4o Realtime · 4 真翻车 · 30 题</p><span class="bk-link">读</span></a>
+      <a href="benchmarks.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">⚖️</span><span class="bk-num has-new">21 ★</span></div><h4>Agent Benchmarks 阅读手册</h4><p class="bk-desc">SWE-bench (Verified/Lite/Live) · GAIA · BFCL · τ-bench · WebArena · OSWorld · 5 陷阱 · 30 题</p><span class="bk-link">读</span></a>
     </div>
   </div>
 </section>
@@ -846,30 +933,36 @@ footer.foot a:hover { color: var(--rust); }
           <th>Debug</th>
           <th>生产 Ops</th>
           <th>Infra</th>
+          <th>行为面</th>
+          <th>多模态</th>
         </tr>
       </thead>
       <tbody>
-        <tr><td>🦊 应用入门</td><td class="x">●</td><td>○</td><td>○</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td></tr>
-        <tr><td>✈️ Implementation</td><td class="x">●</td><td class="dim">·</td><td class="x">●</td><td>○</td><td class="dim">·</td><td class="dim">·</td></tr>
-        <tr><td>🌍 LangGraph 内部</td><td class="x">●</td><td class="x">●</td><td class="x">●</td><td>○</td><td class="dim">·</td><td class="dim">·</td></tr>
-        <tr><td>📜 RAG 生产级</td><td class="x">●</td><td class="x">●</td><td>○</td><td>○</td><td>○</td><td class="dim">·</td></tr>
-        <tr><td>🌹 Memory &amp; Context</td><td class="x">●</td><td class="x">●</td><td>○</td><td>○</td><td>○</td><td class="dim">·</td></tr>
-        <tr><td>🐑 Tool Design</td><td class="x">●</td><td>○</td><td class="x">●</td><td>○</td><td>○</td><td class="dim">·</td></tr>
-        <tr><td>🔭 Eval &amp; Obs</td><td>○</td><td>○</td><td>○</td><td class="x">●</td><td class="x">●</td><td class="dim">·</td></tr>
-        <tr><td>🐍 Debugging</td><td class="dim">·</td><td class="dim">·</td><td>○</td><td class="x">●</td><td class="x">●</td><td class="dim">·</td></tr>
-        <tr><td>🪐 企业交付</td><td>○</td><td class="x">●</td><td class="dim">·</td><td>○</td><td class="x">●</td><td class="dim">·</td></tr>
-        <tr><td>🌌 System Design</td><td class="x">●</td><td class="x">●</td><td>○</td><td>○</td><td>○</td><td class="dim">·</td></tr>
-        <tr><td>✒️ Live Coding</td><td>○</td><td class="dim">·</td><td class="x">●</td><td class="x">●</td><td class="dim">·</td><td class="dim">·</td></tr>
-        <tr><td>🚀 AI Infra</td><td class="dim">·</td><td>○</td><td class="dim">·</td><td class="dim">·</td><td>○</td><td class="x">●</td></tr>
-        <tr><td>🌅 Harness 完全手册</td><td class="x">●</td><td class="x">●</td><td class="x">●</td><td class="x">●</td><td>○</td><td class="dim">·</td></tr>
-        <tr><td>⚖️ Harness ⇄ Graph 对比</td><td class="x">●</td><td class="x">●</td><td>○</td><td>○</td><td>○</td><td class="dim">·</td></tr>
-        <tr><td>🪶 Hermes 速读</td><td>○</td><td class="dim">·</td><td>○</td><td class="dim">·</td><td>○</td><td>○</td></tr>
-        <tr><td>🔌 MCP · USB-C</td><td class="x">●</td><td class="x">●</td><td>○</td><td class="dim">·</td><td>○</td><td class="dim">·</td></tr>
-        <tr><td>🛡️ P1 生产化加固</td><td class="x">●</td><td class="x">●</td><td>○</td><td>○</td><td class="x">●</td><td class="dim">·</td></tr>
+        <tr><td>🦊 应用入门</td><td class="x">●</td><td>○</td><td>○</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td></tr>
+        <tr><td>✈️ Implementation</td><td class="x">●</td><td class="dim">·</td><td class="x">●</td><td>○</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td></tr>
+        <tr><td>🌍 LangGraph 内部</td><td class="x">●</td><td class="x">●</td><td class="x">●</td><td>○</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td></tr>
+        <tr><td>📜 RAG 生产级</td><td class="x">●</td><td class="x">●</td><td>○</td><td>○</td><td>○</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td></tr>
+        <tr><td>🌹 Memory &amp; Context</td><td class="x">●</td><td class="x">●</td><td>○</td><td>○</td><td>○</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td></tr>
+        <tr><td>🐑 Tool Design (含 §11 Security)</td><td class="x">●</td><td>○</td><td class="x">●</td><td>○</td><td class="x">●</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td></tr>
+        <tr><td>🔭 Eval &amp; Obs</td><td>○</td><td>○</td><td>○</td><td class="x">●</td><td class="x">●</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td></tr>
+        <tr><td>🐍 Debugging</td><td class="dim">·</td><td class="dim">·</td><td>○</td><td class="x">●</td><td class="x">●</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td></tr>
+        <tr><td>🪐 企业交付</td><td>○</td><td class="x">●</td><td class="dim">·</td><td>○</td><td class="x">●</td><td class="dim">·</td><td>○</td><td class="dim">·</td></tr>
+        <tr><td>🌌 System Design</td><td class="x">●</td><td class="x">●</td><td>○</td><td>○</td><td>○</td><td class="dim">·</td><td class="dim">·</td><td>○</td></tr>
+        <tr><td>✒️ Live Coding</td><td>○</td><td class="dim">·</td><td class="x">●</td><td class="x">●</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td></tr>
+        <tr><td>🚀 AI Infra (含 §1.5 LLM 30 题)</td><td class="x">●</td><td>○</td><td class="dim">·</td><td class="dim">·</td><td>○</td><td class="x">●</td><td class="dim">·</td><td class="dim">·</td></tr>
+        <tr><td>🌅 Harness 完全手册</td><td class="x">●</td><td class="x">●</td><td class="x">●</td><td class="x">●</td><td>○</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td></tr>
+        <tr><td>⚖️ Harness ⇄ Graph 对比</td><td class="x">●</td><td class="x">●</td><td>○</td><td>○</td><td>○</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td></tr>
+        <tr><td>🪶 Hermes 速读</td><td>○</td><td class="dim">·</td><td>○</td><td class="dim">·</td><td>○</td><td>○</td><td class="dim">·</td><td class="dim">·</td></tr>
+        <tr><td>🔌 MCP · USB-C</td><td class="x">●</td><td class="x">●</td><td>○</td><td class="dim">·</td><td>○</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td></tr>
+        <tr><td>🛡️ P1 加固 (含 §8 Cost-Latency)</td><td class="x">●</td><td class="x">●</td><td>○</td><td>○</td><td class="x">●</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td></tr>
+        <tr style="background:rgba(244,201,90,.04);"><td>🦊 Behavioral &amp; Deep-Dive ★</td><td>○</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td><td class="x">●</td><td class="dim">·</td></tr>
+        <tr style="background:rgba(244,201,90,.04);"><td>🌹 Post-Training ★</td><td class="x">●</td><td>○</td><td class="dim">·</td><td>○</td><td>○</td><td class="x">●</td><td class="dim">·</td><td class="dim">·</td></tr>
+        <tr style="background:rgba(244,201,90,.04);"><td>🌌 Multimodal &amp; Voice ★</td><td class="x">●</td><td class="x">●</td><td>○</td><td>○</td><td>○</td><td>○</td><td class="dim">·</td><td class="x">●</td></tr>
+        <tr style="background:rgba(244,201,90,.04);"><td>⚖️ Agent Benchmarks ★</td><td class="x">●</td><td class="x">●</td><td class="dim">·</td><td>○</td><td>○</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td></tr>
       </tbody>
     </table>
     <p style="text-align:center;font-size:0.78rem;color:var(--ink-mute);font-family:var(--font-sans);margin-top:1rem;">
-      <strong style="color:var(--rust);">●</strong> 直接覆盖 · <strong>○</strong> 部分相关 · <strong style="color:var(--rule);">·</strong> 弱相关
+      <strong style="color:var(--rust);">●</strong> 直接覆盖 · <strong>○</strong> 部分相关 · <strong style="color:var(--rule);">·</strong> 弱相关 · ★ 2026-05 必补
     </p>
   </div>
 </section>
@@ -882,28 +975,29 @@ footer.foot a:hover { color: var(--rust); }
       <h2>关于这套手册</h2>
     </div>
     <div style="max-width: 42em; margin: 0 auto;">
-      <p>这套 17 本手册是为 <strong>2026 年 senior agent engineer 面试</strong>系统化整理的——不是教程合集 · 是按 "从 0 到能上岗" 路径设计的<em>完整体系</em>。</p>
+      <p>这套 21 本手册是为 <strong>2026 年 senior agent engineer 面试</strong>系统化整理的——不是教程合集 · 是按 "从 0 到能上岗" 路径设计的<em>完整体系</em>。2026-05 新增 4 本 senior 必补章节（行为面 / Post-Training / Multimodal &amp; Voice / Agent Benchmarks）+ 3 大补丁（LLM 30 题速查 / Cost-Latency 5 case / Security 30 招攻防）。</p>
 
       <h4 style="font-family:var(--font-display);font-weight:500;font-size:1.3rem;margin:2rem 0 0.6rem;color:var(--ink);">📐 设计原则</h4>
       <ol>
         <li><strong>面试导向</strong>——每本配 12-50 道 senior 面试题 + 答题模板 · 不是 "了解一下" 而是 "能上场答"</li>
-        <li><strong>互不重复</strong>——17 本各有独立主题 · 但内部 cross-link 把相关概念串起</li>
+        <li><strong>覆盖完整</strong>——21 本各有独立主题 · 横跨技术 (Books 01–17) + 软实力 (Book 18) + 高阶专题 (Books 19–21)，覆盖 Anthropic / OpenAI / Stripe / Cursor / Mistral / 字节 等头部 senior 流程的<em>每一轮</em></li>
         <li><strong>真坑 vs 玄学</strong>——每本都有 "翻车复盘" / "面试三档答案" · 别人用真血换的经验</li>
         <li><strong>引用一手资料</strong>——官方文档 / 源码 / paper · 不抄博客抄博客</li>
-        <li><strong>跟 demo 同步</strong>——本项目 Book 02 / 13 / 15 / 16 / 17 都有真实可跑的代码对照 · 改了代码就改书</li>
+        <li><strong>跟 demo 同步</strong>——本项目 Book 02 / 13 / 15 / 16 / 17 / 18 都有真实可跑的代码对照 · 改了代码就改书</li>
       </ol>
 
       <h4 style="font-family:var(--font-display);font-weight:500;font-size:1.3rem;margin:2rem 0 0.6rem;color:var(--ink);">🛠 配套项目</h4>
-      <p><a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/doraemonlyz-jpg/taotao-agent</a> · 完整生产级 agent demo · <strong>同时支持 graph 和 harness 两种实现</strong>（<code>POST /chat</code> + <code>POST /chat/v2</code>）· LangGraph + supervisor + sub-agent + HITL + memory + tool + eval + <strong>MCP 双向</strong>（暴露/消费 tools）+ <strong>P1 加固</strong>（cost 护栏 / memory decay / parallel exec / OpenAPI codegen / multi-session UI）· 跟 Book 02 (graph 实现) · Book 13 (harness 实现) · Book 16 (MCP) · Book 17 (P1) 配套读 · 直接 clone 跑得起。</p>
+      <p><a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/doraemonlyz-jpg/taotao-agent</a> · 完整生产级 agent demo · <strong>同时支持 graph 和 harness 两种实现</strong>（<code>POST /chat</code> + <code>POST /chat/v2</code>）· LangGraph + supervisor + sub-agent + HITL + memory + tool + eval + <strong>MCP 双向</strong>（暴露/消费 tools）+ <strong>P1 加固</strong>（cost 护栏 / memory decay / parallel exec / OpenAPI codegen / multi-session UI）· 跟 Book 02 (graph 实现) · Book 13 (harness 实现) · Book 16 (MCP) · Book 17 (P1) · Book 18 (项目深挖剧本) 配套读 · 直接 clone 跑得起。</p>
 
       <h4 style="font-family:var(--font-display);font-weight:500;font-size:1.3rem;margin:2rem 0 0.6rem;color:var(--ink);">📊 数据</h4>
       <table style="width:100%;border-collapse:collapse;margin-top:0.8rem;font-size:0.92rem;background:var(--paper-card);border:1px solid var(--rule);border-radius:8px;overflow:hidden;box-shadow:var(--shadow-soft);">
-        <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">总行数</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>~30,000</strong></td></tr>
-        <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">章节</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>~170</strong></td></tr>
-        <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">面试题</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>320+</strong></td></tr>
-        <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">术语词</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>800+</strong></td></tr>
+        <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">总行数</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>~38,000</strong></td></tr>
+        <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">章节</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>~210</strong></td></tr>
+        <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">面试题</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>460+</strong></td></tr>
+        <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">术语词</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>1,100+</strong></td></tr>
         <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">SVG 图</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>50+</strong></td></tr>
-        <tr><td style="padding:0.55rem 0.85rem;">Failure mode / 翻车 / 面试三档</td><td style="padding:0.55rem 0.85rem;text-align:right;font-family:var(--font-mono);"><strong>60+</strong></td></tr>
+        <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">Failure mode / 翻车 / 面试三档</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>75+</strong></td></tr>
+        <tr><td style="padding:0.55rem 0.85rem;">头部公司行为面真题（含 Anthropic / OpenAI / Stripe / Cursor / 字节）</td><td style="padding:0.55rem 0.85rem;text-align:right;font-family:var(--font-mono);"><strong>30+</strong></td></tr>
       </table>
     </div>
   </div>
@@ -934,9 +1028,10 @@ footer.foot a:hover { color: var(--rust); }
   </svg>
   <div class="container">
     <h2>准备好开始 <em>从 0 到 senior</em> 了吗？</h2>
-    <p class="lede">推荐顺序：先读 <strong>Book 01 (应用入门)</strong> · 30 分钟建立认知 · 然后看 <strong>Book 02 (实现详解)</strong> 跟 demo 跑一遍 · 之后按 Phase 2 选你最缺的支柱 · 想直接学生产化看 <strong>Book 17 (P1 加固)</strong>。</p>
+    <p class="lede">推荐顺序：先读 <strong>Book 01 (应用入门)</strong> · 30 分钟建立认知 · 然后看 <strong>Book 02 (实现详解)</strong> 跟 demo 跑一遍 · 按 Phase 2 选你最缺的支柱 · 临考前用 <strong>Book 18 (Behavioral)</strong> 准备项目深挖剧本 · 想直接学生产化看 <strong>Book 17 (P1)</strong> · 面 Anthropic / OpenAI 加读 <strong>Book 19 (Post-Training)</strong> + <strong>Book 21 (Benchmarks)</strong>。</p>
     <div class="cta-row">
       <a href="learn.html" class="btn bare">📖 从 Book 01 开始</a>
+      <a href="behavioral.html" class="btn bare">🦊 临考练 Book 18 行为面</a>
       <a href="p1-hardening.html" class="btn bare">🛡️ 直奔 Book 17 P1</a>
       <a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank" class="btn bare">⭐ Star 项目</a>
     </div>
@@ -948,12 +1043,12 @@ footer.foot a:hover { color: var(--rust); }
 <footer class="foot">
   <div class="container">
     <div class="row">
-      <span><strong>桃桃 Agent</strong> · Senior Agent Engineer Manual · v1.1 · 2026-05</span>
+      <span><strong>桃桃 Agent</strong> · Senior Agent Engineer Manual · v1.2 · 2026-05 (+4 books +3 patches)</span>
       <span><a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/doraemonlyz-jpg/taotao-agent</a></span>
     </div>
     <div class="row" style="margin-top:0.6rem;">
       <span>Set in Fraunces · Lora · Outfit · Caveat · JetBrains Mono</span>
-      <span>17 books · 30000+ lines · 320+ Qs · 800+ terms</span>
+      <span>21 books · 38000+ lines · 460+ Qs · 1100+ terms</span>
     </div>
   </div>
 </footer>

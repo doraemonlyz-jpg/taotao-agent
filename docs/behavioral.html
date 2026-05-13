@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Book 18 · Behavioral &amp; Project Deep-Dive · 桃桃 Agent</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230f1d35'/%3E%3Cpath d='M32 10 L 36 26 L 54 28 L 40 38 L 44 54 L 32 44 L 20 54 L 24 38 L 10 28 L 28 26 Z' fill='%23f4c95a' stroke='%23fff5d8' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E">
+<meta name="description" content="Senior agent engineer 行为面 + 项目深挖完整手册 · STAR 6 类模板 · 30 道头部公司原题 · 12 senior signals · 用 taotao-agent 做项目 deep-dive 演练剧本 · 反向提问清单 · 红黑榜">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #0f1d35; --paper-2: #162844; --paper-card: #1c3155;
+  --ink: #f5ecd2; --ink-soft: #c8be9b; --ink-mute: #7e8aa6;
+  --rule: #2c4570; --rule-soft: #1f3458;
+  --leaf: #8eb58f; --leaf-soft: #1d3a38;
+  --rust: #e08e6f; --rust-soft: #3a2a22;
+  --sky:  #6a96bc; --sky-soft:  #1f3050;
+  --gold: #f4c95a; --gold-soft: #3a2f1f;
+  --plum: #c0a3d1; --plum-soft: #2a1f3a;
+  --font-display: "Fraunces", "Times New Roman", serif;
+  --font-body: "Lora", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  --font-zh: "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: radial-gradient(ellipse at top left, rgba(244,201,90,.10), transparent 50%), radial-gradient(ellipse at bottom right, rgba(192,163,209,.10), transparent 50%), var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.75; }
+:lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(244,201,90,.4); transition: all .15s; }
+a:hover { background: rgba(244,201,90,.08); }
+a.bare { border-bottom: none; }
+strong { font-weight: 600; color: var(--ink); }
+em { font-style: italic; color: var(--leaf); font-weight: 500; }
+code { font-family: var(--font-mono); font-size: 0.85em; background: var(--paper-2); padding: 0.08rem 0.35rem; border-radius: 4px; color: var(--rust); border: 1px solid var(--rule-soft); }
+pre { font-family: var(--font-mono); background: #0a1628; color: #e8e3d4; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; font-size: 0.84rem; line-height: 1.55; border: 1px solid var(--rule); }
+pre code { background: none; color: inherit; padding: 0; border: 0; font-size: inherit; }
+
+.container { max-width: 920px; margin: 0 auto; padding: 0 2rem; }
+@media (max-width: 720px) { .container { padding: 0 1.2rem; } }
+
+.nav { padding: 1.4rem 0; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: rgba(15,29,53,.88); backdrop-filter: blur(8px); z-index: 100; }
+.nav-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.nav-brand { font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 1.2rem; color: var(--ink); border: none; }
+.nav-brand .dot { color: var(--gold); }
+.nav-links { display: flex; gap: 1.4rem; font-family: var(--font-sans); font-size: 0.88rem; }
+.nav-links a { color: var(--ink-mute); border-bottom: none; font-weight: 500; }
+.nav-links a:hover { color: var(--rust); background: none; }
+
+.hero { padding: 4rem 0 2.6rem; border-bottom: 1px solid var(--ink); position: relative; }
+.hero::after { content: ""; position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%); width: 90px; height: 4px; background: var(--rust); }
+.eyebrow { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.08em; color: var(--rust); margin-bottom: 1.2rem; font-weight: 600; text-transform: uppercase; }
+.hero h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 1.4rem; color: var(--ink); }
+.hero h1 em { color: var(--rust); font-style: italic; }
+.hero-lede { font-size: 1.12rem; color: var(--ink-soft); max-width: 36em; margin: 0 0 1rem; line-height: 1.65; }
+.hero-meta { font-family: var(--font-sans); font-size: 0.84rem; color: var(--ink-mute); margin-top: 1.2rem; }
+.hero-meta strong { color: var(--gold); }
+
+.section { padding: 3.4rem 0; border-bottom: 1px dashed var(--rule); }
+.section:last-of-type { border-bottom: none; }
+.section h2 { font-family: var(--font-display); font-weight: 500; font-size: 1.85rem; letter-spacing: -0.01em; margin: 0 0 1.4rem; color: var(--ink); display: flex; align-items: baseline; gap: 0.7rem; }
+.section h2 .num { font-family: var(--font-mono); font-weight: 400; font-size: 0.9rem; color: var(--rust); letter-spacing: 0.06em; }
+.section h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.2rem; margin: 2rem 0 0.6rem; color: var(--ink); }
+.section h4 { font-family: var(--font-sans); font-weight: 600; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gold); margin: 1.4rem 0 0.4rem; }
+.section p { margin: 0 0 1rem; }
+.section ul { padding-left: 1.4rem; margin: 0.6rem 0 1rem; }
+.section li { margin: 0.4rem 0; }
+.section ol { padding-left: 1.4rem; margin: 0.6rem 0 1rem; }
+.section ol li { margin: 0.5rem 0; }
+
+table { border-collapse: collapse; width: 100%; margin: 1rem 0 1.4rem; background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; font-size: 0.92rem; }
+th, td { padding: 0.7rem 0.9rem; text-align: left; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+th { background: var(--leaf-soft); color: var(--ink); font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td code { font-size: 0.82rem; }
+
+.cb { background: var(--paper-card); border: 1px solid var(--rule); border-left: 4px solid var(--rust); border-radius: 8px; padding: 1rem 1.2rem; margin: 1.2rem 0; font-size: 0.96rem; }
+.cb.leaf { border-left-color: var(--leaf); background: var(--leaf-soft); }
+.cb.gold { border-left-color: var(--gold); background: var(--gold-soft); }
+.cb.sky { border-left-color: var(--sky); background: var(--sky-soft); }
+.cb.plum { border-left-color: var(--plum); background: var(--plum-soft); }
+.cb-h { font-family: var(--font-sans); font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: var(--ink-mute); margin: 0 0 0.3rem; }
+
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.2rem 0; }
+@media (max-width: 720px) { .split { grid-template-columns: 1fr; } }
+.split > div { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; padding: 1rem 1.1rem; }
+.split h4 { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin: 0 0 0.6rem; font-weight: 600; }
+.split p { font-size: 0.9rem; margin: 0 0 0.6rem; }
+
+.qbank { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 12px; padding: 1.4rem 1.6rem; margin: 1.4rem 0; }
+.qbank h3 { margin-top: 0.6rem; color: var(--gold); font-size: 1.05rem; border-bottom: 1px solid var(--rule); padding-bottom: 0.5rem; }
+.qbank h3:first-child { margin-top: 0; }
+.qbank ol { margin: 0.4rem 0 1rem; padding-left: 1.4rem; }
+.qbank ol li { margin: 0.45rem 0; font-size: 0.94rem; }
+.qbank .qhint { color: var(--ink-mute); font-size: 0.82rem; font-style: italic; }
+
+.glossary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem 1.4rem; font-size: 0.88rem; margin: 1rem 0; }
+@media (max-width: 720px) { .glossary { grid-template-columns: 1fr; } }
+.glossary div { padding: 0.4rem 0; border-bottom: 1px dashed var(--rule-soft); }
+.glossary strong { color: var(--gold); }
+
+.foot { padding: 3rem 0 4rem; text-align: center; font-family: var(--font-sans); color: var(--ink-mute); font-size: 0.88rem; }
+.foot a { color: var(--ink-mute); border-bottom: 1px solid rgba(44,69,112,.3); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-row">
+    <a class="nav-brand" href="index.html"><span class="dot">★</span> 桃桃 Agent</a>
+    <div class="nav-links">
+      <a href="index.html">首页</a>
+      <a href="learn.html">入门书</a>
+      <a href="agent-design.html">System Design</a>
+      <a href="agent-coding.html">Live Coding</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <div class="eyebrow">Book 18 · 行为面 + 项目深挖</div>
+    <h1>每场 senior 面 <em>都有 1–2 轮</em> 不是技术题</h1>
+    <p class="hero-lede">
+      技术轮答得再亮，行为面崩一轮也能把 offer 拖到中位数甚至下放到 mid 级。
+      这一本把"非技术"的两类题——<strong>项目深挖</strong>和<strong>行为题</strong>——按头部公司
+      （Anthropic / OpenAI / Stripe / Cursor / Anysphere / 字节 / Meta）真实流程拆开，
+      给 12 条 senior signals · 6 类 STAR 模板 · 30 道原题答法 · 用 taotao-agent 当例子的项目演练剧本。
+    </p>
+    <p class="hero-meta">
+      <strong>8 章</strong> · <strong>30 真题</strong>（按公司）· <strong>50 词术语</strong> · 阅读 ~45 分钟
+    </p>
+  </div>
+</header>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 1</span>为什么 senior 一定有行为面</h2>
+    <p>
+      Mid → senior 的核心差异不是"会用更多框架"，是 <em>能独立 ship、能带人、能扛模糊</em>。
+      技术轮验证不了这些，所以每家公司都会安排 1–2 轮专门测：
+    </p>
+
+    <table>
+      <thead><tr><th style="width: 20%">公司</th><th>行为轮数</th><th>典型轮名</th><th>谁面</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Anthropic</strong></td><td>2</td><td>"Past Project Deep Dive" + "Values"</td><td>HM + cross-functional</td></tr>
+        <tr><td><strong>OpenAI</strong></td><td>2</td><td>"Project & Impact" + "Behavioral / Hiring Manager"</td><td>HM + 隔级</td></tr>
+        <tr><td><strong>Stripe</strong></td><td>1–2</td><td>"Behavioral" + "Operating principles"</td><td>HM + 隔级</td></tr>
+        <tr><td><strong>Cursor / Anysphere</strong></td><td>1–2</td><td>"Founder chat" + 团队 culture fit</td><td>founder + 1–2 IC</td></tr>
+        <tr><td><strong>字节 / Meta</strong></td><td>1</td><td>"Behavioral" / 总监终面</td><td>L+2 级</td></tr>
+      </tbody>
+    </table>
+
+    <div class="cb gold">
+      <p class="cb-h">硬规律</p>
+      <p style="margin: 0">
+        Anthropic 的"Project Deep Dive"普遍 <strong>60–75 分钟只挖 1 个项目</strong>，
+        细到 "your DB schema 第三张表的索引为什么这么建"。准备时<em>选 1 个</em>能扛得住 1 小时连珠炮的项目，
+        而不是简历上铺 5 个。
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 2</span>12 条 senior signals · interviewer 在听什么</h2>
+    <p>
+      "senior" 这个标签由<em>面试官打分给的 signals</em> 拼出来。下面 12 条是头部公司
+      hiring rubric 的并集——回答任何题之前，心里先核对你给出去的信号有几条命中：
+    </p>
+
+    <table>
+      <thead><tr><th style="width: 22%">Signal</th><th>面试官想听到的话术 / 例子</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Trade-off awareness</strong></td><td>"我评估过 A / B / C 三条路 · 选 B 是因为... · A 的代价是... · 现在回头看 B 也有遗留..."</td></tr>
+        <tr><td><strong>Cost / latency / quality 三角</strong></td><td>主动量化："P95 从 8s 降到 2.3s，月 token 成本 $4.2k → $1.8k，accuracy -0.7%"</td></tr>
+        <tr><td><strong>Ownership</strong></td><td>用"我"而不是"我们"讲<em>关键决策</em>；说出失败的代价是你扛的</td></tr>
+        <tr><td><strong>Bias for action</strong></td><td>"模糊到我没法等 spec 了，我先 ship 一个 stub 让 PM 改"——而不是"我等 spec"</td></tr>
+        <tr><td><strong>Mentoring / multiplier</strong></td><td>"我把这个 pattern 写成了内部 doc · 团队 4 人现在都用 · 节省了..."</td></tr>
+        <tr><td><strong>Cross-functional</strong></td><td>跟 PM / Design / Sales / Legal 沟通的具体例子（不是只跟 eng）</td></tr>
+        <tr><td><strong>Production thinking</strong></td><td>主动提 SLO / on-call / postmortem / runbook / canary</td></tr>
+        <tr><td><strong>Failure ownership</strong></td><td>讲一个真失败 + 你做错了什么 + 学到的具体 process 改动</td></tr>
+        <tr><td><strong>Disagree &amp; commit</strong></td><td>跟 senior / manager 意见不合、最后按对方走、但也讲清楚自己当时为啥反对</td></tr>
+        <tr><td><strong>Strategic thinking</strong></td><td>能解释项目"为什么对公司重要"——不只是"PM 让我做"</td></tr>
+        <tr><td><strong>Calm under ambiguity</strong></td><td>"requirements 是后来才稳定的 · 我先做了 X / Y 假设，跟 PM 周会校准"</td></tr>
+        <tr><td><strong>Curiosity / depth</strong></td><td>偶尔抛一句"这个我后来 weekend 自己 reverse engineered 看了源码"</td></tr>
+      </tbody>
+    </table>
+
+    <div class="cb leaf">
+      <p class="cb-h">面试前 3 天</p>
+      <p style="margin: 0">
+        把这 12 条打印出来，对你准备的 1 主项目 + 2–3 副项目，<em>每条都想一个 1 分钟故事</em>。
+        不需要每场面试讲全 12 个，但需要"被点哪个有哪个"。
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 3</span>STAR 6 类常见问题模板</h2>
+    <p>
+      行为题 80% 落在这 6 类。每类给一个 <strong>STAR (Situation / Task / Action / Result)</strong> 骨架，
+      照着填你的真实例子就能答出 senior 水准。每个模板控制在 <em>2–3 分钟口述</em>——再长就成自我陶醉，再短就显得空。
+    </p>
+
+    <h3>3.1 失败 / 错误判断</h3>
+    <pre><code>Q: Tell me about a time you made a wrong technical decision.
+
+S: 2024 Q3 我们在做 RAG 系统，规模从 1 万文档涨到 50 万，召回 P95 从 200ms 跳到 4s。
+T: 我作为 tech lead 负责选向量库迁移方案。两条候选：
+   ① 升级现有 Pinecone 实例（贵但 0 改动）
+   ② 自建 Qdrant 集群（便宜但 3 周工期）
+A: 我选了 ②，理由是省 60% 成本。但<em>我低估了运维复杂度</em>——
+   上线第二周节点 OOM，两小时 SLO 违约。
+   <strong>我做错的不是选 Qdrant，而是没要求做 1 周 shadow traffic 验证</strong>。
+R: 事后我们补 shadow，迁移完成。我把这套流程写进了团队的 "infra migration runbook"，
+   后续两个项目复用，再没出过类似事故。
+   <em>反思</em>：在自己没运维过的系统上线前，shadow ≥ 1 周不能省。
+</code></pre>
+
+    <h3>3.2 跨职能冲突</h3>
+    <pre><code>Q: Tell me about a time you disagreed with a PM.
+
+S: PM 想在 chat 产品里加 "Always-on agent，预测用户下一句话主动 reply"。
+T: 我的判断：技术上 doable，但 cost 会涨 4x（每条用户消息额外 1 次 LLM call），
+   且伪阳性体验差。
+A: 我没直接说 "不行"。
+   ① 先写了 1 页 RFC，列出 cost 模型 + 3 种交互对比 + 2 条 A/B 实验设计；
+   ② 主动约 PM + Design + Data 一起 30 分钟过 RFC；
+   ③ 提议先做<strong>窄场景实验</strong>（只在等待 &gt; 30s 时主动 reply），把 cost 控在 1.3x。
+R: PM 同意了窄版本，A/B 显示 retention +2.1%、cost +28%（在预算内）。
+   <em>关键</em>：我没说 "no"，是说 "yes, but 给我数据决定 scope"。
+</code></pre>
+
+    <h3>3.3 模糊需求 / 缺信息</h3>
+    <pre><code>Q: How do you handle ambiguous requirements?
+
+S: 老板让做 "an internal AI assistant for ops team"——一句话 spec。
+T: 第一周我没动键盘，做了 3 件事：
+A: ① 跟 5 个 ops 团队员工各 30 分钟访谈，记 "你们最痛的 3 件事"；
+   ② 把痛点聚类：50% 都是"翻 Notion 找 runbook"——决定 v1 只做这一个；
+   ③ 写 1 页 spec：scope / non-scope / success metric (P95 找到正确 runbook 的时间)，
+      给老板 review 30 分钟，签字。
+R: v1 三周上线 · 上线第一个月 ops 团队人均节省 45min/天 ·
+   v2 才扩到 incident summarization。
+   <em>反思</em>：模糊 spec 时<strong>不要 jump to coding</strong>，先做 user research + scope 收敛。
+</code></pre>
+
+    <h3>3.4 mentor 别人</h3>
+    <pre><code>Q: Tell me about mentoring a junior.
+
+S: Q1 来了个 new grad，第一个月看 PR review 总是过不了第二轮。
+T: 我作为他的 onboarding buddy。
+A: ① 第一周：观察 5 次 PR · 列出 3 条 pattern（commit 太大、缺 test、命名抽象）；
+   ② 给他<strong>1:1 doc 模板</strong>"每周 PR self-review 5 题"，让他提 PR 前自查；
+   ③ 我自己的 PR 主动 cc 他做 reviewer，让他<em>逆向</em>学好 PR 长啥样；
+   ④ 第 6 周开始他独立 review 我的 PR。
+R: 3 个月后他成了团队 PR 速度最快的人之一。
+   <em>关键</em>：mentor 不是"我教你"，是设计<strong>self-correction loop</strong> 让他自己修。
+</code></pre>
+
+    <h3>3.5 主导跨团队项目</h3>
+    <pre><code>Q: Drive a project across multiple teams.
+
+S: 公司决定从 GPT-4 切到 Claude 3.5 + 自家 LoRA fine-tune，涉及 backend / data /
+   ML platform / SRE 4 个团队。
+T: 我被指定为 tech lead（不是 manager，没有汇报权）。
+A: ① 第一周写 1 页 "迁移路线图"——明确 6 个里程碑 + 每个里程碑 owner + 验收标准；
+   ② 设双周 sync（4 个 lead 必到，30 分钟，只过 risk + blocker，不讨论 detail）；
+   ③ 关键节点用 <em>shadow traffic + canary</em> 切流，给 SRE 留回滚开关；
+   ④ 跟 finance 算清月成本 swing，主动 cc CFO 团队。
+R: 8 周完成迁移 · 0 incident · 月成本 -42% · accuracy +1.3%。
+   <em>关键</em>：没有汇报权时靠<strong>白纸黑字 + 节奏 + 透明度</strong>。
+</code></pre>
+
+    <h3>3.6 抗压 / 紧急修 bug</h3>
+    <pre><code>Q: Time you handled a production incident.
+
+S: 周五晚 10 点 P0：agent 开始 hallucinate 调用不存在的 tool，影响 12% 流量。
+T: 我是 on-call。
+A: ① 先<strong>止血不查根因</strong>——立刻把流量从 v3.2 切回 v3.1（提前准备过 feature flag）；
+   ② 切完才开始 root cause：v3.2 引入新 tool schema 描述，跟 system prompt 里的
+      example 冲突，模型 confused；
+   ③ 周六上午写 fix + 加 "tool schema vs example consistency" 的 unit test；
+   ④ 周一发 postmortem，列 5 条 process 改进。
+R: SLO 没违约（5 分钟内回滚）· postmortem 里的 prompt diff CI 检查后来抓到 2 次类似问题。
+   <em>关键</em>：on-call 第一反应<em>永远是止血，不是查 root cause</em>。
+</code></pre>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 4</span>项目深挖 · 4 步框架</h2>
+    <p>
+      Anthropic / OpenAI / Stripe 都有专门一轮叫 "Project Deep Dive"，60–75 分钟只挖 <em>1 个</em> 项目。
+      下面这 4 步框架是被反复验证有效的：
+    </p>
+
+    <ol>
+      <li>
+        <strong>选项目 (面试前 1 周)</strong>——选 1 个能撑得住 1 小时连珠炮的项目。条件：
+        <ul>
+          <li><em>你是核心贡献者</em>（不是 "团队的项目"）</li>
+          <li><em>有量化结果</em>（latency / cost / accuracy / retention 至少一项）</li>
+          <li><em>有真实 trade-off</em>——你做过取舍 + 后来反思过</li>
+          <li><em>不超过 2 年</em>——记忆度高</li>
+        </ul>
+      </li>
+      <li>
+        <strong>写一份 internal doc (面试前 3 天)</strong>——给自己写，不交给面试官，5 段：
+        <ol>
+          <li>问题陈述（业务 context · 不要先讲 tech stack）</li>
+          <li>关键约束（latency P95 / 成本上限 / 团队人数 / 工期）</li>
+          <li>3 条候选方案 · 每条 pros &amp; cons · 你最后选了哪条 · 为什么</li>
+          <li>实施过程的 3 个关键决策点（每个 1 段）</li>
+          <li>结果数据 · 你<em>事后</em>会怎么改</li>
+        </ol>
+      </li>
+      <li>
+        <strong>5 分钟 elevator pitch (面试前 1 天)</strong>——把 doc 浓缩成 5 分钟讲完的版本，
+        练 3 遍直到不卡壳。<em>开场 30 秒</em>必须包含：业务问题 + 你的角色 + 1 个量化结果。
+      </li>
+      <li>
+        <strong>面试时</strong>——5 分钟讲完后<em>主动停</em>，等面试官提问。不要塞细节，
+        让面试官引导深度。常见 follow-up：
+        <ul>
+          <li>"why not X?" → 你 doc 第 3 段的 pros &amp; cons 派上用场</li>
+          <li>"how did you measure success?" → doc 第 5 段</li>
+          <li>"what would you do differently?" → doc 第 5 段后半</li>
+          <li>"if traffic 10x'd, what breaks first?" → 现场推演</li>
+          <li>"who pushed back? how did you handle it?" → § 3.2 模板</li>
+        </ul>
+      </li>
+    </ol>
+
+    <div class="cb sky">
+      <p class="cb-h">陷阱</p>
+      <p style="margin: 0">
+        最常见的失败是<strong>开场就讲 architecture</strong>——你以为在 show off 技术，
+        面试官以为你<em>不理解业务</em>。永远先讲 "why this matters to the user/business"。
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 5</span>用 taotao-agent 当 demo 项目演练</h2>
+    <p>
+      没真实 ship 过 senior 级项目？拿这个 repo 当例子完全够用——它<em>真实可跑</em>、
+      有<em>多种实现对比</em>（graph vs harness）、有<em>生产化加固</em>（P1 五条）、
+      还有<em>真 trade-off</em>（每条 P1 都付出了 latency / 复杂度代价）。
+    </p>
+
+    <h3>5.1 一份能用的 deep-dive 剧本（5 分钟版）</h3>
+    <pre><code><strong>问题陈述</strong>（45 秒）
+
+我们想做一个能在生产环境跑的 agent demo——但市面上 demo 都活在 notebook 里，
+真正放到 web 服务后面，5 个问题立刻冒出来：cost 不可控 / parallel tool 拖慢响应 /
+memory 无限膨胀 / 前端跟后端 schema 漂移 / 用户切回历史 session 没法。
+所以我决定：写两套实现 (graph + harness) 同 query 跑出来对比，再加一层 P1 加固。
+
+<strong>我的角色</strong>（15 秒）
+solo build，从 0 到 17 本配套手册 + ~6k 行 Python + 完整 frontend。
+
+<strong>关键决策</strong>（3 个，每个 60 秒）
+
+① <em>graph 还是 harness</em>？两边都做了。graph 适合 explicit workflow 可解释；
+  harness 适合 open-ended，但 token 高 30–60%。给两个 endpoint 让用户选。
+
+② <em>memory decay 用什么算分</em>？最简单是纯 recency，但 high-value 信息会被冲掉。
+  最后用 recency × log1p(use_count) 复合分，配 365 天 half-life，pruning 时
+  blast radius 限制 100 条/次，避免一次清掉用户主轴信息。
+
+③ <em>parallel tool execution</em>？asyncio.gather + asyncio.to_thread 桥接同步 tool。
+  关键是<em>结果重排回输入顺序</em>，否则 LLM 的 prompt cache hit 会暴跌。
+
+<strong>结果</strong>（30 秒）
+
+P1 加固后：单 session token 预算护栏防住了 3 次实测越界 (cost +0%) ·
+parallel tool 让 web search × 2 + RAG × 1 的总耗时从 3.4s → 1.6s ·
+memory prune 把 500 条 noise 清成 80 条 signal · OpenAPI codegen 让前端
+schema drift 在 CI 阶段就 fail 不再上线。
+   <em>事后</em>会做：cost guardrail 应该按 user 而不是 session，session 太短粒度。
+</code></pre>
+
+    <h3>5.2 deep-dive 必背的 5 条数据点</h3>
+    <table>
+      <thead><tr><th>数据点</th><th>数值</th><th>原始来源（项目里位置）</th></tr></thead>
+      <tbody>
+        <tr><td>graph vs harness 同 query token 比</td><td>1.0× / 1.3–1.6×</td><td><code>docs/harness-vs-graph.html</code></td></tr>
+        <tr><td>parallel tool 加速比</td><td>~2.1× (3 tools)</td><td><code>backend/agent/harness/loop.py</code></td></tr>
+        <tr><td>memory decay half-life</td><td>365 天</td><td><code>backend/agent/memory/long_term.py</code></td></tr>
+        <tr><td>cost guardrail 默认上限</td><td>$0.30 / session</td><td><code>backend/agent/security.py</code></td></tr>
+        <tr><td>OpenAPI codegen 触发时机</td><td>CI · `npm run gen:api` diff 非空 fail</td><td><code>frontend/package.json</code></td></tr>
+      </tbody>
+    </table>
+
+    <div class="cb gold">
+      <p class="cb-h">面试官的 follow-up 准备</p>
+      <ul style="margin: .3rem 0 0">
+        <li>"why decay 用 log1p 而不是 sqrt？" → log1p 对 use_count = 0 / 1 / 2 三档差异更大，sqrt 在小值附近平坦</li>
+        <li>"why 365 天？" → 拍的，但应该按 corpus 半衰期实测调（reading list 类长，工单类短）</li>
+        <li>"asyncio.gather 怎么处理一个 tool 抛错？" → return_exceptions=True 把 exception 当结果回写，让 LLM 自己决定重试或换路</li>
+        <li>"parallel 后怎么保证 prompt cache？" → results 按输入顺序重排再喂回 LLM，否则 KV-cache prefix 错位</li>
+        <li>"如果用户开 10 个 session 怎么办？" → 这是当前 cost guardrail 漏洞，session 级护栏防不住，应该补 user-level rate limit</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 6</span>30 道头部公司原题 · 按公司分类</h2>
+    <p>
+      下面是 2025–2026 真面 senior agent eng / staff ML 候选人收集到的行为 + 项目题。
+      <em>给提示不给标准答案</em>——按 § 3 的 STAR 模板和你自己的故事填。
+    </p>
+
+    <div class="qbank">
+      <h3>Anthropic (Project Deep Dive 风)</h3>
+      <ol>
+        <li>讲一个你 ship 过最复杂的 LLM 系统。<span class="qhint">提示：选 1 个项目讲 60 分钟 · 准备好 architecture 草图</span></li>
+        <li>这个系统里 cost 怎么控？P95 latency 怎么测？SLO 多少？<span class="qhint">提示：必须有数字 · 不知道就别选这个项目</span></li>
+        <li>当时不选另外那条路是为什么？现在回头看后悔吗？<span class="qhint">提示：每个决策都要有 trade-off · 别 PR 自己</span></li>
+        <li>这套东西如果流量 10×，第一个 break 的是什么？<span class="qhint">提示：现场推演 · 一般是 vector DB / KV cache / rate limit 三选一</span></li>
+        <li>你们团队怎么 eval 这个 agent？发现 regression 谁 own？<span class="qhint">提示：能讲到 LLM-as-judge calibration 加分</span></li>
+        <li>讲一个你 disagree 但最后按 manager 走的决定。<span class="qhint">提示：disagree &amp; commit · 强调 commit 不抱怨</span></li>
+        <li>最近一次你被自己代码<em>恶心到</em>是什么时候？<span class="qhint">提示：诚实 · 别说 "我从不写烂代码"</span></li>
+      </ol>
+
+      <h3>OpenAI (Project &amp; Impact)</h3>
+      <ol>
+        <li>你最 proud 的项目 · 它对公司带来什么 measurable impact？<span class="qhint">提示：必须有 $ / user 数 / NPS / latency 任何一项</span></li>
+        <li>过去 1 年最大的一个 mistake，怎么 recover 的？<span class="qhint">提示：选真错过的事 · 别选 "我太追求完美" 这种</span></li>
+        <li>讲一个你影响了别的团队 / 让公司方向改变的例子。<span class="qhint">提示：senior 信号 · 不只是写代码</span></li>
+        <li>给你 3 个月 + 不限预算，你会做什么 agent？<span class="qhint">提示：能展现 product taste · 不只是 "更大模型"</span></li>
+      </ol>
+
+      <h3>Stripe (Operating Principles)</h3>
+      <ol>
+        <li>讲一个 "Move with urgency and focus" 的例子。<span class="qhint">提示：Stripe Operating Principles 之一 · 提前看 stripe.com/jobs</span></li>
+        <li>讲一个 "Think rigorously" 的例子。<span class="qhint">提示：要有量化分析 · 不只 gut feeling</span></li>
+        <li>你 ship 过最大的一次 cost optimization？<span class="qhint">提示：Stripe 内部对 unit economics 敏感</span></li>
+        <li>怎么处理一个长期低绩效但 cooperative 的同事？<span class="qhint">提示：senior+ 才会被问</span></li>
+      </ol>
+
+      <h3>Cursor / Anysphere (Founder chat)</h3>
+      <ol>
+        <li>你为什么想来 Cursor？三个月内你能加什么 feature？<span class="qhint">提示：用过产品 · 列 3 个具体 issue + 你的 fix 思路</span></li>
+        <li>你怎么看 agent 未来 1–2 年的演进？<span class="qhint">提示：有 take · 不要骑墙</span></li>
+        <li>给你 1 周时间，你会怎么 prototype 一个新功能？<span class="qhint">提示：bias for shipping</span></li>
+        <li>你最不喜欢现在 Cursor 的哪个设计？<span class="qhint">提示：诚实 · 但要 constructive</span></li>
+      </ol>
+
+      <h3>字节 / Meta (总监终面)</h3>
+      <ol>
+        <li>你怎么衡量自己跟同 level 的差距？<span class="qhint">提示：自我认知 · 别说 "我没差距"</span></li>
+        <li>你带过最难带的人是谁？怎么处理的？<span class="qhint">提示：mentoring 信号</span></li>
+        <li>你跟你最近 1 个 manager 关系怎么样？为什么离职？<span class="qhint">提示：客观讲 · 别贬低</span></li>
+        <li>未来 5 年你想成为什么样的工程师？<span class="qhint">提示：不要说 "我想做 manager" 除非 JD 写明 EM 路线</span></li>
+        <li>你做过最孤独的一次决定是什么？<span class="qhint">提示：ownership 信号 · 顶住压力做的事</span></li>
+      </ol>
+
+      <h3>通用 wildcard (任何家都可能问)</h3>
+      <ol>
+        <li>你怎么 stay current？最近读的 paper / blog / repo 是？<span class="qhint">提示：能讲 1–2 个 specific · 别说 "twitter"</span></li>
+        <li>跟一个不懂 LLM 的人 30 秒解释 RAG。<span class="qhint">提示：测沟通能力</span></li>
+        <li>讲一个你<em>反对</em>了主流意见但事后被证明对的事。<span class="qhint">提示：independent thinking</span></li>
+        <li>你最近 6 个月学到的<em>最反直觉</em>的一件事是？<span class="qhint">提示：能讲一个具体技术细节加分（e.g. "prompt cache 比 model size 影响 cost 更大"）</span></li>
+        <li>给你一个 junior + 1 个 incident，前 30 分钟你做什么？<span class="qhint">提示：incident management · 先止血再 mentor</span></li>
+        <li>你对 senior 这个 title 的定义是什么？<span class="qhint">提示：自检 · 用 § 2 那 12 条信号</span></li>
+        <li>反向问问题环节：你想问我什么？<span class="qhint">提示：见 § 7</span></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 7</span>反向提问清单 · 6 类高质量问题</h2>
+    <p>
+      面试最后 5–10 分钟反向 Q&amp;A 不是闲聊——<strong>问什么</strong>本身就是 signal。
+      下面 6 类避开"福利、远程政策"等 HR 题，每类挑 1–2 个你真关心的：
+    </p>
+
+    <table>
+      <thead><tr><th style="width: 22%">类别</th><th>示例问题</th><th>你能 read 出什么</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>团队节奏</strong></td>
+          <td>"你们一个新 feature 从 idea 到生产平均多久？"</td>
+          <td>体感 ship velocity · 是不是 spec → review → ship 各一周 vs 当天上</td>
+        </tr>
+        <tr>
+          <td><strong>技术深度</strong></td>
+          <td>"过去 3 个月你们 production 出过最严重的 incident 是什么？root cause 是？"</td>
+          <td>面试官敢不敢讲真事 · 团队复盘文化</td>
+        </tr>
+        <tr>
+          <td><strong>组里现在最大瓶颈</strong></td>
+          <td>"如果你能给团队加一个能力，你会要哪种 senior？"</td>
+          <td>探出团队 gap · 也暗示你能不能填</td>
+        </tr>
+        <tr>
+          <td><strong>面试官个人</strong></td>
+          <td>"你来这家公司多久了？最 enjoy 的一件事是？"</td>
+          <td>看面试官眼睛有没有光 · 是 honest 还是 PR 答案</td>
+        </tr>
+        <tr>
+          <td><strong>Career growth</strong></td>
+          <td>"过去两年从 IC4 升 IC5 的人 · 他们做对了什么？"</td>
+          <td>晋升节奏是否畅通 · 路径是否清晰</td>
+        </tr>
+        <tr>
+          <td><strong>组里的 con</strong></td>
+          <td>"如果让你给加入这个团队的人一句忠告，会是什么？"</td>
+          <td>客气问 "缺点" · 答得越具体越好</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="cb leaf">
+      <p class="cb-h">心法</p>
+      <p style="margin: 0">
+        <em>少问</em>"团队 tech stack 是什么"（公开信息）。
+        <em>多问</em>"上次你们改 stack 是因为什么"（讲故事的问题）。
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 8</span>红黑榜 · 该说 / 不该说</h2>
+
+    <div class="split">
+      <div>
+        <h4>✅ 该说</h4>
+        <p><em>具体数字</em>："P95 从 8s → 2.3s · cost 月省 $4.2k → $1.8k"</p>
+        <p><em>事后反思</em>："如果重做，我会先...因为..."</p>
+        <p><em>承认不会</em>："我没真做过 RLHF · 但我读过 paper · 你们组怎么用？"</p>
+        <p><em>用 "我"</em>：关键决策用第一人称</p>
+        <p><em>讲到边界</em>："这超出我当时 scope 的部分 PM owns"</p>
+        <p><em>主动量化</em>：被问 "效果如何" 时立刻给数字</p>
+      </div>
+      <div>
+        <h4>❌ 不该说</h4>
+        <p><em>"我们"</em>滥用——分不清你做了啥</p>
+        <p><em>抱怨前公司</em>——任何形式 · 包括 "manager 不懂技术"</p>
+        <p><em>装懂</em>——被问到完全不会的，承认；硬编一定翻车</p>
+        <p><em>"我太追求完美" 当缺点</em>——面试官秒识别 PR 话术</p>
+        <p><em>讲项目只讲 architecture</em>——business context 永远先</p>
+        <p><em>"那个不是我做的"</em>——但又说不清谁做的</p>
+        <p><em>反问 "你们工作压力大吗"</em>——闪退信号</p>
+      </div>
+    </div>
+
+    <div class="cb gold">
+      <p class="cb-h">最容易被忽略的 1 条</p>
+      <p style="margin: 0">
+        <strong>不要回避 "你的失败"</strong>。被问失败不答或答得很轻 = 不诚实 + 没成长。
+        准备 2 个真失败（一个技术 · 一个协作），<em>讲清楚你做错了什么</em>，
+        而不是甩锅给 "需求变了 / 时间紧"。
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 9</span>50 词术语表 · 行为面 + project deep-dive</h2>
+
+    <div class="glossary">
+      <div><strong>STAR</strong>: Situation / Task / Action / Result · 行为题答题骨架</div>
+      <div><strong>Senior signal</strong>: 面试官 rubric 上的"高级感"指标</div>
+      <div><strong>Trade-off</strong>: 取舍 · senior 必备词</div>
+      <div><strong>Ownership</strong>: 你对结果负责而不是 task</div>
+      <div><strong>Bias for action</strong>: 模糊时先动起来不等 spec</div>
+      <div><strong>Disagree &amp; commit</strong>: Amazon LP · 反对完按对方做</div>
+      <div><strong>Mentoring multiplier</strong>: 通过 mentor 别人放大产出</div>
+      <div><strong>Cross-functional</strong>: 跟非 eng 角色协作</div>
+      <div><strong>SLO</strong>: Service Level Objective · 可用性目标</div>
+      <div><strong>Postmortem</strong>: 事故复盘文档</div>
+      <div><strong>Runbook</strong>: 事故响应步骤手册</div>
+      <div><strong>Canary</strong>: 灰度发布 · 1% 流量验证</div>
+      <div><strong>Shadow traffic</strong>: 影子流量 · 不影响用户的并行验证</div>
+      <div><strong>Rollback</strong>: 出问题秒切回上一版</div>
+      <div><strong>Feature flag</strong>: 远程开关 · 不发版即可关功能</div>
+      <div><strong>Hiring manager (HM)</strong>: 实际带你的人</div>
+      <div><strong>Skip-level</strong>: 隔级面 (你 manager 的 manager)</div>
+      <div><strong>Behavioral round</strong>: 行为面试轮</div>
+      <div><strong>Project Deep Dive</strong>: 项目深挖轮 · Anthropic / OpenAI 标准</div>
+      <div><strong>Founder chat</strong>: 创始人面 · 早期公司流程</div>
+      <div><strong>Operating Principles</strong>: 公司价值观 · Stripe 用</div>
+      <div><strong>LP (Leadership Principle)</strong>: Amazon 价值观 · 16 条</div>
+      <div><strong>Calibration</strong>: 招聘委员会跨 candidate 拉齐</div>
+      <div><strong>Bar raiser</strong>: Amazon 跨组 senior 兜底</div>
+      <div><strong>Onboarding buddy</strong>: 新人配对的资深 IC</div>
+      <div><strong>1:1</strong>: 一对一 · manager 跟 IC 周会</div>
+      <div><strong>RFC</strong>: Request for Comments · 提案文档</div>
+      <div><strong>Tech Spec / TDD</strong>: Tech Design Doc · 技术方案文档</div>
+      <div><strong>Product spec / PRD</strong>: 产品需求文档</div>
+      <div><strong>RACI</strong>: Responsible / Accountable / Consulted / Informed · 角色矩阵</div>
+      <div><strong>Scope creep</strong>: 需求边界蔓延</div>
+      <div><strong>Shipping velocity</strong>: ship 速度 · 团队节奏</div>
+      <div><strong>Tech debt</strong>: 技术债 · 当下省时间未来还利息</div>
+      <div><strong>Quick win</strong>: 小投入大产出 · 短期 ship 抓信任</div>
+      <div><strong>North star metric</strong>: 唯一最重要指标</div>
+      <div><strong>OKR / KPI</strong>: 目标 / 关键结果 · 季度规划</div>
+      <div><strong>Stakeholder</strong>: 利益相关方 · 含 PM / Design / Sales / Legal</div>
+      <div><strong>Pushback</strong>: 反驳 / 挡推</div>
+      <div><strong>Escalate</strong>: 升级（向 manager 上报）</div>
+      <div><strong>Skip-level escalation</strong>: 越级上报 · senior 慎用</div>
+      <div><strong>Conflict resolution</strong>: 冲突管理</div>
+      <div><strong>Code review</strong>: 代码审查</div>
+      <div><strong>Pairing</strong>: 结对编程</div>
+      <div><strong>Brown bag</strong>: 内部午餐分享</div>
+      <div><strong>OKR review</strong>: 季度回顾</div>
+      <div><strong>Promo packet</strong>: 晋升材料</div>
+      <div><strong>Self review</strong>: 自我评价 · 半年/年度</div>
+      <div><strong>Peer feedback</strong>: 同事反馈</div>
+      <div><strong>Skip review</strong>: 隔级 review</div>
+      <div><strong>Halo effect</strong>: 光环效应（一个项目印象覆盖整体评价）</div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 10</span>下一步 · 把这套用起来</h2>
+    <ol>
+      <li>面试前 1 周：选 1 主项目 + 2 副项目 · 按 § 4 写 internal doc</li>
+      <li>面试前 3 天：把 § 2 的 12 senior signals 对照 doc 自检 · 缺哪条编一个故事</li>
+      <li>面试前 1 天：5 分钟 elevator pitch 练 3 遍 · 录音回听</li>
+      <li>面试当天：开场 30 秒 = 业务问题 + 你的角色 + 1 个量化结果</li>
+      <li>反向 Q&amp;A：从 § 7 选 2–3 个真心想问的</li>
+      <li>面试后 2 小时内：写下 follow-up 问题 + 给 recruiter 发感谢信</li>
+    </ol>
+
+    <p>
+      配套阅读：
+      <a href="agent-design.html">Book 10 · System Design</a>（项目深挖经常借 SD 题深入）·
+      <a href="enterprise.html">Book 09 · 企业交付</a>（讲 RFC / spec / runbook 的细节）·
+      <a href="agent-coding.html">Book 11 · Live Coding</a>（讲怎么避免 panic 和 silent failure）。
+    </p>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="container">
+    <p>桃桃 Agent 学习手册 · Book 18 · Behavioral &amp; Project Deep-Dive</p>
+    <p><a href="index.html">← 回总目录</a> · <a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">GitHub</a></p>
+  </div>
+</footer>
+
+</body>
+</html>

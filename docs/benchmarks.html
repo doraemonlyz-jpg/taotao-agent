@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Book 21 · Agent Benchmarks Reading Manual · 桃桃 Agent</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230f1d35'/%3E%3Cpath d='M32 10 L 36 26 L 54 28 L 40 38 L 44 54 L 32 44 L 20 54 L 24 38 L 10 28 L 28 26 Z' fill='%23f4c95a' stroke='%23fff5d8' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E">
+<meta name="description" content="读 SWE-bench / GAIA / BFCL / τ-bench / WebArena / OSWorld leaderboard 的方法 · contamination / harness drift / sample selection 5 大陷阱 · 30 题 · 60 词术语 · 怎么判断一个 agent 模型在真实任务上靠不靠谱">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #0f1d35; --paper-2: #162844; --paper-card: #1c3155;
+  --ink: #f5ecd2; --ink-soft: #c8be9b; --ink-mute: #7e8aa6;
+  --rule: #2c4570; --rule-soft: #1f3458;
+  --leaf: #8eb58f; --leaf-soft: #1d3a38;
+  --rust: #e08e6f; --rust-soft: #3a2a22;
+  --sky:  #6a96bc; --sky-soft:  #1f3050;
+  --gold: #f4c95a; --gold-soft: #3a2f1f;
+  --plum: #c0a3d1; --plum-soft: #2a1f3a;
+  --font-display: "Fraunces", "Times New Roman", serif;
+  --font-body: "Lora", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  --font-zh: "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: radial-gradient(ellipse at top left, rgba(140,180,220,.10), transparent 50%), radial-gradient(ellipse at bottom right, rgba(244,201,90,.08), transparent 50%), var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.75; }
+:lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(244,201,90,.4); transition: all .15s; }
+a:hover { background: rgba(244,201,90,.08); }
+a.bare { border-bottom: none; }
+strong { font-weight: 600; color: var(--ink); }
+em { font-style: italic; color: var(--leaf); font-weight: 500; }
+code { font-family: var(--font-mono); font-size: 0.85em; background: var(--paper-2); padding: 0.08rem 0.35rem; border-radius: 4px; color: var(--rust); border: 1px solid var(--rule-soft); }
+pre { font-family: var(--font-mono); background: #0a1628; color: #e8e3d4; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; font-size: 0.84rem; line-height: 1.55; border: 1px solid var(--rule); }
+pre code { background: none; color: inherit; padding: 0; border: 0; font-size: inherit; }
+
+.container { max-width: 920px; margin: 0 auto; padding: 0 2rem; }
+@media (max-width: 720px) { .container { padding: 0 1.2rem; } }
+
+.nav { padding: 1.4rem 0; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: rgba(15,29,53,.88); backdrop-filter: blur(8px); z-index: 100; }
+.nav-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.nav-brand { font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 1.2rem; color: var(--ink); border: none; }
+.nav-brand .dot { color: var(--gold); }
+.nav-links { display: flex; gap: 1.4rem; font-family: var(--font-sans); font-size: 0.88rem; }
+.nav-links a { color: var(--ink-mute); border-bottom: none; font-weight: 500; }
+.nav-links a:hover { color: var(--rust); background: none; }
+
+.hero { padding: 4rem 0 2.6rem; border-bottom: 1px solid var(--ink); position: relative; }
+.hero::after { content: ""; position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%); width: 90px; height: 4px; background: var(--rust); }
+.eyebrow { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.08em; color: var(--rust); margin-bottom: 1.2rem; font-weight: 600; text-transform: uppercase; }
+.hero h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 1.4rem; color: var(--ink); }
+.hero h1 em { color: var(--rust); font-style: italic; }
+.hero-lede { font-size: 1.12rem; color: var(--ink-soft); max-width: 36em; margin: 0 0 1rem; line-height: 1.65; }
+.hero-meta { font-family: var(--font-sans); font-size: 0.84rem; color: var(--ink-mute); margin-top: 1.2rem; }
+.hero-meta strong { color: var(--gold); }
+
+.section { padding: 3.4rem 0; border-bottom: 1px dashed var(--rule); }
+.section:last-of-type { border-bottom: none; }
+.section h2 { font-family: var(--font-display); font-weight: 500; font-size: 1.85rem; letter-spacing: -0.01em; margin: 0 0 1.4rem; color: var(--ink); display: flex; align-items: baseline; gap: 0.7rem; }
+.section h2 .num { font-family: var(--font-mono); font-weight: 400; font-size: 0.9rem; color: var(--rust); letter-spacing: 0.06em; }
+.section h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.2rem; margin: 2rem 0 0.6rem; color: var(--ink); }
+.section h4 { font-family: var(--font-sans); font-weight: 600; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gold); margin: 1.4rem 0 0.4rem; }
+.section p { margin: 0 0 1rem; }
+.section ul { padding-left: 1.4rem; margin: 0.6rem 0 1rem; }
+.section li { margin: 0.4rem 0; }
+.section ol { padding-left: 1.4rem; margin: 0.6rem 0 1rem; }
+.section ol li { margin: 0.5rem 0; }
+
+table { border-collapse: collapse; width: 100%; margin: 1rem 0 1.4rem; background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; font-size: 0.9rem; }
+th, td { padding: 0.7rem 0.85rem; text-align: left; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+th { background: var(--leaf-soft); color: var(--ink); font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td code { font-size: 0.82rem; }
+
+.cb { background: var(--paper-card); border: 1px solid var(--rule); border-left: 4px solid var(--rust); border-radius: 8px; padding: 1rem 1.2rem; margin: 1.2rem 0; font-size: 0.96rem; }
+.cb.leaf { border-left-color: var(--leaf); background: var(--leaf-soft); }
+.cb.gold { border-left-color: var(--gold); background: var(--gold-soft); }
+.cb.sky { border-left-color: var(--sky); background: var(--sky-soft); }
+.cb.plum { border-left-color: var(--plum); background: var(--plum-soft); }
+.cb-h { font-family: var(--font-sans); font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: var(--ink-mute); margin: 0 0 0.3rem; }
+
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.2rem 0; }
+@media (max-width: 720px) { .split { grid-template-columns: 1fr; } }
+.split > div { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; padding: 1rem 1.1rem; }
+.split h4 { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin: 0 0 0.6rem; font-weight: 600; }
+
+.qbank { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 12px; padding: 1.4rem 1.6rem; margin: 1.4rem 0; }
+.qbank h3 { margin-top: 0.6rem; color: var(--gold); font-size: 1.05rem; border-bottom: 1px solid var(--rule); padding-bottom: 0.5rem; }
+.qbank h3:first-child { margin-top: 0; }
+.qbank ol { margin: 0.4rem 0 1rem; padding-left: 1.4rem; }
+.qbank ol li { margin: 0.45rem 0; font-size: 0.94rem; }
+.qbank .qhint { color: var(--ink-mute); font-size: 0.82rem; font-style: italic; }
+
+.glossary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem 1.4rem; font-size: 0.88rem; margin: 1rem 0; }
+@media (max-width: 720px) { .glossary { grid-template-columns: 1fr; } }
+.glossary div { padding: 0.4rem 0; border-bottom: 1px dashed var(--rule-soft); }
+.glossary strong { color: var(--gold); }
+
+.foot { padding: 3rem 0 4rem; text-align: center; font-family: var(--font-sans); color: var(--ink-mute); font-size: 0.88rem; }
+.foot a { color: var(--ink-mute); border-bottom: 1px solid rgba(44,69,112,.3); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-row">
+    <a class="nav-brand" href="index.html"><span class="dot">★</span> 桃桃 Agent</a>
+    <div class="nav-links">
+      <a href="index.html">首页</a>
+      <a href="eval-observability.html">Eval</a>
+      <a href="harness.html">Harness</a>
+      <a href="implementation.html">实现细节</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <div class="eyebrow">Book 21 · Agent Benchmarks 阅读手册</div>
+    <h1>看 <em>5 个 leaderboard</em> · 看 <em>5 种陷阱</em> · 不被市场宣传忽悠</h1>
+    <p class="hero-lede">
+      "我们家模型 SWE-bench 65% 第一。" 这句话能在 2026 年的 launch tweet 看到 5 次/周。
+      但 leaderboard 数字背后藏着一堆<strong>陷阱</strong>——sample selection / harness drift /
+      contamination / oracle context。这一本教你<em>怎么读</em>每个主流 agent benchmark · 每个陷阱
+      怎么识破 · 自己 ship 模型怎么不被这些坑反噬。
+    </p>
+    <p class="hero-meta">
+      <strong>10 章</strong> · <strong>30 题</strong> · <strong>60 词术语</strong> · 阅读 ~50 分钟
+    </p>
+  </div>
+</header>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 1</span>为什么 senior 必须会读 benchmark</h2>
+    <p>
+      "MMLU 88 / HumanEval 95" 是 base model 时代的指标，<strong>不能预测 agent 任务表现</strong>。
+      Agent 任务有 4 个维度 base benchmark 测不到：
+    </p>
+    <ol>
+      <li><strong>多步执行</strong>：错一步就全错 · ε⁻¹ 衰减</li>
+      <li><strong>工具使用</strong>：知不知道<em>什么时候</em>调 · 不只是会不会调</li>
+      <li><strong>长上下文检索</strong>：50 turn 后能不能 recall 最早的 spec</li>
+      <li><strong>真实世界副作用</strong>：rm -rf / 多支付一次 / 删 prod DB</li>
+    </ol>
+    <p>
+      所以工业界发明了一系列 <strong>agent-native benchmark</strong>：SWE-bench (代码) ·
+      GAIA (通用助手) · BFCL (工具调用) · τ-bench (对话工具) · WebArena (网页) · OSWorld (桌面)。
+    </p>
+    <p>
+      面试会问："你怎么<em>判断</em>一个新模型在你的产品里好不好用？"
+      <em>说"跑 leaderboard 看分数"会被扣分</em>——senior 答案要含"哪些 benchmark 适用 / 不适用 ·
+      数字之外还看什么"。
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 2</span>SWE-bench · 代码 agent 的事实标准</h2>
+    <p>
+      Princeton 2023 提出。从 12 个流行 Python 开源项目（Django / sympy / scikit-learn 等）的
+      <strong>真实 GitHub issue + PR</strong> 抽 2,294 条，每条任务：
+    </p>
+    <ol>
+      <li>给 agent: issue 描述 + 仓库 codebase（commit 在 fix 前那个状态）</li>
+      <li>agent 输出: 一份 patch (.diff)</li>
+      <li>评判: 把 patch apply 上去，跑那个 issue 对应的 PR 里<em>新加的</em>测试，pass 算成功</li>
+    </ol>
+
+    <h3>2.1 三个变种 · 必须分清</h3>
+    <table>
+      <thead><tr><th>变种</th><th>条数</th><th>难度</th><th>2026 SOTA</th></tr></thead>
+      <tbody>
+        <tr><td><strong>SWE-bench Full</strong></td><td>2294</td><td>原始 · 含很多模糊 / 不可解</td><td>~50%</td></tr>
+        <tr><td><strong>SWE-bench Verified</strong></td><td>500</td><td>OpenAI 人工筛过 · 工业标杆</td><td>~70%</td></tr>
+        <tr><td><strong>SWE-bench Lite</strong></td><td>300</td><td>更短 / 1 个文件就能 fix</td><td>~75%</td></tr>
+        <tr><td><strong>SWE-bench Live</strong></td><td>逐月新增</td><td>2024-09 后的新 issue · 防 contamination</td><td>~50%</td></tr>
+      </tbody>
+    </table>
+
+    <div class="cb gold">
+      <p class="cb-h">最易错的细节</p>
+      <p style="margin: 0">
+        看到 "SWE-bench 65%" <em>必须</em>问"哪个 split"。Full / Verified / Lite 数字不能直接比。
+        2025 起 Anthropic / OpenAI / Cursor 公布 score 默认指 <strong>Verified</strong>·
+        但开源模型 paper 经常报 Full（数字小但可比性差）或 Lite（数字大但容易吹水）。
+      </p>
+    </div>
+
+    <h3>2.2 "harness" 比模型更重要</h3>
+    <p>
+      同一个模型 GPT-4o · 在 SWE-bench Verified 上：
+    </p>
+    <ul>
+      <li>裸 ReAct loop · ~24%</li>
+      <li>Aider 的 search-replace harness · ~31%</li>
+      <li>OpenHands (前 OpenDevin) · ~38%</li>
+      <li>Anthropic 自家 harness · ~49%</li>
+    </ul>
+    <p>
+      <strong>同模型差 25 个点</strong>——所以读 leaderboard 必须看 harness：
+      "Claude 4 + ourharness 70%" vs "Claude 4 + Aider 56%" 完全不矛盾。
+      <em>这也意味着 "X 模型 SWE-bench 65%" 不能等同于 "X 模型解决你公司 bug 65%"</em>，
+      因为你的 harness 不一样。
+    </p>
+
+    <h3>2.3 SWE-bench 的 5 大局限</h3>
+    <ul>
+      <li>只测 Python · 不测 Go / Rust / TS / 多语言</li>
+      <li>只测 backend / lib · 不测前端 / UI / 异步并发</li>
+      <li>测试本身就是 oracle—— agent 不需要写新测试</li>
+      <li>contamination：很多 base model 训练数据见过这些 PR diff</li>
+      <li>"成功" 二元判断 · 没区分"小修小改成功"和"重构整个模块"</li>
+    </ul>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 3</span>GAIA · General AI Assistant</h2>
+    <p>
+      Meta 2023 发布的"通用助手" benchmark · 466 题，是 <em>真实人类问的问题</em>，
+      需要<strong>多步推理 + 工具（web/file/code）+ 多模态</strong>才能答。
+    </p>
+
+    <h3>3.1 难度三档</h3>
+    <table>
+      <thead><tr><th>Level</th><th>典型步数</th><th>例子</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Level 1</strong></td><td>1–5 步</td><td>"哪个国家在某届奥运会上获得最多金牌？" (web 一查)</td></tr>
+        <tr><td><strong>Level 2</strong></td><td>5–10 步</td><td>"在这张图找到 ___，再去对应的 wiki 找 ___ 比例"</td></tr>
+        <tr><td><strong>Level 3</strong></td><td>10+ 步 · 多模态</td><td>"分析这份 PDF · 找出表格里 X · 跟 web 上 Y 比，输出 markdown 报告"</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.2 SOTA 路径</h3>
+    <p>
+      2024 GPT-4 + 简单 harness · ~14% · 2025 H1 GPT-4o + Magnetic-One (多 agent) · ~38%·
+      2025 末 Claude 3.7 Sonnet 单 agent + 强 harness · ~52% · 人类基线 ~92%。
+    </p>
+
+    <div class="cb sky">
+      <p class="cb-h">为什么 GAIA 重要</p>
+      <p style="margin: 0">
+        大部分 benchmark 是<em>单步 / 单工具</em>，GAIA 强制 agent 表现"端到端规划 + 多工具串联"
+        能力。<strong>跟你公司里"用户问个真实问题"的 distribution 最接近</strong>，所以
+        senior 面试拿 GAIA 当例子讲 evaluation 通常很受欢迎。
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 4</span>BFCL · Berkeley Function-Calling Leaderboard</h2>
+    <p>
+      UC Berkeley 2024 发布。专门测<strong>tool calling 准确度</strong>——给一个 prompt + 一组 tool schema，
+      模型应该输出哪个 tool 名 / 什么参数 / 是不是 parallel。已经迭代到 V3。
+    </p>
+
+    <h3>4.1 7 类子任务</h3>
+    <table>
+      <thead><tr><th>类别</th><th>测什么</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Simple</strong></td><td>1 prompt → 1 tool · AST equality 判分</td></tr>
+        <tr><td><strong>Multiple</strong></td><td>1 prompt → 选对的那个 tool（多 tool 候选）</td></tr>
+        <tr><td><strong>Parallel</strong></td><td>1 prompt 同时调多个 tool</td></tr>
+        <tr><td><strong>Parallel Multiple</strong></td><td>同时调 + 多候选</td></tr>
+        <tr><td><strong>Irrelevance</strong></td><td>没有合适 tool · 模型应该回 "I can't"</td></tr>
+        <tr><td><strong>Live</strong></td><td>用户真实 query · 不是合成的</td></tr>
+        <tr><td><strong>Multi-turn</strong></td><td>对话连续多 turn · 测 state tracking</td></tr>
+      </tbody>
+    </table>
+
+    <h3>4.2 怎么读 BFCL 排名</h3>
+    <ul>
+      <li><strong>不要只看 overall</strong>。Live + Multi-turn 跟 Simple 差距常常 30+ 分 · 真实场景看 Live。</li>
+      <li><strong>注意 cost 列</strong>。BFCL 公开每个模型每条 sample 的 token 使用量。GPT-4 / Claude 强但贵 · Llama-3.1 70B 性价比高。</li>
+      <li><strong>Irrelevance 别忽略</strong>。模型敢不敢说 "no" 是工业落地最痛点之一——
+        score 高的模型在生产里 hallucinate tool 调用的几率小很多。</li>
+    </ul>
+
+    <div class="cb gold">
+      <p class="cb-h">2026 趋势</p>
+      <p style="margin: 0">
+        Hermes 4 / Qwen 2.5 / Llama 3.1 等开源模型在 BFCL Simple 已经接近 GPT-4o ·
+        但 Multi-turn 仍然落后 8–15 分。<em>开源 tool-calling 还没"完全追平"</em>，
+        生产选模型时不能只看 Simple 数字。
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 5</span>τ-bench · 真实场景对话 + 工具</h2>
+    <p>
+      Sierra (Bret Taylor 公司) 2024 发布。两个领域 —— retail (165 task) + airline (50 task)。
+      Agent 跟<em>另一个 LLM 模拟的用户</em>对话 · 可以调 retail/airline domain 的 ~50 个 tool ·
+      最后 evaluator 检查 DB state 是否变成预期。
+    </p>
+
+    <h3>5.1 跟 BFCL 的本质区别</h3>
+    <p>
+      BFCL 测"<em>这一句话</em> 该调哪个 tool"——单步 · zero-shot。
+      τ-bench 测"<em>整个对话过程</em>能不能稳"——多 turn · 状态机 · 用户会说不清楚 ·
+      会改主意 · 会 push back。<strong>更像真实客服</strong>。
+    </p>
+
+    <h3>5.2 重要的指标 · pass^k</h3>
+    <p>
+      τ-bench 报 <strong>pass^k</strong>：同一 task 跑 k 次 · 全部通过算成功。
+      一般 k=8。这是<em>稳定性</em>指标——单次成功率 80% 的模型 pass^8 可能掉到 40%。
+      <em>pass^1 在生产没意义</em>，因为用户会重试看到不一致就走人。
+    </p>
+
+    <h3>5.3 SOTA</h3>
+    <p>
+      Claude 3.5 Sonnet pass^1 ~70% / pass^8 ~46% (retail) ·
+      GPT-4o pass^1 ~62% / pass^8 ~35%。
+      <em>Anthropic 在 τ-bench 上一直 lead</em> · 跟 Claude 在 multi-turn / instruction following 上的强项一致。
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 6</span>WebArena · 浏览器 agent</h2>
+    <p>
+      CMU 2023 发布。在 4 个真实 web app（OneStopShop / Reddit-like / GitLab-like / Map）的本地副本里 ·
+      给 agent 800+ 任务（"找出本月销量第二的商品"等）。Agent 输入是 HTML/screenshot ·
+      输出是 click/type/scroll 等 action。
+    </p>
+
+    <h3>6.1 变种</h3>
+    <ul>
+      <li><strong>WebArena</strong>: 文本 HTML 输入 (DOM tree)</li>
+      <li><strong>VisualWebArena</strong>: 加 screenshot · 测 VLM 能力</li>
+      <li><strong>WebArena Live</strong>: 真实 production 网站 (有 OAuth 等)</li>
+    </ul>
+
+    <h3>6.2 SOTA &amp; 注意</h3>
+    <p>
+      2024 年初 GPT-4 ~14%。2025 末 Claude 3.7 + 强 harness ~50%。<em>仍远低于人类 78%</em>。
+      <strong>读 WebArena 数字必须看 harness 类型</strong>——是纯 DOM 还是 set-of-marks
+      （把 screenshot 上每个 element 标号）。后者数字会高 10 分以上。
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 7</span>OSWorld · 桌面 computer-use</h2>
+    <p>
+      THU + CMU 2024 发布。在 Ubuntu / Windows / macOS VM 里跑 369 个真实任务
+      （用 GIMP / Office / VSCode / Firefox 等），全部跨多个应用 / 文件系统。
+    </p>
+    <p>
+      Agent 输入 screenshot · 输出 pyautogui-style action。<em>2025 H2 Claude Sonnet 4 + Computer Use</em>
+      ~22%（人类 ~72%）。<strong>差距巨大</strong> · 桌面 agent 还远没 ready · 这是为什么 2026
+      Cursor / Devin 路线大多还停在 IDE 内（受控 env）而不是 full desktop。
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 8</span>5 大读 leaderboard 陷阱 · 必识破</h2>
+
+    <h3>8.1 陷阱 ① · Contamination（污染）</h3>
+    <p>
+      模型训练数据见过 benchmark 答案。SWE-bench Full 大量 PR 是 GitHub 公开的 · base model
+      预训练时几乎肯定见过 fix patch。<strong>修法</strong>：看 SWE-bench <em>Live</em>（持续新增）·
+      或 GAIA（人审过 · 部分 hidden）· 或自己内部 holdout。
+    </p>
+
+    <h3>8.2 陷阱 ② · Harness drift</h3>
+    <p>
+      "X 模型在 SWE-bench Verified 70%" —— 别忘了问 "<em>在哪个 harness 上</em>"。
+      同模型不同 harness 差 25+ 分。<strong>实务读法</strong>：
+      只比较"同 harness 不同模型"的<em>差值</em>，绝对值意义不大。
+    </p>
+
+    <h3>8.3 陷阱 ③ · Sample selection</h3>
+    <p>
+      官方 leaderboard 默认 deterministic sampling (temp=0)，但有些公司 paper 报"<em>best-of-N</em>"
+      或"<em>self-consistency</em>"——同 prompt 跑 5 次取最好 · 数字 +5–10 分。
+      <strong>读法</strong>：搜 "pass^k"、"sampling"、"k=" 这些字眼，弄清是单次还是多次。
+    </p>
+
+    <h3>8.4 陷阱 ④ · Oracle context</h3>
+    <p>
+      SWE-bench 有<em>"oracle"</em> setting —— 提前告诉 agent "你应该改 file_a.py 和 file_b.py" ·
+      这跳过了 file-localization 这个最难的步骤 · 数字会高 10–20 分。
+      <strong>看到 "oracle" 字样直接打折看</strong>。
+    </p>
+
+    <h3>8.5 陷阱 ⑤ · Cost / token / latency 不公布</h3>
+    <p>
+      GPT-4 在 SWE-bench Verified 跑一条平均 $4 + 12 分钟。"开源 7B 跑出 30%" 听上去美好 ·
+      但你算上每条 200K token 输入和 50 turn loop · 实际跑 100 题成本可能跟 GPT-4 一样 ·
+      还慢 3 倍。<strong>没有 $ + s 数字 的 leaderboard 必须打问号</strong>。
+    </p>
+
+    <div class="cb plum">
+      <p class="cb-h">综合查表 · 读到一个新数字时问自己 5 个问题</p>
+      <ol style="margin: .3rem 0 0">
+        <li>哪个 split / level / variant？</li>
+        <li>什么 harness？跟你的 harness 接近吗？</li>
+        <li>几次采样？pass^1 还是 pass^k？</li>
+        <li>有没有 oracle context / hint 注入？</li>
+        <li>cost · latency 公布了吗？</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 9</span>30 道 senior 面试题</h2>
+    <div class="qbank">
+      <h3>SWE-bench</h3>
+      <ol>
+        <li>Full / Verified / Lite / Live · 各自适用什么场景？</li>
+        <li>"X 模型 SWE-bench 60%" — 你会问哪 5 个 follow-up 问题？</li>
+        <li>SWE-bench 不能测什么类型的 bug？</li>
+        <li>同模型不同 harness 差 25 分 · 这告诉你什么？</li>
+        <li>怎么防止评 SWE-bench 时被 contamination？</li>
+        <li>SWE-bench Verified 是怎么从 Full 筛出来的？</li>
+        <li>OpenHands / Aider / Cursor harness 区别在哪？</li>
+      </ol>
+
+      <h3>GAIA</h3>
+      <ol>
+        <li>GAIA Level 3 跟 Level 1 难度差在哪？</li>
+        <li>为什么 GAIA 比 MMLU 更适合预测 agent 真实表现？</li>
+        <li>多 agent (Magnetic-One) 比单 agent 在 GAIA 上强 · 为什么？</li>
+      </ol>
+
+      <h3>BFCL</h3>
+      <ol>
+        <li>BFCL 7 类子任务 · 哪类最贴近生产？</li>
+        <li>Simple 高 / Multi-turn 低的模型在生产会怎样？</li>
+        <li>Irrelevance 测什么？为什么生产很重要？</li>
+        <li>开源模型在 BFCL 还差 GPT-4o 哪一项？</li>
+      </ol>
+
+      <h3>τ-bench</h3>
+      <ol>
+        <li>τ-bench 跟 BFCL 本质区别是什么？</li>
+        <li>pass^k 为什么比 pass^1 重要？</li>
+        <li>pass^8 = 50% 的模型生产上能不能用？</li>
+      </ol>
+
+      <h3>WebArena / OSWorld</h3>
+      <ol>
+        <li>WebArena 跟 VisualWebArena 测什么不同的能力？</li>
+        <li>set-of-marks 怎么帮 agent 提分？为什么是有 cost 的？</li>
+        <li>OSWorld SOTA 还远低于人类 · 这说明什么生产 readiness？</li>
+      </ol>
+
+      <h3>读 leaderboard 方法论</h3>
+      <ol>
+        <li>5 大陷阱列举 + 各 1 个例子。</li>
+        <li>oracle context 是什么？看到怎么处理？</li>
+        <li>"我们家模型 contamination-free" 你怎么验证？</li>
+        <li>同 model 不同 paper 报不同数字 · 5 个原因。</li>
+        <li>给你一份新发布的 agent paper · 你前 5 分钟看什么？</li>
+        <li>cost / latency 一栏没公布 · 你怎么估？</li>
+        <li>怎么判断一个 leaderboard 是否还可信？</li>
+      </ol>
+
+      <h3>实操 · 你公司</h3>
+      <ol>
+        <li>你公司想从 GPT-4o 换 Claude 4 · 你会跑哪 3 个 benchmark + 哪个内部 holdout？</li>
+        <li>设计一个跟 SWE-bench 类似但适合你 codebase 的内部 benchmark · 4 步流程。</li>
+        <li>新模型在所有 public benchmark 都 +5 分 · 但你公司内部 holdout 掉 3 分 · 你怎么解释？</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 10</span>60 词术语表</h2>
+    <div class="glossary">
+      <div><strong>Benchmark</strong>: 标准评估数据集</div>
+      <div><strong>Leaderboard</strong>: 多模型排行榜</div>
+      <div><strong>Holdout</strong>: 不进训练 / 不公开的测试集</div>
+      <div><strong>Contamination</strong>: 训练数据污染了 benchmark</div>
+      <div><strong>SWE-bench</strong>: 代码 agent 主流 benchmark</div>
+      <div><strong>SWE-bench Verified</strong>: OpenAI 人筛 500 条</div>
+      <div><strong>SWE-bench Lite</strong>: 简化 300 条</div>
+      <div><strong>SWE-bench Live</strong>: 持续新增防污染</div>
+      <div><strong>Patch</strong>: 一份 .diff 文件</div>
+      <div><strong>Oracle context</strong>: 提前告诉 agent 哪文件要改</div>
+      <div><strong>Harness</strong>: agent 框架 (loop + tools + prompt)</div>
+      <div><strong>OpenHands</strong>: 开源 agent harness (前 OpenDevin)</div>
+      <div><strong>Aider</strong>: 流行 CLI coding harness</div>
+      <div><strong>SWE-agent</strong>: Princeton 自家 SWE-bench harness</div>
+      <div><strong>Cursor agent mode</strong>: IDE 内 agent</div>
+      <div><strong>Devin</strong>: Cognition Labs 闭源 agent</div>
+      <div><strong>GAIA</strong>: General AI Assistant benchmark</div>
+      <div><strong>Magnetic-One</strong>: Microsoft 多 agent 方案</div>
+      <div><strong>BFCL</strong>: Berkeley Function-Calling Leaderboard</div>
+      <div><strong>AST equality</strong>: BFCL 判分用语法树对比</div>
+      <div><strong>Irrelevance</strong>: 模型敢不敢说 "no tool fits"</div>
+      <div><strong>Multi-turn</strong>: 多轮对话 + 工具</div>
+      <div><strong>τ-bench</strong>: Sierra 提出 · retail/airline 对话</div>
+      <div><strong>pass^k</strong>: k 次都通过算成功 · 稳定性</div>
+      <div><strong>WebArena</strong>: CMU 浏览器 agent</div>
+      <div><strong>VisualWebArena</strong>: VLM 版 WebArena</div>
+      <div><strong>Set-of-marks (SoM)</strong>: 截图叠数字标号</div>
+      <div><strong>OSWorld</strong>: 桌面 OS-level agent benchmark</div>
+      <div><strong>WebShop</strong>: 早期电商 agent benchmark</div>
+      <div><strong>MiniWoB++</strong>: 简单网页任务</div>
+      <div><strong>AgentBench</strong>: 综合多领域 agent benchmark</div>
+      <div><strong>HumanEval</strong>: 代码 base benchmark · 不算 agent</div>
+      <div><strong>MBPP</strong>: 同 HumanEval 但更基础</div>
+      <div><strong>BigCodeBench</strong>: HumanEval 升级版</div>
+      <div><strong>LiveCodeBench</strong>: 防污染版 code benchmark</div>
+      <div><strong>MMLU</strong>: 通用知识 base benchmark</div>
+      <div><strong>GPQA</strong>: 研究生级科学 QA</div>
+      <div><strong>HLE</strong>: Humanity's Last Exam</div>
+      <div><strong>Frontier Math</strong>: 数学竞赛级 benchmark</div>
+      <div><strong>SimpleQA</strong>: 测 LLM hallucination 频率</div>
+      <div><strong>MT-bench</strong>: 早期对话 benchmark · 已过时</div>
+      <div><strong>LMSys Arena</strong>: 人类盲投排名</div>
+      <div><strong>Bradley-Terry rating</strong>: Arena 评分模型</div>
+      <div><strong>Reproducibility</strong>: 同 setting 不同 run 是否一致</div>
+      <div><strong>Sample size</strong>: 题目数量</div>
+      <div><strong>Variance</strong>: 跨 run 的标准差</div>
+      <div><strong>Best-of-N</strong>: 跑 N 次取最好</div>
+      <div><strong>Self-consistency</strong>: 多次采样 majority vote</div>
+      <div><strong>Greedy decoding</strong>: temp=0 · 一致性最高</div>
+      <div><strong>Top-p / nucleus sampling</strong>: 多样性采样</div>
+      <div><strong>Ablation</strong>: 去掉一组件看影响</div>
+      <div><strong>Compute budget</strong>: 单题最大 token / time</div>
+      <div><strong>Step budget</strong>: 单题最大 turn 数</div>
+      <div><strong>Token budget</strong>: 单题最大 token 量</div>
+      <div><strong>Trajectory</strong>: agent 一次任务的完整轨迹</div>
+      <div><strong>Replay</strong>: 重放 trajectory 调试</div>
+      <div><strong>Eval harness</strong>: 跑 benchmark 的脚手架</div>
+      <div><strong>Leaderboard freshness</strong>: 最近一次更新时间</div>
+      <div><strong>Public split</strong>: 公开发布的题</div>
+      <div><strong>Hidden split</strong>: 不公开 · 防作弊</div>
+      <div><strong>Calibration</strong>: 跨 model run 校准分数</div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 11</span>下一步 · 把这套用起来</h2>
+    <ol>
+      <li>把当前你公司用的模型在 SWE-bench Verified / GAIA / BFCL Live 三个 leaderboard 各去查一下排名 · 写 1 页内部 brief</li>
+      <li>挑公司内部 1 个真实场景 · 抽 100 条 · 做成 holdout · 对比 leaderboard 数字看差距</li>
+      <li>写一份 "新模型评估 5 步法" SOP · 团队复用</li>
+      <li>面试时被问 "X 模型怎么样" · 用 § 8 的 5 问反问 + 自己内部 holdout 的数据回答</li>
+    </ol>
+    <p>
+      <strong>必读资料</strong>：
+      SWE-bench paper (Princeton 2023) ·
+      SWE-bench Verified blog (OpenAI 2024) ·
+      GAIA paper (Meta 2023) ·
+      BFCL blog (Berkeley 2024-Live updates) ·
+      τ-bench paper (Sierra 2024) ·
+      WebArena paper (CMU 2023) ·
+      OSWorld paper (THU+CMU 2024) ·
+      "Anthropic Engineering: Building effective agents"。
+    </p>
+    <p>
+      配套：<a href="eval-observability.html">Book 07 · Eval &amp; Observability</a>（怎么自建内部 holdout）·
+      <a href="harness-vs-graph.html">Book 14 · Harness vs Graph</a>（同模型不同 harness 的实测对比）·
+      <a href="agent-design.html">Book 10 · System Design</a>（评估在系统设计题里的 framing）。
+    </p>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="container">
+    <p>桃桃 Agent 学习手册 · Book 21 · Agent Benchmarks Reading Manual</p>
+    <p><a href="index.html">← 回总目录</a> · <a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">GitHub</a></p>
+  </div>
+</footer>
+
+</body>
+</html>

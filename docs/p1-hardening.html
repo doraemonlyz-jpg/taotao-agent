@@ -1038,6 +1038,136 @@ _per_session: <span class="f">dict</span>[str, <span class="f">dict</span>[str, 
       </p>
     </section>
 
+    <!-- ============== Chapter 8 — Cost / Latency Engineering 5 case study (Patch 2026-05) ============== -->
+    <section id="ch-8">
+      <header class="ch-head">
+        <span class="badge">Chapter 8 · Cost &amp; Latency Engineering</span>
+        <h2>5 个独立 case study · token 预算 / prompt 压缩 / semantic cache / model routing / streaming UX</h2>
+        <p class="lede">"agent 太贵 / 太慢" 是 senior 面 / 1:1 / 季度 OKR 永恒的话题。这一章不讲理论，5 个 case study 每个 30 行讲完：背景 → 优化 → 数字 → 反思</p>
+      </header>
+
+      <h3 id="s-8-1"><span class="num">§8.1</span>Case 1 · Token 预算切分 · 把 32K ctx 砍到 8K 不掉精度</h3>
+      <p>
+        <strong>背景</strong>：客服 agent · 每次喂 system prompt (4K) + 完整对话 (10–28K) + tool descriptions (3K) ≈ 17–35K token。月 token bill $42K。
+      </p>
+      <p>
+        <strong>优化 4 招</strong>：
+      </p>
+      <ol>
+        <li><strong>Tool descriptions 按需注入</strong>——系统 prompt 里只列 tool 名 + 一行 summary（300 token）· 模型决定调哪个时再注入完整 schema。砍 2.7K/turn。</li>
+        <li><strong>对话窗口</strong>——只保留最近 10 turn · 早期 turn 用 LLM summarize 成 200-token 摘要塞 system。砍平均 12K → 4K。</li>
+        <li><strong>System prompt 拆 static + dynamic</strong>——80% 内容（角色 / 准则）走 prompt cache（OpenAI 50% / Anthropic 90% 折扣）· 20% 动态（用户名 / 时区）每次重发。</li>
+        <li><strong>Tokenize-aware 截断</strong>——别在字符层截 · 用 tiktoken 算到 token 边界 · 不会半截字 corrupt 后面。</li>
+      </ol>
+      <p>
+        <strong>结果</strong>：平均 ctx 17K → 6.5K · accuracy holdout -0.3%（统计内噪声）· 月 token bill $42K → $14K。
+      </p>
+      <p>
+        <strong>反思</strong>：tool description 按需注入有<em>1 turn 延迟</em>——第一次调用某 tool 时才下发 schema · 模型有时第一次输出会 schema 错。修法：summary 里多带 1 行参数样例。
+      </p>
+
+      <h3 id="s-8-2"><span class="num">§8.2</span>Case 2 · Prompt 压缩 · LLMLingua 把指令砍 50%</h3>
+      <p>
+        <strong>背景</strong>：长 system prompt（4.2K token）· few-shot 5 个 example (每个 600 token) · 总指令 ~7K。
+      </p>
+      <p>
+        <strong>优化</strong>：
+      </p>
+      <ul>
+        <li>用 <strong>LLMLingua-2</strong>（小 BERT 模型）给每个 token 打"重要度"分 · 删低分 token · 保留 50%。</li>
+        <li>关键技巧：<em>不动 instruction · 只压 example 和 background description</em>。</li>
+        <li>fallback：跑 holdout 100 题 · 任何一题 accuracy drop &gt;5% 就 disable 这一条。</li>
+      </ul>
+      <p>
+        <strong>结果</strong>：7K → 3.6K · 整体 accuracy -1.2% (可接受) · cost / latency 各砍 ~40%。
+      </p>
+      <p>
+        <strong>反思</strong>：压缩的 prompt <em>对 prompt cache 是 hit miss</em>——压缩本身改了字节 · 整段 cache 失效。所以只在<em>从来没 cache hit 的 prompt</em>（动态生成）上做。静态 system prompt 优先走 cache 不要压。
+      </p>
+
+      <h3 id="s-8-3"><span class="num">§8.3</span>Case 3 · Semantic cache · Q 重复率 30% 的免费午餐</h3>
+      <p>
+        <strong>背景</strong>：FAQ-style 客服 · 用户每周问"how do I refund?" 这种 50 次。Exact match cache hit 仅 8%（用户问法太多变）。
+      </p>
+      <p>
+        <strong>优化 (semantic cache)</strong>：
+      </p>
+      <ol>
+        <li>每条 query embed (small model, e.g. text-embedding-3-small) · 存 (embedding, response, ttl=24h) 进 Redis vector index。</li>
+        <li>新 query 来 · embed · top-1 检索 · cosine similarity &gt; 0.92 直接返回缓存 response · &gt; 0.85 + 同 user 直接返回 · 否则走完整 LLM。</li>
+        <li>关键防坑：threshold 必须按 domain 校准 · 通用 0.92 在医疗 / 法律必须升到 0.97（差 1 个词意义就完全不同）。</li>
+      </ol>
+      <p>
+        <strong>结果</strong>：cache hit 8% → 38% · LLM call -32% · embedding cost +1.2% · 月成本 -30%。
+      </p>
+      <p>
+        <strong>反思</strong>：semantic cache 跟 personalization 冲突——同一个 "refund 怎么操作" 但用户 A 是 EU (GDPR 流程不同) 用户 B 是 US。修法：cache key 加 user_attributes hash。或者 semantic cache 只用在<em>明确无个性化</em>的 query 子集。
+      </p>
+
+      <h3 id="s-8-4"><span class="num">§8.4</span>Case 4 · Model routing · Haiku 做 80% · Sonnet 兜底</h3>
+      <p>
+        <strong>背景</strong>：所有请求走 Claude 3.5 Sonnet · 月 $58K。但 abuse-tracking 数据显示 70% query 是简单分类 / 路由 / 提取等任务。
+      </p>
+      <p>
+        <strong>优化 (cascading model routing)</strong>：
+      </p>
+      <ol>
+        <li>第一步走 <strong>Claude Haiku</strong>（便宜 12 倍）· 加 system prompt: "回答完后输出 confidence 0–1"。</li>
+        <li>confidence ≥ 0.8 直接返回（占 70%）。</li>
+        <li>confidence &lt; 0.8 · 调用 Sonnet 重做（占 30%）。</li>
+        <li>规则护栏：detect 到 "tool calls / 多步推理 / 长 response" 直接 skip Haiku 走 Sonnet（避免低质量 retry 反而更慢）。</li>
+      </ol>
+      <p>
+        <strong>结果</strong>：月 cost $58K → $19K · P95 latency -22%（Haiku 更快）· accuracy hold-out -0.8%。
+      </p>
+      <p>
+        <strong>反思</strong>：① 模型自报 confidence <em>有 length / vocab bias</em> · 几个月后漂移 · 需要 quarterly recalibrate；② 不要把 router 跟 worker 混在一段 prompt · 应该<em>显式两次 LLM call</em> 才能监控分别成本 / latency。
+      </p>
+
+      <h3 id="s-8-5"><span class="num">§8.5</span>Case 5 · Streaming UX · "感知" P50 从 4s → 0.3s</h3>
+      <p>
+        <strong>背景</strong>：聊天 UI · LLM TTFT (Time-To-First-Token) 大概 1.5s · 全部输出 4–8s · 用户看到 spinner 4 秒一直点 retry。
+      </p>
+      <p>
+        <strong>优化 4 个 UX 招</strong>：
+      </p>
+      <ul>
+        <li><strong>SSE / WebSocket 流式</strong>渲染 token——感知首字 ~300ms。</li>
+        <li>第一秒 LLM 还没出 · UI 显示 <em>tool call placeholder</em>（"Searching docs..."）· 让用户知道在动。</li>
+        <li>tool call 阶段 stream tool name · 不只 stream response token——长 tool call 用户能 cancel。</li>
+        <li>客户端做 <em>optimistic echo</em>——用户敲 enter 那一刻就把 user msg 渲染上去 · 不等 server 200。</li>
+      </ul>
+      <p>
+        <strong>结果</strong>：客观 latency 没变（still 4–8s 总输出）· <em>感知</em> P50 从 4s 跌到 0.3s · NPS +12 · "agent 太慢" 投诉 -73%。
+      </p>
+      <p>
+        <strong>反思</strong>：流式 + cancel 需要后端能 abort 中途 · 一定要在 LLM client 设 timeout + 把 cancellation 传到 LLM API（OpenAI 用 abort signal · Anthropic SDK 用 stream context manager）· 否则成本继续烧。
+      </p>
+
+      <div class="callout">
+        <div class="box-label">5 个 case 共同的方法论</div>
+        <ol>
+          <li><strong>先量化</strong>：每个 case 都是从 "$X / 月 + Pn / latency" 出发的——不要"感觉慢"就动手。</li>
+          <li><strong>分层不耦合</strong>：5 招互不依赖 · 任意停一招产品仍跑——最大化可逆性。</li>
+          <li><strong>cache vs 压缩 是死敌</strong>：压缩破坏 prefix · 全栈一定要先选定哪个优先（一般 cache 优先）。</li>
+          <li><strong>有 holdout 才有 license</strong>：accuracy 不可见，任何"省钱"优化都会被怀疑——先建评估闭环。</li>
+          <li><strong>UX latency &gt; engine latency</strong>：用户不在意 token/s · 只在意"agent 在不在动"。</li>
+        </ol>
+      </div>
+
+      <div class="callout">
+        <div class="box-label">深读资源 · Chapter 8</div>
+        <ul>
+          <li><a href="https://arxiv.org/abs/2310.05736" target="_blank">LLMLingua paper</a> ——prompt 压缩开山</li>
+          <li><a href="https://arxiv.org/abs/2403.12968" target="_blank">LLMLingua-2 paper</a> ——更稳的 token-level 压缩</li>
+          <li><a href="https://www.anthropic.com/news/prompt-caching" target="_blank">Anthropic prompt caching docs</a> ——90% 折扣 + cache 边界规则</li>
+          <li><a href="https://platform.openai.com/docs/guides/prompt-caching" target="_blank">OpenAI cached input docs</a> ——50% 折扣</li>
+          <li><a href="https://martinfowler.com/articles/gen-ai-patterns/" target="_blank">Martin Fowler · GenAI Patterns</a> ——含 Two-step LLM 等 routing 模式</li>
+          <li><a href="https://www.gptcache.org/" target="_blank">GPTCache</a> ——开源 semantic cache 实现</li>
+        </ul>
+      </div>
+    </section>
+
     <!-- ============== Glossary ============== -->
     <section id="glossary">
       <header class="ch-head">

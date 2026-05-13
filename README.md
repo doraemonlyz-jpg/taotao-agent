@@ -10,7 +10,7 @@ Built on **LangGraph 0.6** (orchestration backbone) + **FastAPI** (SSE streaming
 ![stack](https://img.shields.io/badge/backend-LangGraph%200.6%20%2B%20FastAPI-black)
 ![ui](https://img.shields.io/badge/frontend-React%2019%20%2B%20Vite-blue)
 
-> **📚 学习路径 · 十四本书覆盖 agent engineer 全方位面试**
+> **📚 学习路径 · 21 本书覆盖 senior agent engineer 全方位面试（含行为面 + post-training + 多模态/语音 + benchmarks）**
 > - 🟢 **完全新手** → [`docs/learn.html`](docs/learn.html) — 《从 0 到面试》13 章 + 110 词术语表 + 60 道面试题 + 8 周路线 + 进阶专题（benchmark / reasoning / async / agentic RAG / vibe coding / security）+ 每节附公开教程 / GitHub demo URL
 > - 🟠 **要做企业级项目** → [`docs/enterprise.html`](docs/enterprise.html) — 《企业级交付手册》10 章 + 5 份 spec 模板（PRD / Tech Design / Eval Plan / Risk Assessment / Runbook）+ 12 层技术栈选型 + 6 大工程能力 + RACI + 5 个翻车复盘 + 50 道企业级面试题 + 50 项上线 checklist
 > - 🟣 **agent system design 面试** → [`docs/agent-design.html`](docs/agent-design.html) — 《Agent System Design · Senior》6 步答题框架 + 7 大产品反编译（Cursor / Claude Code / Devin / Perplexity / Operator / v0 / 企业 multi-agent）+ 12 个 design pattern + 20 道 senior 设计题 + 80 词术语表
@@ -25,10 +25,20 @@ Built on **LangGraph 0.6** (orchestration backbone) + **FastAPI** (SSE streaming
 > - 🔵 **想看实现** → [`docs/implementation.html`](docs/implementation.html) — 《Implementation Field Guide》17 章逐节点详解 (graph 版)
 > - 🔥 **想吃透 Claude Code / Cursor 怎么实现** → [`docs/harness.html`](docs/harness.html) — 《Agent Harness 完全手册》16 章逐行讲清 loop / system prompt / sub-agent-as-tool / compaction / persistence / failure mode + 5 个真实 harness 反编译 + 20 道 senior 面试题 + 60 词术语 · 配套源码 `backend/agent/harness/`
 > - ⚖️ **想看同 query 两种实现差距** → [`docs/harness-vs-graph.html`](docs/harness-vs-graph.html) — 《Harness ⇄ Graph 对比手册》同项目 head-to-head · 5 类查询 · 真实 trace / cost / latency · 自己跑一遍的 curl 命令
+> - 🪶 **本地模型 + Hermes XML tool-call** → [`docs/hermes.html`](docs/hermes.html) — 《Hermes 速读》Nous Hermes 模型 + XML tool-call 格式 + 接 Ollama 跑实战
+> - 🔌 **MCP · agent 的 USB-C** → [`docs/mcp.html`](docs/mcp.html) — 《MCP 速读》协议 + 双向实现 + Claude Desktop 接入 · 7 分钟版
+> - 🛡️ **demo → 产品 5 件事** → [`docs/p1-hardening.html`](docs/p1-hardening.html) — 《P1 生产化加固》memory decay · parallel exec · cost 护栏 · OpenAPI codegen · multi-session UI · §8 Cost-Latency 5 case study
 >
-> **🌐 全部 14 本书入口** → [`docs/index.html`](docs/index.html) — 按 5 阶段学习路径分类的 landing page
+> **🆕 2026-05 必补章节（4 本）+ 3 大补丁 · 让 senior 面试覆盖率从 80% 提到 95%+**
+> - 🦊 **行为面 + 项目深挖** → [`docs/behavioral.html`](docs/behavioral.html) — 12 senior signals + 6 STAR 模板 + 30 道 Anthropic / OpenAI / Stripe / Cursor / 字节真题 + 反向问问题清单 + 红黑榜 + 用 taotao-agent 当 demo 项目的 elevator pitch 演练剧本
+> - 🌹 **Post-Training Field Guide** → [`docs/post-training.html`](docs/post-training.html) — SFT · LoRA · QLoRA · DPO · KTO · RLHF · RLAIF · Constitutional AI · 4 数据 pipeline · 3 真翻车（catastrophic forgetting / DPO length hacking / LoRA merge 掉精度）· 30 题 · 60 词
+> - 🌌 **Multimodal &amp; Voice Agents** → [`docs/multimodal-voice.html`](docs/multimodal-voice.html) — VLM 5 模型横评 + Computer-use / OmniParser / SeeClick + 语音 agent 三层栈 + latency budget 拆 1200ms + Vapi vs Retell vs Pipecat + GPT-4o Realtime / Moshi 原生多模态 + 4 真翻车 + 30 题
+> - ⚖️ **Agent Benchmarks 阅读手册** → [`docs/benchmarks.html`](docs/benchmarks.html) — SWE-bench (Verified/Lite/Live) / GAIA / BFCL / τ-bench / WebArena / OSWorld 6 大主流 + 5 大读 leaderboard 陷阱 (contamination / harness drift / sample selection / oracle / cost) + 30 题
+> - 📌 **3 大补丁**：[`docs/infra.html#ch-1-5`](docs/infra.html#ch-1-5) §1.5 LLM 基础 30 题速查（attention / KV cache / GQA / spec decoding / 采样 / tokenizer）· [`docs/p1-hardening.html#ch-8`](docs/p1-hardening.html#ch-8) §8 Cost-Latency 5 case study · [`docs/tool-design.html#ch-11`](docs/tool-design.html#ch-11) §11 Security 30 招攻防（OWASP LLM Top 10 + Constitutional AI）
 >
-> 四本互补：learn 建心智 → enterprise 学交付 → infra 钻底层 → index 看代码 · 加上 harness 范式（Book 13 + 14）= 完整覆盖。
+> **🌐 全部 21 本书入口** → [`docs/index.html`](docs/index.html) — 按 7 阶段学习路径分类的 landing page · 38000+ 行 · 460+ 题 · 1100+ 词
+>
+> 完整覆盖：learn 建心智 → 4 大支柱（framework/RAG/memory/tool）→ 3 本工程实战（eval/debug/enterprise）→ 3 本面试冲刺（system design + live coding + behavioral）→ 3 本进阶专项（infra/harness/对比）→ 3 本扩展速读（hermes/mcp/p1）→ 3 本必补（post-training/multimodal/benchmarks）。
 
 > **🐹 想用 Go 服务调 agent？** → [`clients/go-client/`](clients/go-client/) · 零依赖纯 stdlib SDK · `cli.Chat` 阻塞 / `cli.ChatStream` 流式 · 4 个可跑 demo
 >

@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Book 20 · Multimodal &amp; Voice Agents · 桃桃 Agent</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230f1d35'/%3E%3Cpath d='M32 10 L 36 26 L 54 28 L 40 38 L 44 54 L 32 44 L 20 54 L 24 38 L 10 28 L 28 26 Z' fill='%23f4c95a' stroke='%23fff5d8' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E">
+<meta name="description" content="VLM 5 模型横评 · screen-use / computer-use (Cursor / Devin / Anthropic) · 语音 agent 三层栈 (STT/LLM/TTS) · Vapi / Retell / Pipecat 横评 · latency budget 拆解 · 4 真翻车 · 30 题 · 60 词术语">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #0f1d35; --paper-2: #162844; --paper-card: #1c3155;
+  --ink: #f5ecd2; --ink-soft: #c8be9b; --ink-mute: #7e8aa6;
+  --rule: #2c4570; --rule-soft: #1f3458;
+  --leaf: #8eb58f; --leaf-soft: #1d3a38;
+  --rust: #e08e6f; --rust-soft: #3a2a22;
+  --sky:  #6a96bc; --sky-soft:  #1f3050;
+  --gold: #f4c95a; --gold-soft: #3a2f1f;
+  --plum: #c0a3d1; --plum-soft: #2a1f3a;
+  --font-display: "Fraunces", "Times New Roman", serif;
+  --font-body: "Lora", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  --font-zh: "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: radial-gradient(ellipse at top left, rgba(192,163,209,.10), transparent 50%), radial-gradient(ellipse at bottom right, rgba(140,180,220,.10), transparent 50%), var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.75; }
+:lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(244,201,90,.4); transition: all .15s; }
+a:hover { background: rgba(244,201,90,.08); }
+a.bare { border-bottom: none; }
+strong { font-weight: 600; color: var(--ink); }
+em { font-style: italic; color: var(--leaf); font-weight: 500; }
+code { font-family: var(--font-mono); font-size: 0.85em; background: var(--paper-2); padding: 0.08rem 0.35rem; border-radius: 4px; color: var(--rust); border: 1px solid var(--rule-soft); }
+pre { font-family: var(--font-mono); background: #0a1628; color: #e8e3d4; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; font-size: 0.84rem; line-height: 1.55; border: 1px solid var(--rule); }
+pre code { background: none; color: inherit; padding: 0; border: 0; font-size: inherit; }
+
+.container { max-width: 920px; margin: 0 auto; padding: 0 2rem; }
+@media (max-width: 720px) { .container { padding: 0 1.2rem; } }
+
+.nav { padding: 1.4rem 0; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: rgba(15,29,53,.88); backdrop-filter: blur(8px); z-index: 100; }
+.nav-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.nav-brand { font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 1.2rem; color: var(--ink); border: none; }
+.nav-brand .dot { color: var(--gold); }
+.nav-links { display: flex; gap: 1.4rem; font-family: var(--font-sans); font-size: 0.88rem; }
+.nav-links a { color: var(--ink-mute); border-bottom: none; font-weight: 500; }
+.nav-links a:hover { color: var(--rust); background: none; }
+
+.hero { padding: 4rem 0 2.6rem; border-bottom: 1px solid var(--ink); position: relative; }
+.hero::after { content: ""; position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%); width: 90px; height: 4px; background: var(--rust); }
+.eyebrow { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.08em; color: var(--rust); margin-bottom: 1.2rem; font-weight: 600; text-transform: uppercase; }
+.hero h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 1.4rem; color: var(--ink); }
+.hero h1 em { color: var(--rust); font-style: italic; }
+.hero-lede { font-size: 1.12rem; color: var(--ink-soft); max-width: 36em; margin: 0 0 1rem; line-height: 1.65; }
+.hero-meta { font-family: var(--font-sans); font-size: 0.84rem; color: var(--ink-mute); margin-top: 1.2rem; }
+.hero-meta strong { color: var(--gold); }
+
+.section { padding: 3.4rem 0; border-bottom: 1px dashed var(--rule); }
+.section:last-of-type { border-bottom: none; }
+.section h2 { font-family: var(--font-display); font-weight: 500; font-size: 1.85rem; letter-spacing: -0.01em; margin: 0 0 1.4rem; color: var(--ink); display: flex; align-items: baseline; gap: 0.7rem; }
+.section h2 .num { font-family: var(--font-mono); font-weight: 400; font-size: 0.9rem; color: var(--rust); letter-spacing: 0.06em; }
+.section h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.2rem; margin: 2rem 0 0.6rem; color: var(--ink); }
+.section h4 { font-family: var(--font-sans); font-weight: 600; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gold); margin: 1.4rem 0 0.4rem; }
+.section p { margin: 0 0 1rem; }
+.section ul { padding-left: 1.4rem; margin: 0.6rem 0 1rem; }
+.section li { margin: 0.4rem 0; }
+.section ol { padding-left: 1.4rem; margin: 0.6rem 0 1rem; }
+.section ol li { margin: 0.5rem 0; }
+
+table { border-collapse: collapse; width: 100%; margin: 1rem 0 1.4rem; background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; font-size: 0.9rem; }
+th, td { padding: 0.7rem 0.85rem; text-align: left; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+th { background: var(--leaf-soft); color: var(--ink); font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td code { font-size: 0.82rem; }
+
+.cb { background: var(--paper-card); border: 1px solid var(--rule); border-left: 4px solid var(--rust); border-radius: 8px; padding: 1rem 1.2rem; margin: 1.2rem 0; font-size: 0.96rem; }
+.cb.leaf { border-left-color: var(--leaf); background: var(--leaf-soft); }
+.cb.gold { border-left-color: var(--gold); background: var(--gold-soft); }
+.cb.sky { border-left-color: var(--sky); background: var(--sky-soft); }
+.cb.plum { border-left-color: var(--plum); background: var(--plum-soft); }
+.cb-h { font-family: var(--font-sans); font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: var(--ink-mute); margin: 0 0 0.3rem; }
+
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.2rem 0; }
+@media (max-width: 720px) { .split { grid-template-columns: 1fr; } }
+.split > div { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; padding: 1rem 1.1rem; }
+.split h4 { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin: 0 0 0.6rem; font-weight: 600; }
+
+.ladder { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; padding: 1rem 1.2rem; font-family: var(--font-mono); font-size: .82rem; line-height: 1.7; margin: 1rem 0; }
+.ladder span.bar { display: inline-block; height: 10px; background: var(--rust); border-radius: 3px; vertical-align: middle; margin: 0 .4rem; }
+
+.qbank { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 12px; padding: 1.4rem 1.6rem; margin: 1.4rem 0; }
+.qbank h3 { margin-top: 0.6rem; color: var(--gold); font-size: 1.05rem; border-bottom: 1px solid var(--rule); padding-bottom: 0.5rem; }
+.qbank h3:first-child { margin-top: 0; }
+.qbank ol { margin: 0.4rem 0 1rem; padding-left: 1.4rem; }
+.qbank ol li { margin: 0.45rem 0; font-size: 0.94rem; }
+.qbank .qhint { color: var(--ink-mute); font-size: 0.82rem; font-style: italic; }
+
+.glossary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem 1.4rem; font-size: 0.88rem; margin: 1rem 0; }
+@media (max-width: 720px) { .glossary { grid-template-columns: 1fr; } }
+.glossary div { padding: 0.4rem 0; border-bottom: 1px dashed var(--rule-soft); }
+.glossary strong { color: var(--gold); }
+
+.foot { padding: 3rem 0 4rem; text-align: center; font-family: var(--font-sans); color: var(--ink-mute); font-size: 0.88rem; }
+.foot a { color: var(--ink-mute); border-bottom: 1px solid rgba(44,69,112,.3); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-row">
+    <a class="nav-brand" href="index.html"><span class="dot">★</span> 桃桃 Agent</a>
+    <div class="nav-links">
+      <a href="index.html">首页</a>
+      <a href="harness.html">Harness</a>
+      <a href="agent-design.html">System Design</a>
+      <a href="infra.html">AI Infra</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <div class="eyebrow">Book 20 · Multimodal &amp; Voice</div>
+    <h1>VLM、screen-use、语音 agent · <em>2026 senior 必备</em> 三件套</h1>
+    <p class="hero-lede">
+      纯文本 LLM 已经不是"agent 工程师"工作的全部。Cursor / Devin / Computer Use
+      让 <strong>VLM + screen 截图</strong>成为新基础设施 ·
+      Vapi / Retell / Pipecat 让 <strong>语音 agent</strong> latency 卷到 300ms 以下 ·
+      面试官越来越爱问"你怎么把 VLM 接进 agent"和"voice 三层栈延迟怎么拆"。
+      这一本系统化讲清两边。
+    </p>
+    <p class="hero-meta">
+      <strong>9 章</strong> · <strong>30 题</strong> · <strong>60 词术语</strong> · 阅读 ~50 分钟
+    </p>
+  </div>
+</header>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 1</span>VLM 一句话 · 它跟纯文本 LLM 差在哪</h2>
+    <p>
+      <strong>VLM (Vision-Language Model)</strong> = LLM 把"图像 token" 跟"文本 token" 拼在一起处理。
+      架构上几乎都是<em>同一套 transformer</em>，差别在前面多一个 <strong>vision encoder</strong>
+      （ViT / SigLIP / CLIP-style），把图像切 patch、过 encoder、拿到 image tokens，
+      跟文本 token concat 进 LLM。
+    </p>
+
+    <pre><code>image (224×224 / 336×336 / 1024×1024)
+  └─ vision encoder (ViT) → patch embeddings (e.g. 576 tokens for 24×24 patch)
+       └─ projector (MLP / Q-Former / Resampler) → 跟 LLM hidden_dim 对齐
+            └─ concat with text tokens → 普通 transformer forward
+                 └─ 输出文本 (autoregressive)</code></pre>
+
+    <p>
+      <strong>关键 trade-off</strong>：image tokens 数量决定能看清多少细节但也决定推理成本。
+      GPT-4V 默认每张图 ~1100 tokens · Claude 3.5 ~1600 · Gemini 1.5 Pro ~258（很激进的压缩）·
+      Qwen-VL 用动态 patch（小图省 token，大图多 token）。
+    </p>
+
+    <div class="cb gold">
+      <p class="cb-h">面试常考</p>
+      <p style="margin: 0">
+        "为什么 VLM 处理 1024×1024 图比 224×224 慢这么多？"
+        答：image tokens 数量 ≈ <code>(width/patch)²</code>，1024 / 14 patch → ~5300 tokens vs
+        224 / 14 → ~256 tokens · 多 20 倍 · 走 attention 是 N² · 推理时间 400 倍。
+        所以工业用法基本都是 <em>动态 resize / multi-crop</em> 平衡。
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 2</span>5 大主流 VLM 横评（2026 视角）</h2>
+    <table>
+      <thead><tr><th>模型</th><th>vision 强项</th><th>弱项</th><th>典型 cost (1 张 1MP 图)</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>GPT-4o / 4.1</strong></td>
+          <td>OCR / 表格 / 通用 reasoning · 工业最稳</td>
+          <td>高分辨率细节差 · 成本高</td>
+          <td>~$0.005</td>
+        </tr>
+        <tr>
+          <td><strong>Claude 3.5 / 4 Sonnet</strong></td>
+          <td>screenshot 理解（Computer Use 优势）· UI 元素定位</td>
+          <td>纯艺术图描述较平淡</td>
+          <td>~$0.005</td>
+        </tr>
+        <tr>
+          <td><strong>Gemini 1.5/2 Pro</strong></td>
+          <td>视频理解（原生）· 长上下文 (1M token)</td>
+          <td>OCR 精度略逊 GPT-4o</td>
+          <td>~$0.002</td>
+        </tr>
+        <tr>
+          <td><strong>Qwen-VL 2.5/3</strong></td>
+          <td>开源 · 中文 OCR 强 · 动态分辨率</td>
+          <td>需要自己 host · 工程量</td>
+          <td>~$0 (自建)</td>
+        </tr>
+        <tr>
+          <td><strong>InternVL 2.5/3</strong></td>
+          <td>开源 · 跑 benchmark 排第一梯队</td>
+          <td>生态比 Qwen-VL 弱</td>
+          <td>~$0 (自建)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>选型决策树：</p>
+    <ul>
+      <li><em>screenshot 理解 / computer-use</em> → Claude 3.5+ 优先</li>
+      <li><em>OCR / 票据 / 表格</em> → GPT-4o 优先</li>
+      <li><em>视频 / 长 ctx 内容理解</em> → Gemini 1.5+ Pro 优先</li>
+      <li><em>privacy / 不能调云 API</em> → Qwen-VL 或 InternVL 自建</li>
+      <li><em>移动端 / 端侧</em> → Qwen-VL-2B / InternVL-2-2B (4 bit)</li>
+    </ul>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 3</span>Screen-use / Computer-use · 怎么实现</h2>
+    <p>
+      <strong>Computer Use (Anthropic 2024-10)</strong> 让 Claude 能看 desktop 截图、移动鼠标、
+      敲键盘。Cursor / Devin / Open Interpreter 已经基于这套思路落地。看似魔法，
+      其实就是<em>VLM + tool-call + screenshot loop</em>：
+    </p>
+
+    <pre><code>loop:
+  screenshot = take_screenshot()          # tool: 截屏 -> bytes
+  obs = vlm.run(
+    system="你是 desktop agent · 看截图 · 决定 click/type/key/scroll · 输出 tool_call",
+    images=[screenshot],
+    messages=history,
+  )
+  if obs.tool_call:
+    execute(obs.tool_call)                # tool: pyautogui.click(x,y) / type(text) / etc
+    history += [obs.tool_call, "done"]
+  else:
+    return obs.message                    # 任务完成 · 输出给用户</code></pre>
+
+    <h3>3.1 关键 tool 集（Anthropic Computer Use 标准）</h3>
+    <table>
+      <thead><tr><th>tool</th><th>signature</th><th>关键参数</th></tr></thead>
+      <tbody>
+        <tr><td><code>screenshot</code></td><td>() → image</td><td>压缩 / 分辨率</td></tr>
+        <tr><td><code>mouse_move</code></td><td>(x, y) → ok</td><td>VLM 要直接吐 pixel coord</td></tr>
+        <tr><td><code>left_click</code></td><td>(x, y) → ok</td><td>常合并 mouse_move</td></tr>
+        <tr><td><code>type</code></td><td>(text) → ok</td><td>键盘输入 · 多语言</td></tr>
+        <tr><td><code>key</code></td><td>(combo) → ok</td><td>快捷键如 cmd+s</td></tr>
+        <tr><td><code>scroll</code></td><td>(direction, amount) → ok</td><td>页面浏览</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.2 三大坑</h3>
+    <ul>
+      <li><strong>坐标精度</strong>：VLM 直接预测 pixel 坐标常偏 10–30 px。修法：让 VLM 先输出"目标 element 描述"，再用<em>视觉 grounding 模型</em>（OmniParser / SeeClick）转 bbox。</li>
+      <li><strong>screenshot 太大太贵</strong>：1080p 全屏 ≈ 2 MP · 1500+ image tokens。修法：先 detect 当前 active window 裁切 · 或缩到 768 px 长边。</li>
+      <li><strong>无限 loop</strong>：模型卡在某一步反复重试。修法：① 强制每 5 步问"任务完成度 0–100"；② 累计 20 步还没结束直接 abort + 给用户 fallback。</li>
+    </ul>
+
+    <div class="cb sky">
+      <p class="cb-h">VLM + UI 的开源底座</p>
+      <ul style="margin: .3rem 0 0">
+        <li><strong>OmniParser (Microsoft, 2024)</strong>: 把任意截图解析成结构化 element tree</li>
+        <li><strong>SeeClick (2024)</strong>: 文本 "log in 按钮" → bounding box · 解决坐标偏问题</li>
+        <li><strong>Anthropic Computer Use Demo</strong>: <code>github.com/anthropics/anthropic-quickstarts</code></li>
+        <li><strong>Open Interpreter</strong>: 开源的 desktop / terminal agent · 可以 self-host</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 4</span>语音 agent 三层栈 · STT → LLM → TTS</h2>
+    <p>
+      "voice agent" 不是 LLM 直接听说，而是三层 pipeline + 一堆 latency-killer 中间件：
+    </p>
+
+    <pre><code>用户开口
+   │
+   │  ① VAD (Voice Activity Detection)  · 判断 user 在说话 / 已说完
+   │
+   ▼
+   ② STT (Speech-to-Text)              · streaming 转文字
+   │
+   ▼
+   ③ LLM (生成 response)                · 流式输出 token
+   │
+   ▼
+   ④ TTS (Text-to-Speech)              · 流式合成音频
+   │
+   ▼
+   ⑤ 音频送回用户耳朵</code></pre>
+
+    <h3>4.1 各层主流方案 (2026)</h3>
+    <table>
+      <thead><tr><th>层</th><th>主流 / 默认</th><th>替代</th><th>关键指标</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>VAD</strong></td>
+          <td>Silero VAD (开源 · 1MB · CPU 跑)</td>
+          <td>WebRTC VAD · Picovoice Cobra</td>
+          <td>对静音灵敏度 / 假阳性率</td>
+        </tr>
+        <tr>
+          <td><strong>STT</strong></td>
+          <td>Deepgram Nova-3 · OpenAI Whisper / gpt-4o-transcribe</td>
+          <td>AssemblyAI · 自部署 Whisper-large-v3</td>
+          <td>WER · 首字延迟 (TTFB &lt; 200ms)</td>
+        </tr>
+        <tr>
+          <td><strong>LLM</strong></td>
+          <td>GPT-4o-mini · Claude Haiku · Llama-3.1-70B</td>
+          <td>同 SLM 生态</td>
+          <td>TTFT &lt; 300ms · TPS &gt; 50</td>
+        </tr>
+        <tr>
+          <td><strong>TTS</strong></td>
+          <td>ElevenLabs Flash · Cartesia Sonic · OpenAI TTS</td>
+          <td>Resemble · Coqui XTTS（自部署）</td>
+          <td>首字音频 &lt; 100ms · 拟人度</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>4.2 端到端 latency budget · 把 1500ms 拆开</h3>
+    <p>
+      用户体感"自然对话" 的硬杠是 <strong>800–1200ms</strong>（电话级）；
+      "fluent / 像真人"是 <strong>500ms 以下</strong>。budget 拆：
+    </p>
+
+    <div class="ladder">
+      VAD detect end-of-speech    <span class="bar" style="width: 30px"></span> 250–400ms (主要是 silence threshold)<br>
+      STT 出最后一个 partial      <span class="bar" style="width: 18px"></span> 100–150ms<br>
+      LLM TTFT (首 token)        <span class="bar" style="width: 36px"></span> 250–500ms<br>
+      TTS 首字音频               <span class="bar" style="width: 12px"></span> 80–120ms<br>
+      网络 RTT (双向)             <span class="bar" style="width: 14px"></span> 60–120ms<br>
+      ──────────────────────────────────<br>
+      <em>感知延迟</em>（用户开口 → 听到 agent 第一个字）≈ 800–1200ms
+    </div>
+
+    <h3>4.3 latency 5 大优化招</h3>
+    <ol>
+      <li><strong>STT 出 partial 就喂 LLM</strong>（不等 final）· LLM 可以"预热" KV-cache</li>
+      <li><strong>"endpointing"</strong>: 不等 800ms 静音才认为说完 · 用 STT 的 punctuation prediction · 听到 ?/. 立刻打断</li>
+      <li><strong>LLM 开 streaming + TTS 开 streaming</strong>: LLM 出第一句 / 第一个 punctuation 就喂 TTS · 不等整个回复</li>
+      <li><strong>填充词 (filler) 抢时间</strong>: LLM 还在算时先 TTS 一句"嗯..."掩盖 · Vapi / Retell 默认行为</li>
+      <li><strong>预热 + warm pool</strong>: 长连接（WebSocket）+ 预 fork worker 池 · 砍冷启动</li>
+    </ol>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 5</span>Vapi / Retell / Pipecat · 三选一</h2>
+    <p>
+      不用从零搭三层栈——下面 3 个框架已经把 latency 优化做得很到位。横评：
+    </p>
+
+    <table>
+      <thead><tr><th>方案</th><th>定位</th><th>典型 latency</th><th>vendor lock</th><th>适合谁</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Vapi</strong></td>
+          <td>SaaS · 全栈托管 · 自带 phone number</td>
+          <td>~700ms</td>
+          <td>高（绑定 SaaS）</td>
+          <td>需要电话 inbound/outbound · 创业公司起步</td>
+        </tr>
+        <tr>
+          <td><strong>Retell AI</strong></td>
+          <td>SaaS · 主打企业电话场景</td>
+          <td>~600ms</td>
+          <td>高</td>
+          <td>客服 / 预约 / 销售 outbound</td>
+        </tr>
+        <tr>
+          <td><strong>Pipecat</strong></td>
+          <td>开源 framework (Daily.co)</td>
+          <td>取决于自己组件 · 可压到 ~400ms</td>
+          <td>低</td>
+          <td>需要 deep customization · 自部署 · 接 WebRTC</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>5.1 Pipecat 核心设计 · 一段代码看完</h3>
+    <pre><code>from pipecat.pipeline.pipeline import Pipeline
+from pipecat.services.deepgram import DeepgramSTTService
+from pipecat.services.openai import OpenAILLMService
+from pipecat.services.cartesia import CartesiaTTSService
+
+pipeline = Pipeline([
+    transport.input(),                  # 进 WebRTC frames
+    DeepgramSTTService(api_key=...),    # frames -&gt; partial text frames
+    LLMUserResponseAggregator(),        # 把 partial 攒成整句再 ship
+    OpenAILLMService(api_key=..., model="gpt-4o-mini"),
+    CartesiaTTSService(api_key=..., voice_id="..."),
+    transport.output(),                 # 出 WebRTC frames -&gt; 用户耳朵
+])
+
+# 跑：
+runner = PipelineRunner()
+runner.run(PipelineTask(pipeline))</code></pre>
+
+    <p>
+      <strong>关键设计</strong>：每个 service 只处理 <em>frames</em>（音频 / 文本 / 控制），
+      所有连接是<em>异步流</em>。LLM service 一边输出 token 一边 push 给 TTS service · 不等完。
+    </p>
+
+    <div class="cb leaf">
+      <p class="cb-h">谁用 Pipecat</p>
+      <p style="margin: 0">
+        ChatGPT Voice Mode 早期 demo 用了 Pipecat ·
+        Anysphere / Cursor 内部 voice 实验 ·
+        Daily.co 自家产品。<em>2025 H2 起，企业自部署 voice agent 几乎都从 Pipecat 起步</em>。
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 6</span>原生多模态模型 · GPT-4o-realtime / Gemini Live</h2>
+    <p>
+      上面四层栈是<em>松耦合</em>组合 · 灵活但延迟有下限（VAD + STT 串行）。
+      <strong>2024 H2 起出现"原生多模态"</strong>——audio in / audio out 一个模型搞定，
+      跳过 STT 和 TTS 两步。
+    </p>
+
+    <table>
+      <thead><tr><th>模型</th><th>架构</th><th>typical latency</th><th>定价 (per min)</th></tr></thead>
+      <tbody>
+        <tr><td><strong>GPT-4o Realtime API</strong></td><td>同一个 transformer 接受 audio token</td><td>~320ms</td><td>~$0.06 in / $0.24 out</td></tr>
+        <tr><td><strong>Gemini 2 Live</strong></td><td>同上 · video in 也 native</td><td>~400ms</td><td>~$0.07</td></tr>
+        <tr><td><strong>Moshi (Kyutai 开源)</strong></td><td>full-duplex (能边听边说)</td><td>~200ms</td><td>$0 自建</td></tr>
+      </tbody>
+    </table>
+
+    <p>
+      <strong>权衡</strong>：原生模型延迟低、表达力强（能模仿语气 / 笑 / 唱），但<em>难调试</em>
+      （没有中间 text，看不到模型在说什么）、<em>价高</em>、<em>定制差</em>（不能换 voice / STT 引擎）。
+      生产上 2026 大多数公司还是 <strong>松耦合栈</strong> 为主，原生只在<em>高端体验</em>场景用。
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 7</span>4 真翻车复盘</h2>
+
+    <h3>7.1 翻车 A · VLM screenshot 分辨率太大爆 cost</h3>
+    <p>
+      <strong>背景</strong>：computer-use agent 跑客户 SaaS dashboard · 每步截 1440×900 全屏。
+    </p>
+    <p>
+      <strong>症状</strong>：100 个并发 session · 单月 vision API 账单 $48k · 比预期高 9 倍。
+    </p>
+    <p>
+      <strong>根因</strong>：1440×900 → ~1700 image tokens · 每步对 2 张图（before/after action）
+      → 3400 image tokens / step · 平均 12 step / task · 40000 image tokens / task。
+    </p>
+    <p>
+      <strong>修法</strong>：① 先 detect active window 裁切（典型省 60%）· ② 长边缩到 1024 ·
+      ③ 只在"action 后" 截屏 · 不在 "before"。月成本降到 $11k。
+    </p>
+
+    <h3>7.2 翻车 B · 语音 agent 在嘈杂环境一直被打断</h3>
+    <p>
+      <strong>背景</strong>：客服语音 agent · 用户在地铁 / 开车环境调用。
+    </p>
+    <p>
+      <strong>症状</strong>：agent 才说半句就被自己背景噪音 trigger VAD 当作"用户在说话"
+      → 自我打断 · 用户体验灾难。
+    </p>
+    <p>
+      <strong>修法</strong>：① 加 echo cancellation (Krisp / Daily AEC) · ② VAD threshold 动态根据
+      ambient noise 调 · ③ TTS 播放期间 VAD sensitivity 降低（仅检测显著语音事件）。
+    </p>
+
+    <h3>7.3 翻车 C · LLM 流式输出导致 TTS 句子拆得很奇怪</h3>
+    <p>
+      <strong>背景</strong>：为了低延迟 · 每收到 1 个 token 就尝试喂 TTS。
+    </p>
+    <p>
+      <strong>症状</strong>：TTS 出来"嗯。是的。它。能。帮你。" 像机器人。
+    </p>
+    <p>
+      <strong>修法</strong>：在 LLM stream 跟 TTS 之间加 <strong>sentence aggregator</strong>——
+      累积到 punctuation (. ? ! 中文 。？！) 再 flush · 同时设 max_chars=80 兜底防长句卡住。
+    </p>
+
+    <h3>7.4 翻车 D · Computer-use agent 误删用户文件</h3>
+    <p>
+      <strong>背景</strong>：让 agent "整理一下 Downloads 文件夹"。
+    </p>
+    <p>
+      <strong>症状</strong>：agent 把整个 Downloads 拖进了垃圾桶并清空。
+    </p>
+    <p>
+      <strong>根因</strong>：① 模糊指令 + ② 没 dry-run + ③ 没要 user confirmation。
+    </p>
+    <p>
+      <strong>修法</strong>：① 任何 destructive action（rm / drag-to-trash / overwrite）必须 user
+      confirm · ② sandbox 跑（一个空白 VM） · ③ 大动作前 take backup snapshot ·
+      ④ system prompt 加 "如果指令含糊 · 先复述给用户确认 · 不要假设"。
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 8</span>30 道 senior 面试题</h2>
+    <div class="qbank">
+      <h3>VLM &amp; Vision</h3>
+      <ol>
+        <li>VLM 跟纯文本 LLM 架构上差什么？讲一下 vision encoder + projector + LLM 流程。</li>
+        <li>image tokens 数量怎么算？为什么 1024×1024 比 224×224 慢这么多？</li>
+        <li>GPT-4V vs Claude vision vs Gemini vs Qwen-VL · 给 4 个场景各推荐一个。</li>
+        <li>"动态分辨率"（Qwen-VL）跟 "fixed crop"（CLIP/GPT-4V）trade-off？</li>
+        <li>VLM 在 OCR 上能不能直接打过传统 OCR？什么场景能 / 不能？</li>
+      </ol>
+
+      <h3>Computer-use / Screen-use</h3>
+      <ol>
+        <li>给你 Anthropic Computer Use API · 你怎么 prevent 它把用户文件 rm -rf？</li>
+        <li>VLM 直接预测 pixel 坐标精度怎样？怎么补救？</li>
+        <li>computer-use agent 卡死在某一步怎么 detect？</li>
+        <li>screenshot 1440×900 太贵怎么压？讲 3 招。</li>
+        <li>OmniParser / SeeClick 解决了 computer-use 的什么问题？</li>
+      </ol>
+
+      <h3>Voice 三层栈</h3>
+      <ol>
+        <li>语音 agent 端到端 latency budget · 怎么拆 1200ms？</li>
+        <li>VAD 是什么？为什么静音 threshold 动态调？</li>
+        <li>STT partial vs final · 流式语音 agent 怎么用？</li>
+        <li>LLM TTFT 想从 600ms 砍到 250ms · 你会做什么？</li>
+        <li>TTS 流式合成的 sentence aggregator 怎么写？</li>
+        <li>为什么 voice agent 经常加"嗯..."这种 filler？</li>
+        <li>双向 RTT 60ms vs 200ms 体验差多少？</li>
+        <li>Echo cancellation 解决什么问题？</li>
+        <li>电话场景 (PSTN) 跟 web 场景的栈有什么区别？</li>
+      </ol>
+
+      <h3>Vapi / Retell / Pipecat</h3>
+      <ol>
+        <li>Vapi vs Retell vs Pipecat · 你会怎么选？三个场景给三个答案。</li>
+        <li>Pipecat 的 pipeline 和 frames 抽象解决了什么问题？</li>
+        <li>Pipecat 想接自己 fine-tune 过的 Whisper 怎么做？</li>
+        <li>Retell 的 endpointing 跟 Vapi 的 endpointing 差别？</li>
+      </ol>
+
+      <h3>原生多模态</h3>
+      <ol>
+        <li>GPT-4o Realtime 跟传统三层栈对比 · 各自适合什么场景？</li>
+        <li>原生模型最大的可观测性问题是什么？怎么 mitigate？</li>
+        <li>Moshi 的 "full duplex" 解决了什么传统栈做不到的事？</li>
+      </ol>
+
+      <h3>系统设计</h3>
+      <ol>
+        <li>设计一个 customer support voice agent · 5000 并发 · 凌晨 3 点的 cold session。</li>
+        <li>设计一个 desktop agent · 帮用户填表 · 怎么处理 OAuth 登录步骤？</li>
+        <li>设计一个 medical image triage agent · VLM + 专家 escalation。</li>
+        <li>给 voice agent 做 LLM-as-judge 式 eval · 怎么覆盖语音特有问题（停顿 / 打断）？</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 9</span>60 词术语表</h2>
+    <div class="glossary">
+      <div><strong>VLM</strong>: Vision-Language Model · 多模态 LLM</div>
+      <div><strong>ViT</strong>: Vision Transformer · 主流图像 encoder</div>
+      <div><strong>SigLIP</strong>: 改进版 CLIP · sigmoid loss</div>
+      <div><strong>CLIP</strong>: 开山图文对齐预训练</div>
+      <div><strong>Image tokens</strong>: 图像被 patch 化后的 token</div>
+      <div><strong>Patch</strong>: 图像切成的小方块（典型 14×14 / 16×16 px）</div>
+      <div><strong>Projector</strong>: vision feature → LLM 维度的 MLP</div>
+      <div><strong>Q-Former</strong>: BLIP-2 的 query-based 投影</div>
+      <div><strong>Resampler</strong>: Flamingo 的 cross-attention 投影</div>
+      <div><strong>动态分辨率</strong>: 根据图大小动态切 patch 数</div>
+      <div><strong>Multi-crop</strong>: 一张图多个 crop 喂 VLM</div>
+      <div><strong>OCR</strong>: Optical Character Recognition</div>
+      <div><strong>Visual grounding</strong>: 文本 → bbox</div>
+      <div><strong>OmniParser</strong>: 截图 → element tree (Microsoft)</div>
+      <div><strong>SeeClick</strong>: 文本指令 → UI 坐标</div>
+      <div><strong>Computer Use</strong>: Anthropic 的 desktop agent API</div>
+      <div><strong>Screenshot loop</strong>: 截屏 → VLM → action 循环</div>
+      <div><strong>Active window detection</strong>: 只截当前窗口省 token</div>
+      <div><strong>STT (ASR)</strong>: Speech-to-Text · 自动语音识别</div>
+      <div><strong>TTS</strong>: Text-to-Speech · 语音合成</div>
+      <div><strong>VAD</strong>: Voice Activity Detection</div>
+      <div><strong>Endpointing</strong>: 判断用户已说完</div>
+      <div><strong>Whisper</strong>: OpenAI 开源 STT</div>
+      <div><strong>Deepgram Nova</strong>: 商业 STT API</div>
+      <div><strong>Cartesia Sonic</strong>: 商业 TTS · 主打低延迟</div>
+      <div><strong>ElevenLabs Flash</strong>: 商业 TTS · 拟人度高</div>
+      <div><strong>WER</strong>: Word Error Rate · STT 准确率指标</div>
+      <div><strong>TTFB</strong>: Time To First Byte (响应)</div>
+      <div><strong>TTFT</strong>: Time To First Token · LLM 响应起点</div>
+      <div><strong>TPS</strong>: Tokens Per Second · LLM 输出速率</div>
+      <div><strong>Sentence aggregator</strong>: LLM token 攒成句子再喂 TTS</div>
+      <div><strong>Filler</strong>: "嗯..."等填充词掩盖延迟</div>
+      <div><strong>Streaming TTS</strong>: 边收文字边出音频</div>
+      <div><strong>Barge-in</strong>: 用户打断 agent 说话</div>
+      <div><strong>Echo cancellation (AEC)</strong>: 消除自身回声</div>
+      <div><strong>Krisp</strong>: 商业去噪 SDK</div>
+      <div><strong>WebRTC</strong>: 浏览器实时音视频协议</div>
+      <div><strong>SIP / PSTN</strong>: 电话信令 / 公共电话网</div>
+      <div><strong>Twilio</strong>: 经典电话/SMS API</div>
+      <div><strong>Daily.co</strong>: WebRTC 平台 · Pipecat 母公司</div>
+      <div><strong>Vapi</strong>: voice agent SaaS</div>
+      <div><strong>Retell AI</strong>: voice agent SaaS · 企业向</div>
+      <div><strong>Pipecat</strong>: 开源 voice agent framework</div>
+      <div><strong>Frame</strong>: Pipecat 的最小数据单位</div>
+      <div><strong>Realtime API</strong>: GPT-4o 原生 audio in/out API</div>
+      <div><strong>Gemini Live</strong>: Google 原生多模态 API</div>
+      <div><strong>Moshi</strong>: Kyutai 开源原生语音 LLM (full-duplex)</div>
+      <div><strong>Full-duplex</strong>: 同时听 + 说</div>
+      <div><strong>Half-duplex</strong>: 一次只能 listen 或 speak</div>
+      <div><strong>Sample rate</strong>: 16kHz (语音) / 24kHz (TTS) / 48kHz (HiFi)</div>
+      <div><strong>Opus</strong>: 主流低延迟语音编码</div>
+      <div><strong>PCM</strong>: 未压缩原始音频</div>
+      <div><strong>Punctuation prediction</strong>: STT 输出标点 · 帮 endpointing</div>
+      <div><strong>Wake word</strong>: "Hey Siri" 类唤醒词</div>
+      <div><strong>Speaker diarization</strong>: 多说话人切分</div>
+      <div><strong>Silence threshold</strong>: VAD 静音判定时长</div>
+      <div><strong>Cold session</strong>: 首次连接的延迟</div>
+      <div><strong>Warm pool</strong>: 预热的 worker 池</div>
+      <div><strong>Sub-500ms goal</strong>: "fluent" voice 的工业目标</div>
+      <div><strong>Voice clone</strong>: 几秒采样克隆音色</div>
+      <div><strong>Prosody</strong>: 语调 / 节奏 / 重音</div>
+      <div><strong>SSML</strong>: 标记语言 · 控制 TTS 停顿/语速</div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 10</span>下一步 · 配套阅读</h2>
+    <ul>
+      <li><a href="harness.html">Book 13 · Harness</a> — computer-use agent 几乎都是 harness 风</li>
+      <li><a href="agent-design.html">Book 10 · System Design</a> — voice agent 系统设计题</li>
+      <li><a href="infra.html">Book 12 · AI Infra</a> — VLM 推理优化（KV cache · vision encoder 量化）</li>
+      <li><a href="post-training.html">Book 19 · Post-Training</a> — VLM 怎么 fine-tune（LLaVA-style）</li>
+    </ul>
+    <p>
+      <strong>必读 paper / 项目</strong>：
+      LLaVA (2023) · Qwen-VL Tech Report (2024) · Anthropic Computer Use blog (2024-10) ·
+      OmniParser (2024) · Moshi (2024) · OpenAI GPT-4o Realtime API docs ·
+      Pipecat <code>pipecat-ai/pipecat</code> repo。
+    </p>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="container">
+    <p>桃桃 Agent 学习手册 · Book 20 · Multimodal &amp; Voice Agents</p>
+    <p><a href="index.html">← 回总目录</a> · <a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">GitHub</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
