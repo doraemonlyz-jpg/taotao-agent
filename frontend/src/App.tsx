@@ -92,6 +92,15 @@ export default function App() {
         <LangToggle />
         <a
           className="repo-link"
+          href={import.meta.env.VITE_DOCS_URL ?? "/api/tutorial/index.html"}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={t("tutorialTip")}
+        >
+          {t("tutorialLink")}
+        </a>
+        <a
+          className="repo-link"
           href="https://github.com/doraemonlyz-jpg/agent-demo"
           target="_blank"
           rel="noopener noreferrer"

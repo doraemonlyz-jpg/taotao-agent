@@ -144,9 +144,13 @@ table code { font-size: 0.82em; }
 .pull cite { display: block; margin-top: 0.6rem; font-style: normal; font-family: var(--font-sans); font-size: 0.78rem; color: var(--ink-mute); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500; }
 footer.colophon { margin-top: 5rem; padding-top: 2.5rem; border-top: 2px solid var(--ink); font-family: var(--font-sans); font-size: 0.85rem; color: var(--ink-mute); }
 footer.colophon .row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.6rem; }
+
+#open-app-fab { position: fixed; top: 14px; right: 16px; z-index: 999; display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.5rem 0.95rem; background: rgba(244,201,90,.92); color: #1d1d1f; font-family: var(--font-sans, system-ui, sans-serif); font-weight: 600; font-size: 0.82rem; letter-spacing: 0.02em; border: 1.5px solid #1d1d1f; border-radius: 999px; box-shadow: 2px 2px 0 #1d1d1f; text-decoration: none; transition: transform .12s ease, box-shadow .12s ease; } #open-app-fab:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 #1d1d1f; background: #fff5d8; } #open-app-fab .fab-icon { color: #c84a16; font-size: 0.7rem; } @media (max-width: 600px) { #open-app-fab .fab-text { display: none; } #open-app-fab { padding: 0.5rem 0.6rem; } }
 </style>
 </head>
 <body>
+<a id="open-app-fab" href="/" target="_blank" rel="noopener" title="打开配套 demo · 在线试玩 agent"><span class="fab-icon">▶</span><span class="fab-text">在线 demo</span></a>
+
 <div class="layout">
   <aside class="toc" id="toc">
     <div class="toc-brand">

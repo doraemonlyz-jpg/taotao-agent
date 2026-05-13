@@ -24,6 +24,9 @@ export const ui: Dict = {
   modelLoading: { en: "(loading…)",                                zh: "(加载中…)" },
   backendOff:   { en: "(backend offline — start `uvicorn app:app`)", zh: "(后端未启动 — 请运行 `uvicorn app:app`)" },
   githubLink:   { en: "github →",                                  zh: "Github →" },
+  tutorialLink: { en: "tutorial →",                                zh: "教程 →" },
+  tutorialTip:  { en: "22 books · senior agent engineer interview prep",
+                  zh: "22 本书 · senior agent engineer 面试速通" },
   langToggleA11y: { en: "Switch language",                         zh: "切换语言" },
 
   // engine (graph vs harness) toggle

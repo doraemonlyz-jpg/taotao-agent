@@ -11,6 +11,7 @@ import os
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from langchain_core.messages import AIMessage
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
@@ -109,6 +110,13 @@ TELEMETRY_STATUS = install_telemetry(app)
 # Mount the MCP streamable-http app at /mcp. Endpoint: POST/GET http://host:8000/mcp/
 if _mcp_instance is not None:
     app.mount("/mcp", _mcp_instance.streamable_http_app())
+
+# Mount the book site (docs/) at /tutorial so the frontend can deep-link
+# to any chapter from the topbar without a separate static server.  We
+# avoid /docs because FastAPI already mounts Swagger UI there.
+_DOCS_DIR = (ROOT_DIR := os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))) and os.path.join(ROOT_DIR, "docs")
+if os.path.isdir(_DOCS_DIR):
+    app.mount("/tutorial", StaticFiles(directory=_DOCS_DIR, html=True), name="tutorial")
 
 
 def _maybe_rate_limit(limit_str: str):
