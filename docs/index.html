@@ -4,143 +4,206 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>桃桃 Agent · Senior Agent Engineer 17 本书学习手册</title>
-<meta name="description" content="从 0 到 senior agent engineer 面试 · 17 本完整手册 · 5 阶段学习路径 · 30000+ 行内容 · 320+ 道面试题 · 800+ 词术语表 · 涵盖 LangGraph / RAG / Memory / Tool / Eval / Debug / 系统设计 / Live Coding / 企业级交付 / AI Infra / Harness Engineering / Hermes / MCP / P1 生产化加固">
+<meta name="description" content="从 0 到 senior agent engineer 面试 · 17 本完整手册 · 6 阶段学习路径 · 30000+ 行内容 · 320+ 道面试题 · 800+ 词术语表 · 涵盖 LangGraph / RAG / Memory / Tool / Eval / Debug / 系统设计 / Live Coding / 企业级交付 / AI Infra / Harness Engineering / Hermes / MCP / P1 生产化加固">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --paper: #fbf5e8; --paper-2: #f4ecd6; --paper-card: #ffffff;
-  --ink: #1d1a14; --ink-soft: #3a3327; --ink-mute: #756c5c;
-  --rule: #d8cdb0; --rule-soft: #e8debc;
-  --leaf: #4a8a4a; --leaf-soft: #ebf3e7;
-  --rust: #c44d2a; --rust-soft: #fae6dc;
-  --sky:  #2c6ca8; --sky-soft:  #e2edf5;
+  /* paper · warm afternoon light */
+  --paper: #f9f1de; --paper-2: #f1e7cb; --paper-card: #fffdf6;
+  /* ink · soft, slightly indigo (not pure black) */
+  --ink: #1f1c17; --ink-soft: #3d362a; --ink-mute: #7a705e;
+  --rule: #d8cba6; --rule-soft: #e8debc;
+  /* nature palette · totoro forest */
+  --leaf: #4f8b4f; --leaf-deep: #356b39; --leaf-soft: #e9f1de;
+  --moss: #6b8c5a; --moss-soft: #e3eccd;
+  /* sunset / earth */
+  --rust: #c14a25; --rust-soft: #f9e2d6; --terra: #b85a2c;
+  /* sky · spirited away */
+  --sky:  #4a8fc4; --sky-deep: #2c6ca8; --sky-soft:  #dbeaf5;
+  --night: #1d2f4a; --night-deep: #14213a;
+  /* misc */
   --plum: #864c8e; --plum-soft: #f1e6f2;
-  --gold: #b8881e; --gold-soft: #f7eccd;
+  --gold: #c9961e; --gold-soft: #f7eccd; --gold-warm: #f4c46a;
   --teal: #1f7a6b; --teal-soft: #ddeeea;
   --coral: #d96c5d; --coral-soft: #fae0db;
+
   --font-display: "Fraunces", "Times New Roman", serif;
   --font-body: "Lora", "Iowan Old Style", Georgia, serif;
   --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  --font-hand: "Caveat", "Bradley Hand", cursive;
   --font-zh: "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+
+  --shadow-soft: 0 4px 14px rgba(61,54,42,.08), 0 1px 3px rgba(61,54,42,.05);
+  --shadow-cloud: 0 8px 28px rgba(61,54,42,.10), 0 2px 6px rgba(61,54,42,.06);
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { margin: 0; background: radial-gradient(ellipse at top left, rgba(196,178,144,.14), transparent 50%), radial-gradient(ellipse at bottom right, rgba(74,138,74,.10), transparent 50%), var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.7; }
+
+/* paper texture · faint grain via SVG data URI */
+body {
+  margin: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 15% 8%, rgba(244,196,106,.18), transparent 60%),
+    radial-gradient(ellipse 50% 35% at 85% 20%, rgba(74,143,196,.10), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 50% 100%, rgba(79,139,79,.10), transparent 55%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.36 0 0 0 0 0.22 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"),
+    var(--paper);
+  color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.7;
+}
 :lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
-a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(196,77,42,.4); transition: all .15s; }
-a:hover { background: rgba(196,77,42,.08); }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(193,74,37,.4); transition: all .15s; }
+a:hover { background: rgba(193,74,37,.08); }
 a.bare { border-bottom: none; }
-em { font-style: italic; color: var(--leaf); font-weight: 500; }
+em { font-style: italic; color: var(--leaf-deep); font-weight: 500; }
 strong { font-weight: 600; color: var(--ink); }
 
-.container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+.container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; position: relative; }
 @media (max-width: 720px) { .container { padding: 0 1.2rem; } }
 
 /* ===== nav bar ===== */
-.nav { padding: 1.4rem 0; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: rgba(251,245,232,.95); backdrop-filter: blur(8px); z-index: 100; }
+.nav { padding: 1.2rem 0; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: rgba(249,241,222,.92); backdrop-filter: blur(10px); z-index: 100; }
 .nav-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-.nav-brand { font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 1.3rem; color: var(--ink); border: none; }
+.nav-brand { font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 1.35rem; color: var(--ink); border: none; display: inline-flex; align-items: center; gap: .55rem; }
 .nav-brand .dot { color: var(--rust); }
-.nav-links { display: flex; gap: 1.6rem; font-family: var(--font-sans); font-size: 0.9rem; }
+.nav-brand .leaf-mini { width: 22px; height: 22px; color: var(--leaf); display: inline-block; }
+.nav-links { display: flex; gap: 1.5rem; font-family: var(--font-sans); font-size: 0.9rem; }
 .nav-links a { color: var(--ink-mute); border-bottom: none; font-weight: 500; }
 .nav-links a:hover { color: var(--rust); background: none; }
-.nav-cta { font-family: var(--font-sans); font-size: 0.85rem; padding: 0.45rem 1rem; background: var(--rust); color: white !important; border-radius: 999px; border: none; font-weight: 500; }
+.nav-cta { font-family: var(--font-sans); font-size: 0.85rem; padding: 0.45rem 1.1rem; background: var(--rust); color: white !important; border-radius: 999px; border: none; font-weight: 500; box-shadow: 0 2px 6px rgba(193,74,37,.25); }
 .nav-cta:hover { background: #a13d20; }
 
-/* ===== hero ===== */
-.hero { padding: 5rem 0 4rem; border-bottom: 1px solid var(--ink); position: relative; }
-.hero::after { content: ""; position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%); width: 120px; height: 4px; background: var(--rust); }
-.hero-eyebrow { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.08em; color: var(--rust); margin-bottom: 1.6rem; font-weight: 600; text-transform: uppercase; text-align: center; }
-.hero-eyebrow .sep { color: var(--rule); margin: 0 0.6rem; font-weight: 400; }
-.hero h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(2.6rem, 5.5vw, 4.4rem); line-height: 1.04; letter-spacing: -0.02em; margin: 0 0 1.6rem; color: var(--ink); text-align: center; max-width: 14em; margin-left: auto; margin-right: auto; }
+/* ===== hero · totoro sky + rolling hills ===== */
+.hero {
+  padding: 5.5rem 0 8rem; position: relative; overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(219,234,245,.45) 0%, rgba(219,234,245,.15) 35%, transparent 65%);
+}
+.hero-sky { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.hero-sky .cloud { fill: #ffffff; opacity: .85; filter: drop-shadow(0 4px 8px rgba(74,143,196,.12)); }
+.hero-sky .cloud-2 { opacity: .65; }
+.hero-sky .leaf-drift { fill: var(--leaf); opacity: .55; }
+.hero-sky .leaf-drift-2 { fill: var(--moss); opacity: .50; }
+.hero-sky .star { fill: var(--gold-warm); opacity: .7; }
+@keyframes drift { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(20px, 8px); } }
+@keyframes sway { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(8deg); } }
+.hero-sky .cloud-grp-a { animation: drift 22s ease-in-out infinite; transform-origin: center; }
+.hero-sky .cloud-grp-b { animation: drift 28s ease-in-out infinite reverse; }
+.hero-sky .leaf-grp { animation: sway 9s ease-in-out infinite; transform-origin: 50% 100%; }
+.hero-sky .leaf-grp-2 { animation: sway 12s ease-in-out infinite reverse; transform-origin: 50% 100%; }
+
+.hero-hill { position: absolute; left: 0; right: 0; bottom: -1px; width: 100%; height: 140px; pointer-events: none; z-index: 0; }
+.hero-hill .hill-back { fill: var(--moss-soft); }
+.hero-hill .hill-mid  { fill: var(--moss); opacity: .55; }
+.hero-hill .hill-front{ fill: var(--leaf); opacity: .35; }
+.hero-hill .tree { fill: var(--leaf-deep); opacity: .55; }
+
+.hero-inner { position: relative; z-index: 1; }
+.hero-eyebrow { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.1em; color: var(--rust); margin-bottom: 1.4rem; font-weight: 600; text-transform: uppercase; text-align: center; }
+.hero-eyebrow .sep { color: var(--rule); margin: 0 0.55rem; font-weight: 400; }
+.hero h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(2.6rem, 5.5vw, 4.6rem); line-height: 1.04; letter-spacing: -0.02em; margin: 0 auto 1.6rem; color: var(--ink); text-align: center; max-width: 14em; }
 .hero h1 em { color: var(--rust); font-style: italic; }
 .hero h1 .strike { position: relative; }
-.hero h1 .strike::after { content: ""; position: absolute; left: -2%; right: -2%; top: 53%; height: 4px; background: var(--ink-mute); transform: rotate(-2deg); }
-.hero-lede { font-size: 1.2rem; color: var(--ink-soft); max-width: 38em; margin: 0 auto 2.5rem; line-height: 1.6; text-align: center; }
+.hero h1 .strike::after { content: ""; position: absolute; left: -3%; right: -3%; top: 53%; height: 5px; background:
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 5' preserveAspectRatio='none'%3E%3Cpath d='M0 3 Q 25 0 50 3 T 100 3 T 150 3 T 200 3' stroke='%23806f54' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") repeat-x; background-size: 200px 5px; transform: rotate(-1.5deg); }
+.hero h1 .underline-hand { position: relative; color: var(--leaf-deep); font-style: italic; }
+.hero h1 .underline-hand::after { content: ""; position: absolute; left: 0; right: 0; bottom: -10px; height: 8px; background:
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 8' preserveAspectRatio='none'%3E%3Cpath d='M2 5 Q 50 0 100 4 T 198 4' stroke='%234f8b4f' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat; background-size: 100% 8px; opacity: .8; }
+.hero-lede { font-size: 1.18rem; color: var(--ink-soft); max-width: 38em; margin: 0 auto 2.5rem; line-height: 1.65; text-align: center; }
 .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem; }
-.btn { font-family: var(--font-sans); font-weight: 500; font-size: 0.95rem; padding: 0.85rem 1.6rem; border-radius: 999px; border: 2px solid var(--ink); cursor: pointer; transition: all .15s; }
+.btn { font-family: var(--font-sans); font-weight: 500; font-size: 0.95rem; padding: 0.85rem 1.7rem; border-radius: 999px; border: 2px solid var(--ink); cursor: pointer; transition: all .18s; box-shadow: var(--shadow-soft); }
 .btn-primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-.btn-primary:hover { background: var(--rust); border-color: var(--rust); }
-.btn-secondary { background: transparent; color: var(--ink); }
-.btn-secondary:hover { background: var(--ink); color: var(--paper); }
-.btn { border-bottom: 2px solid var(--ink); }
-.btn-secondary { border-bottom: 2px solid var(--ink); }
-.btn-primary { border-bottom: 2px solid var(--ink); }
+.btn-primary:hover { background: var(--rust); border-color: var(--rust); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(193,74,37,.32); }
+.btn-secondary { background: rgba(255,253,246,.85); color: var(--ink); }
+.btn-secondary:hover { background: var(--ink); color: var(--paper); transform: translateY(-2px); }
+
+/* ===== Hand-drawn section divider ===== */
+.divider {
+  display: block; width: 100%; height: 36px; margin: 0; pointer-events: none; opacity: .8;
+}
 
 /* ===== stats ===== */
-.stats { padding: 3rem 0; border-bottom: 1px dashed var(--rule); }
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 2rem; text-align: center; }
-.stat .num { font-family: var(--font-display); font-weight: 600; font-size: 2.4rem; color: var(--rust); display: block; line-height: 1; }
-.stat .label { font-family: var(--font-sans); font-size: 0.78rem; color: var(--ink-mute); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 0.4rem; display: block; }
+.stats { padding: 3rem 0 2.5rem; border-bottom: 1px dashed var(--rule); position: relative; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 2rem; text-align: center; }
+.stat .num { font-family: var(--font-display); font-weight: 600; font-size: 2.5rem; color: var(--rust); display: block; line-height: 1; letter-spacing: -.02em; }
+.stat .label { font-family: var(--font-sans); font-size: 0.76rem; color: var(--ink-mute); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 0.5rem; display: block; }
+.stat-hand { font-family: var(--font-hand); color: var(--leaf-deep); font-size: 1.15rem; display: block; margin-top: .25rem; transform: rotate(-2deg); }
 
-/* ===== quick start ===== */
-.section { padding: 5rem 0; }
-.section-head { text-align: center; margin-bottom: 3rem; }
+/* ===== sections ===== */
+.section { padding: 5rem 0; position: relative; }
+.section-head { text-align: center; margin-bottom: 3rem; position: relative; }
 .section-head .sec-eyebrow { font-family: var(--font-sans); font-size: 0.74rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--rust); margin-bottom: 0.8rem; }
-.section-head h2 { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.9rem, 3.5vw, 2.7rem); line-height: 1.15; margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+.section-head h2 { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.95rem, 3.5vw, 2.8rem); line-height: 1.15; margin: 0 0 0.8rem; letter-spacing: -0.01em; }
 .section-head h2 em { color: var(--rust); font-style: italic; }
 .section-head .sec-lede { font-size: 1rem; color: var(--ink-mute); max-width: 32em; margin: 0 auto; font-style: italic; font-family: var(--font-display); }
 
+/* ===== quick start ===== */
 .qs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.4rem; }
-.qs-card { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 14px; padding: 1.6rem 1.5rem; transition: all .2s; border-bottom: 3px solid var(--rule); border-left: none; border-right: none; border-top: 1px solid var(--rule); }
+.qs-card { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 16px; padding: 1.6rem 1.5rem; transition: all .25s cubic-bezier(.4,.0,.2,1); border-bottom: 3px solid var(--rule); position: relative; box-shadow: var(--shadow-soft); }
 .qs-card.qs-rust { border-left: 4px solid var(--rust); }
 .qs-card.qs-leaf { border-left: 4px solid var(--leaf); }
 .qs-card.qs-sky { border-left: 4px solid var(--sky); }
 .qs-card.qs-plum { border-left: 4px solid var(--plum); }
-.qs-card:hover { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(29,26,20,.08); }
+.qs-card.qs-gold { border-left: 4px solid var(--gold); }
+.qs-card:hover { transform: translateY(-4px) rotate(-.3deg); box-shadow: var(--shadow-cloud); border-color: var(--ink-mute); }
 .qs-card h4 { font-family: var(--font-sans); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--rust); margin: 0 0 0.4rem; }
-.qs-card .qs-title { font-family: var(--font-display); font-weight: 500; font-size: 1.25rem; line-height: 1.25; color: var(--ink); margin: 0 0 0.7rem; }
-.qs-card p { font-size: 0.92rem; color: var(--ink-soft); margin: 0 0 1rem; line-height: 1.55; }
+.qs-card .qs-title { font-family: var(--font-display); font-weight: 500; font-size: 1.25rem; line-height: 1.3; color: var(--ink); margin: 0 0 0.7rem; }
+.qs-card p { font-size: 0.92rem; color: var(--ink-soft); margin: 0 0 1rem; line-height: 1.6; }
 .qs-card .qs-link { font-family: var(--font-sans); font-size: 0.84rem; font-weight: 500; color: var(--rust); border-bottom: 1px solid var(--rust); }
 .qs-card .qs-link::after { content: " →"; }
 
 /* ===== phase ===== */
-.phase { margin-bottom: 4rem; }
+.phase { margin-bottom: 4rem; position: relative; }
 .phase-head { display: flex; align-items: baseline; gap: 1.2rem; padding-bottom: 1rem; border-bottom: 2px solid var(--ink); margin-bottom: 1.8rem; flex-wrap: wrap; }
-.phase-num { font-family: var(--font-display); font-weight: 700; font-size: 3rem; line-height: 1; color: var(--rust); font-style: italic; }
+.phase-num { font-family: var(--font-display); font-weight: 700; font-size: 3rem; line-height: 1; color: var(--rust); font-style: italic; text-shadow: 1px 1px 0 rgba(244,196,106,.35); }
 .phase-meta { flex: 1; min-width: 220px; }
 .phase-meta h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.7rem; margin: 0 0 0.3rem; color: var(--ink); letter-spacing: -0.005em; }
 .phase-meta h3 em { color: var(--rust); font-style: italic; font-weight: 500; }
 .phase-meta .phase-sub { font-family: var(--font-sans); font-size: 0.86rem; color: var(--ink-mute); }
 .phase-meta .phase-sub strong { color: var(--ink); font-weight: 600; }
-.phase-time { font-family: var(--font-sans); font-size: 0.78rem; color: var(--ink-mute); letter-spacing: 0.06em; text-transform: uppercase; padding: 0.4rem 0.8rem; background: var(--paper-2); border-radius: 999px; flex-shrink: 0; }
+.phase-time { font-family: var(--font-sans); font-size: 0.78rem; color: var(--ink-mute); letter-spacing: 0.06em; text-transform: uppercase; padding: 0.4rem 0.85rem; background: var(--paper-2); border-radius: 999px; flex-shrink: 0; border: 1px solid var(--rule); }
 
+/* ===== book grid ===== */
 .book-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 1.2rem; }
-.book-card { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 12px; padding: 1.4rem 1.5rem 1.2rem; transition: all .2s; display: flex; flex-direction: column; min-height: 230px; }
-.book-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(29,26,20,.08); border-color: var(--ink-mute); }
+.book-card { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 14px; padding: 1.4rem 1.5rem 1.2rem; transition: all .25s cubic-bezier(.4,.0,.2,1); display: flex; flex-direction: column; min-height: 230px; position: relative; box-shadow: var(--shadow-soft); }
+.book-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-cloud); border-color: var(--leaf); }
 .book-card a { border: none; }
 .book-card .bk-row { display: flex; gap: 0.8rem; align-items: baseline; margin-bottom: 0.6rem; }
 .book-card .bk-emoji { font-size: 1.4rem; line-height: 1; }
 .book-card .bk-num { font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink-mute); letter-spacing: 0.06em; }
 .book-card h4 { font-family: var(--font-display); font-weight: 600; font-size: 1.2rem; margin: 0 0 0.4rem; color: var(--ink); line-height: 1.25; }
 .book-card .bk-eng { font-family: var(--font-sans); font-size: 0.78rem; color: var(--ink-mute); margin-bottom: 0.7rem; font-style: italic; letter-spacing: 0.02em; }
-.book-card .bk-desc { font-size: 0.9rem; color: var(--ink-soft); line-height: 1.55; flex: 1; margin: 0 0 0.9rem; }
+.book-card .bk-desc { font-size: 0.9rem; color: var(--ink-soft); line-height: 1.6; flex: 1; margin: 0 0 0.9rem; }
 .book-card .bk-meta { display: flex; gap: 1rem; flex-wrap: wrap; font-family: var(--font-sans); font-size: 0.74rem; color: var(--ink-mute); margin-bottom: 0.8rem; padding-top: 0.7rem; border-top: 1px dashed var(--rule); }
 .book-card .bk-meta span { white-space: nowrap; }
 .book-card .bk-meta strong { color: var(--rust); font-weight: 600; }
 .book-card .bk-link { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 500; color: var(--rust); margin-top: auto; }
 .book-card .bk-link::after { content: " →"; }
-.book-card.featured { border-color: var(--rust); border-left: 4px solid var(--rust); background: linear-gradient(to bottom right, var(--paper-card), var(--rust-soft) 200%); }
+.book-card.featured { border-color: var(--rust); border-left: 4px solid var(--rust); background: linear-gradient(to bottom right, var(--paper-card), var(--rust-soft) 220%); }
+.book-card.featured-leaf { border-color: var(--leaf); border-left: 4px solid var(--leaf); background: linear-gradient(to bottom right, var(--paper-card), var(--leaf-soft) 220%); }
+/* tiny "new" sticker */
+.bk-num.has-new::after { content: "✦"; color: var(--rust); margin-left: .35rem; font-weight: 700; }
 
 /* ===== Roadmap progress ===== */
-.roadmap { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 16px; padding: 2.4rem; margin: 0 0 4rem; }
-.roadmap h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.5rem; margin: 0 0 1.6rem; color: var(--ink); text-align: center; }
-.roadmap-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.6rem; margin-bottom: 1.2rem; }
-.roadmap-step { text-align: center; padding: 0.7rem 0.5rem; border-radius: 8px; font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; color: white; }
-.roadmap-step .rs-time { display: block; font-size: 0.66rem; opacity: 0.85; font-weight: 400; margin-top: 0.2rem; letter-spacing: 0.04em; }
+.roadmap { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 18px; padding: 2.4rem; margin: 0 0 4rem; box-shadow: var(--shadow-soft); position: relative; overflow: hidden; }
+.roadmap::before { content: ""; position: absolute; top: -30px; right: -30px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(244,196,106,.35), transparent 70%); pointer-events: none; }
+.roadmap h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.55rem; margin: 0 0 1.6rem; color: var(--ink); text-align: center; }
+.roadmap-bar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.55rem; margin-bottom: 1.2rem; }
+.roadmap-step { text-align: center; padding: 0.7rem 0.4rem; border-radius: 10px; font-family: var(--font-sans); font-size: 0.74rem; font-weight: 600; color: white; box-shadow: 0 2px 5px rgba(0,0,0,.1); }
+.roadmap-step .rs-time { display: block; font-size: 0.62rem; opacity: 0.85; font-weight: 400; margin-top: 0.2rem; letter-spacing: 0.04em; }
 .rs-1 { background: var(--leaf); }
-.rs-2 { background: var(--sky); }
+.rs-2 { background: var(--sky-deep); }
 .rs-3 { background: var(--plum); }
 .rs-4 { background: var(--rust); }
 .rs-5 { background: var(--gold); }
-.roadmap-labels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.6rem; font-family: var(--font-sans); font-size: 0.74rem; color: var(--ink-mute); text-align: center; line-height: 1.4; }
-.roadmap-labels strong { color: var(--ink); display: block; font-size: 0.82rem; }
+.rs-6 { background: var(--teal); }
+.roadmap-labels { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.55rem; font-family: var(--font-sans); font-size: 0.72rem; color: var(--ink-mute); text-align: center; line-height: 1.4; }
+.roadmap-labels strong { color: var(--ink); display: block; font-size: 0.8rem; }
 
 /* ===== Coverage matrix ===== */
-.coverage table { width: 100%; border-collapse: collapse; margin: 0; font-size: 0.85rem; background: var(--paper-card); border-radius: 8px; overflow: hidden; border: 1px solid var(--rule); }
+.coverage table { width: 100%; border-collapse: collapse; margin: 0; font-size: 0.85rem; background: var(--paper-card); border-radius: 12px; overflow: hidden; border: 1px solid var(--rule); box-shadow: var(--shadow-soft); }
 .coverage th, .coverage td { padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--rule-soft); text-align: center; vertical-align: middle; }
 .coverage th { font-family: var(--font-sans); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink); font-weight: 600; background: var(--paper-2); }
 .coverage td:first-child { text-align: left; font-family: var(--font-display); font-weight: 500; color: var(--ink); }
@@ -148,18 +211,31 @@ strong { font-weight: 600; color: var(--ink); }
 .coverage td.dim { color: var(--rule); }
 .coverage tr:hover td { background: rgba(196,178,144,.13); }
 
-/* ===== Final CTA ===== */
-.final-cta { background: var(--ink); color: var(--paper); padding: 4rem 0; margin-top: 4rem; }
-.final-cta h2 { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.8rem, 3.2vw, 2.4rem); margin: 0 0 1rem; text-align: center; color: var(--paper); }
-.final-cta h2 em { color: #f7c87a; font-style: italic; }
-.final-cta .lede { text-align: center; color: rgba(251,245,232,.75); max-width: 36em; margin: 0 auto 2rem; font-style: italic; font-family: var(--font-display); font-size: 1.05rem; }
+/* ===== Final CTA · spirited away night sky ===== */
+.final-cta { background: linear-gradient(180deg, var(--night) 0%, var(--night-deep) 100%); color: var(--paper); padding: 5rem 0 5.5rem; margin-top: 4rem; position: relative; overflow: hidden; }
+.final-cta .sky-svg { position: absolute; inset: 0; pointer-events: none; }
+.final-cta .sky-svg .star { fill: #fff8d6; }
+.final-cta .sky-svg .star-bright { fill: #fff8d6; opacity: 1; }
+.final-cta .sky-svg .moon { fill: #f7e7a3; opacity: .9; filter: drop-shadow(0 0 12px rgba(247,231,163,.4)); }
+.final-cta .sky-svg .pine { fill: #0d1a2c; }
+.final-cta .sky-svg .hill-night { fill: #112240; }
+@keyframes twinkle { 0%, 100% { opacity: .85; } 50% { opacity: .35; } }
+.final-cta .sky-svg .star { animation: twinkle 4s ease-in-out infinite; }
+.final-cta .sky-svg .star.s2 { animation-delay: 1.2s; }
+.final-cta .sky-svg .star.s3 { animation-delay: 2.5s; }
+.final-cta .sky-svg .star.s4 { animation-delay: 3.1s; }
+.final-cta .container { position: relative; z-index: 1; }
+.final-cta h2 { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.9rem, 3.4vw, 2.55rem); margin: 0 0 1rem; text-align: center; color: var(--paper); }
+.final-cta h2 em { color: var(--gold-warm); font-style: italic; }
+.final-cta .lede { text-align: center; color: rgba(249,241,222,.78); max-width: 38em; margin: 0 auto 2rem; font-style: italic; font-family: var(--font-display); font-size: 1.05rem; }
 .final-cta .cta-row { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; }
-.final-cta .btn { background: var(--paper); color: var(--ink); border-color: var(--paper); border-bottom-color: var(--paper); }
-.final-cta .btn:hover { background: var(--rust); color: white; border-color: var(--rust); border-bottom-color: var(--rust); }
+.final-cta .btn { background: var(--paper); color: var(--ink); border-color: var(--paper); }
+.final-cta .btn:hover { background: var(--rust); color: white; border-color: var(--rust); }
+.final-cta .hand-note { font-family: var(--font-hand); color: var(--gold-warm); font-size: 1.4rem; text-align: center; margin-top: 1.5rem; transform: rotate(-2deg); display: block; }
 
-footer.foot { padding: 2.5rem 0 3rem; border-top: 1px solid var(--rule); background: var(--paper-2); font-family: var(--font-sans); font-size: 0.85rem; color: var(--ink-mute); }
+footer.foot { padding: 2.5rem 0 3rem; border-top: 1px solid var(--rule); background: var(--paper-2); font-family: var(--font-sans); font-size: 0.85rem; color: var(--ink-mute); position: relative; }
 footer.foot .row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; align-items: baseline; }
-footer.foot a { color: var(--ink-mute); border-bottom-color: rgba(117,108,92,.3); }
+footer.foot a { color: var(--ink-mute); border-bottom-color: rgba(122,112,94,.3); }
 footer.foot a:hover { color: var(--rust); }
 </style>
 </head>
@@ -168,10 +244,13 @@ footer.foot a:hover { color: var(--rust); }
 <!-- ============== Nav ============== -->
 <nav class="nav">
   <div class="container nav-row">
-    <a href="#" class="nav-brand bare">桃桃 <span class="dot">·</span> Agent Manual</a>
+    <a href="#" class="nav-brand bare">
+      <svg class="leaf-mini" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c-4 4-7 8-7 12a7 7 0 1 0 14 0c0-4-3-8-7-12zm0 5c2 3 4 6 4 9a4 4 0 1 1-8 0c0-3 2-6 4-9z"/></svg>
+      桃桃 <span class="dot">·</span> Agent Manual
+    </a>
     <div class="nav-links">
       <a href="#path">学习路径</a>
-      <a href="#books">12 本书</a>
+      <a href="#books">17 本书</a>
       <a href="#coverage">面试覆盖</a>
       <a href="#about">关于</a>
     </div>
@@ -179,19 +258,70 @@ footer.foot a:hover { color: var(--rust); }
   </div>
 </nav>
 
-<!-- ============== Hero ============== -->
+<!-- ============== Hero · Totoro 的天空 ============== -->
 <section class="hero">
-  <div class="container">
+  <!-- Sky decorations · clouds + drifting leaves + small stars -->
+  <svg class="hero-sky" viewBox="0 0 1400 600" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <!-- soft puffy clouds -->
+    <g class="cloud-grp-a">
+      <ellipse class="cloud" cx="200" cy="130" rx="110" ry="34"/>
+      <ellipse class="cloud" cx="155" cy="115" rx="55" ry="26"/>
+      <ellipse class="cloud" cx="240" cy="115" rx="65" ry="28"/>
+    </g>
+    <g class="cloud-grp-b">
+      <ellipse class="cloud cloud-2" cx="1180" cy="90" rx="125" ry="36"/>
+      <ellipse class="cloud cloud-2" cx="1130" cy="75" rx="55" ry="26"/>
+      <ellipse class="cloud cloud-2" cx="1230" cy="75" rx="55" ry="26"/>
+    </g>
+    <g class="cloud-grp-a" style="animation-duration: 32s;">
+      <ellipse class="cloud cloud-2" cx="950" cy="200" rx="80" ry="22" opacity="0.55"/>
+      <ellipse class="cloud cloud-2" cx="920" cy="190" rx="40" ry="18" opacity="0.55"/>
+    </g>
+    <!-- small stars / sparkles, daytime soft -->
+    <g>
+      <circle class="star" cx="400" cy="80" r="2.5"/>
+      <circle class="star" cx="700" cy="50" r="2"/>
+      <circle class="star" cx="850" cy="120" r="2.2"/>
+      <circle class="star" cx="1320" cy="150" r="2"/>
+    </g>
+    <!-- drifting leaves bottom-left -->
+    <g class="leaf-grp" transform="translate(120 410)">
+      <path class="leaf-drift" d="M0 0 Q -10 -22 -22 -28 Q -10 -10 -8 6 Q -3 0 0 0z"/>
+    </g>
+    <g class="leaf-grp-2" transform="translate(180 460) rotate(20)">
+      <path class="leaf-drift-2" d="M0 0 Q 8 -18 18 -22 Q 8 -8 6 6 Q 3 0 0 0z"/>
+    </g>
+    <g class="leaf-grp" transform="translate(1280 430) rotate(-30)">
+      <path class="leaf-drift" d="M0 0 Q -10 -22 -22 -28 Q -10 -10 -8 6 Q -3 0 0 0z"/>
+    </g>
+  </svg>
+
+  <!-- Rolling hills at bottom -->
+  <svg class="hero-hill" viewBox="0 0 1400 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- back hill -->
+    <path class="hill-back" d="M0 80 Q 200 30 400 60 T 800 50 T 1200 65 T 1400 55 L 1400 140 L 0 140 Z"/>
+    <!-- mid hill -->
+    <path class="hill-mid"  d="M0 100 Q 250 60 500 90 T 1000 85 T 1400 95 L 1400 140 L 0 140 Z"/>
+    <!-- front hill -->
+    <path class="hill-front" d="M0 115 Q 300 90 600 110 T 1200 110 T 1400 115 L 1400 140 L 0 140 Z"/>
+    <!-- pine trees -->
+    <g class="tree" transform="translate(290 92)"><path d="M0 0 L -8 18 L -3 18 L -7 28 L 7 28 L 3 18 L 8 18 Z"/></g>
+    <g class="tree" transform="translate(880 86)"><path d="M0 0 L -10 22 L -4 22 L -8 32 L 8 32 L 4 22 L 10 22 Z"/></g>
+    <g class="tree" transform="translate(1110 96)"><path d="M0 0 L -7 16 L -3 16 L -6 24 L 6 24 L 3 16 L 7 16 Z"/></g>
+  </svg>
+
+  <div class="container hero-inner">
     <div class="hero-eyebrow">Senior Agent Engineer<span class="sep">·</span>Interview Manual<span class="sep">·</span>2026</div>
-    <h1>从 <span class="strike">"会用 LangChain"</span><br>到 <em>"我能 ship 一个生产级 agent"</em><br>的 12 本完整手册</h1>
+    <h1>从 <span class="strike">"会用 LangChain"</span><br>到 <em>"我能 ship 一个生产级 agent"</em><br>的 <span class="underline-hand">17 本</span>完整手册</h1>
     <p class="hero-lede">
-      把 senior agent engineer 面试需要的<em>全部知识</em>系统化整理成 12 本互相关联的手册——
-      <strong>5 阶段学习路径 · 22000+ 行内容 · 280+ 道面试题 · 700+ 词术语</strong>。
-      不是教程合集 · 是按"从 0 到面试"路径设计的<em>完整体系</em>。
+      把 senior agent engineer 面试需要的<em>全部知识</em>系统化整理成 17 本互相关联的手册——
+      <strong>6 阶段学习路径 · 30000+ 行内容 · 320+ 道面试题 · 800+ 词术语</strong>。
+      不是教程合集 · 是按 "从 0 到能上岗" 路径设计的<em>完整体系</em>，
+      配套一个真实可跑的 demo（<code>POST /chat</code> graph + <code>POST /chat/v2</code> harness + MCP 双向 + P1 加固）。
     </p>
     <div class="hero-cta">
       <a href="#path" class="btn btn-primary bare">📚 按路径开始学</a>
-      <a href="#books" class="btn btn-secondary bare">🗂️ 直接看 12 本</a>
+      <a href="#books" class="btn btn-secondary bare">🗂️ 直接看 17 本</a>
     </div>
   </div>
 </section>
@@ -200,12 +330,12 @@ footer.foot a:hover { color: var(--rust); }
 <section class="stats">
   <div class="container">
     <div class="stats-grid">
-      <div class="stat"><span class="num">14</span><span class="label">完整手册</span></div>
-      <div class="stat"><span class="num">26k+</span><span class="label">行内容</span></div>
-      <div class="stat"><span class="num">300+</span><span class="label">面试题</span></div>
-      <div class="stat"><span class="num">760+</span><span class="label">词术语表</span></div>
-      <div class="stat"><span class="num">40+</span><span class="label">SVG 图</span></div>
-      <div class="stat"><span class="num">5</span><span class="label">学习阶段</span></div>
+      <div class="stat"><span class="num">17</span><span class="label">完整手册</span><span class="stat-hand">+3 NEW</span></div>
+      <div class="stat"><span class="num">30k+</span><span class="label">行内容</span></div>
+      <div class="stat"><span class="num">320+</span><span class="label">面试题</span></div>
+      <div class="stat"><span class="num">800+</span><span class="label">词术语表</span></div>
+      <div class="stat"><span class="num">50+</span><span class="label">SVG 图</span></div>
+      <div class="stat"><span class="num">6</span><span class="label">学习阶段</span></div>
     </div>
   </div>
 </section>
@@ -249,6 +379,12 @@ footer.foot a:hover { color: var(--rust); }
         <p>同项目两种实现 · 16 章逐行讲清 harness · 含 5 个产品反编译 · 同 query head-to-head</p>
         <a href="harness.html" class="qs-link bare">看《Harness 完全手册》</a>
       </div>
+      <div class="qs-card qs-gold">
+        <h4>🛡️ 已有 demo · 想做生产化</h4>
+        <div class="qs-title">"能跑了 · 怎么撑得住"</div>
+        <p>memory decay · 并行 tool · cost 护栏 · OpenAPI codegen · multi-session — 5 套工程哲学</p>
+        <a href="p1-hardening.html" class="qs-link bare">直接看《P1 生产化加固》</a>
+      </div>
     </div>
   </div>
 </section>
@@ -258,25 +394,27 @@ footer.foot a:hover { color: var(--rust); }
   <div class="container">
     <div class="section-head">
       <div class="sec-eyebrow">📍 Learning Path</div>
-      <h2>5 阶段 <em>10-15 周</em> 完整路径</h2>
+      <h2>6 阶段 <em>10-15 周</em> 完整路径</h2>
       <p class="sec-lede">从 0 到能投 senior agent engineer · 每阶段独立可学</p>
     </div>
 
     <div class="roadmap">
       <h3>📅 推荐学习节奏</h3>
       <div class="roadmap-bar">
-        <div class="roadmap-step rs-1">Phase 1 · 入门<span class="rs-time">1-2 周</span></div>
-        <div class="roadmap-step rs-2">Phase 2 · 核心<span class="rs-time">3-5 周</span></div>
-        <div class="roadmap-step rs-3">Phase 3 · 工程<span class="rs-time">2-3 周</span></div>
-        <div class="roadmap-step rs-4">Phase 4 · 面试<span class="rs-time">1-2 周</span></div>
-        <div class="roadmap-step rs-5">Phase 5 · 进阶<span class="rs-time">按需</span></div>
+        <div class="roadmap-step rs-1">P1 · 入门<span class="rs-time">1-2 周</span></div>
+        <div class="roadmap-step rs-2">P2 · 核心<span class="rs-time">3-5 周</span></div>
+        <div class="roadmap-step rs-3">P3 · 工程<span class="rs-time">2-3 周</span></div>
+        <div class="roadmap-step rs-4">P4 · 面试<span class="rs-time">1-2 周</span></div>
+        <div class="roadmap-step rs-5">P5 · 进阶<span class="rs-time">按需</span></div>
+        <div class="roadmap-step rs-6">P6 · 加固<span class="rs-time">按需</span></div>
       </div>
       <div class="roadmap-labels">
-        <div><strong>2 本书</strong>建立认知 + 看 demo</div>
+        <div><strong>2 本</strong>建立认知 + 跑 demo</div>
         <div><strong>4 大支柱</strong>Framework / RAG / Memory / Tool</div>
-        <div><strong>3 本书</strong>Eval / Debug / Enterprise</div>
-        <div><strong>2 本书</strong>System Design + Live Coding</div>
-        <div><strong>3 本</strong>AI Infra · Harness 范式 · 按需</div>
+        <div><strong>3 本</strong>Eval / Debug / Enterprise</div>
+        <div><strong>2 本</strong>System Design + Live Coding</div>
+        <div><strong>3 本</strong>Infra · Harness · 对比</div>
+        <div><strong>3 本</strong>Hermes · MCP · P1 加固</div>
       </div>
     </div>
 
@@ -305,9 +443,9 @@ footer.foot a:hover { color: var(--rust); }
           <div class="bk-row"><span class="bk-emoji">🔵</span><span class="bk-num">Book 02</span></div>
           <h4>Implementation Field Guide</h4>
           <div class="bk-eng">从节点到 LLM 的实现详解</div>
-          <p class="bk-desc">配套 <code>taotao-agent</code> 项目逐节点详解——LangGraph 怎么搭 · supervisor 怎么写 · 前端怎么 stream · memory 怎么实现 · tool 怎么注册。学完能复刻一个完整生产级 agent。</p>
+          <p class="bk-desc">配套 <code>taotao-agent</code> 项目逐节点详解——LangGraph 怎么搭 · supervisor 怎么写 · 前端怎么 stream · memory 怎么实现 · tool 怎么注册 · OpenAPI codegen 怎么接。学完能复刻一个完整生产级 agent。</p>
           <div class="bk-meta">
-            <span><strong>17</strong> 章</span><span><strong>2270+</strong> 行</span><span><strong>带源码</strong></span>
+            <span><strong>17</strong> 章</span><span><strong>2400+</strong> 行</span><span><strong>带源码</strong></span>
           </div>
           <span class="bk-link">看实现</span>
         </a>
@@ -348,8 +486,8 @@ footer.foot a:hover { color: var(--rust); }
         <a href="memory-context.html" class="book-card bare">
           <div class="bk-row"><span class="bk-emoji">💜</span><span class="bk-num">Book 05</span></div>
           <h4>Memory &amp; Context Engineering</h4>
-          <div class="bk-eng">Mem0 / Zep / Letta · 1M context</div>
-          <p class="bk-desc">5 类 memory 分类（认知科学）· short/long-term 全谱 · Mem0/Zep/Letta/Cognee 4 框架横评 · forgetting + consolidation · multi-user · 1M/2M context engineering + prompt caching · 5 真翻车复盘。</p>
+          <div class="bk-eng">Mem0 / Zep / Letta · 1M context · decay 实战</div>
+          <p class="bk-desc">5 类 memory 分类（认知科学）· short/long-term 全谱 · Mem0/Zep/Letta/Cognee 4 框架横评 · forgetting + consolidation · multi-user · 1M/2M context engineering + prompt caching · 5 真翻车复盘 · 含本项目 recency×usage 复合分 prune 实战。</p>
           <div class="bk-meta">
             <span><strong>10</strong> 章</span><span><strong>15</strong> 题</span><span><strong>70</strong> 词</span>
           </div>
@@ -468,17 +606,17 @@ footer.foot a:hover { color: var(--rust); }
           <span class="bk-link">深入 Infra</span>
         </a>
         <a href="harness.html" class="book-card featured bare">
-          <div class="bk-row"><span class="bk-emoji">🔥</span><span class="bk-num">Book 13 · NEW</span></div>
+          <div class="bk-row"><span class="bk-emoji">🔥</span><span class="bk-num">Book 13</span></div>
           <h4>Agent Harness 完全手册</h4>
           <div class="bk-eng">Claude Code / Cursor 风 · 配套 backend/agent/harness/</div>
-          <p class="bk-desc">把 taotao-agent 用 harness 风格<strong>完整重写一遍</strong>——16 章逐行讲清 loop / system prompt / tool / sub-agent-as-tool / memory / compaction / persistence / streaming / failure mode / eval。同时 5 个真实 harness 反编译（Claude Code · Cursor · aider · Devin · Open Interpreter）。</p>
+          <p class="bk-desc">把 taotao-agent 用 harness 风格<strong>完整重写一遍</strong>——16 章逐行讲清 loop / system prompt / tool / sub-agent-as-tool / memory / compaction / persistence / streaming / failure mode / eval。同时 5 个真实 harness 反编译（Claude Code · Cursor · aider · Devin · Open Interpreter）· 含并行 tool 执行实战。</p>
           <div class="bk-meta">
             <span><strong>16</strong> 章</span><span><strong>20</strong> 题</span><span><strong>60</strong> 词</span><span><strong>带源码</strong></span>
           </div>
           <span class="bk-link">学新范式</span>
         </a>
         <a href="harness-vs-graph.html" class="book-card bare">
-          <div class="bk-row"><span class="bk-emoji">⚖️</span><span class="bk-num">Book 14 · NEW</span></div>
+          <div class="bk-row"><span class="bk-emoji">⚖️</span><span class="bk-num">Book 14</span></div>
           <h4>Harness ⇄ Graph 对比手册</h4>
           <div class="bk-eng">同 query · 两种实现 · 真实 trace 对比</div>
           <p class="bk-desc">市面上独家——同一 agent 同时支持 <code>POST /chat</code> (graph) 和 <code>POST /chat/v2</code> (harness)。5 类典型 query head-to-head：trivial · 单 LLM · 2 tool · multi-step · memory 修正。给真实 trace / cost / latency / 答案对比 + 你自己跑一遍的 curl 命令。</p>
@@ -486,6 +624,50 @@ footer.foot a:hover { color: var(--rust); }
             <span><strong>5</strong> query</span><span><strong>6</strong> 维度</span><span><strong>head-to-head</strong></span>
           </div>
           <span class="bk-link">看实测</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- ============== Phase 6 · NEW ============== -->
+    <div class="phase" id="phase-6">
+      <div class="phase-head">
+        <div class="phase-num">06</div>
+        <div class="phase-meta">
+          <h3>扩展 · <em>速读 + 加固</em></h3>
+          <div class="phase-sub"><strong>目标</strong>：项目能跑后 · 三本短 / 中篇覆盖<em>本地模型生态</em>（Hermes XML 调用）· <em>跨工具协议</em>（MCP）· <em>生产化加固</em>（5 套工程哲学）</div>
+        </div>
+        <span class="phase-time">⏱ 按需 · 各 30 分钟内</span>
+      </div>
+      <div class="book-grid">
+        <a href="hermes.html" class="book-card bare">
+          <div class="bk-row"><span class="bk-emoji">🪶</span><span class="bk-num">Book 15</span></div>
+          <h4>Hermes 速读</h4>
+          <div class="bk-eng">Nous Hermes · XML tool-call · 本地模型</div>
+          <p class="bk-desc">5 分钟搞清 Nous Hermes 模型家族 + 它们独特的 XML tool-call 格式 + 跟 OpenAI structured tool-call 的对比 + 本项目接 Ollama 跑 Hermes 的实战。给做本地模型 / privacy-first 部署的同学。</p>
+          <div class="bk-meta">
+            <span><strong>速读</strong></span><span><strong>本地模型</strong></span><span><strong>XML schema</strong></span>
+          </div>
+          <span class="bk-link">5 分钟扫</span>
+        </a>
+        <a href="mcp.html" class="book-card bare">
+          <div class="bk-row"><span class="bk-emoji">🔌</span><span class="bk-num">Book 16</span></div>
+          <h4>MCP · agent 的 USB-C</h4>
+          <div class="bk-eng">协议本身 + 双向实现 + Claude Desktop 接入</div>
+          <p class="bk-desc">7 分钟讲清 Model Context Protocol：协议设计 / Tools-Prompts-Resources / stdio + streamable-http 两种 transport / 本项目作为 server (暴露给 Claude Desktop / Cursor) + 作为 client (消费 filesystem / fetch 等外部 server) 的双向实现。</p>
+          <div class="bk-meta">
+            <span><strong>双向</strong></span><span><strong>Claude Desktop ✓</strong></span><span><strong>5</strong> 题</span>
+          </div>
+          <span class="bk-link">学 MCP</span>
+        </a>
+        <a href="p1-hardening.html" class="book-card featured-leaf bare">
+          <div class="bk-row"><span class="bk-emoji">🛡️</span><span class="bk-num has-new">Book 17</span></div>
+          <h4>P1 生产化加固</h4>
+          <div class="bk-eng">5 个改动 · 5 套工程哲学 · senior 姿态</div>
+          <p class="bk-desc">从 demo 到产品差的 5 件事——memory decay (recency×usage 复合分) · parallel tool exec (asyncio.gather) · cost guardrail (FastAPI dependency) · OpenAPI codegen (schema-driven) · multi-session UI (stateless backend)。每章给原理 / 代码 / 取舍 / 三档面试答案。</p>
+          <div class="bk-meta">
+            <span><strong>7</strong> 章</span><span><strong>12</strong> 题</span><span><strong>30</strong> 词</span><span><strong>带源码</strong></span>
+          </div>
+          <span class="bk-link">学加固</span>
         </a>
       </div>
     </div>
@@ -502,10 +684,10 @@ footer.foot a:hover { color: var(--rust); }
     </div>
     <div class="book-grid">
       <a href="learn.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🟢</span><span class="bk-num">01</span></div><h4>应用 · 从 0 到面试</h4><p class="bk-desc">入门 + 全谱 · 13 章 / 110 词 / 60 题 / 8 周路线</p><span class="bk-link">读</span></a>
-      <a href="implementation.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🔵</span><span class="bk-num">02</span></div><h4>Implementation Field Guide</h4><p class="bk-desc">配套项目逐节点详解 · 17 章带源码</p><span class="bk-link">读</span></a>
+      <a href="implementation.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🔵</span><span class="bk-num">02</span></div><h4>Implementation Field Guide</h4><p class="bk-desc">配套项目逐节点详解 · 17 章带源码 + OpenAPI codegen</p><span class="bk-link">读</span></a>
       <a href="langgraph-internals.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🟤</span><span class="bk-num">03</span></div><h4>LangGraph 内部 + 5 框架</h4><p class="bk-desc">6 原语深挖 + 框架横评 + Pregel 源码</p><span class="bk-link">读</span></a>
       <a href="rag-production.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🟧</span><span class="bk-num">04</span></div><h4>RAG 生产级</h4><p class="bk-desc">chunking / rerank / Agentic / GraphRAG · 11 章</p><span class="bk-link">读</span></a>
-      <a href="memory-context.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">💜</span><span class="bk-num">05</span></div><h4>Memory &amp; Context</h4><p class="bk-desc">Mem0/Zep/Letta · 1M context · prompt cache</p><span class="bk-link">读</span></a>
+      <a href="memory-context.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">💜</span><span class="bk-num">05</span></div><h4>Memory &amp; Context</h4><p class="bk-desc">Mem0/Zep/Letta · 1M context · prompt cache · decay 实战</p><span class="bk-link">读</span></a>
       <a href="tool-design.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🟫</span><span class="bk-num">06</span></div><h4>Tool Design + MCP</h4><p class="bk-desc">100+ tools · structured output · security</p><span class="bk-link">读</span></a>
       <a href="eval-observability.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🟦</span><span class="bk-num">07</span></div><h4>Eval &amp; Observability</h4><p class="bk-desc">5 层 eval · LLM-as-judge · 5 工具横评</p><span class="bk-link">读</span></a>
       <a href="agent-debugging.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">⚫</span><span class="bk-num">08</span></div><h4>Debugging Playbook</h4><p class="bk-desc">30 failure mode · 5 真 incident</p><span class="bk-link">读</span></a>
@@ -513,11 +695,11 @@ footer.foot a:hover { color: var(--rust); }
       <a href="agent-design.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🟣</span><span class="bk-num">10</span></div><h4>Agent System Design</h4><p class="bk-desc">7 案例反编译 · 12 模式 · 20 题</p><span class="bk-link">读</span></a>
       <a href="agent-coding.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🟡</span><span class="bk-num">11</span></div><h4>Live Coding 实战</h4><p class="bk-desc">8 真题 + 答案 + 22 anti-pattern</p><span class="bk-link">读</span></a>
       <a href="infra.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🔴</span><span class="bk-num">12</span></div><h4>AI Infra · 从硬件到面试</h4><p class="bk-desc">GPU / 推理 / 训练 · 80 题 · 25 论文</p><span class="bk-link">读</span></a>
-      <a href="harness.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🔥</span><span class="bk-num">13</span></div><h4>Agent Harness 完全手册</h4><p class="bk-desc">Claude Code/Cursor 风 · 16 章带源码 · 20 题</p><span class="bk-link">读</span></a>
+      <a href="harness.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🔥</span><span class="bk-num">13</span></div><h4>Agent Harness 完全手册</h4><p class="bk-desc">Claude Code/Cursor 风 · 16 章带源码 · 含并行 exec</p><span class="bk-link">读</span></a>
       <a href="harness-vs-graph.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">⚖️</span><span class="bk-num">14</span></div><h4>Harness ⇄ Graph 对比</h4><p class="bk-desc">同 query head-to-head · 5 类查询 · 真实 trace</p><span class="bk-link">读</span></a>
       <a href="hermes.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🪶</span><span class="bk-num">15</span></div><h4>Hermes 速读</h4><p class="bk-desc">Nous Hermes 模型 + XML tool-call 格式 · 5 分钟版</p><span class="bk-link">读</span></a>
       <a href="mcp.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🔌</span><span class="bk-num">16</span></div><h4>MCP · agent 的 USB-C</h4><p class="bk-desc">协议本身 + 双向实现 + Claude Desktop 接入 · 7 分钟版</p><span class="bk-link">读</span></a>
-      <a href="p1-hardening.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🛡️</span><span class="bk-num">17 · NEW</span></div><h4>P1 生产化加固</h4><p class="bk-desc">memory decay · 并行 tool · cost guardrail · OpenAPI codegen · multi-session UI · 5 个改动 5 套工程哲学 · 12 题</p><span class="bk-link">读</span></a>
+      <a href="p1-hardening.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🛡️</span><span class="bk-num has-new">17</span></div><h4>P1 生产化加固</h4><p class="bk-desc">memory decay · 并行 tool · cost guardrail · OpenAPI codegen · multi-session · 5 套工程哲学 · 12 题</p><span class="bk-link">读</span></a>
     </div>
   </div>
 </section>
@@ -557,6 +739,9 @@ footer.foot a:hover { color: var(--rust); }
         <tr><td>🔴 AI Infra</td><td class="dim">·</td><td>○</td><td class="dim">·</td><td class="dim">·</td><td>○</td><td class="x">●</td></tr>
         <tr><td>🔥 Harness 完全手册</td><td class="x">●</td><td class="x">●</td><td class="x">●</td><td class="x">●</td><td>○</td><td class="dim">·</td></tr>
         <tr><td>⚖️ Harness ⇄ Graph 对比</td><td class="x">●</td><td class="x">●</td><td>○</td><td>○</td><td>○</td><td class="dim">·</td></tr>
+        <tr><td>🪶 Hermes 速读</td><td>○</td><td class="dim">·</td><td>○</td><td class="dim">·</td><td>○</td><td>○</td></tr>
+        <tr><td>🔌 MCP · USB-C</td><td class="x">●</td><td class="x">●</td><td>○</td><td class="dim">·</td><td>○</td><td class="dim">·</td></tr>
+        <tr><td>🛡️ P1 生产化加固</td><td class="x">●</td><td class="x">●</td><td>○</td><td>○</td><td class="x">●</td><td class="dim">·</td></tr>
       </tbody>
     </table>
     <p style="text-align:center;font-size:0.78rem;color:var(--ink-mute);font-family:var(--font-sans);margin-top:1rem;">
@@ -573,41 +758,74 @@ footer.foot a:hover { color: var(--rust); }
       <h2>关于这套手册</h2>
     </div>
     <div style="max-width: 42em; margin: 0 auto;">
-      <p>这套 14 本手册是为 <strong>2026 年 senior agent engineer 面试</strong>系统化整理的——不是教程合集 · 是按 "从 0 到能上岗" 路径设计的<em>完整体系</em>。</p>
+      <p>这套 17 本手册是为 <strong>2026 年 senior agent engineer 面试</strong>系统化整理的——不是教程合集 · 是按 "从 0 到能上岗" 路径设计的<em>完整体系</em>。</p>
 
       <h4 style="font-family:var(--font-display);font-weight:500;font-size:1.3rem;margin:2rem 0 0.6rem;color:var(--ink);">📐 设计原则</h4>
       <ol>
-        <li><strong>面试导向</strong>——每本配 15-20 道 senior 面试题 + 答题模板 · 不是 "了解一下" 而是 "能上场答"</li>
-        <li><strong>互不重复</strong>——14 本各有独立主题 · 但内部 cross-link 把相关概念串起</li>
-        <li><strong>真坑 vs 玄学</strong>——每本都有 "翻车复盘" 章节 · 别人用真血换的经验</li>
+        <li><strong>面试导向</strong>——每本配 12-50 道 senior 面试题 + 答题模板 · 不是 "了解一下" 而是 "能上场答"</li>
+        <li><strong>互不重复</strong>——17 本各有独立主题 · 但内部 cross-link 把相关概念串起</li>
+        <li><strong>真坑 vs 玄学</strong>——每本都有 "翻车复盘" / "面试三档答案" · 别人用真血换的经验</li>
         <li><strong>引用一手资料</strong>——官方文档 / 源码 / paper · 不抄博客抄博客</li>
+        <li><strong>跟 demo 同步</strong>——本项目 Book 02 / 13 / 15 / 16 / 17 都有真实可跑的代码对照 · 改了代码就改书</li>
       </ol>
 
       <h4 style="font-family:var(--font-display);font-weight:500;font-size:1.3rem;margin:2rem 0 0.6rem;color:var(--ink);">🛠 配套项目</h4>
-      <p><a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/doraemonlyz-jpg/taotao-agent</a> ——完整生产级 agent demo · <strong>同时支持 graph 和 harness 两种实现</strong>（<code>POST /chat</code> + <code>POST /chat/v2</code>）· LangGraph + supervisor + sub-agent + HITL + memory + tool + eval · 跟 Book 02 (graph 实现) 和 Book 13 (harness 实现) 配套读 · 直接 clone 跑得起。</p>
+      <p><a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/doraemonlyz-jpg/taotao-agent</a> · 完整生产级 agent demo · <strong>同时支持 graph 和 harness 两种实现</strong>（<code>POST /chat</code> + <code>POST /chat/v2</code>）· LangGraph + supervisor + sub-agent + HITL + memory + tool + eval + <strong>MCP 双向</strong>（暴露/消费 tools）+ <strong>P1 加固</strong>（cost 护栏 / memory decay / parallel exec / OpenAPI codegen / multi-session UI）· 跟 Book 02 (graph 实现) · Book 13 (harness 实现) · Book 16 (MCP) · Book 17 (P1) 配套读 · 直接 clone 跑得起。</p>
 
       <h4 style="font-family:var(--font-display);font-weight:500;font-size:1.3rem;margin:2rem 0 0.6rem;color:var(--ink);">📊 数据</h4>
-      <table style="width:100%;border-collapse:collapse;margin-top:0.8rem;font-size:0.92rem;background:var(--paper-card);border:1px solid var(--rule);border-radius:6px;overflow:hidden;">
-        <tr><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);">总行数</td><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>~26,000</strong></td></tr>
-        <tr><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);">章节</td><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>~150</strong></td></tr>
-        <tr><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);">面试题</td><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>300+</strong></td></tr>
-        <tr><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);">术语词</td><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>760+</strong></td></tr>
-        <tr><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);">SVG 图</td><td style="padding:0.5rem 0.8rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>40+</strong></td></tr>
-        <tr><td style="padding:0.5rem 0.8rem;">Failure mode / 翻车</td><td style="padding:0.5rem 0.8rem;text-align:right;font-family:var(--font-mono);"><strong>50+</strong></td></tr>
+      <table style="width:100%;border-collapse:collapse;margin-top:0.8rem;font-size:0.92rem;background:var(--paper-card);border:1px solid var(--rule);border-radius:8px;overflow:hidden;box-shadow:var(--shadow-soft);">
+        <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">总行数</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>~30,000</strong></td></tr>
+        <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">章节</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>~170</strong></td></tr>
+        <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">面试题</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>320+</strong></td></tr>
+        <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">术语词</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>800+</strong></td></tr>
+        <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">SVG 图</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>50+</strong></td></tr>
+        <tr><td style="padding:0.55rem 0.85rem;">Failure mode / 翻车 / 面试三档</td><td style="padding:0.55rem 0.85rem;text-align:right;font-family:var(--font-mono);"><strong>60+</strong></td></tr>
       </table>
     </div>
   </div>
 </section>
 
-<!-- ============== Final CTA ============== -->
+<!-- ============== Final CTA · spirited away night sky ============== -->
 <section class="final-cta">
+  <svg class="sky-svg" viewBox="0 0 1400 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <!-- moon -->
+    <circle class="moon" cx="1180" cy="80" r="36"/>
+    <circle cx="1196" cy="68" r="6" fill="#1d2f4a" opacity=".25"/>
+    <circle cx="1170" cy="92" r="4" fill="#1d2f4a" opacity=".2"/>
+    <!-- stars -->
+    <circle class="star star-bright" cx="120" cy="60" r="2.4"/>
+    <circle class="star s2" cx="240" cy="100" r="1.8"/>
+    <circle class="star s3" cx="380" cy="40" r="2"/>
+    <circle class="star" cx="520" cy="90" r="1.6"/>
+    <circle class="star s4" cx="660" cy="55" r="2.2"/>
+    <circle class="star s2" cx="780" cy="130" r="1.8"/>
+    <circle class="star" cx="900" cy="70" r="2"/>
+    <circle class="star s3" cx="1020" cy="130" r="1.6"/>
+    <circle class="star s4" cx="1300" cy="170" r="2"/>
+    <circle class="star" cx="80" cy="200" r="1.4"/>
+    <circle class="star s2" cx="450" cy="180" r="1.8"/>
+    <circle class="star s3" cx="850" cy="200" r="1.6"/>
+    <!-- distant hill -->
+    <path class="hill-night" d="M0 320 Q 300 240 600 290 T 1200 280 T 1400 310 L 1400 400 L 0 400 Z"/>
+    <!-- pine forest silhouette -->
+    <g class="pine">
+      <path d="M120 320 L 110 350 L 117 350 L 113 365 L 127 365 L 123 350 L 130 350 Z"/>
+      <path d="M180 310 L 168 345 L 176 345 L 171 365 L 189 365 L 184 345 L 192 345 Z"/>
+      <path d="M260 318 L 250 348 L 257 348 L 253 365 L 267 365 L 263 348 L 270 348 Z"/>
+      <path d="M980 314 L 968 348 L 976 348 L 971 368 L 989 368 L 984 348 L 992 348 Z"/>
+      <path d="M1060 320 L 1050 350 L 1057 350 L 1053 365 L 1067 365 L 1063 350 L 1070 350 Z"/>
+      <path d="M1140 312 L 1128 348 L 1136 348 L 1131 368 L 1149 368 L 1144 348 L 1152 348 Z"/>
+    </g>
+  </svg>
   <div class="container">
     <h2>准备好开始 <em>从 0 到 senior</em> 了吗？</h2>
-    <p class="lede">推荐顺序：先读 <strong>Book 01 (应用入门)</strong> · 30 分钟建立认知 · 然后看 <strong>Book 02 (实现详解)</strong> 跟 demo 跑一遍 · 之后按 Phase 2 选你最缺的支柱。</p>
+    <p class="lede">推荐顺序：先读 <strong>Book 01 (应用入门)</strong> · 30 分钟建立认知 · 然后看 <strong>Book 02 (实现详解)</strong> 跟 demo 跑一遍 · 之后按 Phase 2 选你最缺的支柱 · 想直接学生产化看 <strong>Book 17 (P1 加固)</strong>。</p>
     <div class="cta-row">
       <a href="learn.html" class="btn bare">📖 从 Book 01 开始</a>
+      <a href="p1-hardening.html" class="btn bare">🛡️ 直奔 Book 17 P1</a>
       <a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank" class="btn bare">⭐ Star 项目</a>
     </div>
+    <span class="hand-note">— 一边读，一边跑 demo —</span>
   </div>
 </section>
 
@@ -615,12 +833,12 @@ footer.foot a:hover { color: var(--rust); }
 <footer class="foot">
   <div class="container">
     <div class="row">
-      <span><strong>桃桃 Agent</strong> · Senior Agent Engineer Manual · v1.0 · 2026-05</span>
+      <span><strong>桃桃 Agent</strong> · Senior Agent Engineer Manual · v1.1 · 2026-05</span>
       <span><a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/doraemonlyz-jpg/taotao-agent</a></span>
     </div>
     <div class="row" style="margin-top:0.6rem;">
-      <span>Set in Fraunces · Lora · Outfit · JetBrains Mono</span>
-      <span>14 books · 26000+ lines · 300+ Qs · 760+ terms</span>
+      <span>Set in Fraunces · Lora · Outfit · Caveat · JetBrains Mono</span>
+      <span>17 books · 30000+ lines · 320+ Qs · 800+ terms</span>
     </div>
   </div>
 </footer>
