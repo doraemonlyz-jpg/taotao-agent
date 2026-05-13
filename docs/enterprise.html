@@ -15,32 +15,32 @@
  * ===================================================================== */
 
 :root {
-  --paper:        #fbf5e8;
-  --paper-2:      #f4ecd6;
+  --paper:        #f7faf3;
+  --paper-2:      #ebf2e3;
   --paper-card:   #ffffff;
-  --ink:          #1d1a14;
-  --ink-soft:     #3a3327;
-  --ink-mute:     #756c5c;
-  --rule:         #d8cdb0;
-  --rule-soft:    #e8debc;
+  --ink:          #2a322c;
+  --ink-soft:     #4a554c;
+  --ink-mute:     #8a948a;
+  --rule:         #d4dfc8;
+  --rule-soft:    #e3ecd8;
 
-  --leaf:         #4a8a4a;
-  --leaf-soft:    #ebf3e7;
-  --rust:         #c44d2a;
+  --leaf:         #7eb287;
+  --leaf-soft:    #e8f1e0;
+  --rust:         #e08a6e;
   --rust-soft:    #fae6dc;
-  --sky:          #2c6ca8;
-  --sky-soft:     #e2edf5;
-  --plum:         #864c8e;
-  --plum-soft:    #f1e6f2;
-  --gold:         #b8881e;
-  --gold-soft:    #f7eccd;
+  --sky:          #5e9fc4;
+  --sky-soft:     #e7f1f7;
+  --plum:         #b89bc4;
+  --plum-soft:    #f1e8f3;
+  --gold:         #c4a14c;
+  --gold-soft:    #faecc7;
 
-  --code-bg:      #fdf9ed;
-  --code-fg:      #2a2620;
-  --code-key:     #c44d2a;
-  --code-str:     #4a8a4a;
-  --code-cmt:     #998a6c;
-  --code-fn:      #864c8e;
+  --code-bg:      #f4f8ee;
+  --code-fg:      #2a322c;
+  --code-key:     #e08a6e;
+  --code-str:     #7eb287;
+  --code-cmt:     #8a958a;
+  --code-fn:      #b89bc4;
 
   --font-display: "Fraunces", "Times New Roman", serif;
   --font-body:    "Lora", "Iowan Old Style", Georgia, serif;
@@ -54,8 +54,8 @@ html { scroll-behavior: smooth; }
 body {
   margin: 0;
   background:
-    radial-gradient(ellipse at top left, rgba(196, 178, 144, 0.12), transparent 50%),
-    radial-gradient(ellipse at bottom right, rgba(74, 138, 74, 0.08), transparent 50%),
+    radial-gradient(ellipse at top left, rgba(126,178,135,0.12), transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(158,197,220,0.08), transparent 50%),
     var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
@@ -66,8 +66,8 @@ body {
 :lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
 .book-body p, .book-body li { color: var(--ink-soft); }
 
-a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(196, 77, 42, 0.4); }
-a:hover { background: rgba(196, 77, 42, 0.08); }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(201,115,87,0.4); }
+a:hover { background: rgba(201,115,87,0.08); }
 em { font-style: italic; color: var(--leaf); font-weight: 500; }
 strong { font-weight: 600; color: var(--ink); }
 
@@ -151,7 +151,7 @@ strong { font-weight: 600; color: var(--ink); }
   font-size: 0.74rem; color: var(--ink-mute);
   line-height: 1.6;
 }
-.toc-foot a { color: var(--ink-mute); border-bottom-color: rgba(117, 108, 92, 0.3); }
+.toc-foot a { color: var(--ink-mute); border-bottom-color: rgba(138,148,138,0.3); }
 .toc-foot a:hover { color: var(--rust); }
 
 /* ---------- Book ---------- */
@@ -392,7 +392,7 @@ th {
   font-weight: 600; background: var(--paper-2);
 }
 tr:last-child td { border-bottom: none; }
-tr:hover td { background: rgba(196, 178, 144, 0.13); }
+tr:hover td { background: rgba(126,178,135,0.13); }
 
 /* RACI table — same as table but R/A/C/I letters get color chips */
 .raci td:nth-child(n+2) { text-align: center; font-family: var(--font-sans); font-weight: 700; font-size: 0.85rem; }
@@ -408,7 +408,7 @@ tr:hover td { background: rgba(196, 178, 144, 0.13); }
   border-radius: 12px;
   padding: 1.6rem 1.4rem 1.2rem;
   margin: 1.4rem 0 1.8rem;
-  box-shadow: 0 1px 3px rgba(29, 26, 20, 0.04);
+  box-shadow: 0 1px 3px rgba(42,50,44,0.04);
 }
 .figure svg { display: block; width: 100%; height: auto; max-width: 760px; margin: 0 auto; }
 .figure figcaption {
@@ -421,7 +421,7 @@ tr:hover td { background: rgba(196, 178, 144, 0.13); }
 .figure figcaption strong { color: var(--ink-soft); font-weight: 600; text-transform: none; letter-spacing: 0; }
 
 .fig-box       { fill: var(--paper-card); stroke: var(--ink-soft); stroke-width: 1.5; }
-.fig-box-soft  { fill: #fdf9ed; stroke: var(--rule); stroke-width: 1.2; }
+.fig-box-soft  { fill: #f4f8ee; stroke: var(--rule); stroke-width: 1.2; }
 .fig-box-leaf  { fill: var(--leaf-soft); stroke: var(--leaf); stroke-width: 1.5; }
 .fig-box-rust  { fill: var(--rust-soft); stroke: var(--rust); stroke-width: 1.5; }
 .fig-box-sky   { fill: var(--sky-soft); stroke: var(--sky); stroke-width: 1.5; }
@@ -743,7 +743,7 @@ footer.colophon .row {
         <svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="6-phase delivery timeline">
           <defs>
             <marker id="ts-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#756c5c"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#8a948a"/>
             </marker>
           </defs>
           <!-- timeline base line -->
@@ -752,7 +752,7 @@ footer.colophon .row {
 
           <!-- 6 phase nodes alternating top/bottom -->
           <!-- P0 Discovery (top) -->
-          <circle cx="80" cy="160" r="6" fill="#c44d2a"/>
+          <circle cx="80" cy="160" r="6" fill="#e08a6e"/>
           <line class="fig-line" x1="80" y1="154" x2="80" y2="100"/>
           <rect class="fig-box-rust" x="20" y="40" width="140" height="60" rx="6"/>
           <text class="fig-t-label fig-t-rust" x="90" y="58" text-anchor="middle">P0 · DISCOVERY</text>
@@ -760,7 +760,7 @@ footer.colophon .row {
           <text class="fig-t-sm fig-t-mute" x="90" y="92" text-anchor="middle">1-2 周</text>
 
           <!-- P1 Spec (bottom) -->
-          <circle cx="190" cy="160" r="6" fill="#c44d2a"/>
+          <circle cx="190" cy="160" r="6" fill="#e08a6e"/>
           <line class="fig-line" x1="190" y1="166" x2="190" y2="220"/>
           <rect class="fig-box-leaf" x="130" y="222" width="140" height="60" rx="6"/>
           <text class="fig-t-label fig-t-leaf" x="200" y="240" text-anchor="middle">P1 · SPEC</text>
@@ -768,7 +768,7 @@ footer.colophon .row {
           <text class="fig-t-sm fig-t-mute" x="200" y="274" text-anchor="middle">2-4 周</text>
 
           <!-- P2 POC (top) -->
-          <circle cx="305" cy="160" r="6" fill="#c44d2a"/>
+          <circle cx="305" cy="160" r="6" fill="#e08a6e"/>
           <line class="fig-line" x1="305" y1="154" x2="305" y2="100"/>
           <rect class="fig-box-sky" x="245" y="40" width="140" height="60" rx="6"/>
           <text class="fig-t-label fig-t-sky" x="315" y="58" text-anchor="middle">P2 · POC</text>
@@ -776,7 +776,7 @@ footer.colophon .row {
           <text class="fig-t-sm fig-t-mute" x="315" y="92" text-anchor="middle">2-4 周</text>
 
           <!-- P3 Production (bottom) -->
-          <circle cx="425" cy="160" r="6" fill="#c44d2a"/>
+          <circle cx="425" cy="160" r="6" fill="#e08a6e"/>
           <line class="fig-line" x1="425" y1="166" x2="425" y2="220"/>
           <rect class="fig-box-plum" x="365" y="222" width="140" height="60" rx="6"/>
           <text class="fig-t-label fig-t-plum" x="435" y="240" text-anchor="middle">P3 · PRODUCTION</text>
@@ -784,7 +784,7 @@ footer.colophon .row {
           <text class="fig-t-sm fig-t-mute" x="435" y="274" text-anchor="middle">4-8 周</text>
 
           <!-- P4 Eval (top) -->
-          <circle cx="545" cy="160" r="6" fill="#c44d2a"/>
+          <circle cx="545" cy="160" r="6" fill="#e08a6e"/>
           <line class="fig-line" x1="545" y1="154" x2="545" y2="100"/>
           <rect class="fig-box-gold" x="485" y="40" width="140" height="60" rx="6"/>
           <text class="fig-t-label fig-t-gold" x="555" y="58" text-anchor="middle">P4 · EVAL/HARDEN</text>
@@ -792,7 +792,7 @@ footer.colophon .row {
           <text class="fig-t-sm fig-t-mute" x="555" y="92" text-anchor="middle">2-4 周</text>
 
           <!-- P5 Launch (bottom) -->
-          <circle cx="660" cy="160" r="6" fill="#c44d2a"/>
+          <circle cx="660" cy="160" r="6" fill="#e08a6e"/>
           <line class="fig-line" x1="660" y1="166" x2="660" y2="220"/>
           <rect class="fig-box-rust" x="600" y="222" width="140" height="60" rx="6"/>
           <text class="fig-t-label fig-t-rust" x="670" y="240" text-anchor="middle">P5 · LAUNCH/OPS</text>
@@ -1273,7 +1273,7 @@ Score = Likelihood × Impact（H=3, M=2, L=1），≥ 6 必须有具体 mitigati
         <svg viewBox="0 0 760 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Build vs Buy decision tree">
           <defs>
             <marker id="bb-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#756c5c"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#8a948a"/>
             </marker>
           </defs>
 
@@ -1453,7 +1453,7 @@ Output ONLY a JSON: {{"score": int, "reason": str}}"""</span>
         <svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Four guardrail layers">
           <defs>
             <marker id="g-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#756c5c"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#8a948a"/>
             </marker>
           </defs>
           <rect class="fig-box-soft" x="20" y="100" width="100" height="60" rx="6"/>

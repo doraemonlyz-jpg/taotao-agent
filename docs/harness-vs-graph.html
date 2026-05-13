@@ -10,16 +10,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --paper: #fbf5e8; --paper-2: #f4ecd6; --paper-card: #ffffff;
-  --ink: #1d1a14; --ink-soft: #3a3327; --ink-mute: #756c5c;
-  --rule: #d8cdb0; --rule-soft: #e8debc;
-  --leaf: #4a8a4a; --leaf-soft: #ebf3e7;
-  --rust: #c44d2a; --rust-soft: #fae6dc;
-  --sky:  #2c6ca8; --sky-soft:  #e2edf5;
-  --plum: #864c8e; --plum-soft: #f1e6f2;
-  --gold: #b8881e; --gold-soft: #f7eccd;
-  --code-bg: #fdf9ed; --code-fg: #2a2620; --code-key: #c44d2a;
-  --code-str: #4a8a4a; --code-cmt: #998a6c; --code-fn: #864c8e;
+  --paper: #f7faf3; --paper-2: #ebf2e3; --paper-card: #ffffff;
+  --ink: #2a322c; --ink-soft: #4a554c; --ink-mute: #8a948a;
+  --rule: #d4dfc8; --rule-soft: #e3ecd8;
+  --leaf: #7eb287; --leaf-soft: #e8f1e0;
+  --rust: #e08a6e; --rust-soft: #fae6dc;
+  --sky:  #5e9fc4; --sky-soft:  #e7f1f7;
+  --plum: #b89bc4; --plum-soft: #f1e8f3;
+  --gold: #c4a14c; --gold-soft: #faecc7;
+  --code-bg: #f4f8ee; --code-fg: #2a322c; --code-key: #e08a6e;
+  --code-str: #7eb287; --code-cmt: #8a958a; --code-fn: #b89bc4;
   --font-display: "Fraunces", "Times New Roman", serif;
   --font-body: "Lora", "Iowan Old Style", Georgia, serif;
   --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
@@ -28,11 +28,11 @@
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { margin: 0; background: radial-gradient(ellipse at top left, rgba(196, 178, 144, 0.12), transparent 50%), radial-gradient(ellipse at bottom right, rgba(74, 138, 74, 0.08), transparent 50%), var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.75; }
+body { margin: 0; background: radial-gradient(ellipse at top left, rgba(126,178,135,0.12), transparent 50%), radial-gradient(ellipse at bottom right, rgba(158,197,220,0.08), transparent 50%), var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.75; }
 :lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
 .book-body p, .book-body li { color: var(--ink-soft); }
-a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(196, 77, 42, 0.4); }
-a:hover { background: rgba(196, 77, 42, 0.08); }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(201,115,87,0.4); }
+a:hover { background: rgba(201,115,87,0.08); }
 em { font-style: italic; color: var(--leaf); font-weight: 500; }
 strong { font-weight: 600; color: var(--ink); }
 
@@ -53,7 +53,7 @@ strong { font-weight: 600; color: var(--ink); }
 .toc a:hover { background: var(--paper-2); color: var(--ink); }
 .toc a.active { background: var(--rust-soft); color: var(--rust); }
 .toc-foot { margin-top: 2rem; padding: 1rem 0.7rem 0; border-top: 1px dashed var(--rule); font-family: var(--font-sans); font-size: 0.74rem; color: var(--ink-mute); line-height: 1.6; }
-.toc-foot a { color: var(--ink-mute); border-bottom-color: rgba(117, 108, 92, 0.3); }
+.toc-foot a { color: var(--ink-mute); border-bottom-color: rgba(138,148,138,0.3); }
 .toc-foot a:hover { color: var(--rust); }
 
 .book-body { padding: 2rem 0 6rem; max-width: 800px; }
@@ -113,7 +113,7 @@ table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.6rem; font-size
 th, td { text-align: left; padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
 th { font-family: var(--font-sans); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink); font-weight: 600; background: var(--paper-2); }
 tr:last-child td { border-bottom: none; }
-tr:hover td { background: rgba(196, 178, 144, 0.13); }
+tr:hover td { background: rgba(126,178,135,0.13); }
 table code { font-size: 0.82em; }
 
 td.win { background: var(--leaf-soft); color: var(--leaf); font-weight: 600; }
