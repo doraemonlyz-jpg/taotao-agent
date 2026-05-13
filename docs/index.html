@@ -105,32 +105,6 @@ strong { font-weight: 600; color: var(--ink); }
 .hero-sky .baobab { fill: none; stroke: #2c4570; stroke-width: 2; stroke-linecap: round; opacity: .7; }
 .hero-sky .baobab-crown { fill: #1f3458; opacity: .8; stroke: #2c4570; stroke-width: 1; }
 .hero-sky .hat-boa { fill: none; stroke: var(--ink-mute); stroke-width: 1.4; opacity: .55; }
-/* fox — sandy desert orange + cream chest, sitting upright; lives in its own SVG */
-.hero-fox {
-  position: absolute;
-  left: clamp(20px, 6%, 100px);
-  bottom: 30px;
-  width: clamp(160px, 18vw, 260px);
-  height: auto;
-  z-index: 2;                    /* above dunes (which are z-index: 0) */
-  pointer-events: none;
-  filter: drop-shadow(0 6px 14px rgba(0,0,0,.35));
-}
-.hero-fox .fox-body  { fill: #d97a4a; }
-.hero-fox .fox-belly { fill: #f5dcb8; }
-.hero-fox .fox-tip   { fill: #2a1c14; }
-.hero-fox .fox-inner { fill: #f5dcb8; }
-.hero-fox .fox-eye   { fill: #0f1d35; }
-/* gentle tail-sway: rotate around the fox's bottom-center */
-.hero-fox .fox-grp {
-  transform-origin: 0 6px;
-  animation: fox-tail 5s ease-in-out infinite;
-}
-@keyframes fox-tail { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-1.8deg); } }
-/* on small screens the fox sits a touch lower & smaller so it doesn't crowd the headline */
-@media (max-width: 720px) {
-  .hero-fox { left: 8px; bottom: 18px; width: 130px; }
-}
 @keyframes twinkle { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
 @keyframes twinkle-soft { 0%, 100% { opacity: .8; } 50% { opacity: .25; } }
 @keyframes float-slow { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(8px, -4px); } }
@@ -455,63 +429,6 @@ footer.foot a:hover { color: var(--rust); }
     <path class="dune-edge"  d="M0 122 Q 260 88 540 112 T 1080 110 T 1400 124"/>
   </svg>
 
-  <!-- 🦊 The Fox · standalone SVG so it won't distort with the dune stretching -->
-  <svg class="hero-fox" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-   <g transform="translate(110 195)">
-    <g class="fox-grp">
-      <!-- subtle ground shadow -->
-      <ellipse cx="0" cy="6" rx="60" ry="6" fill="#000" opacity=".25"/>
-
-      <!-- bushy tail curling around (drawn first so body covers the base) -->
-      <path class="fox-body" d="M 30 -8 q 50 -8 56 26 q 8 32 -18 44 q -4 -18 -18 -26 q -16 -6 -20 -44 z"/>
-      <path class="fox-belly" d="M 64 56 q 12 -4 14 -16 q -6 -2 -12 2 q -6 4 -2 14 z"/>
-
-      <!-- back hind haunches -->
-      <ellipse class="fox-body" cx="22" cy="36" rx="22" ry="16"/>
-
-      <!-- main body (sitting upright, facing right) -->
-      <path class="fox-body" d="M -22 6 q -8 -42 24 -46 q 32 -4 36 30 q 4 26 -8 40 q -32 8 -54 -4 q -4 -10 2 -20 z"/>
-
-      <!-- white belly / chest -->
-      <path class="fox-belly" d="M 6 -8 q 16 0 16 22 q 0 16 -18 18 q -12 0 -14 -16 q 0 -18 16 -24 z"/>
-
-      <!-- front legs -->
-      <path class="fox-body" d="M -2 22 q -4 18 0 28 l 9 0 q 4 -18 0 -28 z"/>
-      <path class="fox-body" d="M 14 22 q -4 18 0 28 l 9 0 q 4 -18 0 -28 z"/>
-      <path class="fox-tip"  d="M -3 48 l 11 0 l 0 5 l -11 0 z"/>
-      <path class="fox-tip"  d="M 13 48 l 11 0 l 0 5 l -11 0 z"/>
-
-      <!-- head (tilted up toward the prince) -->
-      <g transform="translate(18 -32) rotate(12)">
-        <!-- left ear (further) -->
-        <path class="fox-body" d="M -12 -14 l -6 -32 l 16 8 z"/>
-        <path class="fox-inner" d="M -10 -16 l -4 -22 l 10 5 z"/>
-        <!-- right ear -->
-        <path class="fox-body" d="M 16 -18 l 8 -32 l 9 24 z"/>
-        <path class="fox-inner" d="M 18 -20 l 6 -22 l 5 16 z"/>
-        <!-- skull / face -->
-        <path class="fox-body" d="M -16 -16 q 0 -20 16 -20 q 24 0 28 16 q 0 20 -8 26 q -24 8 -34 -4 q -8 -8 -2 -18 z"/>
-        <!-- white snout / cheeks -->
-        <path class="fox-belly" d="M 0 -2 q 12 -4 24 0 q 0 14 -14 16 q -10 0 -10 -16 z"/>
-        <!-- eyes (almond, friendly) -->
-        <ellipse class="fox-eye" cx="-4" cy="-9" rx="2.4" ry="3.2"/>
-        <ellipse class="fox-eye" cx="13" cy="-9" rx="2.4" ry="3.2"/>
-        <!-- tiny eye highlights -->
-        <circle cx="-3" cy="-10" r=".8" fill="#fff5d8"/>
-        <circle cx="14" cy="-10" r=".8" fill="#fff5d8"/>
-        <!-- nose -->
-        <path class="fox-tip" d="M 14 2 l 7 0 l -3.5 5 z"/>
-        <!-- whiskers -->
-        <g stroke="#f5dcb8" stroke-width=".7" opacity=".75" stroke-linecap="round">
-          <line x1="6"  y1="6"  x2="-8" y2="4"/>
-          <line x1="6"  y1="8"  x2="-8" y2="9"/>
-          <line x1="22" y1="6"  x2="36" y2="4"/>
-          <line x1="22" y1="8"  x2="36" y2="9"/>
-        </g>
-      </g>
-    </g>
-   </g>
-  </svg>
 
   <div class="container hero-inner">
     <div class="hero-eyebrow">Senior Agent Engineer<span class="sep">·</span>Interview Manual<span class="sep">·</span>2026</div>
