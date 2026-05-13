@@ -16,33 +16,33 @@
 
 :root {
   /* warm cream paper, very inviting */
-  --paper:        #f7faf3;
-  --paper-2:      #ebf2e3;
-  --paper-card:   #ffffff;
-  --ink:          #2a322c;
-  --ink-soft:     #4a554c;
-  --ink-mute:     #8a948a;
-  --rule:         #d4dfc8;
-  --rule-soft:    #e3ecd8;
+  --paper:        #f4ede0;
+  --paper-2:      #e9e0c8;
+  --paper-card:   #fbf6e9;
+  --ink:          #3d3a32;
+  --ink-soft:     #5e574c;
+  --ink-mute:     #9c9482;
+  --rule:         #d5cab2;
+  --rule-soft:    #e3d9c0;
 
   /* friendly accents — used sparingly */
-  --leaf:         #7eb287;     /* concept / learn */
-  --leaf-soft:    #e8f1e0;
-  --rust:         #e08a6e;     /* important / tip */
-  --rust-soft:    #fae6dc;
-  --sky:          #5e9fc4;     /* code / tech */
-  --sky-soft:     #e7f1f7;
-  --plum:         #b89bc4;     /* analogy */
-  --plum-soft:    #f1e8f3;
-  --gold:         #c4a14c;     /* interview / Q&A */
-  --gold-soft:    #faecc7;
+  --leaf:         #7d9d80;     /* concept / learn */
+  --leaf-soft:    #e7eed9;
+  --rust:         #c97a5e;     /* important / tip */
+  --rust-soft:    #f1ddd1;
+  --sky:          #7ea9c4;     /* code / tech */
+  --sky-soft:     #e3ebf1;
+  --plum:         #a690b1;     /* analogy */
+  --plum-soft:    #ebe2ed;
+  --gold:         #c1995a;     /* interview / Q&A */
+  --gold-soft:    #f1e3b9;
 
-  --code-bg:      #f4f8ee;
-  --code-fg:      #2a322c;
-  --code-key:     #e08a6e;
-  --code-str:     #7eb287;
-  --code-cmt:     #8a958a;
-  --code-fn:      #b89bc4;
+  --code-bg:      #ede5d2;
+  --code-fg:      #3d3a32;
+  --code-key:     #c97a5e;
+  --code-str:     #7d9d80;
+  --code-cmt:     #9a9384;
+  --code-fn:      #a690b1;
 
   --font-display: "Fraunces", "Times New Roman", serif;
   --font-body:    "Lora", "Iowan Old Style", Georgia, serif;
@@ -56,8 +56,8 @@ html { scroll-behavior: smooth; }
 body {
   margin: 0;
   background:
-    radial-gradient(ellipse at top left, rgba(126,178,135,0.12), transparent 50%),
-    radial-gradient(ellipse at bottom right, rgba(158,197,220,0.08), transparent 50%),
+    radial-gradient(ellipse at top left, rgba(165,175,130,0.12), transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(160,180,200,0.08), transparent 50%),
     var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
@@ -68,8 +68,8 @@ body {
 :lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
 .book-body p, .book-body li { color: var(--ink-soft); }
 
-a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(201,115,87,0.4); }
-a:hover { background: rgba(201,115,87,0.08); }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(180,106,79,0.4); }
+a:hover { background: rgba(180,106,79,0.08); }
 em { font-style: italic; color: var(--leaf); font-weight: 500; }
 strong { font-weight: 600; color: var(--ink); }
 
@@ -191,7 +191,7 @@ strong { font-weight: 600; color: var(--ink); }
 }
 .toc-foot a {
   color: var(--ink-mute);
-  border-bottom-color: rgba(138,148,138,0.3);
+  border-bottom-color: rgba(156,148,130,0.3);
 }
 .toc-foot a:hover { color: var(--rust); }
 
@@ -428,7 +428,7 @@ pre .f { color: var(--code-fn); font-weight: 500; }
 .box.interview .box-label { color: var(--gold); }
 .box.interview .box-label::before { content: "🎯"; }
 
-.box.warn { background: #fff4e0; border-color: #d49414; }
+.box.warn { background: #f7ecd2; border-color: #d49414; }
 .box.warn .box-label { color: #b87a0a; }
 .box.warn .box-label::before { content: "⚠️"; }
 
@@ -530,7 +530,7 @@ th {
   background: var(--paper-2);
 }
 tr:last-child td { border-bottom: none; }
-tr:hover td { background: rgba(126,178,135,0.13); }
+tr:hover td { background: rgba(165,175,130,0.13); }
 
 /* ---------- Diagrams ---------- */
 .diagram {
@@ -560,7 +560,7 @@ tr:hover td { background: rgba(126,178,135,0.13); }
   border-radius: 12px;
   padding: 1.6rem 1.4rem 1.2rem;
   margin: 1.4rem 0 1.8rem;
-  box-shadow: 0 1px 3px rgba(42,50,44,0.04);
+  box-shadow: 0 1px 3px rgba(61,58,50,0.04);
 }
 .figure svg { display: block; width: 100%; height: auto; max-width: 760px; margin: 0 auto; }
 .figure figcaption {
@@ -576,7 +576,7 @@ tr:hover td { background: rgba(126,178,135,0.13); }
 
 /* SVG primitives — shared across all figures */
 .fig-box       { fill: var(--paper-card); stroke: var(--ink-soft); stroke-width: 1.5; }
-.fig-box-soft  { fill: #f4f8ee; stroke: var(--rule); stroke-width: 1.2; }
+.fig-box-soft  { fill: #ede5d2; stroke: var(--rule); stroke-width: 1.2; }
 .fig-box-leaf  { fill: var(--leaf-soft); stroke: var(--leaf); stroke-width: 1.5; }
 .fig-box-rust  { fill: var(--rust-soft); stroke: var(--rust); stroke-width: 1.5; }
 .fig-box-sky   { fill: var(--sky-soft); stroke: var(--sky); stroke-width: 1.5; }
@@ -1034,10 +1034,10 @@ executor.invoke({<span class="s">"input"</span>: <span class="s">"北京 - 上�
         <svg viewBox="0 0 760 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Agent 10-component reference architecture">
           <defs>
             <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#8a948a"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#9c9482"/>
             </marker>
             <marker id="arr-rust" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#e08a6e"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#c97a5e"/>
             </marker>
           </defs>
 
@@ -1192,7 +1192,7 @@ llm_with_tools = llm.bind_tools([calculator])
         <svg viewBox="0 0 760 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tool calling step-by-step flow">
           <defs>
             <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#8a948a"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#9c9482"/>
             </marker>
           </defs>
 
@@ -1379,10 +1379,10 @@ llm_with_tools = llm.bind_tools([calculator])
         <svg viewBox="0 0 760 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Supervisor multi-agent topology">
           <defs>
             <marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#8a948a"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#9c9482"/>
             </marker>
             <marker id="arr3r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#e08a6e"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#c97a5e"/>
             </marker>
           </defs>
 
@@ -1871,10 +1871,10 @@ v = client.embeddings.<span class="f">create</span>(
         <svg viewBox="0 0 760 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="RAG vs Agent comparison">
           <defs>
             <marker id="arr5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#8a948a"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#9c9482"/>
             </marker>
             <marker id="arr5r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#e08a6e"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#c97a5e"/>
             </marker>
           </defs>
 
@@ -2113,10 +2113,10 @@ v = client.embeddings.<span class="f">create</span>(
         <svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Supervisor pattern with state loop">
           <defs>
             <marker id="arr7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#8a948a"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#9c9482"/>
             </marker>
             <marker id="arr7r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#e08a6e"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#c97a5e"/>
             </marker>
           </defs>
 

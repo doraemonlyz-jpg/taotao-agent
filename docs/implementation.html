@@ -16,26 +16,26 @@
  * ===================================================================== */
 
 :root {
-  --paper:        #f7faf3;
-  --paper-2:      #ebf2e3;
-  --paper-edge:   #d4dfc8;
-  --ink:          #2a322c;
-  --ink-soft:     #4a554c;
-  --ink-mute:     #8a948a;
-  --rule:         #d4dfc8;
-  --rule-soft:    #e3ecd8;
-  --tomato:       #e08a6e;
-  --moss:         #5a8961;
-  --amber:        #c4a14c;
-  --indigo:       #5e9fc4;
-  --panel:        #f4f8ee;
-  --code-bg:      #2a322c;
-  --code-fg:      #ebf2e3;
+  --paper:        #f4ede0;
+  --paper-2:      #e9e0c8;
+  --paper-edge:   #d5cab2;
+  --ink:          #3d3a32;
+  --ink-soft:     #5e574c;
+  --ink-mute:     #9c9482;
+  --rule:         #d5cab2;
+  --rule-soft:    #e3d9c0;
+  --tomato:       #c97a5e;
+  --moss:         #5d7a5f;
+  --amber:        #c1995a;
+  --indigo:       #7ea9c4;
+  --panel:        #ede5d2;
+  --code-bg:      #3d3a32;
+  --code-fg:      #e9e0c8;
   --code-mute:    #b8c2b8;
   --code-key:     #f5b88e;
   --code-str:     #b9d49b;
-  --code-fn:      #f5d68b;
-  --code-cmt:     #8a958a;
+  --code-fn:      #e9c882;
+  --code-cmt:     #9a9384;
 
   --font-display: "Fraunces", "Times New Roman", serif;
   --font-body:    "Spectral", "Iowan Old Style", "Charter", Georgia, serif;
@@ -49,7 +49,7 @@ html { scroll-behavior: smooth; }
 body {
   margin: 0;
   background:
-    radial-gradient(circle at 12% 8%, rgba(126,178,135,0.18), transparent 40%),
+    radial-gradient(circle at 12% 8%, rgba(165,175,130,0.18), transparent 40%),
     radial-gradient(circle at 88% 92%, rgba(150, 130, 90, 0.12), transparent 50%),
     var(--paper);
   color: var(--ink);
@@ -178,7 +178,7 @@ strong { font-weight: 600; color: var(--ink); }
 }
 .toc-foot a {
   color: var(--ink-mute);
-  border-bottom-color: rgba(138,148,138,0.4);
+  border-bottom-color: rgba(156,148,130,0.4);
 }
 .toc-foot a:hover { color: var(--tomato); }
 
@@ -353,7 +353,7 @@ li { margin: 0.2rem 0; }
 code {
   font-family: var(--font-mono);
   font-size: 0.84em;
-  background: rgba(126,178,135,0.22);
+  background: rgba(165,175,130,0.22);
   padding: 0.05rem 0.35rem;
   border-radius: 4px;
   color: var(--ink);
@@ -368,7 +368,7 @@ pre {
   font-size: 0.78rem;
   line-height: 1.55;
   margin: 1rem 0 1.4rem;
-  border: 1px solid #2a322c;
+  border: 1px solid #3d3a32;
 }
 pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
 pre .k { color: var(--code-key); }
@@ -399,7 +399,7 @@ pre .m { color: var(--code-mute); }
 }
 .callout.tip    { border-color: var(--moss); }
 .callout.warn   { border-color: var(--amber); }
-.callout.steal  { border-color: var(--indigo); background: var(--sky-soft, #e7f1f7); }
+.callout.steal  { border-color: var(--indigo); background: var(--sky-soft, #e3ebf1); }
 .callout .lbl {
   font-family: var(--font-mono);
   font-size: 0.62rem;
@@ -455,7 +455,7 @@ th {
   background: var(--paper-2);
   border-bottom: 1px solid var(--rule);
 }
-tr:hover td { background: rgba(126,178,135,0.13); }
+tr:hover td { background: rgba(165,175,130,0.13); }
 
 /* ---------- Pull quotes ---------- */
 .pull {

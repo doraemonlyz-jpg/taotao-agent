@@ -11,22 +11,22 @@
 <style>
 :root {
   /* paper · clean morning light · soft mint cream (小清新基底) */
-  --paper: #f7faf3; --paper-2: #ebf2e3; --paper-card: #ffffff;
+  --paper: #f4ede0; --paper-2: #e9e0c8; --paper-card: #fbf6e9;
   /* ink · charcoal with slight cool tint */
-  --ink: #2a322c; --ink-soft: #4a554c; --ink-mute: #8a948a;
-  --rule: #d4dfc8; --rule-soft: #e3ecd8;
+  --ink: #3d3a32; --ink-soft: #5e574c; --ink-mute: #9c9482;
+  --rule: #d5cab2; --rule-soft: #e3d9c0;
   /* nature palette · sage / pastel forest */
-  --leaf: #7eb287; --leaf-deep: #5a8961; --leaf-soft: #e8f1e0;
-  --moss: #94b48c; --moss-soft: #ecf2e1;
+  --leaf: #7d9d80; --leaf-deep: #5d7a5f; --leaf-soft: #e7eed9;
+  --moss: #a4b29a; --moss-soft: #eae9d3;
   /* warm accent · soft coral instead of brick rust */
-  --rust: #e08a6e; --rust-soft: #fae6dc; --terra: #c97357;
+  --rust: #c97a5e; --rust-soft: #f1ddd1; --terra: #b46a4f;
   /* sky · pale watercolor */
-  --sky:  #9ec5dc; --sky-deep: #5e9fc4; --sky-soft:  #e7f1f7;
+  --sky:  #a6c1d4; --sky-deep: #7ea9c4; --sky-soft:  #e3ebf1;
   --night: #2a4565; --night-deep: #1d3050;
   /* misc · all toned down for 小清新 */
-  --plum: #b89bc4; --plum-soft: #f1e8f3;
-  --gold: #e8c46e; --gold-soft: #faecc7; --gold-warm: #f5d68b;
-  --teal: #7ab5a8; --teal-soft: #def0eb;
+  --plum: #a690b1; --plum-soft: #ebe2ed;
+  --gold: #d4b272; --gold-soft: #f1e3b9; --gold-warm: #e9c882;
+  --teal: #83a8a0; --teal-soft: #e1ebe6;
   --coral: #e8a195; --coral-soft: #fbe4dd;
 
   --font-display: "Fraunces", "Times New Roman", serif;
@@ -46,16 +46,16 @@ html { scroll-behavior: smooth; }
 body {
   margin: 0;
   background:
-    radial-gradient(ellipse 60% 40% at 15% 8%, rgba(158,197,220,.18), transparent 60%),
-    radial-gradient(ellipse 55% 38% at 85% 18%, rgba(232,161,149,.10), transparent 60%),
-    radial-gradient(ellipse 70% 50% at 50% 100%, rgba(126,178,135,.12), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 15% 8%, rgba(160,180,200,.18), transparent 60%),
+    radial-gradient(ellipse 55% 38% at 85% 18%, rgba(210,145,130,.10), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 50% 100%, rgba(165,175,130,.12), transparent 55%),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.50 0 0 0 0 0.42 0 0 0 0.035 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"),
     var(--paper);
   color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.7;
 }
 :lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
-a { color: var(--terra); text-decoration: none; border-bottom: 1px solid rgba(201,115,87,.45); transition: all .15s; }
-a:hover { background: rgba(201,115,87,.08); }
+a { color: var(--terra); text-decoration: none; border-bottom: 1px solid rgba(180,106,79,.45); transition: all .15s; }
+a:hover { background: rgba(180,106,79,.08); }
 a.bare { border-bottom: none; }
 em { font-style: italic; color: var(--leaf-deep); font-weight: 500; }
 strong { font-weight: 600; color: var(--ink); }
@@ -72,7 +72,7 @@ strong { font-weight: 600; color: var(--ink); }
 .nav-links { display: flex; gap: 1.5rem; font-family: var(--font-sans); font-size: 0.9rem; }
 .nav-links a { color: var(--ink-mute); border-bottom: none; font-weight: 500; }
 .nav-links a:hover { color: var(--rust); background: none; }
-.nav-cta { font-family: var(--font-sans); font-size: 0.85rem; padding: 0.45rem 1.1rem; background: var(--terra); color: white !important; border-radius: 999px; border: none; font-weight: 500; box-shadow: 0 2px 6px rgba(201,115,87,.28); }
+.nav-cta { font-family: var(--font-sans); font-size: 0.85rem; padding: 0.45rem 1.1rem; background: var(--terra); color: white !important; border-radius: 999px; border: none; font-weight: 500; box-shadow: 0 2px 6px rgba(180,106,79,.28); }
 .nav-cta:hover { background: #b56344; }
 
 /* ===== hero · totoro sky + rolling hills ===== */
@@ -82,7 +82,7 @@ strong { font-weight: 600; color: var(--ink); }
     linear-gradient(180deg, rgba(219,234,245,.45) 0%, rgba(219,234,245,.15) 35%, transparent 65%);
 }
 .hero-sky { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-.hero-sky .cloud { fill: #ffffff; opacity: .85; filter: drop-shadow(0 4px 8px rgba(74,143,196,.12)); }
+.hero-sky .cloud { fill: #fbf6e9; opacity: .85; filter: drop-shadow(0 4px 8px rgba(74,143,196,.12)); }
 .hero-sky .cloud-2 { opacity: .65; }
 .hero-sky .leaf-drift { fill: var(--leaf); opacity: .55; }
 .hero-sky .leaf-drift-2 { fill: var(--moss); opacity: .50; }
@@ -115,7 +115,7 @@ strong { font-weight: 600; color: var(--ink); }
 .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem; }
 .btn { font-family: var(--font-sans); font-weight: 500; font-size: 0.95rem; padding: 0.85rem 1.7rem; border-radius: 999px; border: 2px solid var(--ink); cursor: pointer; transition: all .18s; box-shadow: var(--shadow-soft); }
 .btn-primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-.btn-primary:hover { background: var(--terra); border-color: var(--terra); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(201,115,87,.32); }
+.btn-primary:hover { background: var(--terra); border-color: var(--terra); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(180,106,79,.32); }
 .btn-secondary { background: rgba(255,253,246,.85); color: var(--ink); }
 .btn-secondary:hover { background: var(--ink); color: var(--paper); transform: translateY(-2px); }
 
@@ -157,7 +157,7 @@ strong { font-weight: 600; color: var(--ink); }
 /* ===== phase ===== */
 .phase { margin-bottom: 4rem; position: relative; }
 .phase-head { display: flex; align-items: baseline; gap: 1.2rem; padding-bottom: 1rem; border-bottom: 2px solid var(--ink); margin-bottom: 1.8rem; flex-wrap: wrap; }
-.phase-num { font-family: var(--font-display); font-weight: 700; font-size: 3rem; line-height: 1; color: var(--terra); font-style: italic; text-shadow: 1px 1px 0 rgba(158,197,220,.45); }
+.phase-num { font-family: var(--font-display); font-weight: 700; font-size: 3rem; line-height: 1; color: var(--terra); font-style: italic; text-shadow: 1px 1px 0 rgba(160,180,200,.45); }
 .phase-meta { flex: 1; min-width: 220px; }
 .phase-meta h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.7rem; margin: 0 0 0.3rem; color: var(--ink); letter-spacing: -0.005em; }
 .phase-meta h3 em { color: var(--rust); font-style: italic; font-weight: 500; }
@@ -188,8 +188,8 @@ strong { font-weight: 600; color: var(--ink); }
 
 /* ===== Roadmap progress ===== */
 .roadmap { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 18px; padding: 2.4rem; margin: 0 0 4rem; box-shadow: var(--shadow-soft); position: relative; overflow: hidden; }
-.roadmap::before { content: ""; position: absolute; top: -30px; right: -30px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(158,197,220,.40), transparent 70%); pointer-events: none; }
-.roadmap::after { content: ""; position: absolute; bottom: -40px; left: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(126,178,135,.28), transparent 70%); pointer-events: none; }
+.roadmap::before { content: ""; position: absolute; top: -30px; right: -30px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(160,180,200,.40), transparent 70%); pointer-events: none; }
+.roadmap::after { content: ""; position: absolute; bottom: -40px; left: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(165,175,130,.28), transparent 70%); pointer-events: none; }
 .roadmap h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.55rem; margin: 0 0 1.6rem; color: var(--ink); text-align: center; }
 .roadmap-bar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.55rem; margin-bottom: 1.2rem; }
 .roadmap-step { text-align: center; padding: 0.7rem 0.4rem; border-radius: 10px; font-family: var(--font-sans); font-size: 0.74rem; font-weight: 600; color: white; box-shadow: 0 2px 5px rgba(0,0,0,.1); }
@@ -210,13 +210,13 @@ strong { font-weight: 600; color: var(--ink); }
 .coverage td:first-child { text-align: left; font-family: var(--font-display); font-weight: 500; color: var(--ink); }
 .coverage td.x { color: var(--rust); font-weight: 700; font-size: 1.05rem; }
 .coverage td.dim { color: var(--rule); }
-.coverage tr:hover td { background: rgba(126,178,135,.10); }
+.coverage tr:hover td { background: rgba(165,175,130,.10); }
 
 /* ===== Final CTA · spirited away night sky ===== */
 .final-cta { background: linear-gradient(180deg, var(--night) 0%, var(--night-deep) 100%); color: var(--paper); padding: 5rem 0 5.5rem; margin-top: 4rem; position: relative; overflow: hidden; }
 .final-cta .sky-svg { position: absolute; inset: 0; pointer-events: none; }
-.final-cta .sky-svg .star { fill: #fff8d6; }
-.final-cta .sky-svg .star-bright { fill: #fff8d6; opacity: 1; }
+.final-cta .sky-svg .star { fill: #fff4d8; }
+.final-cta .sky-svg .star-bright { fill: #fff4d8; opacity: 1; }
 .final-cta .sky-svg .moon { fill: #f7e7a3; opacity: .9; filter: drop-shadow(0 0 12px rgba(247,231,163,.4)); }
 .final-cta .sky-svg .pine { fill: #0d1a2c; }
 .final-cta .sky-svg .hill-night { fill: #112240; }

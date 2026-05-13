@@ -10,16 +10,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --paper: #f7faf3; --paper-2: #ebf2e3; --paper-card: #ffffff;
-  --ink: #2a322c; --ink-soft: #4a554c; --ink-mute: #8a948a;
-  --rule: #d4dfc8; --rule-soft: #e3ecd8;
-  --leaf: #7eb287; --leaf-soft: #e8f1e0;
-  --rust: #e08a6e; --rust-soft: #fae6dc;
-  --sky:  #5e9fc4; --sky-soft:  #e7f1f7;
-  --plum: #b89bc4; --plum-soft: #f1e8f3;
-  --gold: #c4a14c; --gold-soft: #faecc7;
-  --code-bg: #f4f8ee; --code-fg: #2a322c; --code-key: #e08a6e;
-  --code-str: #7eb287; --code-cmt: #8a958a; --code-fn: #b89bc4;
+  --paper: #f4ede0; --paper-2: #e9e0c8; --paper-card: #fbf6e9;
+  --ink: #3d3a32; --ink-soft: #5e574c; --ink-mute: #9c9482;
+  --rule: #d5cab2; --rule-soft: #e3d9c0;
+  --leaf: #7d9d80; --leaf-soft: #e7eed9;
+  --rust: #c97a5e; --rust-soft: #f1ddd1;
+  --sky:  #7ea9c4; --sky-soft:  #e3ebf1;
+  --plum: #a690b1; --plum-soft: #ebe2ed;
+  --gold: #c1995a; --gold-soft: #f1e3b9;
+  --code-bg: #ede5d2; --code-fg: #3d3a32; --code-key: #c97a5e;
+  --code-str: #7d9d80; --code-cmt: #9a9384; --code-fn: #a690b1;
   --font-display: "Fraunces", "Times New Roman", serif;
   --font-body: "Lora", "Iowan Old Style", Georgia, serif;
   --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
@@ -28,11 +28,11 @@
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { margin: 0; background: radial-gradient(ellipse at top left, rgba(126,178,135,0.12), transparent 50%), radial-gradient(ellipse at bottom right, rgba(158,197,220,0.08), transparent 50%), var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.75; }
+body { margin: 0; background: radial-gradient(ellipse at top left, rgba(165,175,130,0.12), transparent 50%), radial-gradient(ellipse at bottom right, rgba(160,180,200,0.08), transparent 50%), var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.75; }
 :lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
 .book-body p, .book-body li { color: var(--ink-soft); }
-a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(201,115,87,0.4); }
-a:hover { background: rgba(201,115,87,0.08); }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(180,106,79,0.4); }
+a:hover { background: rgba(180,106,79,0.08); }
 em { font-style: italic; color: var(--leaf); font-weight: 500; }
 strong { font-weight: 600; color: var(--ink); }
 
@@ -53,7 +53,7 @@ strong { font-weight: 600; color: var(--ink); }
 .toc a:hover { background: var(--paper-2); color: var(--ink); }
 .toc a.active { background: var(--rust-soft); color: var(--rust); }
 .toc-foot { margin-top: 2rem; padding: 1rem 0.7rem 0; border-top: 1px dashed var(--rule); font-family: var(--font-sans); font-size: 0.74rem; color: var(--ink-mute); line-height: 1.6; }
-.toc-foot a { color: var(--ink-mute); border-bottom-color: rgba(138,148,138,0.3); }
+.toc-foot a { color: var(--ink-mute); border-bottom-color: rgba(156,148,130,0.3); }
 .toc-foot a:hover { color: var(--rust); }
 
 .book-body { padding: 2rem 0 6rem; max-width: 800px; }
@@ -102,7 +102,7 @@ pre .f { color: var(--code-fn); font-weight: 500; }
 .box.tip { background: var(--rust-soft); border-color: var(--rust); }
 .box.tip .box-label { color: var(--rust); }
 .box.tip .box-label::before { content: "💡"; }
-.box.warn { background: #fff4e0; border-color: #d49414; }
+.box.warn { background: #f7ecd2; border-color: #d49414; }
 .box.warn .box-label { color: #b87a0a; }
 .box.warn .box-label::before { content: "⚠️"; }
 .box.deep { background: var(--plum-soft); border-color: var(--plum); }
@@ -113,7 +113,7 @@ table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.6rem; font-size
 th, td { text-align: left; padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
 th { font-family: var(--font-sans); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink); font-weight: 600; background: var(--paper-2); }
 tr:last-child td { border-bottom: none; }
-tr:hover td { background: rgba(126,178,135,0.13); }
+tr:hover td { background: rgba(165,175,130,0.13); }
 table code { font-size: 0.82em; }
 
 td.win { background: var(--leaf-soft); color: var(--leaf); font-weight: 600; }
