@@ -1,0 +1,66 @@
+<!--
+  Mermaid loader · matches our Petit-Prince / Ghibli palette.
+  Drop this snippet right before </body> in any book that uses
+  <pre class="mermaid">...</pre> blocks.
+-->
+<style>
+  /* shared diagram styling */
+  .diagram { background: var(--paper-card, #1c3155); border: 1px solid var(--rule, #2c4570); border-radius: 12px; padding: 1.4rem 1rem; margin: 1.4rem 0; overflow-x: auto; text-align: center; }
+  .diagram pre.mermaid { background: transparent !important; border: none !important; padding: 0 !important; margin: 0; font-family: inherit; line-height: inherit; text-align: center; min-height: 60px; }
+  .diagram pre.mermaid svg { max-width: 100%; height: auto; }
+  .diagram-cap { font-family: var(--font-sans, system-ui); font-size: 0.78rem; color: var(--ink-mute, #7e8aa6); margin-top: 0.7rem; letter-spacing: 0.03em; text-transform: uppercase; }
+</style>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    securityLevel: 'loose',
+    themeVariables: {
+      // surface
+      background: '#0f1d35',
+      mainBkg: '#1c3155',
+      secondBkg: '#1d3a38',
+      tertiaryBkg: '#3a2a22',
+      // borders
+      primaryBorderColor: '#f4c95a',
+      secondaryBorderColor: '#8eb58f',
+      tertiaryBorderColor: '#e08e6f',
+      clusterBkg: '#162844',
+      clusterBorder: '#2c4570',
+      // text
+      primaryTextColor: '#f5ecd2',
+      secondaryTextColor: '#f5ecd2',
+      tertiaryTextColor: '#f5ecd2',
+      textColor: '#f5ecd2',
+      titleColor: '#f4c95a',
+      // edges
+      lineColor: '#c8be9b',
+      edgeLabelBackground: '#162844',
+      arrowheadColor: '#f4c95a',
+      // notes
+      noteBkgColor: '#3a2f1f',
+      noteTextColor: '#f5ecd2',
+      noteBorderColor: '#f4c95a',
+      // sequence
+      actorBkg: '#1c3155',
+      actorBorder: '#f4c95a',
+      actorTextColor: '#f5ecd2',
+      actorLineColor: '#c8be9b',
+      signalColor: '#f5ecd2',
+      signalTextColor: '#f5ecd2',
+      labelBoxBkgColor: '#1d3a38',
+      labelBoxBorderColor: '#8eb58f',
+      labelTextColor: '#f5ecd2',
+      loopTextColor: '#f5ecd2',
+      activationBorderColor: '#f4c95a',
+      activationBkgColor: '#3a2f1f',
+      sequenceNumberColor: '#0f1d35',
+      // misc
+      fontFamily: '"Outfit", "Lora", system-ui, sans-serif',
+      fontSize: '14px',
+    },
+    flowchart: { curve: 'basis', padding: 16, htmlLabels: true, useMaxWidth: true },
+    sequence: { actorMargin: 60, boxMargin: 8, messageMargin: 30, useMaxWidth: true, mirrorActors: false, wrap: true },
+  });
+</script>

@@ -249,19 +249,28 @@ td code { font-size: 0.82rem; }
   multi-agent pattern · 我们项目的 <code>graph</code> 版就是它。</p>
 
   <h3>结构 · 我们的 graph 版</h3>
-  <pre><code class="lang-text">          ┌──────────────┐
-   user──▶│  supervisor  │ ◀──── (decides next)
-          └──┬─────┬─────┘
-             │     │
-       ┌─────▼┐  ┌─▼────┐  ┌──────┐
-       │resear│  │coder │  │writer│
-       │cher  │  │      │  │      │
-       └──────┘  └──────┘  └──────┘
-                    │
-                ┌───▼──┐
-                │critic│
-                └──────┘
-</code></pre>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    U((👤 user)) -->|message| S{{💼 supervisor<br/>decides next}}
+    S -.->|next: research| R[🔍 researcher]
+    S -.->|next: code|     C[💻 coder]
+    S -.->|next: write|    W[✍️ writer]
+    R -->|result| S
+    C -->|result| S
+    W --> K(👁 critic)
+    K -.->|approve / fail| S
+    classDef sup fill:#3a2f1f,stroke:#f4c95a,stroke-width:2px,color:#f5ecd2;
+    classDef worker fill:#1d3a38,stroke:#8eb58f,color:#f5ecd2;
+    classDef quality fill:#3a2a22,stroke:#e08e6f,color:#f5ecd2;
+    classDef io fill:#162844,stroke:#6a96bc,color:#f5ecd2;
+    class S sup;
+    class R,C,W worker;
+    class K quality;
+    class U io;
+    </pre>
+    <div class="diagram-cap">supervisor 路由 · workers 并行可独立 · critic 是 quality gate</div>
+  </div>
 
   <p>实现见 <code>backend/agent/graph.py</code> + <code>nodes/supervisor.py</code>。supervisor 用
   <code>get_fast_llm()</code> 跑 · 节省 cost。worker 用主模型。</p>
@@ -538,9 +547,28 @@ def run_vote(task, *, n=5, temperature=0.7, session_id=""):
   （actor 用主模型 · critic 用 fast 模型）· 既省钱又减少 self-confirmation bias。</p>
 
   <h3>结构</h3>
-  <pre><code class="lang-text">round 1: ACTOR  ── draft ──▶ CRITIC ── score:6 + fixes ─▶
-round 2: ACTOR  ── revise ─▶ CRITIC ── score:8 ──────── (≥ pass_score) STOP
-final: 返回 actor 最后一版 draft</code></pre>
+  <div class="diagram">
+    <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 user
+    participant A as ✍️ Actor<br/>(main model)
+    participant C as 👁 Critic<br/>(fast model)
+    U->>A: task
+    rect rgb(40, 56, 90)
+      Note over A,C: Round 1
+      A->>+C: draft v1
+      C-->>-A: SCORE 6 · ISSUES + FIXES
+    end
+    rect rgb(56, 76, 50)
+      Note over A,C: Round 2
+      A->>+C: draft v2 (incorporates feedback)
+      C-->>-A: SCORE 8 ✅ pass_score
+    end
+    A-->>U: final draft (latest version)
+    </pre>
+    <div class="diagram-cap">actor + critic 内循环 · score ≥ pass_score 或 max_rounds 即停</div>
+  </div>
 
   <h3>我们的实现 · 关键点</h3>
   <ul>
@@ -909,5 +937,74 @@ backend/agent/tools/multi_agent_tool.py · LangChain @tool wrapper
   </div>
 </footer>
 
+
+<!-- mermaid-init:start -->
+<!--
+  Mermaid loader · matches our Petit-Prince / Ghibli palette.
+  Drop this snippet right before </body> in any book that uses
+  <pre class="mermaid">...</pre> blocks.
+-->
+<style>
+  /* shared diagram styling */
+  .diagram { background: var(--paper-card, #1c3155); border: 1px solid var(--rule, #2c4570); border-radius: 12px; padding: 1.4rem 1rem; margin: 1.4rem 0; overflow-x: auto; text-align: center; }
+  .diagram pre.mermaid { background: transparent !important; border: none !important; padding: 0 !important; margin: 0; font-family: inherit; line-height: inherit; text-align: center; min-height: 60px; }
+  .diagram pre.mermaid svg { max-width: 100%; height: auto; }
+  .diagram-cap { font-family: var(--font-sans, system-ui); font-size: 0.78rem; color: var(--ink-mute, #7e8aa6); margin-top: 0.7rem; letter-spacing: 0.03em; text-transform: uppercase; }
+</style>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    securityLevel: 'loose',
+    themeVariables: {
+      // surface
+      background: '#0f1d35',
+      mainBkg: '#1c3155',
+      secondBkg: '#1d3a38',
+      tertiaryBkg: '#3a2a22',
+      // borders
+      primaryBorderColor: '#f4c95a',
+      secondaryBorderColor: '#8eb58f',
+      tertiaryBorderColor: '#e08e6f',
+      clusterBkg: '#162844',
+      clusterBorder: '#2c4570',
+      // text
+      primaryTextColor: '#f5ecd2',
+      secondaryTextColor: '#f5ecd2',
+      tertiaryTextColor: '#f5ecd2',
+      textColor: '#f5ecd2',
+      titleColor: '#f4c95a',
+      // edges
+      lineColor: '#c8be9b',
+      edgeLabelBackground: '#162844',
+      arrowheadColor: '#f4c95a',
+      // notes
+      noteBkgColor: '#3a2f1f',
+      noteTextColor: '#f5ecd2',
+      noteBorderColor: '#f4c95a',
+      // sequence
+      actorBkg: '#1c3155',
+      actorBorder: '#f4c95a',
+      actorTextColor: '#f5ecd2',
+      actorLineColor: '#c8be9b',
+      signalColor: '#f5ecd2',
+      signalTextColor: '#f5ecd2',
+      labelBoxBkgColor: '#1d3a38',
+      labelBoxBorderColor: '#8eb58f',
+      labelTextColor: '#f5ecd2',
+      loopTextColor: '#f5ecd2',
+      activationBorderColor: '#f4c95a',
+      activationBkgColor: '#3a2f1f',
+      sequenceNumberColor: '#0f1d35',
+      // misc
+      fontFamily: '"Outfit", "Lora", system-ui, sans-serif',
+      fontSize: '14px',
+    },
+    flowchart: { curve: 'basis', padding: 16, htmlLabels: true, useMaxWidth: true },
+    sequence: { actorMargin: 60, boxMargin: 8, messageMargin: 30, useMaxWidth: true, mirrorActors: false, wrap: true },
+  });
+</script>
+<!-- mermaid-init:end -->
 </body>
 </html>

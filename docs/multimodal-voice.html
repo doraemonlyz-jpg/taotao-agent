@@ -165,11 +165,28 @@ td code { font-size: 0.82rem; }
       跟文本 token concat 进 LLM。
     </p>
 
-    <pre><code>image (224×224 / 336×336 / 1024×1024)
-  └─ vision encoder (ViT) → patch embeddings (e.g. 576 tokens for 24×24 patch)
-       └─ projector (MLP / Q-Former / Resampler) → 跟 LLM hidden_dim 对齐
-            └─ concat with text tokens → 普通 transformer forward
-                 └─ 输出文本 (autoregressive)</code></pre>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart LR
+    IMG[🖼 image<br/>224² / 336² / 1024²]
+    ENC[ViT vision encoder<br/>patch & embed]
+    PATCH[patch embeddings<br/>~576 tokens<br/>24×24 patch]
+    PROJ[projector<br/>MLP / Q-Former /<br/>Perceiver Resampler]
+    CONCAT[/concat with text tokens/]
+    TFM{{transformer forward<br/>autoregressive}}
+    OUT[📝 text output]
+    IMG --> ENC --> PATCH --> PROJ --> CONCAT --> TFM --> OUT
+    classDef in fill:#1d3a38,stroke:#8eb58f,color:#f5ecd2;
+    classDef proc fill:#1c3155,stroke:#6a96bc,color:#f5ecd2;
+    classDef llm fill:#3a2f1f,stroke:#f4c95a,color:#f5ecd2;
+    classDef out fill:#3a2a22,stroke:#e08e6f,color:#f5ecd2;
+    class IMG in;
+    class ENC,PATCH,PROJ,CONCAT proc;
+    class TFM llm;
+    class OUT out;
+      </pre>
+      <div class="diagram-cap">VLM 推理 5 步 · 图像被 tokenize 之后跟文字 token 并轨进 LLM</div>
+    </div>
 
     <p>
       <strong>关键 trade-off</strong>：image tokens 数量决定能看清多少细节但也决定推理成本。
@@ -300,21 +317,32 @@ td code { font-size: 0.82rem; }
       "voice agent" 不是 LLM 直接听说，而是三层 pipeline + 一堆 latency-killer 中间件：
     </p>
 
-    <pre><code>用户开口
-   │
-   │  ① VAD (Voice Activity Detection)  · 判断 user 在说话 / 已说完
-   │
-   ▼
-   ② STT (Speech-to-Text)              · streaming 转文字
-   │
-   ▼
-   ③ LLM (生成 response)                · 流式输出 token
-   │
-   ▼
-   ④ TTS (Text-to-Speech)              · 流式合成音频
-   │
-   ▼
-   ⑤ 音频送回用户耳朵</code></pre>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart TD
+    U1([🎙 user speaks])
+    VAD{{① VAD<br/>still talking?<br/>finished?}}
+    STT[② STT<br/>stream → text]
+    LLM[/③ LLM<br/>stream tokens/]
+    TTS[④ TTS<br/>stream audio]
+    U2([👂 user hears])
+    U1 --> VAD
+    VAD -- "still" --> VAD
+    VAD -- "finished" --> STT
+    STT -->|partials| LLM
+    LLM -->|first sentence| TTS
+    TTS --> U2
+    classDef io fill:#1d3a38,stroke:#8eb58f,color:#f5ecd2;
+    classDef gate fill:#3a2f1f,stroke:#f4c95a,color:#f5ecd2;
+    classDef proc fill:#1c3155,stroke:#6a96bc,color:#f5ecd2;
+    classDef llm fill:#3a2a22,stroke:#e08e6f,color:#f5ecd2;
+    class U1,U2 io;
+    class VAD gate;
+    class STT,TTS proc;
+    class LLM llm;
+      </pre>
+      <div class="diagram-cap">语音 agent 五层栈 · 全程 streaming 才能压感知延迟到 ≤ 1 s</div>
+    </div>
 
     <h3>4.1 各层主流方案 (2026)</h3>
     <table>
@@ -688,5 +716,74 @@ runner.run(PipelineTask(pipeline))</code></pre>
   </div>
 </footer>
 
+
+<!-- mermaid-init:start -->
+<!--
+  Mermaid loader · matches our Petit-Prince / Ghibli palette.
+  Drop this snippet right before </body> in any book that uses
+  <pre class="mermaid">...</pre> blocks.
+-->
+<style>
+  /* shared diagram styling */
+  .diagram { background: var(--paper-card, #1c3155); border: 1px solid var(--rule, #2c4570); border-radius: 12px; padding: 1.4rem 1rem; margin: 1.4rem 0; overflow-x: auto; text-align: center; }
+  .diagram pre.mermaid { background: transparent !important; border: none !important; padding: 0 !important; margin: 0; font-family: inherit; line-height: inherit; text-align: center; min-height: 60px; }
+  .diagram pre.mermaid svg { max-width: 100%; height: auto; }
+  .diagram-cap { font-family: var(--font-sans, system-ui); font-size: 0.78rem; color: var(--ink-mute, #7e8aa6); margin-top: 0.7rem; letter-spacing: 0.03em; text-transform: uppercase; }
+</style>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    securityLevel: 'loose',
+    themeVariables: {
+      // surface
+      background: '#0f1d35',
+      mainBkg: '#1c3155',
+      secondBkg: '#1d3a38',
+      tertiaryBkg: '#3a2a22',
+      // borders
+      primaryBorderColor: '#f4c95a',
+      secondaryBorderColor: '#8eb58f',
+      tertiaryBorderColor: '#e08e6f',
+      clusterBkg: '#162844',
+      clusterBorder: '#2c4570',
+      // text
+      primaryTextColor: '#f5ecd2',
+      secondaryTextColor: '#f5ecd2',
+      tertiaryTextColor: '#f5ecd2',
+      textColor: '#f5ecd2',
+      titleColor: '#f4c95a',
+      // edges
+      lineColor: '#c8be9b',
+      edgeLabelBackground: '#162844',
+      arrowheadColor: '#f4c95a',
+      // notes
+      noteBkgColor: '#3a2f1f',
+      noteTextColor: '#f5ecd2',
+      noteBorderColor: '#f4c95a',
+      // sequence
+      actorBkg: '#1c3155',
+      actorBorder: '#f4c95a',
+      actorTextColor: '#f5ecd2',
+      actorLineColor: '#c8be9b',
+      signalColor: '#f5ecd2',
+      signalTextColor: '#f5ecd2',
+      labelBoxBkgColor: '#1d3a38',
+      labelBoxBorderColor: '#8eb58f',
+      labelTextColor: '#f5ecd2',
+      loopTextColor: '#f5ecd2',
+      activationBorderColor: '#f4c95a',
+      activationBkgColor: '#3a2f1f',
+      sequenceNumberColor: '#0f1d35',
+      // misc
+      fontFamily: '"Outfit", "Lora", system-ui, sans-serif',
+      fontSize: '14px',
+    },
+    flowchart: { curve: 'basis', padding: 16, htmlLabels: true, useMaxWidth: true },
+    sequence: { actorMargin: 60, boxMargin: 8, messageMargin: 30, useMaxWidth: true, mirrorActors: false, wrap: true },
+  });
+</script>
+<!-- mermaid-init:end -->
 </body>
 </html>

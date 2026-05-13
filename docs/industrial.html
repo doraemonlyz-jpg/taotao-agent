@@ -99,11 +99,11 @@ td code { font-size: 0.82rem; }
 .toc ol li { font-size: 0.9rem; margin: 0.25rem 0; }
 .toc a { border-bottom: none; color: var(--ink-soft); }
 .toc a:hover { color: var(--rust); }
- }
- }
-
-}
-
+.prompt-card { background: var(--paper-card); border: 1px solid var(--rule); border-left: 4px solid var(--gold); border-radius: 12px; margin: 1.4rem 0; overflow: hidden; }
+.prompt-card-h { padding: 0.7rem 1rem; border-bottom: 1px dashed var(--rule); font-family: var(--font-sans); font-size: 0.78rem; color: var(--gold); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; }
+.prompt-card-h code { background: transparent; border: 0; color: var(--ink-soft); padding: 0; font-size: 0.9em; }
+.prompt-card-sub { padding: 0.55rem 1rem; margin: 0; color: var(--ink-mute); font-size: 0.85rem; font-style: italic; border-bottom: 1px dashed var(--rule); }
+.prompt-card-body { margin: 0; padding: 0.95rem 1.1rem; background: #0a1628; border-radius: 0; font-size: 0.86rem; color: #e8e3d4; font-family: var(--font-mono); white-space: pre-wrap; }
 .ttap-link:hover { transform: translateY(-1px); }
 .ttap-link { font-family: "Fredoka", "Comfortaa", "Quicksand", system-ui, sans-serif !important; font-weight: 600 !important; color: var(--gold, #f4c95a) !important; letter-spacing: -0.005em; transition: color .15s ease, opacity .15s ease, transform .15s ease; }
 .ttap-link:hover { color: var(--rust, #e08e6f) !important; opacity: 0.95; background: none !important; }
@@ -419,11 +419,11 @@ except PermissionRequired as pr:
   16KiB 上限：超出截断 + 留 <code>[AGENTS.md truncated · was N bytes]</code> marker。</p>
 
   <p>注入位置在 system prompt 末尾，独立 fenced block：</p>
-  <pre><code class="lang-text">────────────────────────────────────────
-[Project instructions · loaded from /path/AGENTS.md]
-These rules come from the user's repository · always-on context.
-────────────────────────────────────────
-&lt;your AGENTS.md content&gt;</code></pre>
+  <div class="prompt-card">
+    <div class="prompt-card-h">Project instructions · loaded from <code>/path/AGENTS.md</code></div>
+    <p class="prompt-card-sub">These rules come from the user's repository · always-on context.</p>
+    <pre class="prompt-card-body">&lt;your AGENTS.md content&gt;</pre>
+  </div>
 
   <h3>实战技巧</h3>
   <p>什么内容值得放进 AGENTS.md：</p>
