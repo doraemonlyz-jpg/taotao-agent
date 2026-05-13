@@ -26,6 +26,10 @@ backend/data/*
 !backend/data/skills/
 backend/data/skills/*.tmp
 
+# MCP client config · contains tokens for remote servers
+backend/mcp_servers.json
+!backend/mcp_servers.example.json
+
 # Belt-and-braces: never commit these even if someone forgets the rule above
 *.sqlite
 *.sqlite-shm

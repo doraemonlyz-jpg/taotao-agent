@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import uuid
 from typing import Any
@@ -29,12 +30,45 @@ from agent.observability import (
     usage as usage_tracker,
     write_jsonl,
 )
+from agent.mcp.client import get_status as mcp_client_status
+from agent.mcp.server import build_mcp_server
 from agent.security import (
     chat_rate_limit,
     install_security,
     require_api_key,
 )
 from agent.tools import tool_descriptions
+
+# --- MCP server build (must happen pre-app so its lifespan can attach) ---
+MCP_STATUS: dict = {"http_enabled": False, "exposed_tools": []}
+_mcp_instance = None
+if os.environ.get("MCP_HTTP_ENABLED", "1").strip().lower() not in ("0", "false", "no", "off"):
+    try:
+        _mcp_instance = build_mcp_server()
+        MCP_STATUS = {
+            "http_enabled": True,
+            "endpoint": "/mcp",
+            "transport": "streamable_http",
+            "exposed_tools": [t.name for t in _mcp_instance._tool_manager.list_tools()],
+        }
+    except Exception as e:  # pragma: no cover · degrade gracefully
+        MCP_STATUS = {"http_enabled": False, "error": repr(e)}
+
+
+@contextlib.asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    """Start FastMCP's StreamableHTTP session manager.
+
+    Mounted ASGI sub-apps don't inherit the parent's lifespan events, so
+    FastMCP's task group never starts and every request 500s with
+    'Task group is not initialized'. We bridge it here.
+    """
+    if _mcp_instance is not None:
+        async with _mcp_instance.session_manager.run():
+            yield
+    else:
+        yield
+
 
 app = FastAPI(
     title="桃桃 Agent · taotao-agent",
@@ -43,8 +77,10 @@ app = FastAPI(
         "Production-shape Agent demo. Two interchangeable backends:\n"
         "- `POST /chat`     · LangGraph 13-node graph\n"
         "- `POST /chat/v2`  · Harness while-loop (Claude-Code style)\n\n"
-        "Both share SSE wire format, tool registry, memory, and observability."
+        "Both share SSE wire format, tool registry, memory, and observability.\n"
+        "MCP-compatible · `/mcp` exposes whitelisted tools to Claude Desktop, Cursor, and other MCP clients."
     ),
+    lifespan=_lifespan,
 )
 
 # CORS · default to "*" for dev demo. Tighten via ALLOWED_ORIGINS env when
@@ -65,6 +101,10 @@ LIMITER = getattr(app.state, "limiter", None)
 # /metrics endpoint is registered here. Tools / sub-agents / LLM calls
 # get hand-instrumented via tool_span / subagent_span / llm_span.
 TELEMETRY_STATUS = install_telemetry(app)
+
+# Mount the MCP streamable-http app at /mcp. Endpoint: POST/GET http://host:8000/mcp/
+if _mcp_instance is not None:
+    app.mount("/mcp", _mcp_instance.streamable_http_app())
 
 
 def _maybe_rate_limit(limit_str: str):
@@ -88,6 +128,10 @@ def health() -> dict:
         "guardrails_enabled": cfg.guardrails_enabled,
         "security": SECURITY_STATUS,
         "telemetry": TELEMETRY_STATUS,
+        "mcp": {
+            "server": MCP_STATUS,
+            "client": mcp_client_status(),
+        },
     }
 
 

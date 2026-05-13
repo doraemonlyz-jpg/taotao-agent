@@ -1,0 +1,18 @@
+{
+  "_comment": "Copy to mcp_servers.json (gitignored) and point MCP_CLIENT_CONFIG at it. Same shape as Claude Desktop's claude_desktop_config.json.",
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
+    },
+    "fetch": {
+      "command": "uvx",
+      "args": ["mcp-server-fetch"]
+    },
+    "loopback-self": {
+      "_doc": "Hits our own /mcp/. Useful for proving the round-trip works without external deps.",
+      "url": "http://127.0.0.1:8000/mcp/",
+      "transport": "streamable_http"
+    }
+  }
+}

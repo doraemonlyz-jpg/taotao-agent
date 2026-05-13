@@ -9,8 +9,9 @@ from .profile_tool import read_profile, update_profile
 from .python_repl import python_repl
 from .skills_tool import load_skill
 from .web_search import web_search
+from ..mcp.client import load_external_tools as _load_mcp_client_tools
 
-all_tools = [
+_BUILTIN_TOOLS = [
     calculator,
     current_time,
     web_search,
@@ -25,6 +26,11 @@ all_tools = [
     read_profile,
     load_skill,
 ]
+
+# External MCP tools are merged in lazily-once at import time. They're
+# named `<server>__<tool>` (prefix=True) so they never collide with our
+# built-ins. Empty list when MCP_CLIENT_CONFIG is unset.
+all_tools = _BUILTIN_TOOLS + _load_mcp_client_tools()
 
 
 def tool_descriptions() -> list[dict]:

@@ -35,6 +35,7 @@ from ..tools.profile_tool import read_profile, update_profile
 from ..tools.python_repl import python_repl
 from ..tools.skills_tool import load_skill
 from ..tools.web_search import web_search
+from ..mcp.client import load_external_tools as _load_mcp_client_tools
 
 from .subagent import dispatch_subagent
 
@@ -82,6 +83,10 @@ HARNESS_TOOLS = [
     dispatch_subagent,
     final_answer,
 ]
+
+# Append external MCP-client tools (named `<server>__<tool>`). Empty list
+# when MCP_CLIENT_CONFIG is unset, so this is a no-op for default installs.
+HARNESS_TOOLS.extend(_load_mcp_client_tools())
 
 
 def tool_descriptions() -> list[dict]:

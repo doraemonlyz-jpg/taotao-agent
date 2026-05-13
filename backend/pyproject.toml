@@ -42,6 +42,8 @@ dependencies = [
     "opentelemetry-exporter-otlp-proto-grpc>=1.27.0",
     "prometheus-fastapi-instrumentator>=7.0.0",
     "ddgs>=9.14.2",
+    "mcp[cli]>=1.27.1",
+    "langchain-mcp-adapters>=0.2.2",
 ]
 
 [dependency-groups]

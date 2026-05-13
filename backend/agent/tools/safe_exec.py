@@ -10,6 +10,7 @@ A tool can opt out of caching by setting `cache=False` when wrapping.
 """
 from __future__ import annotations
 
+import asyncio
 import concurrent.futures
 import hashlib
 import json
@@ -70,7 +71,17 @@ def safe_run_tool(tool: BaseTool, args: dict | str, *, cacheable: bool = True) -
         if cached is not None:
             return f"[cache hit]\n{cached}"
 
-    fut = _EXECUTOR.submit(tool.invoke, args)
+    def _run() -> str:
+        try:
+            return tool.invoke(args)
+        except NotImplementedError:
+            # MCP-client tools (and other adapters) sometimes only
+            # implement async invocation. Spin up a private loop in this
+            # worker thread so we don't fight whatever loop the caller
+            # has open.
+            return asyncio.run(tool.ainvoke(args))
+
+    fut = _EXECUTOR.submit(_run)
     try:
         out = fut.result(timeout=cfg.tool_timeout_s)
     except concurrent.futures.TimeoutError:
@@ -78,6 +89,15 @@ def safe_run_tool(tool: BaseTool, args: dict | str, *, cacheable: bool = True) -
         return f"[error] tool {tool.name!r} exceeded {cfg.tool_timeout_s:.0f}s timeout"
     except Exception as e:
         return f"[error] tool {tool.name!r} raised: {e}"
+
+    # MCP tools (langchain-mcp-adapters) return a list of content blocks
+    # like [{"type": "text", "text": "...", "id": "lc_..."}]. Flatten to
+    # plain text so the downstream LLM doesn't see noisy JSON · keep the
+    # raw string for everything else.
+    if isinstance(out, list) and out and all(isinstance(b, dict) for b in out):
+        parts = [b.get("text", "") for b in out if b.get("type") == "text"]
+        if parts:
+            out = "\n".join(parts)
 
     text = out if isinstance(out, str) else str(out)
     text = _truncate(text, cfg.tool_result_max_chars)
