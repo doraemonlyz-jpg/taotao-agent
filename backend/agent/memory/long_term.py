@@ -319,6 +319,24 @@ class LongTermMemory:
         }
 
 
-@lru_cache(maxsize=1)
-def get_memory() -> LongTermMemory:
-    return LongTermMemory()
+@lru_cache(maxsize=64)
+def _memory_for(tenant: str) -> LongTermMemory:
+    """Memoised per-tenant factory · 64 most-recently-used tenants stay hot.
+    Eviction is fine · chroma reopens cheaply.  64 covers most B2B SaaS;
+    bump if you grow."""
+    return LongTermMemory(tenant_id=tenant)
+
+
+def get_memory(tenant_id: str | None = None) -> LongTermMemory:
+    """Return the LongTermMemory for `tenant_id` · or the current
+    request's tenant from the auth ContextVar · or "default".
+
+    Single canonical entry-point used everywhere (graph nodes, harness
+    tools, /memory endpoints).  Multi-tenancy is ENFORCED HERE · pass a
+    tenant_id to bypass the ContextVar (admin operations, migrations).
+    """
+    if tenant_id is None:
+        # Lazy import · avoid circular (auth → security → app → memory)
+        from ..auth import get_current_tenant_id
+        tenant_id = get_current_tenant_id()
+    return _memory_for(_safe_tenant(tenant_id))

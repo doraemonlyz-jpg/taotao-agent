@@ -1,0 +1,110 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel previous runs of the same branch when a new push lands ·
+# saves CI minutes during rapid iteration.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------- Backend · ruff + mypy + pytest ----------
+  backend:
+    name: backend · lint + type + test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.5.x"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Install Python + deps
+        run: |
+          uv sync --frozen --group dev
+          # Extra dev deps that aren't yet in uv.lock · install best-effort
+          uv pip install --quiet ruff mypy "pyjwt[crypto]" || true
+
+      - name: Ruff · lint (strict surfaces · legacy code excluded)
+        # Same scoping policy as mypy · we tighten lint on new code only.
+        # Bring legacy modules in incrementally as we touch them.
+        run: uv run ruff check agent/auth agent/multi_agent tests
+
+      - name: Mypy · strict-typed surfaces only (auth · multi_agent.types)
+        run: uv run mypy
+
+      - name: Pytest · 56 tests · auth + tenant isolation + tools + multi-agent + app
+        env:
+          # Hermetic test config · no Sentry / OTLP / rate-limit interference
+          API_KEY: ""
+          RATE_LIMIT_ENABLED: "0"
+        run: uv run pytest tests/ -q --tb=short
+
+  # ---------- Frontend · type-check + production build ----------
+  frontend:
+    name: frontend · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      - name: Build (tsc -b && vite build · type-checks too)
+        env:
+          VITE_API_BASE: /api
+        run: npm run build
+
+  # ---------- Docs · check that the 24 books at least exist ----------
+  docs:
+    name: docs · sanity check
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - name: All 24 books present
+        run: |
+          set -eu
+          required=(
+            index.html learn.html implementation.html langgraph-internals.html
+            rag-production.html memory-context.html tool-design.html
+            eval-observability.html agent-debugging.html enterprise.html
+            agent-design.html agent-coding.html infra.html harness.html
+            harness-vs-graph.html hermes.html mcp.html p1-hardening.html
+            behavioral.html post-training.html multimodal-voice.html
+            benchmarks.html industrial.html multi-agent.html saas.html
+          )
+          missing=0
+          for f in "${required[@]}"; do
+            if [ ! -f "docs/$f" ]; then
+              echo "MISSING · docs/$f"
+              missing=$((missing+1))
+            fi
+          done
+          if [ $missing -gt 0 ]; then
+            echo "::error::$missing required doc(s) missing · see above"
+            exit 1
+          fi
+          echo "✓ all 25 entry pages present (index + 24 books)"

@@ -29,8 +29,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 from ..nodes.llm import get_fast_llm, get_llm
 from ..observability import emit
-from .types import AgentSpec, Result
-
+from .types import Result
 
 _ANSWER_RE = re.compile(r"answer\s*[:：]\s*(.+?)$", re.IGNORECASE | re.MULTILINE)
 

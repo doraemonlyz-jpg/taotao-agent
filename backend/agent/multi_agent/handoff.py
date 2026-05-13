@@ -26,16 +26,16 @@ agent abstractions · pure dict + while-loop · ~120 lines.
 """
 from __future__ import annotations
 
-from typing import Callable
-
 from langchain_core.messages import (
-    AIMessage, AnyMessage, HumanMessage, SystemMessage,
+    AIMessage,
+    AnyMessage,
+    HumanMessage,
+    SystemMessage,
 )
 
 from ..nodes.llm import get_llm
 from ..observability import emit
 from .types import AgentSpec, Result
-
 
 # ----------------------------------------------------------------- agents
 

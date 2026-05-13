@@ -525,6 +525,7 @@ Group J · Frontend
 
 | Date | Commit | What |
 |---|---|---|
+| 2026-05-13 | (this) | **P0 debt cleanup** · `LICENSE` (MIT) · ContextVar-based identity middleware in `app.py` (multi-tenancy now ACTUALLY enforced via `get_memory()`) · `backend/tests/` with 56 passing tests (auth + tenant isolation + tools + multi-agent + app HTTP) · ruff + mypy configured in `pyproject.toml` (scoped to new code) · `.github/workflows/test.yml` 3-job CI (backend lint+type+test · frontend build · docs sanity) · `frontend/src/vite-env.d.ts` to fix pre-existing TS error |
 | 2026-05-13 | `83ca4ea` | Book 24 · From Demo to Public SaaS · 11-phase roadmap + 4 starter implementations (auth, multi-tenant memory, nginx prod, frontend Dockerfile.prod) |
 | 2026-05-13 | `1c8b83a` | docs(diagrams): swap ASCII art for Mermaid · matches Petit-Prince palette |
 | 2026-05-13 | `2420b35` | Book 23 + 4 multi-agent patterns + `multi_agent_run` tool |
@@ -549,8 +550,8 @@ The session that produced Books 22-24 also did:
 ## §10 · Current state · what's done · what's not
 
 ### Tier-2 ready (internal SaaS · ~100 users)
-- ✅ Auth dependency (JWT or API_KEY)
-- ✅ Multi-tenant memory (per-tenant chroma collection · verified)
+- ✅ Auth dependency (JWT or API_KEY) · **wired via FastAPI middleware**
+- ✅ Multi-tenant memory · ContextVar-bridged · `get_memory()` is now tenant-aware everywhere (graph nodes, harness tools, /memory endpoints) · **isolation tested**
 - ✅ TLS + reverse-proxy config (template ready)
 - ✅ Frontend production build (Dockerfile.prod)
 - ✅ Per-session cost guardrail
@@ -559,6 +560,8 @@ The session that produced Books 22-24 also did:
 - ✅ MCP dual-role
 - ✅ Multi-agent patterns
 - ✅ Sentry · OpenTelemetry · Prometheus
+- ✅ **Tests** · 56 pytest cases covering auth/tenant/tools/multi-agent/app HTTP
+- ✅ **CI** · ruff + mypy + pytest + frontend build + docs check on every push
 
 ### NOT yet done (Tier-3 public SaaS gaps · see Book 24 for the full list)
 

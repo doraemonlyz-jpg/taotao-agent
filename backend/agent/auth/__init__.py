@@ -18,6 +18,22 @@ The `tenant_id` is the namespacing key for memory / chroma / traces.
 """
 from __future__ import annotations
 
-from .identity import Identity, current_identity
+from .identity import (
+    ANONYMOUS,
+    Identity,
+    current_identity,
+    get_current_identity,
+    get_current_tenant_id,
+    require_admin,
+    use_identity,
+)
 
-__all__ = ["Identity", "current_identity"]
+__all__ = [
+    "ANONYMOUS",
+    "Identity",
+    "current_identity",
+    "get_current_identity",
+    "get_current_tenant_id",
+    "require_admin",
+    "use_identity",
+]

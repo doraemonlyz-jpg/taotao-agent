@@ -42,6 +42,13 @@ from agent.security import (
     install_security,
     require_api_key,
 )
+from agent.auth import (
+    Identity,
+    current_identity,
+    get_current_identity,
+    use_identity,
+)
+from agent.auth.identity import _identity_from_jwt, _jwt_public_key, _api_key_expected
 from agent.tools import tool_descriptions
 
 # --- MCP server build (must happen pre-app so its lifespan can attach) ---
@@ -97,6 +104,47 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*", "X-API-Key"],
 )
+
+# --------------------------------------------------------------------- #
+# Identity middleware · resolves the caller's Identity once per request
+# and stashes it in a ContextVar so deep-stack code (memory tools, graph
+# nodes, harness loop) can read `get_current_identity()` without having
+# to plumb the request object through every call site.
+#
+# This is the bridge that makes `get_memory()` (no args) actually
+# tenant-aware · without it, every request still leaks into the
+# "default" tenant collection.
+#
+# Resolution mirrors `current_identity` dependency exactly · just runs
+# earlier (middleware) so it's set before any tool runs.  Failures here
+# do NOT 401 · we fall through to the dependency on the actual route
+# (which DOES 401).  Middleware errors would 500 the whole app.
+# --------------------------------------------------------------------- #
+@app.middleware("http")
+async def _identity_middleware(request: Request, call_next):
+    ident = None
+    try:
+        if _jwt_public_key():
+            auth_h = request.headers.get("authorization") or request.headers.get("Authorization")
+            if auth_h:
+                parts = auth_h.split(None, 1)
+                if len(parts) == 2 and parts[0].lower() == "bearer":
+                    ident = _identity_from_jwt(parts[1].strip())
+        elif _api_key_expected():
+            provided = request.headers.get("X-API-Key") or request.headers.get("x-api-key")
+            if provided == _api_key_expected():
+                ident = Identity(
+                    user_id="shared", tenant_id="default",
+                    email=None, roles=("user",),
+                )
+    except Exception:
+        # Any auth error here is a bad header · downstream Depends() will
+        # 401 properly.  We MUST NOT raise from middleware.
+        ident = None
+
+    with use_identity(ident):
+        return await call_next(request)
+
 
 # Auth + rate-limit + sentry · all env-gated. See backend/agent/security.py.
 SECURITY_STATUS = install_security(app)

@@ -23,13 +23,17 @@ Usage from the harness · use the wrapper tool `multi_agent_run` in
 """
 from __future__ import annotations
 
-from .types import Result, AgentSpec
 from .debate import run_debate
-from .voting import run_vote
 from .handoff import run_handoff
 from .reflection import run_reflection
+from .types import AgentSpec, Result
+from .voting import run_vote
 
 __all__ = [
-    "Result", "AgentSpec",
-    "run_debate", "run_vote", "run_handoff", "run_reflection",
+    "AgentSpec",
+    "Result",
+    "run_debate",
+    "run_handoff",
+    "run_reflection",
+    "run_vote",
 ]

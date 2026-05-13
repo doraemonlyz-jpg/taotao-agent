@@ -18,11 +18,25 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 
 from fastapi import HTTPException, Request, status
 
 log = logging.getLogger("agent.auth")
+
+# --------------------------------------------------------------------- #
+# Request-scoped Identity context · so tools (called by the LLM mid-loop
+# with no direct access to the FastAPI request object) can still see the
+# caller's tenant_id.  Set by the FastAPI middleware in `app.py` for
+# every request · falls back to a "default" anonymous identity when not
+# in a request (CLI mode · background jobs).
+# --------------------------------------------------------------------- #
+_current_identity: ContextVar[Identity | None] = ContextVar(
+    "agent_current_identity", default=None
+)
 
 # Lazy import so installs without PyJWT keep working in dev mode.
 try:
@@ -94,12 +108,19 @@ def _identity_from_jwt(token: str) -> Identity:
             "JWT verification unavailable on server (pyjwt missing)",
         )
     pub = _jwt_public_key()
+    if pub is None:
+        # Misconfigured prod · shouldn't reach here (caller checks first)
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "JWT mode active but JWT_PUBLIC_KEY is empty",
+        )
     aud = _jwt_audience()
     try:
-        opts = {"verify_aud": bool(aud)}
+        # Cast to Any · PyJWT's typed Options TypedDict varies across versions
+        opts: dict = {"verify_aud": bool(aud)}
         claims = jwt.decode(
             token, pub, algorithms=_jwt_algorithms(),
-            audience=aud, options=opts,
+            audience=aud, options=opts,  # type: ignore[arg-type]
         )
     except jwt.PyJWTError as e:
         log.info("JWT rejected · %s", e)
@@ -107,7 +128,7 @@ def _identity_from_jwt(token: str) -> Identity:
             status.HTTP_401_UNAUTHORIZED,
             f"Invalid token: {e.__class__.__name__}",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from e
 
     # tenant resolution · first claim that exists wins
     tenant: str | None = None
@@ -204,3 +225,49 @@ def require_admin(ident: Identity) -> Identity:
             "Admin role required",
         )
     return ident
+
+
+# --------------------------------------------------------------------- #
+# ContextVar plumbing · enables tools (no request access) to read tenant
+# --------------------------------------------------------------------- #
+
+ANONYMOUS = Identity(
+    user_id="anonymous", tenant_id="default", email=None, roles=("user",)
+)
+
+
+def get_current_identity() -> Identity:
+    """Return the request-scoped Identity · or the anonymous default if
+    we're outside a request (CLI / background job).
+
+    This is what tools (memory, profile, etc.) call to figure out which
+    tenant they belong to.  In production it ALWAYS returns the real
+    identity that the FastAPI middleware set; in dev / CLI it returns
+    the safe default tenant.
+    """
+    return _current_identity.get() or ANONYMOUS
+
+
+def get_current_tenant_id() -> str:
+    """Shorthand for `get_current_identity().tenant_id` · the most-used
+    accessor across memory / profile code paths."""
+    return get_current_identity().tenant_id
+
+
+@contextmanager
+def use_identity(ident: Identity | None) -> Iterator[None]:
+    """Set the request-scoped Identity · restores on exit.
+
+    Used by the FastAPI middleware:
+        with use_identity(ident):
+            response = await call_next(request)
+
+    Also useful in tests:
+        with use_identity(Identity("u1", "acme")):
+            assert get_current_tenant_id() == "acme"
+    """
+    token = _current_identity.set(ident)
+    try:
+        yield
+    finally:
+        _current_identity.reset(token)

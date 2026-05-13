@@ -31,7 +31,6 @@ from ..nodes.llm import get_fast_llm, get_llm
 from ..observability import emit
 from .types import AgentSpec, Result
 
-
 _SCORE_RE = re.compile(r"score\s*[:：]\s*(\d{1,2})", re.IGNORECASE)
 
 
