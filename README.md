@@ -57,6 +57,122 @@ Built on **LangGraph 0.6** (orchestration backbone) + **FastAPI** (SSE streaming
 
 ---
 
+## 📸 Screenshot
+
+<p align="center">
+  <img src="assets/screenshot.svg" alt="taotao-agent · chat UI with live trace panel" width="900"/>
+</p>
+
+> Real UI · `npm --prefix frontend run dev` (Vite 5180) + `make dev` (FastAPI 8000).
+> The right column is the **live trace panel** — every node, every tool call,
+> every token cost streams in real time over SSE.
+
+---
+
+## 🏗 Architecture · one diagram
+
+```mermaid
+flowchart TB
+    subgraph Client["Client"]
+        UI["React 19 + Vite<br/>chat + trace panel"]
+        CLI["taotao_cli.py<br/>Rich TUI"]
+        GO["Go SDK<br/>(stdlib only)"]
+        MCP["MCP clients<br/>Claude Desktop · Cursor"]
+    end
+
+    subgraph Edge["Edge"]
+        NGINX["Nginx<br/>TLS · gzip · SSE"]
+    end
+
+    subgraph App["FastAPI · routers/*"]
+        AUTH["Identity middleware<br/>JWT / API_KEY → ContextVar"]
+        QUOTA["Quota gate<br/>day · month tokens / USD"]
+        CHAT["/chat · /chat/v2<br/>SSE streaming"]
+        ADMIN["/admin/*<br/>tenants · DSR · cache"]
+        BILL["/billing/*<br/>checkout · webhook · portal"]
+        MEM["/memory · /profile · /skills"]
+        OBS["/usage · /traces · /metrics"]
+    end
+
+    subgraph Agents["Two interchangeable agent backends"]
+        GRAPH["LangGraph 13-node graph<br/>perception → planner → executor → critic"]
+        HARN["Harness while-loop<br/>Claude-Code style"]
+    end
+
+    subgraph Tools["Tool registry · safe_run_tool wrapper"]
+        BUILTIN["builtin · calculator · web_search<br/>read_file · python_repl · current_time"]
+        SUB["sub-agents · researcher · coder · writer<br/>multi_agent_run · debate · vote · handoff"]
+        SANDBOX["python_repl sandbox<br/>subprocess · docker · gVisor"]
+    end
+
+    subgraph State["State + storage"]
+        CHROMA["Chroma · per-tenant collections<br/>long-term memory + reflections"]
+        PG["Postgres · langgraph checkpointer<br/>(or sqlite for dev)"]
+        SQLITE["sqlite · quota + billing + profile<br/>(survives restart)"]
+    end
+
+    subgraph Observ["Observability"]
+        OTEL["OpenTelemetry<br/>OTLP gRPC / HTTP"]
+        PROM["Prometheus /metrics"]
+        LOG["Structured JSON logs<br/>tenant + user injected"]
+        SENTRY["Sentry"]
+    end
+
+    subgraph Ext["External"]
+        LLM["LLM providers<br/>Anthropic · OpenAI · Gemini · Ollama"]
+        STRIPE["Stripe<br/>metered billing + webhooks"]
+        IDP["IdP<br/>Auth0 / Cognito / Authentik"]
+        SINK["Honeycomb · Datadog<br/>Grafana Cloud · Jaeger"]
+    end
+
+    UI -->|HTTPS · SSE| NGINX
+    CLI --> AUTH
+    GO --> NGINX
+    MCP -->|streamable_http| AUTH
+    NGINX --> AUTH
+
+    AUTH -->|tenant_id| QUOTA
+    QUOTA --> CHAT
+    QUOTA --> MEM
+
+    CHAT --> GRAPH
+    CHAT --> HARN
+    GRAPH --> Tools
+    HARN --> Tools
+
+    Tools --> BUILTIN
+    Tools --> SUB
+    BUILTIN --> SANDBOX
+
+    GRAPH -.checkpoint.-> PG
+    HARN -.checkpoint.-> SQLITE
+    MEM --> CHROMA
+    QUOTA --> SQLITE
+    BILL --> SQLITE
+    ADMIN --> CHROMA
+    ADMIN --> SQLITE
+
+    GRAPH --> LLM
+    HARN --> LLM
+    SUB --> LLM
+    BILL <-->|webhook| STRIPE
+    AUTH <-.JWT verify.-> IDP
+
+    GRAPH -.spans.-> OTEL
+    HARN -.spans.-> OTEL
+    Tools -.spans.-> OTEL
+    OTEL --> SINK
+    APP -.metrics.-> PROM
+    APP -.errors.-> SENTRY
+    APP -.logs.-> LOG
+```
+
+> Open [`docs/index.html`](docs/index.html) for the per-component walk-through.
+> Three boxes are skeleton-grade (Stripe / IdP / external sinks) · everything
+> else runs out of the box with `make dev`.
+
+---
+
 ## What's inside
 
 Every box on the standard agent diagram maps to a real node in `backend/agent/`:

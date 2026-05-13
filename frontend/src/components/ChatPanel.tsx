@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { streamChat, type Engine, type TraceEvent } from "../api";
-import { pick, samples, useLang } from "../i18n";
+import { useLang } from "../i18n";
+import ExamplePrompts from "./ExamplePrompts";
 
 // Lazy · the markdown stack is ~280KB (react-markdown + remark-gfm +
 // rehype-highlight + highlight.js). Loading it on demand keeps the
@@ -39,7 +40,7 @@ export default function ChatPanel({
   setSessionId,
   engine,
 }: Props) {
-  const { lang, t } = useLang();
+  const { t } = useLang();
   const [input, setInput] = useState("");
   const [turns, setTurns] = useState<Turn[]>([]);
   const [streaming, setStreaming] = useState("");
@@ -135,22 +136,7 @@ export default function ChatPanel({
         {turns.length === 0 && (
           <div className="empty">
             <p className="hello">{t("chatHello")}</p>
-            <ul className="samples">
-              {samples.map((s) => {
-                const text = pick(s, lang);
-                return (
-                  <li key={text}>
-                    <button
-                      type="button"
-                      onClick={() => setInput(text)}
-                      disabled={busy}
-                    >
-                      {text}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
+            <ExamplePrompts onPick={setInput} disabled={busy} />
           </div>
         )}
 
