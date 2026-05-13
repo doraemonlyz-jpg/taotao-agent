@@ -35,8 +35,12 @@ class Settings(BaseModel):
     tool_timeout_s: float = float(os.getenv("AGENT_TOOL_TIMEOUT_S", "30"))
     tool_result_max_chars: int = int(os.getenv("AGENT_TOOL_RESULT_MAX_CHARS", "4000"))
 
-    # Memory hygiene
+    # Memory hygiene · dedup at write, decay/prune at admin call.
+    # See agent/memory/long_term.py · prune() for the scoring formula.
     dedup_threshold: float = float(os.getenv("AGENT_DEDUP_THRESHOLD", "0.92"))
+    mem_half_life_days: float = float(os.getenv("AGENT_MEM_HALF_LIFE_DAYS", "14"))
+    mem_prune_max_keep: int = int(os.getenv("AGENT_MEM_PRUNE_MAX_KEEP", "500"))
+    mem_prune_drop_fraction: float = float(os.getenv("AGENT_MEM_PRUNE_DROP_FRACTION", "0.10"))
 
     # Tool routing — top-K relevant tools to bind per turn (0 = bind all)
     tool_route_topk: int = int(os.getenv("AGENT_TOOL_ROUTE_TOPK", "0"))

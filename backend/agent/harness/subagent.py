@@ -153,6 +153,12 @@ def dispatch_subagent(role: str, task: str) -> str:
     Use this when a task naturally factors into a sub-task that benefits from
     its OWN context window and a SCOPED toolset — not for trivial work.
 
+    PARALLELISM · IMPORTANT.
+    The harness runs all your tool calls in a single turn CONCURRENTLY, so
+    if you have 3 independent research questions, emit 3 dispatch_subagent
+    calls in the SAME assistant turn · they will run side-by-side instead
+    of sequentially.  Don't fan them out one per turn.
+
     Args:
         role: one of "researcher" (web search), "coder" (python + files),
               "writer" (polish a final answer from prior context)
@@ -162,10 +168,16 @@ def dispatch_subagent(role: str, task: str) -> str:
     Returns:
         The sub-agent's final answer string.
 
-    Example tasks (good):
-        - role="researcher", task="Find the 3 most cited papers on PagedAttention; return titles + URLs."
-        - role="coder",       task="Compute the SHA-256 of the string 'hello world' and return the hex."
-        - role="writer",      task="Polish this draft into 3 bullet points: <draft text>"
+    Example tasks (good · parallel):
+        # In one turn, emit:
+        - dispatch_subagent(role="researcher", task="Find papers on PagedAttention; titles + URLs.")
+        - dispatch_subagent(role="researcher", task="Find papers on FlashAttention 3; titles + URLs.")
+        - dispatch_subagent(role="researcher", task="Find papers on speculative decoding; titles + URLs.")
+        # → 3x faster than 3 separate turns.
+
+    Example tasks (good · single):
+        - role="coder",   task="Compute the SHA-256 of 'hello world' and return the hex."
+        - role="writer",  task="Polish this draft into 3 bullet points: <draft text>"
 
     Example tasks (bad):
         - role="researcher", task="research stuff"   # too vague

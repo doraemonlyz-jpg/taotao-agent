@@ -213,25 +213,39 @@ class Harness:
                     yield {"node": "harness", "kind": "answer", "payload": {"text": redacted}}
                     return
 
-            # 3e. run real tool calls · sequentially for simplicity here.
-            # (Parallel tool execution is a 5-line change · see docs/tool-design.html)
+            # 3e. run real tool calls · CONCURRENTLY when there's more than
+            # one in this turn. Each tool already runs in the safe_run_tool
+            # ThreadPoolExecutor (with timeout/cache/truncation), so we just
+            # need to launch them via asyncio.gather to overlap I/O.
+            #
+            # This unlocks parallel dispatch_subagent too · the LLM can emit
+            # 3 dispatch_subagent calls in one turn and they run side-by-side.
             emit("harness", "tool_call",
                  {"calls": [{"name": c["name"], "args": c.get("args", {})} for c in tool_calls],
-                  "step": step},
+                  "step": step,
+                  "parallel": len(tool_calls) > 1},
                  session_id=sid)
 
-            for tc in tool_calls:
+            async def _run_one(tc: dict) -> tuple[dict, str]:
                 name = tc["name"]
                 tool = tools_by_name.get(name)
                 if tool is None:
-                    content = f"[error] unknown tool {name!r}"
-                else:
-                    content = await asyncio.to_thread(safe_run_tool, tool, tc.get("args", {}))
+                    return tc, f"[error] unknown tool {name!r}"
+                content = await asyncio.to_thread(safe_run_tool, tool, tc.get("args", {}))
+                return tc, content
+
+            results = await asyncio.gather(*[_run_one(tc) for tc in tool_calls])
+
+            # Append in the original order so the model sees a deterministic
+            # transcript (helps prompt caching too).
+            for tc, content in results:
                 emit("harness", "tool_result",
-                     {"name": name, "chars": len(content), "preview": content[:240]},
+                     {"name": tc["name"], "chars": len(content), "preview": content[:240]},
                      session_id=sid)
-                messages.append(ToolMessage(content=content, name=name, tool_call_id=tc["id"]))
-                self.store.save(sid, messages)
+                messages.append(ToolMessage(
+                    content=content, name=tc["name"], tool_call_id=tc["id"],
+                ))
+            self.store.save(sid, messages)
 
         # ---- 4. hit the cap · ask for a forced wrap-up ------------------
         emit("harness", "error",

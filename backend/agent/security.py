@@ -137,6 +137,43 @@ def chat_rate_limit() -> str:
 
 
 # ------------------------------------------------------------------ #
+# 3.5 · Cost-budget guardrail · per-session USD ceiling
+# ------------------------------------------------------------------ #
+# We already track USD-per-session in observability/usage.py.  This is the
+# enforcement half: if a session has already burnt through its budget,
+# refuse new /chat requests with 402 instead of running an LLM call we'd
+# regret.  Disabled when AGENT_SESSION_BUDGET_USD=0 (the default for local
+# Ollama setups, since local tokens cost $0).
+async def enforce_session_budget(payload_session_id: str | None = None) -> None:
+    """FastAPI dependency · 402 Payment Required when over budget.
+
+    Pulled out of the chat handler so it can be reused by /chat, /chat/v2,
+    /chat/replay etc. uniformly.  Looks up the running cost via
+    `observability.usage.snapshot()` to share state with /usage and the
+    UsageCallback.
+    """
+    if not payload_session_id:
+        return  # first turn of a new session has no cost yet
+    try:
+        from .observability import usage as usage_tracker
+    except Exception:  # pragma: no cover · soft degrade
+        return
+    snap = usage_tracker.snapshot(payload_session_id)
+    if snap.get("over_budget"):
+        sess = snap.get("session") or {}
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "error": "session budget exhausted",
+                "session_id": payload_session_id,
+                "spent_usd": sess.get("cost_usd"),
+                "budget_usd": snap.get("budget_usd"),
+                "hint": "Start a new session_id, raise AGENT_SESSION_BUDGET_USD, or clear the cap with =0.",
+            },
+        )
+
+
+# ------------------------------------------------------------------ #
 # 3 · Sentry · error tracking + perf
 # ------------------------------------------------------------------ #
 def init_sentry() -> bool:

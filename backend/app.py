@@ -34,6 +34,7 @@ from agent.mcp.client import get_status as mcp_client_status
 from agent.mcp.server import build_mcp_server
 from agent.security import (
     chat_rate_limit,
+    enforce_session_budget,
     install_security,
     require_api_key,
 )
@@ -203,6 +204,7 @@ async def chat(request: Request, payload: ChatIn):
     user_text = payload.message.strip()
     if not user_text:
         raise HTTPException(400, "empty message")
+    await enforce_session_budget(payload.session_id)
 
     graph = get_graph()
     queue = event_bus.subscribe(sid)
@@ -311,6 +313,7 @@ async def chat_v2(request: Request, payload: ChatIn):
     user_text = payload.message.strip()
     if not user_text:
         raise HTTPException(400, "empty message")
+    await enforce_session_budget(payload.session_id)
 
     queue = event_bus.subscribe(sid)
     runner: asyncio.Task | None = None
@@ -521,6 +524,28 @@ def add_memory(m: MemoryIn) -> dict:
 def clear_memory() -> dict:
     get_memory().clear()
     return {"ok": True}
+
+
+class PruneIn(BaseModel):
+    max_keep: int | None = None
+    drop_fraction: float | None = None
+    half_life_days: float | None = None
+    dry_run: bool = False
+
+
+@app.post("/memory/prune", tags=["memory"], dependencies=[Depends(require_api_key)])
+def prune_memory(p: PruneIn) -> dict:
+    """Drop low-value memories by composite recency+usage score.
+
+    All knobs default to env-derived settings (AGENT_MEM_*).  Pass
+    `dry_run: true` to preview what would go without deleting.
+    """
+    return get_memory().prune(
+        max_keep=p.max_keep,
+        drop_fraction=p.drop_fraction,
+        half_life_days=p.half_life_days,
+        dry_run=p.dry_run,
+    )
 
 
 # ---------------------------------------------------------------- /reflections
