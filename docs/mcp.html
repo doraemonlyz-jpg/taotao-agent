@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCP 速读 · 桃桃 Agent</title>
+<meta name="description" content="Model Context Protocol · agent 的 USB-C · 一页讲清协议本身 + taotao-agent 的双向实现 + Claude Desktop / Cursor 接入步骤">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #fbf5e8; --paper-2: #f4ecd6; --paper-card: #ffffff;
+  --ink: #1d1a14; --ink-soft: #3a3327; --ink-mute: #756c5c;
+  --rule: #d8cdb0; --rule-soft: #e8debc;
+  --leaf: #4a8a4a; --leaf-soft: #ebf3e7;
+  --rust: #c44d2a; --rust-soft: #fae6dc;
+  --sky:  #2c6ca8; --sky-soft:  #e2edf5;
+  --gold: #b8881e; --gold-soft: #f7eccd;
+  --teal: #1f7a6b; --teal-soft: #ddeeea;
+  --font-display: "Fraunces", "Times New Roman", serif;
+  --font-body: "Lora", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  --font-zh: "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: radial-gradient(ellipse at top left, rgba(196,178,144,.14), transparent 50%), radial-gradient(ellipse at bottom right, rgba(74,138,74,.10), transparent 50%), var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.75; }
+:lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(196,77,42,.4); transition: all .15s; }
+a:hover { background: rgba(196,77,42,.08); }
+a.bare { border-bottom: none; }
+strong { font-weight: 600; color: var(--ink); }
+em { font-style: italic; color: var(--leaf); font-weight: 500; }
+code { font-family: var(--font-mono); font-size: 0.85em; background: var(--paper-2); padding: 0.08rem 0.35rem; border-radius: 4px; color: var(--rust); border: 1px solid var(--rule-soft); }
+pre { font-family: var(--font-mono); background: #1d1a14; color: #e8e3d4; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; font-size: 0.84rem; line-height: 1.55; }
+pre code { background: none; color: inherit; padding: 0; border: 0; font-size: inherit; }
+
+.container { max-width: 920px; margin: 0 auto; padding: 0 2rem; }
+@media (max-width: 720px) { .container { padding: 0 1.2rem; } }
+
+.nav { padding: 1.4rem 0; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: rgba(251,245,232,.95); backdrop-filter: blur(8px); z-index: 100; }
+.nav-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.nav-brand { font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 1.2rem; color: var(--ink); border: none; }
+.nav-brand .dot { color: var(--rust); }
+.nav-links { display: flex; gap: 1.4rem; font-family: var(--font-sans); font-size: 0.88rem; }
+.nav-links a { color: var(--ink-mute); border-bottom: none; font-weight: 500; }
+.nav-links a:hover { color: var(--rust); background: none; }
+
+.hero { padding: 4rem 0 2.6rem; border-bottom: 1px solid var(--ink); position: relative; }
+.hero::after { content: ""; position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%); width: 90px; height: 4px; background: var(--rust); }
+.eyebrow { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.08em; color: var(--rust); margin-bottom: 1.2rem; font-weight: 600; text-transform: uppercase; }
+.hero h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 1.4rem; color: var(--ink); }
+.hero h1 em { color: var(--rust); font-style: italic; }
+.hero-lede { font-size: 1.12rem; color: var(--ink-soft); max-width: 36em; margin: 0; line-height: 1.65; }
+
+.section { padding: 3.4rem 0; border-bottom: 1px dashed var(--rule); }
+.section:last-of-type { border-bottom: none; }
+.section h2 { font-family: var(--font-display); font-weight: 500; font-size: 1.85rem; letter-spacing: -0.01em; margin: 0 0 1.4rem; color: var(--ink); display: flex; align-items: baseline; gap: 0.7rem; }
+.section h2 .num { font-family: var(--font-mono); font-weight: 400; font-size: 0.9rem; color: var(--rust); letter-spacing: 0.06em; }
+.section h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.2rem; margin: 2rem 0 0.6rem; color: var(--ink); }
+.section p { margin: 0 0 1rem; }
+.section ul { padding-left: 1.4rem; margin: 0.6rem 0 1rem; }
+.section li { margin: 0.3rem 0; }
+
+table { border-collapse: collapse; width: 100%; margin: 1rem 0 1.4rem; background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; font-size: 0.92rem; }
+th, td { padding: 0.65rem 0.85rem; text-align: left; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+th { background: var(--leaf-soft); color: var(--ink); font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td code { font-size: 0.82rem; }
+
+.cb { background: var(--paper-card); border: 1px solid var(--rule); border-left: 4px solid var(--rust); border-radius: 8px; padding: 1rem 1.2rem; margin: 1.2rem 0; font-size: 0.96rem; }
+.cb.leaf { border-left-color: var(--leaf); background: var(--leaf-soft); }
+.cb.gold { border-left-color: var(--gold); background: var(--gold-soft); }
+.cb.sky { border-left-color: var(--sky); background: var(--sky-soft); }
+.cb.teal { border-left-color: var(--teal); background: var(--teal-soft); }
+.cb-h { font-family: var(--font-sans); font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: var(--ink-mute); margin: 0 0 0.3rem; }
+
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.2rem 0; }
+@media (max-width: 720px) { .split { grid-template-columns: 1fr; } }
+.split > div { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; padding: 1rem 1.1rem; }
+.split h4 { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin: 0 0 0.6rem; font-weight: 600; }
+.split pre { margin: 0; font-size: 0.78rem; }
+
+.q { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; padding: 1rem 1.2rem; margin: 0.8rem 0; }
+.q-q { font-family: var(--font-display); font-weight: 500; font-size: 1.04rem; color: var(--ink); margin-bottom: 0.5rem; }
+.q-a { color: var(--ink-soft); font-size: 0.96rem; }
+
+.foot { padding: 3rem 0 4rem; text-align: center; font-family: var(--font-sans); color: var(--ink-mute); font-size: 0.88rem; }
+.foot a { color: var(--ink-mute); border-bottom: 1px solid rgba(117,108,92,.3); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-row">
+    <a class="nav-brand" href="index.html"><span class="dot">●</span> 桃桃 Agent</a>
+    <div class="nav-links">
+      <a href="index.html">首页</a>
+      <a href="learn.html">学习手册</a>
+      <a href="harness.html">Harness</a>
+      <a href="implementation.html">实现细节</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <div class="eyebrow">速读手册 · 7 分钟版</div>
+    <h1>MCP · 给 agent 一根 <em>USB-C</em></h1>
+    <p class="hero-lede">
+      Anthropic 在 2024-11 提出的 <strong>Model Context Protocol</strong>，把"agent ⇄ 工具源"的连接方式标准化。
+      这一页讲三件事：① MCP 解决了什么问题、协议长什么样；
+      ② taotao-agent 怎么<strong>双向</strong>实现的（既当 server 把工具吐出去，也当 client 把别人的工具吃进来）；
+      ③ 怎么把 Claude Desktop / Cursor 接到我们这个 server。
+    </p>
+  </div>
+</header>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 1</span>没有 MCP 之前 · agent 的 N×M 焦虑</h2>
+    <p>
+      你写了一个 agent，想让它能：① 读你电脑上的文件；② 查 GitHub issue；③ 操作 Notion；④ 跑数据库查询。
+      在 MCP 之前，每个工具源你都得<strong>手写一个 LangChain Tool 包装器</strong>，把 SDK 调用塞进去，
+      还得管认证、错误处理、参数校验。换一个 agent 框架，又得重写一遍。
+    </p>
+    <p>
+      这就是经典的 <em>N×M 集成爆炸</em>：N 个 agent 框架 × M 个工具源 = N×M 份连接代码。
+      Anthropic 看到这个痛点，从 LSP（Language Server Protocol，VSCode/IDE 那套）抄了思路 ——
+      <strong>定义一个协议，让"工具源"实现一次，"agent 端"调用一次，剩下全靠协议适配</strong>。
+      MCP 就这么来的。
+    </p>
+
+    <div class="cb leaf">
+      <p class="cb-h">一句话定义</p>
+      <p style="margin:0">
+        MCP = JSON-RPC 2.0 + 三个 server 能力（<code>tools</code> / <code>prompts</code> / <code>resources</code>）+ 两种传输（stdio / streamable_http）。
+        Anthropic 主推、OpenAI 也加入了，2025 上半年起 Cursor / Cody / Claude Desktop / Continue 全都内置 MCP client。
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 2</span>三个核心概念 · 一张表认完</h2>
+
+    <table>
+      <thead><tr><th style="width:20%">能力</th><th>是什么</th><th>典型场景</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Tools</strong></td>
+          <td>带 JSON Schema 参数的<strong>可被调用</strong>的函数。模型决定何时调、传什么参数。</td>
+          <td>查文件、跑 SQL、发推、改 Notion 页面</td>
+        </tr>
+        <tr>
+          <td><strong>Prompts</strong></td>
+          <td>预先写好的、参数化的<strong>系统提示模板</strong>。用户/IDE 主动选用，不是 LLM 自己决定。</td>
+          <td>"用 PR-review 模式审这段代码"，"按公司 commit 规范写 message"</td>
+        </tr>
+        <tr>
+          <td><strong>Resources</strong></td>
+          <td>带 URI 的<strong>只读数据</strong>。client 可以拉、可以订阅变更。比 tool 轻 —— 不需要 LLM 决策就能注入上下文。</td>
+          <td>当前文件内容、最近的日志、用户 profile</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="cb gold">
+      <p class="cb-h">Tool 和 Resource 区别（很多人搞混）</p>
+      <p style="margin:0">
+        Tool 是<strong>动作</strong> —— LLM 看到 schema、自己决定要不要调、传什么参数。
+        Resource 是<strong>状态</strong> —— 由 client（不是 LLM）主动拉取、放进 context window。
+        前者像调函数，后者像读文件。同一份数据可以同时作为 tool（"refresh_logs"）和 resource（"file://logs/today.log"）暴露。
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 3</span>协议长什么样 · JSON-RPC 一帧帧看</h2>
+    <p>
+      MCP 用 JSON-RPC 2.0，每条消息都是 <code>{"jsonrpc":"2.0","id":N,"method":"...","params":{...}}</code>。
+      下面是一次完整握手 + 工具调用的 trace（这就是 <code>curl</code> 我们 <code>/mcp/</code> 端点能看到的东西）：
+    </p>
+
+<pre><code><span style="color:#9bd1a8">→ initialize</span>
+{"jsonrpc":"2.0","id":1,"method":"initialize",
+ "params":{"protocolVersion":"2025-06-18",
+           "capabilities":{},
+           "clientInfo":{"name":"cursor","version":"0.45"}}}
+
+<span style="color:#e8c87a">← server hello (告诉 client 自己有哪些能力)</span>
+{"jsonrpc":"2.0","id":1,"result":{
+   "protocolVersion":"2025-06-18",
+   "capabilities":{"tools":{...},"prompts":{...},"resources":{...}},
+   "serverInfo":{"name":"taotao-agent","version":"1.27.1"},
+   "instructions":"Tools cover math, time, web search, ..."}}
+
+<span style="color:#9bd1a8">→ tools/list</span>
+{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}
+
+<span style="color:#e8c87a">← 工具清单 + JSON Schema</span>
+{"jsonrpc":"2.0","id":2,"result":{"tools":[
+   {"name":"calculator","description":"Evaluate a math expression...",
+    "inputSchema":{"type":"object","properties":{"expression":{"type":"string"}},
+                   "required":["expression"]}},
+   ...]}}
+
+<span style="color:#9bd1a8">→ tools/call</span>
+{"jsonrpc":"2.0","id":3,"method":"tools/call",
+ "params":{"name":"calculator","arguments":{"expression":"2**16+7"}}}
+
+<span style="color:#e8c87a">← content blocks（可以混 text / image / resource link）</span>
+{"jsonrpc":"2.0","id":3,"result":{
+   "content":[{"type":"text","text":"2**16+7 = 65543"}],
+   "isError":false}}</code></pre>
+
+    <p>
+      就这么直白。<strong>没有魔法 —— 任何能发 HTTP/stdio + 写 JSON 的程序都能当 MCP client 或 server</strong>。
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 4</span>两种传输 · 选哪个</h2>
+
+    <div class="split">
+      <div>
+        <h4>stdio</h4>
+        <p style="font-size:.92rem; margin:0 0 .5rem">
+          Client（Claude Desktop / Cursor）<strong>spawn 一个子进程</strong>，
+          双方用 stdin/stdout 收发 JSON-RPC，每行一帧。
+        </p>
+        <p style="font-size:.92rem; margin:0">
+          <strong>用于：</strong>本地工具，安全靠"进程在用户身份下跑"自然解决。<br>
+          <strong>启动：</strong><code>uv run python -m agent.mcp</code>
+        </p>
+      </div>
+      <div>
+        <h4>streamable_http</h4>
+        <p style="font-size:.92rem; margin:0 0 .5rem">
+          MCP server 是一个普通的 HTTP 服务，client 往 <code>/mcp/</code> 发 POST，
+          每个响应可以是单个 JSON 也可以是 SSE 流。
+        </p>
+        <p style="font-size:.92rem; margin:0">
+          <strong>用于：</strong>远程工具，需要走网络的场景。<br>
+          <strong>启动：</strong>跟我们 FastAPI 一起，挂在 <code>/mcp</code>。
+        </p>
+      </div>
+    </div>
+
+    <div class="cb sky">
+      <p class="cb-h">还有一个 SSE 传输（已弃用）</p>
+      <p style="margin:0">
+        早期 MCP 用 SSE + 单独的 messages 端点（双信道），后来发现挺别扭，2025-03 协议版换成了 streamable_http
+        —— 单个端点既支持单次 JSON 响应、也支持 SSE 流。新代码一律用 streamable_http，老代码看到就当 fallback 兼容。
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 5</span>我们的服务端实现 · <code>backend/agent/mcp/server.py</code></h2>
+    <p>
+      用官方 <code>mcp</code> Python SDK 的 <code>FastMCP</code> 高层 API，~100 行讲完。核心三步：
+    </p>
+
+    <h3>① 把 LangChain 的 <code>@tool</code> 翻成 MCP tool</h3>
+    <p>
+      LangChain tool 已经有 <code>name</code> / <code>description</code> / <code>args_schema</code>（Pydantic），
+      我们用 <code>inspect</code> 重建一个 Python 函数签名，再交给 <code>FastMCP.add_tool()</code>。
+      FastMCP 自己会从签名推 JSON Schema 给 client 看。
+    </p>
+
+<pre><code>def _wrap_tool(t: BaseTool) -&gt; Callable:
+    schema = t.args_schema
+    fields = getattr(schema, "model_fields", {})
+    params = [
+        inspect.Parameter(name, KW_ONLY, default=..., annotation=...)
+        for name, finfo in fields.items()
+    ]
+    sig = inspect.Signature(parameters=params, return_annotation=str)
+
+    def runner(**kwargs):
+        return str(t.invoke(kwargs))
+
+    runner.__name__ = t.name
+    runner.__doc__ = t.description
+    runner.__signature__ = sig   # FastMCP 看的就是这个
+    return runner</code></pre>
+
+    <h3>② 白名单 · 不是所有 tool 都该被任何 client 调</h3>
+    <p>
+      默认只暴露<strong>只读、安全</strong>那一组：<code>calculator</code> / <code>current_time</code> / <code>web_search</code> /
+      <code>read_file</code> / <code>list_files</code> / <code>grep_in_files</code> / <code>recall</code> / <code>read_profile</code> /
+      <code>load_skill</code>。
+      <code>write_file</code> / <code>python_repl</code> / <code>remember</code> 这种<strong>有副作用的</strong>必须显式开。
+    </p>
+<pre><code># .env
+MCP_EXPOSED_TOOLS=calculator,current_time,web_search   # 自定义白名单
+MCP_EXPOSED_TOOLS=*                                    # 全开（仅信任环境）</code></pre>
+
+    <h3>③ 两种传输共享同一个 FastMCP 实例</h3>
+
+    <div class="split">
+      <div>
+        <h4>stdio · 给 Claude Desktop 用</h4>
+<pre><code># backend/agent/mcp/__main__.py
+from .server import run_stdio
+run_stdio()
+# ↑ uv run python -m agent.mcp</code></pre>
+      </div>
+      <div>
+        <h4>HTTP · 挂到 FastAPI</h4>
+<pre><code># backend/app.py
+_mcp = build_mcp_server()
+app.mount("/mcp", _mcp.streamable_http_app())
+
+@asynccontextmanager
+async def _lifespan(_app):
+    async with _mcp.session_manager.run():
+        yield  # 这一行是关键</code></pre>
+      </div>
+    </div>
+
+    <div class="cb gold">
+      <p class="cb-h">坑 · ASGI mount 不会传 lifespan</p>
+      <p style="margin:0">
+        FastMCP 的 streamable_http app 内部用一个 <code>session_manager</code> 跑 anyio task group，
+        必须在 lifespan 里 <code>async with</code>。但 Starlette 的 <code>app.mount()</code> 默认<strong>不</strong>把外层
+        FastAPI 的 lifespan 事件传给被 mount 的子 app —— 结果就是 task group 永远不启动，
+        每次请求 500: "<em>Task group is not initialized</em>"。
+        修复方式是把 MCP 的 session_manager 嵌进 FastAPI 的 lifespan 里，亲自启动。
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 6</span>我们的客户端实现 · <code>backend/agent/mcp/client.py</code></h2>
+    <p>
+      用 <code>langchain-mcp-adapters</code>（LangChain 官方维护）。配置文件复用 Claude Desktop 那套
+      <code>{"mcpServers": {...}}</code> 格式，意味着你能直接把 Claude Desktop 的 config 拷过来。
+    </p>
+
+<pre><code>// backend/mcp_servers.json  (gitignored)
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
+    },
+    "fetch": {
+      "command": "uvx",
+      "args": ["mcp-server-fetch"]
+    },
+    "remote-thing": {
+      "url": "https://api.example.com/mcp/",
+      "transport": "streamable_http",
+      "headers": {"Authorization": "Bearer $TOKEN"}
+    }
+  }
+}</code></pre>
+
+    <p>启用就是一行环境变量：</p>
+<pre><code># .env
+MCP_CLIENT_CONFIG=./mcp_servers.json</code></pre>
+
+    <p>
+      启动时 <code>load_external_tools()</code> 会一次性把所有外部 server 的 tools 拉下来，
+      命名为 <code>&lt;server&gt;__&lt;tool&gt;</code>（例如 <code>filesystem_read_file</code>），合并进 <code>all_tools</code> 和 <code>HARNESS_TOOLS</code>。
+      <strong>对图节点和 harness 完全透明</strong> —— 它们看到的就是更多可调用的 LangChain tool。
+    </p>
+
+    <h3>三个非显然的工程决策</h3>
+    <ul>
+      <li>
+        <strong>命名前缀防冲突</strong>。我们自己有 <code>read_file</code>，filesystem MCP server 也有 <code>read_file</code>。
+        adapter 的 <code>tool_name_prefix=True</code> 让冲突不可能发生。
+      </li>
+      <li>
+        <strong>async-only 怎么办</strong>。MCP-client 工具只实现 <code>ainvoke()</code>，sync <code>.invoke()</code> 会
+        <code>NotImplementedError</code>。我们在 <code>safe_run_tool</code> 里 try/except，回退到 <code>asyncio.run(tool.ainvoke(...))</code>，
+        因为 ThreadPoolExecutor worker 线程没自带 loop，开一个临时的就行。
+      </li>
+      <li>
+        <strong>content blocks 拉平</strong>。MCP 返回的是 <code>[{type:"text", text:"..."}]</code> 数组（为了支持 image / resource link）。
+        我们在 <code>safe_run_tool</code> 把 text-only 数组拉平成纯字符串，LLM 看到的就是 "9*9 = 81" 而不是一坨 JSON。
+        非 text 的（图片）保持原样。
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 7</span>三种用法 · Claude Desktop / Cursor / curl</h2>
+
+    <h3>用法 ①：把 taotao-agent 接进 Claude Desktop</h3>
+    <p>编辑 <code>~/Library/Application Support/Claude/claude_desktop_config.json</code>：</p>
+<pre><code>{
+  "mcpServers": {
+    "taotao-agent": {
+      "command": "uv",
+      "args": ["--directory", "/Users/you/Code/agent-demo/backend",
+               "run", "python", "-m", "agent.mcp"]
+    }
+  }
+}</code></pre>
+    <p>重启 Claude Desktop，对话框旁边会出现工具图标，里面就有我们的 9 个白名单 tool。</p>
+
+    <h3>用法 ②：把 taotao-agent 接进 Cursor</h3>
+    <p>Cursor → Settings → MCP → Add new MCP server，同样的 stdio 命令。或走 HTTP：</p>
+<pre><code>{
+  "mcpServers": {
+    "taotao-agent": {
+      "url": "http://127.0.0.1:8000/mcp/",
+      "transport": "streamable_http"
+    }
+  }
+}</code></pre>
+
+    <h3>用法 ③：curl 直接调试</h3>
+<pre><code># 列工具
+curl -s -X POST http://127.0.0.1:8000/mcp/ \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
+
+# 调工具
+curl -s -X POST http://127.0.0.1:8000/mcp/ \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call",
+       "params":{"name":"calculator","arguments":{"expression":"2**16+7"}}}'</code></pre>
+
+    <div class="cb teal">
+      <p class="cb-h">自循环测试</p>
+      <p style="margin:0">
+        把 <code>backend/mcp_servers.example.json</code> 里的 <code>loopback-self</code> 块单独拷出来当配置，
+        我们的 client 会去调我们的 server，这是验证整条链路最干净的方法 —— 不依赖任何外部进程。
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 8</span>面试 5 问 · 答得出来基本算懂了</h2>
+
+    <div class="q">
+      <div class="q-q">Q1 · MCP 跟 OpenAI function calling 区别是什么？</div>
+      <div class="q-a">
+        function calling 是<strong>模型层</strong>能力（"模型能输出 tool_call JSON"）。MCP 是<strong>系统层</strong>协议
+        ("agent 怎么发现外部工具源")。两者正交：MCP server 把工具暴露给 agent，agent 拿到这些 tool 还得通过 function calling 让模型决定用哪个。
+        类比：function calling 是 USB 协议本身，MCP 是 USB 集线器。
+      </div>
+    </div>
+
+    <div class="q">
+      <div class="q-q">Q2 · 既然有 LangChain Tool 抽象，为啥还要 MCP？</div>
+      <div class="q-a">
+        LangChain Tool 是<strong>语言内</strong>抽象（Python 函数）。
+        MCP 是<strong>跨语言、跨进程</strong>协议 —— Notion 团队用 TypeScript 写一个 MCP server，
+        你用 Python agent 直接消费，不需要重写 SDK 包装器，也不需要把 Notion SDK 装进你的 venv。
+        本质是把工具源做成<strong>独立可部署的微服务</strong>。
+      </div>
+    </div>
+
+    <div class="q">
+      <div class="q-q">Q3 · stdio 和 HTTP 该怎么选？</div>
+      <div class="q-a">
+        本地工具（要访问你电脑文件、跑你电脑上的 git）必须 stdio —— HTTP 服务跨不了用户身份边界。
+        远程工具（公司内部 API、SaaS 集成）必须 streamable_http —— 不能让用户机子去 spawn 服务端进程。
+        混合场景（Claude Desktop 调你公司的 API）：本地装一个 stdio MCP server 当"代理"，
+        它内部再去调远程 HTTP，是一种常见 pattern。
+      </div>
+    </div>
+
+    <div class="q">
+      <div class="q-q">Q4 · MCP server 暴露 <code>write_file</code> / <code>execute_shell</code> 这种 tool 的安全风险？</div>
+      <div class="q-a">
+        极大。MCP client 是任意进程 —— 只要能连上你的端点（stdio 进程被启动 / HTTP 没认证），
+        它就能让一个 LLM 帮它做任何 server 暴露的事情。<strong>Prompt injection 在 MCP 时代被放大成了横向移动漏洞</strong>。
+        缓解：① 默认白名单只放只读 tool（我们就是这么做的）；② HTTP 传输强制 <code>Authorization</code> token；
+        ③ 副作用类 tool 要求 client 二次确认（MCP 协议有 <code>elicitation</code> 机制可以反向问 client）；
+        ④ 进程沙箱 + 文件路径白名单。
+      </div>
+    </div>
+
+    <div class="q">
+      <div class="q-q">Q5 · 大量 MCP tool 接入会不会撑爆 context window？</div>
+      <div class="q-a">
+        会。每个 tool 的 schema + description 都会塞进 system prompt，10 个 server 各 20 个 tool 就是 200 个 schema，
+        几 K token 起步。两种应对：① <strong>渐进式披露</strong>（progressive disclosure）—— 先只塞一个 <code>list_tools</code>
+        meta-tool，用了再展开；② <strong>语义路由</strong>（我们 graph 那个 <code>select_tools</code> 节点就是干这个的）——
+        每轮按用户输入 embedding 召回 top-K tool 才喂进去。两个方案各有 trade-off，详见 <a href="tool-design.html">tool-design.html § 5</a>。
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 9</span>继续读</h2>
+    <ul>
+      <li>MCP 官方规范 · <a href="https://modelcontextprotocol.io/" target="_blank" rel="noopener">modelcontextprotocol.io</a></li>
+      <li>Anthropic 引言 · <a href="https://www.anthropic.com/news/model-context-protocol" target="_blank" rel="noopener">anthropic.com/news/model-context-protocol</a></li>
+      <li>Python SDK · <a href="https://github.com/modelcontextprotocol/python-sdk" target="_blank" rel="noopener">github.com/modelcontextprotocol/python-sdk</a></li>
+      <li>已有的 MCP server 列表（开个眼） · <a href="https://github.com/modelcontextprotocol/servers" target="_blank" rel="noopener">github.com/modelcontextprotocol/servers</a></li>
+      <li>LangChain 适配器 · <a href="https://github.com/langchain-ai/langchain-mcp-adapters" target="_blank" rel="noopener">langchain-mcp-adapters</a></li>
+      <li>本项目相关章节 · <a href="implementation.html">implementation.html § 17.1</a>（tool 注册流程）· <a href="tool-design.html">tool-design.html</a>（function calling 4 流派）· <a href="hermes.html">hermes.html</a>（开源模型 tool 格式）</li>
+    </ul>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="container">
+    <p>桃桃 Agent · <a href="index.html">回首页</a> · <a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank" rel="noopener">GitHub</a></p>
+  </div>
+</footer>
+
+</body>
+</html>

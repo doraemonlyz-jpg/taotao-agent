@@ -53,6 +53,7 @@ Every box on the standard agent diagram maps to a real node in `backend/agent/`:
 | R | **Reflection**    | `nodes/critic.py`       | Reflexion-style self-critique; one bounded retry |
 | G | **Guardrails**    | `nodes/guardrails.py`   | input prompt-injection filter + output PII redaction |
 | O11y | **Observability** | `observability/tracer.py` | every node emits a `TraceEvent` → JSONL file + live SSE bus |
+| MCP | **Model Context Protocol** | `mcp/server.py`, `mcp/client.py` | bidirectional · expose our tools at `/mcp/` (Claude Desktop / Cursor) AND consume external MCP servers into our registry |
 
 ---
 
@@ -143,6 +144,26 @@ The API is now at http://127.0.0.1:8000:
 | OTel | `OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317` | unset → console | Auto-traces FastAPI + httpx; tools/sub-agents/LLM via `tool_span()` etc. |
 | Prometheus | always-on at `/metrics` | — | http_requests_total, request_duration_seconds, etc. |
 | CORS | `ALLOWED_ORIGINS=https://app.example.com,...` | `*` | Restrict to known frontends |
+| MCP server (HTTP) | `MCP_HTTP_ENABLED=1`, `MCP_EXPOSED_TOOLS=calculator,web_search,...` (or `*`) | on, safe-set | Mounts an MCP server at `/mcp/` so Claude Desktop / Cursor / any MCP client can call our whitelisted tools |
+| MCP server (stdio) | `uv run python -m agent.mcp` | — | Launches the same server over stdio for Claude-Desktop-spawned subprocess |
+| MCP client | `MCP_CLIENT_CONFIG=./mcp_servers.json` | unset | Load tools from external MCP servers (filesystem, fetch, …); they're merged into both registries as `<server>_<tool>` |
+
+### MCP · expose / consume tools over Model Context Protocol
+
+```bash
+# 1) Smoke our server directly
+curl -s -X POST http://127.0.0.1:8000/mcp/ \
+  -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | jq .result.tools
+
+# 2) Wire it into Claude Desktop · ~/Library/Application Support/Claude/claude_desktop_config.json
+#    {"mcpServers": {"taotao-agent": {"command":"uv","args":["--directory","/path/agent-demo/backend","run","python","-m","agent.mcp"]}}}
+
+# 3) Have our agent consume external MCP servers · backend/mcp_servers.json
+#    See backend/mcp_servers.example.json for the shape (filesystem / fetch / loopback)
+```
+
+Full manual: [docs/mcp.html](docs/mcp.html) (协议 + 双向实现 + 5 道面试题).
 
 ### Eval
 
