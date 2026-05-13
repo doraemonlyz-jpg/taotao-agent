@@ -1,0 +1,70 @@
+name: 🐛 Bug report
+description: Something is broken or behaving unexpectedly
+title: "[bug] "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. The more we know up front,
+        the faster we can fix it. Please don't paste API keys or PII.
+
+  - type: input
+    id: version
+    attributes:
+      label: Version / commit
+      description: "Output of `git rev-parse --short HEAD` or release tag"
+      placeholder: "e.g. 4ffce3f"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: backend
+    attributes:
+      label: Which backend?
+      options:
+        - "/chat (LangGraph graph)"
+        - "/chat/v2 (Harness loop)"
+        - "taotao_cli.py (CLI)"
+        - "MCP (server or client)"
+        - "Frontend"
+        - "Docs / website"
+        - "Other / not sure"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: "Plain English description of the bug"
+      placeholder: "When I ... I expected ... but got ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps
+      description: "Minimal commands / payload to reproduce. We can't fix what we can't reproduce."
+      placeholder: |
+        1. `cd backend && uvicorn app:app --port 8000`
+        2. `curl -X POST http://localhost:8000/chat -d '...'`
+        3. ...
+      render: bash
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs / traces
+      description: "Backend log lines or frontend console errors. Redact secrets."
+      render: shell
+
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: "OS · Python · Node · model provider"
+      placeholder: "macOS 14.5 · Python 3.12 · Node 22 · Anthropic claude-sonnet-4-5"

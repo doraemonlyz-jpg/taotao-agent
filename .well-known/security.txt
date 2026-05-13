@@ -1,0 +1,14 @@
+# https://securitytxt.org/  ·  RFC 9116
+# Serve from /.well-known/security.txt at runtime.
+#
+# This is a demo project · we don't run a bug bounty.
+# But if you find something, please open a GitHub Security Advisory
+# (private · maintainers only see it) instead of a public issue.
+
+Contact: https://github.com/doraemonlyz-jpg/taotao-agent/security/advisories/new
+Contact: mailto:security@taotao-agent.invalid
+Expires: 2027-12-31T23:59:59.000Z
+Preferred-Languages: en, zh
+Canonical: https://taotao-agent.example.com/.well-known/security.txt
+Policy: https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/SECURITY.md
+Acknowledgments: https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/SECURITY.md#hall-of-fame

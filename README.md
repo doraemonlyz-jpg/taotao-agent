@@ -6,6 +6,12 @@
 Built on **LangGraph 0.6** (orchestration backbone) + **FastAPI** (SSE streaming)
 + **React 19 + Vite** (chat UI with a live trace panel).
 
+[![CI](https://img.shields.io/github/actions/workflow/status/doraemonlyz-jpg/taotao-agent/test.yml?branch=main&label=CI&logo=github)](https://github.com/doraemonlyz-jpg/taotao-agent/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.12+-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
+[![Node](https://img.shields.io/badge/node-22+-339933.svg?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Docs · 24 books](https://img.shields.io/badge/docs-24%20books-orange.svg)](docs/index.html)
+[![Code style: ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 ![status](https://img.shields.io/badge/status-v0.1-tomato)
 ![stack](https://img.shields.io/badge/backend-LangGraph%200.6%20%2B%20FastAPI-black)
 ![ui](https://img.shields.io/badge/frontend-React%2019%20%2B%20Vite-blue)

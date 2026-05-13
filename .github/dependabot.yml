@@ -1,0 +1,64 @@
+# Dependabot · auto-PRs for outdated dependencies.
+#
+# We use `weekly` everywhere · daily PRs are noise for a small project.
+# Group minor + patch updates so we don't get one PR per package.
+# Major bumps stay individual · they need human review.
+version: 2
+updates:
+  # ---------- Backend · Python · uv-managed ----------
+  - package-ecosystem: "uv"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
+    labels: ["deps", "backend"]
+    commit-message:
+      prefix: "deps(backend)"
+      include: "scope"
+    groups:
+      python-minor-patch:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
+    # Pin our load-bearing model APIs · review majors carefully
+    ignore:
+      - dependency-name: "langgraph"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "langchain*"
+        update-types: ["version-update:semver-major"]
+
+  # ---------- Frontend · npm ----------
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
+    labels: ["deps", "frontend"]
+    commit-message:
+      prefix: "deps(frontend)"
+      include: "scope"
+    groups:
+      npm-minor-patch:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
+    ignore:
+      # React 19 is current · don't auto-jump major
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+
+  # ---------- GitHub Actions themselves ----------
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 3
+    labels: ["deps", "ci"]
+    commit-message:
+      prefix: "deps(ci)"

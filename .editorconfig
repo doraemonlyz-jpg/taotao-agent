@@ -1,0 +1,30 @@
+# https://editorconfig.org · per-editor agnostic style consensus.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Python · PEP 8
+[*.py]
+indent_size = 4
+max_line_length = 100
+
+# Go-style two-space defaults for everything web
+[*.{ts,tsx,js,jsx,json,yml,yaml,html,css,scss,md}]
+indent_size = 2
+
+# Makefiles MUST use tabs · don't argue with make
+[Makefile]
+indent_style = tab
+
+# Don't touch generated artifacts
+[{frontend/dist/**,frontend/src/api/types.ts,**/.venv/**,**/node_modules/**}]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset
+insert_final_newline = unset

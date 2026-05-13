@@ -1,0 +1,42 @@
+# Force LF everywhere · prevent Windows checkouts from rewriting line endings.
+* text=auto eol=lf
+
+# Explicit text · most source code
+*.py     text eol=lf
+*.ts     text eol=lf
+*.tsx    text eol=lf
+*.js     text eol=lf
+*.jsx    text eol=lf
+*.json   text eol=lf
+*.yml    text eol=lf
+*.yaml   text eol=lf
+*.toml   text eol=lf
+*.md     text eol=lf
+*.html   text eol=lf
+*.css    text eol=lf
+*.sh     text eol=lf
+Makefile text eol=lf
+
+# Binary · don't touch
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.ico  binary
+*.pdf  binary
+*.zip  binary
+*.gz   binary
+
+# GitHub linguist · de-emphasize generated / vendored files in repo stats
+frontend/src/api/types.ts linguist-generated=true
+frontend/dist/**          linguist-generated=true
+backend/.venv/**          linguist-vendored=true
+docs/_assets/**           linguist-vendored=true
+
+# Exclude books from PR diff stats · they're tutorials, not code review surface
+docs/*.html  linguist-documentation=true
+
+# `.lock` files don't show in PR diffs by default · keep them stable
+backend/uv.lock         binary
+frontend/package-lock.json -diff

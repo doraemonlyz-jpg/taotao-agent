@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Read the manual first
+    url: https://github.com/doraemonlyz-jpg/taotao-agent/tree/main/docs
+    about: 24 books cover most "how do I ..." questions. Skim before opening an issue.
+  - name: 🤖 AI agent onboarding
+    url: https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/CLAUDE.md
+    about: Pick this up via Cursor / Claude Code / Codex? Read CLAUDE.md first.
