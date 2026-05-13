@@ -19,6 +19,10 @@ import os
 import re
 from dataclasses import dataclass
 
+# Importing agent.config side-effect-loads the .env so init_chat_model
+# below finds ANTHROPIC_API_KEY / OPENAI_API_KEY / etc.
+from agent import config as _agent_config  # noqa: F401
+
 from .cases import Case
 from .runner import RunResult
 
@@ -70,7 +74,10 @@ def _extract_json(s: str) -> dict:
 async def _ask_judge(case: Case, result: RunResult) -> dict:
     """Call the judge LLM. Defaults to anthropic claude-3-5-sonnet because
     you already have an Anthropic key wired."""
-    judge_model = os.environ.get("EVAL_JUDGE_MODEL", "anthropic:claude-3-5-sonnet-latest")
+    # Default to Haiku 4.5: fast (~2s), cheap (~$1/MTok), and accurate
+    # enough for binary/three-level grading. Override via EVAL_JUDGE_MODEL
+    # if you want to spend on Sonnet.
+    judge_model = os.environ.get("EVAL_JUDGE_MODEL", "anthropic:claude-haiku-4-5")
     from langchain.chat_models import init_chat_model
 
     llm = init_chat_model(judge_model, temperature=0)

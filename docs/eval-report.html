@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"/>
-<title>Eval report · taotao-agent · 2026-05-12 16:20</title>
+<title>Eval report · taotao-agent · 2026-05-12 17:15</title>
 <style>
 :root {
   --bg:#f6f3e8;--paper:#fbf3df;--ink:#2c3a30;--ink-soft:#57665b;--ink-mute:#8a8c79;
@@ -36,25 +36,25 @@ h2{font-size:1.05rem;margin:1.6rem 0 .35rem;color:var(--forest-deep)}
 </style></head><body>
 
 <h1>Eval Report · taotao-agent</h1>
-<div class="muted">2026-05-12 16:20 · 0 cases × 2 engines · judge=anthropic:claude-3-5-sonnet-latest</div>
+<div class="muted">2026-05-12 17:15 · 3 cases × 2 engines · judge=anthropic:claude-3-5-sonnet-latest</div>
 
 <div class="cards">
         <div class="card">
           <div class="card-h">GRAPH</div>
-          <div class="kv"><span>cases</span><b>0</b></div>
-          <div class="kv"><span>pass-rate</span><b>-</b></div>
-          <div class="kv"><span>avg score</span><b>-</b></div>
-          <div class="kv"><span>avg latency</span><b>-ms</b></div>
-          <div class="kv"><span>avg ↑/↓ tokens</span><b>- / -</b></div>
-          <div class="kv"><span>avg cost</span><b>-</b></div>
-          <div class="kv"><span>avg tools/turn</span><b>-</b></div>
+          <div class="kv"><span>cases</span><b>3</b></div>
+          <div class="kv"><span>pass-rate</span><b>33.3%</b></div>
+          <div class="kv"><span>avg score</span><b>38.9%</b></div>
+          <div class="kv"><span>avg latency</span><b>96195ms</b></div>
+          <div class="kv"><span>avg ↑/↓ tokens</span><b>4287 / 437</b></div>
+          <div class="kv"><span>avg cost</span><b>$0</b></div>
+          <div class="kv"><span>avg tools/turn</span><b>0</b></div>
         </div>
         <div class="card">
           <div class="card-h">HARNESS</div>
-          <div class="kv"><span>cases</span><b>1</b></div>
-          <div class="kv"><span>pass-rate</span><b>0.0%</b></div>
-          <div class="kv"><span>avg score</span><b>0.0%</b></div>
-          <div class="kv"><span>avg latency</span><b>23303ms</b></div>
+          <div class="kv"><span>cases</span><b>3</b></div>
+          <div class="kv"><span>pass-rate</span><b>66.7%</b></div>
+          <div class="kv"><span>avg score</span><b>61.1%</b></div>
+          <div class="kv"><span>avg latency</span><b>43344ms</b></div>
           <div class="kv"><span>avg ↑/↓ tokens</span><b>0 / 0</b></div>
           <div class="kv"><span>avg cost</span><b>$0</b></div>
           <div class="kv"><span>avg tools/turn</span><b>1</b></div>
@@ -67,8 +67,8 @@ h2{font-size:1.05rem;margin:1.6rem 0 .35rem;color:var(--forest-deep)}
 </tr></thead>
 <tbody>
         <tr>
-          <td>math</td>
-          <td class="num">-</td><td class="num">-</td><td class="num">-ms</td><td class="num">-</td><td class="num">0.0%</td><td class="num">0.0%</td><td class="num">23303ms</td><td class="num">$0</td>
+          <td>code</td>
+          <td class="num">33.3%</td><td class="num">38.9%</td><td class="num">96195ms</td><td class="num">$0</td><td class="num">66.7%</td><td class="num">61.1%</td><td class="num">43344ms</td><td class="num">$0</td>
         </tr></tbody>
 </table>
 
@@ -83,18 +83,46 @@ h2{font-size:1.05rem;margin:1.6rem 0 .35rem;color:var(--forest-deep)}
 </tr></thead>
 <tbody>
         <tr>
-          <td class="cid">math.001</td>
-          <td>math</td>
-          <td class="user" title="What is sqrt(2^32 - 1)? Round to 4 decimals.">What is sqrt(2^32 - 1)? Round to 4 decimals.</td>
+          <td class="cid">code.001</td>
+          <td>code</td>
+          <td class="user" title="Write a Python function `is_prime(n)` that returns True iff n is prime, then test it on n=29.">Write a Python function `is_prime(n)` that returns True iff n is prime, then tes…</td>
+          <td class="num pass-y">✓</td>
+          <td class="num">66.7</td>
+          <td class="num">72603ms</td>
+          <td class="num">$0</td>
+          <td class="num pass-y">✓</td>
+          <td class="num">100.0</td>
+          <td class="num">42979ms</td>
+          <td class="num">$0</td>
+          <td class="notes" title="graph: Function defined and is_prime(29) correctly returns True. Tool used (python_repl) is acceptable variant of expected (python). Minor inefficiency: agent suggests additional testing but doesn&#x27;t execute it; response includes unnecessary commentary about edge cases without demonstration. ··· harness: Function defined and tested correctly on n=29 returning True. Tool used (python_repl) is appropriate and equivalent to python. No wasted calls or unnecessary steps.">Function defined and tested correctly on n=29 returning True</td>
+        </tr>
+        <tr>
+          <td class="cid">code.002</td>
+          <td>code</td>
+          <td class="user" title="Sort this list in descending order using Python: [3, 1, 4, 1, 5, 9, 2, 6, 5]">Sort this list in descending order using Python: [3, 1, 4, 1, 5, 9, 2, 6, 5]</td>
           <td class="num pass-n">✗</td>
-          <td class="num">-</td>
-          <td class="num">0ms</td>
+          <td class="num">33.3</td>
+          <td class="num">94284ms</td>
+          <td class="num">$0</td>
+          <td class="num pass-y">✓</td>
+          <td class="num">83.3</td>
+          <td class="num">7588ms</td>
+          <td class="num">$0</td>
+          <td class="notes" title="graph: Answer is correct and shows proper Python syntax, but agent provided code without executing it via the python tool. Agent made up the output rather than running the code to verify it. ··· harness: Answer is correct and matches rubric exactly. Used python_repl (acceptable variant of python tool). Minor issue: response is in Chinese rather than English, but this doesn&#x27;t affect technical correctness. No wasted tool calls.">Answer is correct and matches rubric exactly. Used python_re</td>
+        </tr>
+        <tr>
+          <td class="cid">code.003</td>
+          <td>code</td>
+          <td class="user" title="Implement bubble sort in Python and run it on [5,2,9,1,7].">Implement bubble sort in Python and run it on [5,2,9,1,7].</td>
+          <td class="num pass-n">✗</td>
+          <td class="num">16.7</td>
+          <td class="num">121699ms</td>
           <td class="num">$0</td>
           <td class="num pass-n">✗</td>
           <td class="num">0.0</td>
-          <td class="num">23303ms</td>
+          <td class="num">79466ms</td>
           <td class="num">$0</td>
-          <td class="notes" title="graph:  ··· harness: (judge skipped)">(judge skipped)</td>
+          <td class="notes" title="graph: Agent claims correct output [1,2,5,7,9] but provides no actual code implementation or tool execution. Response is in Chinese, describes algorithm conceptually, and shows no python_repl usage despite claiming to use it. No verifiable proof the code was run. ··· harness: Response is in Thai, not English. No actual code execution shown - only code snippet provided without python_repl tool output. Cannot verify the claimed result [1,2,5,7,9] was actually produced. Agent claims to have run code but provides no execution evidence.">Response is in Thai, not English. No actual code execution s</td>
         </tr></tbody>
 </table>
 

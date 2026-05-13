@@ -31,16 +31,26 @@ RESULTS_DIR = Path(__file__).resolve().parents[1] / "data" / "eval"
 
 
 async def _process(args) -> None:
-    cases = []
-    for cat in args.categories:
-        cases.extend(load_all(cat or None))
-    if not args.categories:
-        cases = load_all()
+    # Resolve which categories we'll actually load. Empty list = all four.
+    categories = args.categories or ["math", "code", "search", "memory"]
 
-    if args.limit > 0:
-        cases = cases[: args.limit]
+    cases = []
+    for cat in categories:
+        loaded = load_all(cat)
+        # `--limit N` means "first N per category" so trimming math down to
+        # 3 still leaves room for code / search / memory in a balanced run.
+        if args.limit > 0:
+            loaded = loaded[: args.limit]
+        cases.extend(loaded)
 
     print(f"running {len(cases)} cases × {len(args.engines)} engines = {len(cases)*len(args.engines)} runs")
+
+    # Open the raw JSONL up front and append per-row so an interrupted
+    # run still leaves partial data on disk (eval is slow; we can't
+    # afford to lose 30 min of LLM calls to a Ctrl-C).
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    raw_path = RESULTS_DIR / f"{int(time.time())}.jsonl"
+    raw_fp = raw_path.open("w", encoding="utf-8")
 
     merged: list[dict] = []
     for engine in args.engines:
@@ -75,6 +85,8 @@ async def _process(args) -> None:
                     "judge_notes", "overall_pass",
                 )})
             merged.append(row)
+            raw_fp.write(json.dumps(row, default=str) + "\n")
+            raw_fp.flush()
             tag = "✓" if row.get("overall_pass") else "✗"
             print(
                 f"  [{tag}] {c.id:<14} {row['duration_s']:>6.2f}s  "
@@ -83,10 +95,7 @@ async def _process(args) -> None:
                 f"err={row['error'] or ''}"
             )
 
-    # Persist raw + render report
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    raw_path = RESULTS_DIR / f"{int(time.time())}.jsonl"
-    write_jsonl_results(merged, raw_path)
+    raw_fp.close()
     rep = render(merged, REPORT_PATH)
 
     # Summary line
@@ -107,7 +116,12 @@ def main() -> None:
     p = argparse.ArgumentParser(prog="eval.cli")
     p.add_argument("--categories", default="", help="comma-separated subset (math,code,search,memory). Empty = all.")
     p.add_argument("--engines", default="graph,harness", help="comma-separated subset")
-    p.add_argument("--limit", type=int, default=0, help="cap N cases per category (0 = all)")
+    p.add_argument(
+        "--limit",
+        type=int,
+        default=0,
+        help="cap N cases PER CATEGORY (0 = all). Balanced across math/code/search/memory.",
+    )
     p.add_argument("--no-judge", action="store_true", help="skip LLM judge (programmatic checks only)")
     args = p.parse_args()
     args.categories = [c.strip() for c in args.categories.split(",") if c.strip()]
