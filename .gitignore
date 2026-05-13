@@ -30,6 +30,12 @@ backend/data/skills/*.tmp
 backend/mcp_servers.json
 !backend/mcp_servers.example.json
 
+# OpenAPI dump · regenerable via `cd frontend && npm run gen:api`
+frontend/openapi.json
+
+# tsc incremental cache
+frontend/tsconfig*.tsbuildinfo
+
 # Belt-and-braces: never commit these even if someone forgets the rule above
 *.sqlite
 *.sqlite-shm

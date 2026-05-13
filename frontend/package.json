@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "gen:api": "cd ../backend && uv run python -c \"import json; from app import app; open('../frontend/openapi.json','w').write(json.dumps(app.openapi(), indent=2))\" && openapi-typescript ./openapi.json -o ./src/api/schema.gen.ts && echo '✓ schema.gen.ts updated'"
   },
   "dependencies": {
     "highlight.js": "^11.11.1",
@@ -20,6 +21,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "openapi-typescript": "^7.13.0",
     "typescript": "~5.6.3",
     "vite": "^6.0.5"
   }

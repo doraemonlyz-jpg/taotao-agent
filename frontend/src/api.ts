@@ -1,9 +1,22 @@
 /* Tiny fetch wrappers + an SSE chat helper.
  * In dev we go through Vite's `/api` proxy → http://127.0.0.1:8000.
  * In prod the same `/api` prefix is expected.
+ *
+ * Request-body types come from the auto-generated OpenAPI schema
+ * (src/api/schema.gen.ts).  Response types stay hand-written here
+ * because most handlers return raw dicts without FastAPI response_model
+ * annotations · once those exist we can flip to the generated ones.
  */
+import type { Schemas } from "./api/index";
 
 const BASE = "/api";
+
+export type ChatIn = Schemas["ChatIn"];
+export type MemoryIn = Schemas["MemoryIn"];
+export type ModelSwitchIn = Schemas["ModelSwitchIn"];
+export type ProfileIn = Schemas["ProfileIn"];
+export type PruneIn = Schemas["PruneIn"];
+export type ReplayIn = Schemas["ReplayIn"];
 
 export interface TraceEvent {
   ts: number;
@@ -35,6 +48,25 @@ export async function fetchMemory(): Promise<MemoryItem[]> {
 
 export async function clearMemory(): Promise<void> {
   await fetch(`${BASE}/memory`, { method: "DELETE" });
+}
+
+export interface PruneResult {
+  total: number;
+  kept: number;
+  dropped: number;
+  dry_run: boolean;
+  policy?: { max_keep: number; drop_fraction: number; half_life_days: number };
+  victim_preview?: string[];
+}
+
+export async function pruneMemory(p: Partial<PruneIn> = {}): Promise<PruneResult> {
+  const r = await fetch(`${BASE}/memory/prune`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(p),
+  });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
 }
 
 export async function fetchHealth(): Promise<{ ok: boolean; model: string }> {
@@ -169,6 +201,19 @@ export interface SkillEntry {
 
 export async function fetchSkills(): Promise<SkillEntry[]> {
   const r = await fetch(`${BASE}/skills`);
+  return r.json();
+}
+
+/* ---------------- replay / past sessions ---------------- */
+export interface SessionSummary {
+  session_id: string;
+  first_user: string | null;
+  last_ts: number;
+}
+
+export async function listSessions(limit = 50): Promise<SessionSummary[]> {
+  const r = await fetch(`${BASE}/chat/replay/sessions?limit=${limit}`);
+  if (!r.ok) return [];
   return r.json();
 }
 
