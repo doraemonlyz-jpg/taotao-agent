@@ -55,6 +55,8 @@ from ..nodes.guardrails import _EMAIL, _INJECTION, _PHONE
 from ..nodes.llm import get_llm
 from ..observability import emit, usage as usage_tracker
 from ..tools.safe_exec import safe_run_tool
+from ..permissions import PermissionRequired, _decide as _perm_decide
+from ..hooks import fire as fire_hook
 
 from .compaction import needs_compaction, compact, estimate_tokens
 from .persistence import HarnessSessionStore, get_store
@@ -130,6 +132,7 @@ class Harness:
         self,
         user_input: str,
         session_id: str,
+        *, plan_mode: bool = False,
     ) -> AsyncIterator[dict]:
         """Drive one turn of the harness · yields trace events; the SSE
         layer in app.py forwards them to the client.
@@ -140,12 +143,14 @@ class Harness:
         The frontend's existing SSE handler is therefore reused unchanged.
         """
         sid = session_id
-        emit("harness", "perception", {"text": user_input[:240]}, session_id=sid)
+        fire_hook("session_start", session_id=sid)
+        emit("harness", "perception", {"text": user_input[:240], "plan_mode": plan_mode}, session_id=sid)
 
         # ---- 1. input guardrail -----------------------------------------
         refusal = self._input_guardrail(user_input, sid)
         if refusal:
             redacted = self._output_guardrail(refusal, sid)
+            fire_hook("stop", session_id=sid)
             yield {"node": "harness", "kind": "answer", "payload": {"text": redacted}}
             return
 
@@ -153,12 +158,12 @@ class Harness:
         messages: list[AnyMessage] = self.store.load(sid)
         if not messages:
             # First turn · seed with the system prompt.
-            messages = [SystemMessage(content=render_system_prompt(self._profile_blob()))]
+            messages = [SystemMessage(content=render_system_prompt(self._profile_blob(), plan_mode=plan_mode))]
         else:
             # Refresh the system prompt on every turn so profile updates
             # take effect immediately.  Cheap because of prompt caching.
             if isinstance(messages[0], SystemMessage):
-                messages[0] = SystemMessage(content=render_system_prompt(self._profile_blob()))
+                messages[0] = SystemMessage(content=render_system_prompt(self._profile_blob(), plan_mode=plan_mode))
 
         messages.append(HumanMessage(content=user_input))
         self.store.save(sid, messages)
@@ -194,6 +199,7 @@ class Harness:
             if not tool_calls:
                 final_text = self._content_text(response.content)
                 redacted = self._output_guardrail(final_text, sid)
+                fire_hook("stop", session_id=sid)
                 yield {"node": "harness", "kind": "answer", "payload": {"text": redacted}}
                 return
 
@@ -210,6 +216,7 @@ class Harness:
                     ))
                     self.store.save(sid, messages)
                     redacted = self._output_guardrail(answer or self._content_text(response.content), sid)
+                    fire_hook("stop", session_id=sid)
                     yield {"node": "harness", "kind": "answer", "payload": {"text": redacted}}
                     return
 
@@ -226,12 +233,31 @@ class Harness:
                   "parallel": len(tool_calls) > 1},
                  session_id=sid)
 
+            # Plan-mode hard filter — destructive tools never run.
+            DESTRUCTIVE = {"write_file", "delete_file", "python_repl", "bash",
+                           "shell", "apply_edit"}
+
             async def _run_one(tc: dict) -> tuple[dict, str]:
                 name = tc["name"]
                 tool = tools_by_name.get(name)
                 if tool is None:
                     return tc, f"[error] unknown tool {name!r}"
-                content = await asyncio.to_thread(safe_run_tool, tool, tc.get("args", {}))
+                if plan_mode and name in DESTRUCTIVE:
+                    emit("harness", "plan_mode_block", {"tool": name}, session_id=sid)
+                    return tc, ("[blocked · plan mode] this tool is read-only "
+                                "until the user approves the plan.")
+                try:
+                    content = await asyncio.to_thread(
+                        safe_run_tool, tool, tc.get("args", {}),
+                        session_id=sid,
+                    )
+                except PermissionRequired as pr:
+                    emit("harness", "permission_request",
+                         {"tool": pr.tool_name, "args": pr.args},
+                         session_id=sid)
+                    content = (f"[permission_required · tool '{pr.tool_name}']\n"
+                               "Tell the user what you want to do and ask them "
+                               "to reply 'allow' / 'allow always' / 'deny'.")
                 return tc, content
 
             results = await asyncio.gather(*[_run_one(tc) for tc in tool_calls])
@@ -262,6 +288,7 @@ class Harness:
         except Exception as e:
             text = f"(internal error after max-step cap: {e!r})"
         redacted = self._output_guardrail(text, sid)
+        fire_hook("stop", session_id=sid)
         yield {"node": "harness", "kind": "answer", "payload": {"text": redacted}}
 
     # ─────────────────────────────────────────── streaming helper
@@ -358,8 +385,8 @@ def _get_harness() -> Harness:
     return _default
 
 
-async def run_harness(user_input: str, session_id: str) -> AsyncIterator[dict]:
+async def run_harness(user_input: str, session_id: str, *, plan_mode: bool = False) -> AsyncIterator[dict]:
     """Convenience: yields events from the singleton Harness."""
     h = _get_harness()
-    async for ev in h.run(user_input, session_id):
+    async for ev in h.run(user_input, session_id, plan_mode=plan_mode):
         yield ev

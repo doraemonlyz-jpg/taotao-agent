@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>桃桃 Agent · Senior Agent Engineer 21 本书学习手册</title>
+<title>桃桃 Agent · Senior Agent Engineer 22 本书学习手册</title>
 <meta name="description" content="从 0 到 senior agent engineer 面试 · 21 本完整手册 · 7 阶段学习路径 · 38000+ 行内容 · 460+ 道面试题 · 1100+ 词术语表 · 涵盖 LangGraph / RAG / Memory / Tool / Eval / Debug / 系统设计 / Live Coding / 企业级交付 / AI Infra / Harness Engineering / Hermes / MCP / P1 生产化加固 / 行为面 / Post-Training / Multimodal &amp; Voice / Agent Benchmarks · 含 LLM 基础 30 题 / Cost-Latency 5 case / Security 30 招攻防 三大补丁">
 <!-- Favicon · Petit Prince's gold star -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230f1d35'/%3E%3Cpath d='M32 10 L 36 26 L 54 28 L 40 38 L 44 54 L 32 44 L 20 54 L 24 38 L 10 28 L 28 26 Z' fill='%23f4c95a' stroke='%23fff5d8' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E">
@@ -297,7 +297,7 @@ footer.foot a:hover { color: var(--rust); }
     </a>
     <div class="nav-links">
       <a href="#path">学习路径</a>
-      <a href="#books">21 本书</a>
+      <a href="#books">22 本书</a>
       <a href="#coverage">面试覆盖</a>
       <a href="#about">关于</a>
     </div>
@@ -535,6 +535,12 @@ footer.foot a:hover { color: var(--rust); }
         <div class="qs-title">"SWE-bench 65% · 我怎么 verify 真假"</div>
         <p>SWE-bench / GAIA / BFCL / τ-bench / WebArena / OSWorld 6 大主流 · 5 大读榜陷阱 · 30 题</p>
         <a href="benchmarks.html" class="qs-link bare">看《Agent Benchmarks 阅读手册》</a>
+      </div>
+      <div class="qs-card qs-rust">
+        <h4>🛠️ 想把 demo 搭成工业级 agent</h4>
+        <div class="qs-title">"Claude Code 内部到底做了哪些我没做的事"</div>
+        <p>17 features 全讲 · plan mode / permission / hooks / AGENTS.md / slash / diff preview / subagent.md · 8 反编译结论</p>
+        <a href="industrial.html" class="qs-link bare">看《工业化基建手册》</a>
       </div>
     </div>
   </div>
@@ -886,7 +892,7 @@ footer.foot a:hover { color: var(--rust); }
   <div class="container">
     <div class="section-head">
       <div class="sec-eyebrow">📚 All 21 Books</div>
-      <h2>21 本书 <em>一览表</em></h2>
+      <h2>22 本书 <em>一览表</em></h2>
       <p class="sec-lede">不按学习顺序 · 按主题快速扫 · ★ = 2026-05 必补</p>
     </div>
     <div class="book-grid">
@@ -910,6 +916,7 @@ footer.foot a:hover { color: var(--rust); }
       <a href="behavioral.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🦊</span><span class="bk-num has-new">18 ★</span></div><h4>Behavioral &amp; Project Deep-Dive</h4><p class="bk-desc">12 senior signals · 6 STAR · 30 真题 (Anthropic / OpenAI / Stripe / Cursor / 字节) · 反向问问题 · 红黑榜</p><span class="bk-link">读</span></a>
       <a href="post-training.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🌹</span><span class="bk-num has-new">19 ★</span></div><h4>Post-Training Field Guide</h4><p class="bk-desc">SFT · LoRA · QLoRA · DPO/KTO/PPO/GRPO · RLAIF · Constitutional · 4 数据 pipeline · 3 真翻车 · 30 题 · 60 词</p><span class="bk-link">读</span></a>
       <a href="multimodal-voice.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🌌</span><span class="bk-num has-new">20 ★</span></div><h4>Multimodal &amp; Voice Agents</h4><p class="bk-desc">VLM 5 模型 · screen-use · 语音 3 层栈 · Vapi/Retell/Pipecat · GPT-4o Realtime · 4 真翻车 · 30 题</p><span class="bk-link">读</span></a>
+      <a href="industrial.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🛠️</span><span class="bk-num has-new">22 ★</span></div><h4>工业化基建手册 · 反编译 Claude Code</h4><p class="bk-desc">17 features 全讲 · plan mode / permission / hooks / AGENTS.md / slash / diff preview / subagent.md / tool offset / 3-tier settings · 8 反编译结论 · 30 题</p><span class="bk-link">读</span></a>
       <a href="benchmarks.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">⚖️</span><span class="bk-num has-new">21 ★</span></div><h4>Agent Benchmarks 阅读手册</h4><p class="bk-desc">SWE-bench (Verified/Lite/Live) · GAIA · BFCL · τ-bench · WebArena · OSWorld · 5 陷阱 · 30 题</p><span class="bk-link">读</span></a>
     </div>
   </div>
@@ -959,6 +966,7 @@ footer.foot a:hover { color: var(--rust); }
         <tr style="background:rgba(244,201,90,.04);"><td>🌹 Post-Training ★</td><td class="x">●</td><td>○</td><td class="dim">·</td><td>○</td><td>○</td><td class="x">●</td><td class="dim">·</td><td class="dim">·</td></tr>
         <tr style="background:rgba(244,201,90,.04);"><td>🌌 Multimodal &amp; Voice ★</td><td class="x">●</td><td class="x">●</td><td>○</td><td>○</td><td>○</td><td>○</td><td class="dim">·</td><td class="x">●</td></tr>
         <tr style="background:rgba(244,201,90,.04);"><td>⚖️ Agent Benchmarks ★</td><td class="x">●</td><td class="x">●</td><td class="dim">·</td><td>○</td><td>○</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td></tr>
+        <tr style="background:rgba(244,201,90,.04);"><td>🛠️ 工业化基建 ★</td><td class="x">●</td><td class="x">●</td><td class="x">●</td><td class="x">●</td><td class="x">●</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td></tr>
       </tbody>
     </table>
     <p style="text-align:center;font-size:0.78rem;color:var(--ink-mute);font-family:var(--font-sans);margin-top:1rem;">
@@ -975,7 +983,7 @@ footer.foot a:hover { color: var(--rust); }
       <h2>关于这套手册</h2>
     </div>
     <div style="max-width: 42em; margin: 0 auto;">
-      <p>这套 21 本手册是为 <strong>2026 年 senior agent engineer 面试</strong>系统化整理的——不是教程合集 · 是按 "从 0 到能上岗" 路径设计的<em>完整体系</em>。2026-05 新增 4 本 senior 必补章节（行为面 / Post-Training / Multimodal &amp; Voice / Agent Benchmarks）+ 3 大补丁（LLM 30 题速查 / Cost-Latency 5 case / Security 30 招攻防）。</p>
+      <p>这套 22 本手册是为 <strong>2026 年 senior agent engineer 面试</strong>系统化整理的——不是教程合集 · 是按 "从 0 到能上岗" 路径设计的<em>完整体系</em>。2026-05 新增 4 本 senior 必补章节（行为面 / Post-Training / Multimodal &amp; Voice / Agent Benchmarks）+ 3 大补丁（LLM 30 题速查 / Cost-Latency 5 case / Security 30 招攻防）。</p>
 
       <h4 style="font-family:var(--font-display);font-weight:500;font-size:1.3rem;margin:2rem 0 0.6rem;color:var(--ink);">📐 设计原则</h4>
       <ol>
@@ -1028,7 +1036,7 @@ footer.foot a:hover { color: var(--rust); }
   </svg>
   <div class="container">
     <h2>准备好开始 <em>从 0 到 senior</em> 了吗？</h2>
-    <p class="lede">推荐顺序：先读 <strong>Book 01 (应用入门)</strong> · 30 分钟建立认知 · 然后看 <strong>Book 02 (实现详解)</strong> 跟 demo 跑一遍 · 按 Phase 2 选你最缺的支柱 · 临考前用 <strong>Book 18 (Behavioral)</strong> 准备项目深挖剧本 · 想直接学生产化看 <strong>Book 17 (P1)</strong> · 面 Anthropic / OpenAI 加读 <strong>Book 19 (Post-Training)</strong> + <strong>Book 21 (Benchmarks)</strong>。</p>
+    <p class="lede">推荐顺序：先读 <strong>Book 01 (应用入门)</strong> · 30 分钟建立认知 · 然后看 <strong>Book 02 (实现详解)</strong> 跟 demo 跑一遍 · 按 Phase 2 选你最缺的支柱 · 临考前用 <strong>Book 18 (Behavioral)</strong> 准备项目深挖剧本 · 想直接学生产化看 <strong>Book 17 (P1)</strong> · 想进一步看详细工业化基建看 <strong>Book 22 (工业化手册)</strong> · 面 Anthropic / OpenAI 加读 <strong>Book 19 (Post-Training)</strong> + <strong>Book 21 (Benchmarks)</strong>。</p>
     <div class="cta-row">
       <a href="learn.html" class="btn bare">📖 从 Book 01 开始</a>
       <a href="behavioral.html" class="btn bare">🦊 临考练 Book 18 行为面</a>

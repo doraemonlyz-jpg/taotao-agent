@@ -1,4 +1,18 @@
-"""Runtime configuration. Reads .env once and exposes typed settings."""
+"""Runtime configuration · 3-tier settings merge.
+
+Order (later wins · same convention as Cursor / VS Code / Claude Code):
+
+  1. **Default**       hard-coded in the Settings class
+  2. **Global env**    `~/.taotao/.env`               (your laptop preferences)
+  3. **Project env**   `<repo>/.env` (next to backend/) (per-checkout config)
+  4. **OS env**        `os.environ`                   (CI / docker overrides)
+
+The dotenv loader is layered: each layer is loaded with the next-higher
+layer winning on key collisions. OS env always wins because it's already
+in `os.environ` at process start.
+
+If you want to inspect the resolved layout, hit `GET /config`.
+"""
 from __future__ import annotations
 
 import os
@@ -9,7 +23,17 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 
 ROOT = Path(__file__).resolve().parent.parent
-load_dotenv(ROOT / ".env")
+
+_GLOBAL_ENV = Path.home() / ".taotao" / ".env"
+_PROJECT_ENV = ROOT / ".env"
+SETTINGS_LAYERS: list[dict] = []
+if _GLOBAL_ENV.exists():
+    load_dotenv(_GLOBAL_ENV, override=False)
+    SETTINGS_LAYERS.append({"layer": "global", "path": str(_GLOBAL_ENV)})
+if _PROJECT_ENV.exists():
+    load_dotenv(_PROJECT_ENV, override=True)
+    SETTINGS_LAYERS.append({"layer": "project", "path": str(_PROJECT_ENV)})
+SETTINGS_LAYERS.append({"layer": "os_env", "note": "winning layer"})
 
 
 class Settings(BaseModel):

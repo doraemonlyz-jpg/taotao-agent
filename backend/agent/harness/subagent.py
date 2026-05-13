@@ -102,13 +102,30 @@ _ROLES: dict[str, dict] = {
 Role = Literal["researcher", "coder", "writer"]
 
 
+def _resolve_role(role: str) -> dict | None:
+    """Built-in role wins on collision; otherwise look up a .md subagent."""
+    if role in _ROLES:
+        return _ROLES[role]
+    from ..subagents.loader import get_md_subagent, resolve_tools
+    md = get_md_subagent(role)
+    if md is None:
+        return None
+    return {
+        "system": md.system,
+        "tools": resolve_tools(md.tool_names),
+        "max_steps": md.max_steps,
+    }
+
+
 def _run_inner_loop(role: str, task: str, session_id: str) -> str:
     """A miniature harness loop — same shape as the main one, scoped tools.
 
     Synchronous for simplicity; called from within the main async loop via
     `asyncio.to_thread` (see the @tool wrapper below).
     """
-    cfg = _ROLES[role]
+    cfg = _resolve_role(role)
+    if cfg is None:
+        return f"[error] unknown role {role!r}"
     msgs: list[AnyMessage] = [
         SystemMessage(content=cfg["system"]),
         HumanMessage(content=task),
@@ -183,8 +200,10 @@ def dispatch_subagent(role: str, task: str) -> str:
         - role="researcher", task="research stuff"   # too vague
         - role="coder", task="write me an OS"        # too big · break down first
     """
-    if role not in _ROLES:
-        return f"[error] unknown role {role!r} · valid: {list(_ROLES)}"
+    if _resolve_role(role) is None:
+        from ..subagents.loader import list_md_subagents
+        valid = list(_ROLES) + [m.name for m in list_md_subagents()]
+        return f"[error] unknown role {role!r} · valid: {valid}"
     if not task or len(task) < 8:
         return "[error] task must be a precise instruction (≥8 chars)"
     sid = ""  # tool decorator strips kwargs · session id is logged elsewhere

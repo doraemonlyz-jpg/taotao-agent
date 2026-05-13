@@ -1,0 +1,7 @@
+{
+  "rules": [
+    { "pattern": "read_file",  "decision": "allow", "note": "project · safe read" },
+    { "pattern": "list_files", "decision": "allow", "note": "project · safe read" },
+    { "pattern": "calculator", "decision": "allow", "note": "project · pure" }
+  ]
+}

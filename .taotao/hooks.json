@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "session_start": [],
+    "pre_tool_use": [
+      {
+        "match": "write_file|delete_file|apply_edit",
+        "command": "echo \"$(date +%H:%M:%S) about to ${TAOTAO_TOOL} ${TAOTAO_ARGS_JSON}\" >> data/audit.log"
+      }
+    ],
+    "post_tool_use": [],
+    "notification": [],
+    "stop": []
+  }
+}

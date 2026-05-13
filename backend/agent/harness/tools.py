@@ -32,7 +32,9 @@ from ..tools.current_time import current_time
 from ..tools.file_ops import grep_in_files, list_files, read_file, write_file
 from ..tools.memory_tool import recall, remember
 from ..tools.profile_tool import read_profile, update_profile
+from ..tools.propose_edit import apply_edit, propose_edit
 from ..tools.python_repl import python_repl
+from ..tools.read_tool_result import read_tool_result
 from ..tools.skills_tool import load_skill
 from ..tools.web_search import web_search
 from ..mcp.client import load_external_tools as _load_mcp_client_tools
@@ -77,7 +79,10 @@ HARNESS_TOOLS = [
     read_profile,
     update_profile,
     load_skill,
+    read_tool_result,
     # --- side effects --------------------------------------------------
+    propose_edit,
+    apply_edit,
     write_file,
     # --- harness control flow ------------------------------------------
     dispatch_subagent,

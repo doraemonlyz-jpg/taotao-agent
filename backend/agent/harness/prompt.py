@@ -91,11 +91,48 @@ Now: handle the user's message.
 """
 
 
-def render_system_prompt(profile_summary: str | None = None) -> str:
-    """The system prompt + a tiny per-user profile blob the loop injects on
-    every turn.  We KEEP the profile slot inside the system message so it
-    benefits from prompt caching (Anthropic / OpenAI both cache prefixes)."""
+PLAN_MODE_OVERLAY = """\
+
+# ⚠ PLAN MODE · READ-ONLY ⚠
+
+You are currently in PLAN MODE.  You CANNOT execute any state-changing tool
+this turn — write_file, delete_file, python_repl, bash, dispatch_subagent
+with destructive intent are all OFF.  Read tools (read_file, list_files,
+web_search, recall, get_profile, calculator, current_time) are still ON.
+
+Your single job: produce a CLEAR PLAN for what you would do once permitted.
+
+Output shape:
+  1. **Goal restatement** (1 line)
+  2. **Steps** · numbered list, each starting with the tool name in
+     backticks: e.g. `1. ` `read_file('config.py')` to confirm X.
+  3. **Risks / open questions** the user should answer before approving.
+  4. **Estimated cost** in tool-calls (≤ N).
+
+Do NOT write/exec anything. End with: "Reply 'go' to execute."
+"""
+
+
+def render_system_prompt(profile_summary: str | None = None,
+                          *, plan_mode: bool = False) -> str:
+    """The system prompt + per-user profile + project AGENTS.md + plan-mode overlay.
+
+    All four pieces share one cached SystemMessage so prompt caching still
+    fires (Anthropic / OpenAI both cache prefixes; we only append, never
+    splice in the middle).
+    """
     base = SYSTEM_PROMPT
     if profile_summary:
         base += f"\n\n# What you know about this user\n{profile_summary}\n"
+
+    try:
+        from ..project_context import system_block as _project_block
+        block = _project_block()
+        if block:
+            base += block
+    except Exception:
+        pass
+
+    if plan_mode:
+        base += PLAN_MODE_OVERLAY
     return base

@@ -15,7 +15,7 @@ from langchain_core.messages import AIMessage
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
-from agent.config import get_settings, update_runtime_model
+from agent.config import SETTINGS_LAYERS, get_settings, update_runtime_model
 from agent.graph import get_graph
 from agent.harness import run_harness
 from agent.harness.persistence import get_store as get_harness_store
@@ -32,6 +32,9 @@ from agent.observability import (
 )
 from agent.mcp.client import get_status as mcp_client_status
 from agent.mcp.server import build_mcp_server
+from agent.permissions import add_rule as add_perm_rule, list_rules as list_perm_rules
+from agent.hooks import list_hooks
+from agent.slash_commands import dispatch as slash_dispatch
 from agent.security import (
     chat_rate_limit,
     enforce_session_budget,
@@ -195,6 +198,7 @@ def switch_model(payload: ModelSwitchIn) -> dict:
 class ChatIn(BaseModel):
     message: str
     session_id: str | None = None
+    mode: str = "act"  # "act" | "plan"
 
 
 @app.post("/chat", tags=["chat"], dependencies=[Depends(require_api_key)])
@@ -315,12 +319,26 @@ async def chat_v2(request: Request, payload: ChatIn):
         raise HTTPException(400, "empty message")
     await enforce_session_budget(payload.session_id)
 
+    # Slash commands · short-circuit before LLM
+    slash = slash_dispatch(user_text, sid)
+    if slash is not None:
+        if isinstance(slash, dict) and slash.get("rewrite"):
+            user_text = slash["rewrite"]  # rewritten prompt → continue to LLM
+        else:
+            reply = slash if isinstance(slash, str) else (slash.get("reply") or "(ok)")
+            async def _slash_stream():
+                yield {"event": "session", "data": json.dumps({"session_id": sid})}
+                yield {"event": "trace", "data": json.dumps({"node": "slash", "kind": "answer", "payload": {"text": reply}})}
+                yield {"event": "done", "data": json.dumps({"session_id": sid})}
+            return EventSourceResponse(_slash_stream())
+
+    plan_mode = (payload.mode == "plan")
     queue = event_bus.subscribe(sid)
     runner: asyncio.Task | None = None
 
     async def run_loop():
         try:
-            async for _ev in run_harness(user_text, sid):
+            async for _ev in run_harness(user_text, sid, plan_mode=plan_mode):
                 # Loop yields are mirrored on event_bus already · the iter
                 # is consumed only to drive the loop (and surface errors).
                 pass
@@ -475,6 +493,91 @@ def reset_harness_session(session_id: str) -> dict:
     get_harness_store().clear(session_id)
     return {"ok": True, "session_id": session_id}
 
+
+
+
+
+# ---------------------------------------------------------------- /permissions
+@app.get("/permissions", tags=["meta"])
+def perms() -> list[dict]:
+    """Effective permission rules · merged project + global + runtime + default."""
+    return list_perm_rules()
+
+
+class PermDecide(BaseModel):
+    pattern: str
+    decision: str  # "allow" | "ask" | "deny"
+    persist: str = "session"  # "session" | "global" | "project"
+    note: str = ""
+
+
+@app.post(
+    "/permissions/decide", tags=["meta"], dependencies=[Depends(require_api_key)]
+)
+def perm_decide(p: PermDecide) -> dict:
+    """User answer to a `permission_request` trace event.  Adds the rule
+    so subsequent calls of the same shape don't ask again."""
+    rule = add_perm_rule(p.pattern, p.decision, persist=p.persist, note=p.note)
+    return {"ok": True, "rule": {"pattern": rule.pattern, "decision": rule.decision, "note": rule.note}}
+
+
+# ---------------------------------------------------------------- /hooks
+@app.get("/hooks", tags=["meta"])
+def hooks() -> dict:
+    """Currently-loaded hook config (project + global merged)."""
+    return list_hooks()
+
+
+
+
+# ---------------------------------------------------------------- /config
+@app.get("/config", tags=["meta"])
+def config_layers() -> dict:
+    """Settings layer chain · global → project → os_env (later wins)."""
+    cfg = get_settings()
+    return {
+        "layers": SETTINGS_LAYERS,
+        "active": {
+            "model": cfg.model, "fast_model": cfg.fast_model,
+            "session_budget_usd": cfg.session_budget_usd,
+            "tool_timeout_s": cfg.tool_timeout_s,
+            "tool_result_max_chars": cfg.tool_result_max_chars,
+        },
+    }
+
+
+# ---------------------------------------------------------------- /notify
+class NotifyIn(BaseModel):
+    title: str = "桃桃"
+    message: str
+    sound: bool = True
+    session_id: str | None = None
+
+
+@app.post("/notify", tags=["meta"], dependencies=[Depends(require_api_key)])
+def notify(n: NotifyIn) -> dict:
+    """Push a notification · publishes a `notification` SSE event for any
+    open subscribers AND — if `terminal-notifier` is installed (mac) —
+    pops a desktop alert. Used by long-running tasks to ping the user."""
+    import shutil
+    import subprocess
+    if n.session_id:
+        event_bus.publish(n.session_id, {
+            "ts": 0, "node": "notify", "kind": "notification",
+            "payload": {"title": n.title, "message": n.message},
+        })
+    desktop_ok = False
+    tn = shutil.which("terminal-notifier")
+    if tn:
+        try:
+            subprocess.Popen([
+                tn, "-title", n.title, "-message", n.message,
+                *(["-sound", "default"] if n.sound else []),
+            ])
+            desktop_ok = True
+        except Exception:
+            desktop_ok = False
+    return {"ok": True, "desktop": desktop_ok}
 
 # ---------------------------------------------------------------- /traces
 @app.get("/traces", tags=["observability"])
