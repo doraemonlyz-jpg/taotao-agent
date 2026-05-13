@@ -8,7 +8,7 @@
 <meta name="description" content="Model Context Protocol · agent 的 USB-C · 一页讲清协议本身 + taotao-agent 的双向实现 + Claude Desktop / Cursor 接入步骤">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap&family=Fredoka:wght@500;600;700" rel="stylesheet">
 <style>
 :root {
   --paper: #0f1d35; --paper-2: #162844; --paper-card: #1c3155;
@@ -90,13 +90,23 @@ td code { font-size: 0.82rem; }
 
 .foot { padding: 3rem 0 4rem; text-align: center; font-family: var(--font-sans); color: var(--ink-mute); font-size: 0.88rem; }
 .foot a { color: var(--ink-mute); border-bottom: 1px solid rgba(44,69,112,.3); }
+ }
+ }
 
-#open-app-fab { position: fixed; top: 14px; right: 16px; z-index: 999; display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.5rem 0.95rem; background: rgba(244,201,90,.92); color: #1d1d1f; font-family: var(--font-sans, system-ui, sans-serif); font-weight: 600; font-size: 0.82rem; letter-spacing: 0.02em; border: 1.5px solid #1d1d1f; border-radius: 999px; box-shadow: 2px 2px 0 #1d1d1f; text-decoration: none; transition: transform .12s ease, box-shadow .12s ease; } #open-app-fab:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 #1d1d1f; background: #fff5d8; } #open-app-fab .fab-icon { color: #c84a16; font-size: 0.7rem; } @media (max-width: 600px) { #open-app-fab .fab-text { display: none; } #open-app-fab { padding: 0.5rem 0.6rem; } }
+}
+
+.ttap-link:hover { transform: translateY(-1px); }
+.ttap-link { font-family: "Fredoka", "Comfortaa", "Quicksand", system-ui, sans-serif !important; font-weight: 600 !important; color: var(--gold, #f4c95a) !important; letter-spacing: -0.005em; transition: color .15s ease, opacity .15s ease, transform .15s ease; }
+.ttap-link:hover { color: var(--rust, #e08e6f) !important; opacity: 0.95; background: none !important; }
+.ttap-link .ttap-mark {
+  display: inline-block; margin-right: 0.32em;
+  color: var(--gold, #f4c95a); font-size: 0.85em;
+  transform: translateY(-1px);
+}
+.ttap-link.ttap-toc .ttap-mark { margin-left: 0.25em; margin-right: 0; font-size: 0.75em; opacity: 0.85; }
 </style>
 </head>
 <body>
-<a id="open-app-fab" href="/" target="_blank" rel="noopener" title="打开配套 demo · 在线试玩 agent"><span class="fab-icon">▶</span><span class="fab-text">在线 demo</span></a>
-
 
 <nav class="nav">
   <div class="container nav-row">
@@ -106,6 +116,9 @@ td code { font-size: 0.82rem; }
       <a href="learn.html">学习手册</a>
       <a href="harness.html">Harness</a>
       <a href="implementation.html">实现细节</a>
+      <a href="multi-agent.html">Multi-Agent</a>
+      <a class="ttap-link" href="http://localhost:5180/" target="_blank" rel="noopener" title="打开配套 demo · 在线试玩 agent"><span class="ttap-mark">✦</span>TaotaoAgent</a>
+      
     </div>
   </div>
 </nav>

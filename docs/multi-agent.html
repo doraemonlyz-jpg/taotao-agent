@@ -1,0 +1,913 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Book 23 · Multi-Agent Architecture · 5 patterns + 4 framework · 桃桃 Agent</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230f1d35'/%3E%3Cpath d='M32 10 L 36 26 L 54 28 L 40 38 L 44 54 L 32 44 L 20 54 L 24 38 L 10 28 L 28 26 Z' fill='%23f4c95a' stroke='%23fff5d8' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E">
+<meta name="description" content="多 Agent 架构手册 · 5 大模式（supervisor / hub-and-spoke / debate / vote / handoff / reflection）+ 4 框架横评（LangGraph / AutoGen / CrewAI / OpenAI Swarm）+ 何时不该用多 agent + 30 道资深面试题 · 全部含可运行代码">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap&family=Fredoka:wght@500;600;700" rel="stylesheet">
+<style>
+:root {
+  --paper: #0f1d35; --paper-2: #162844; --paper-card: #1c3155;
+  --ink: #f5ecd2; --ink-soft: #c8be9b; --ink-mute: #7e8aa6;
+  --rule: #2c4570; --rule-soft: #1f3458;
+  --leaf: #8eb58f; --leaf-soft: #1d3a38;
+  --rust: #e08e6f; --rust-soft: #3a2a22;
+  --sky:  #6a96bc; --sky-soft:  #1f3050;
+  --gold: #f4c95a; --gold-soft: #3a2f1f;
+  --plum: #c0a3d1; --plum-soft: #2a1f3a;
+  --font-display: "Fraunces", "Times New Roman", serif;
+  --font-body: "Lora", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  --font-zh: "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: radial-gradient(ellipse at top left, rgba(140,180,220,.10), transparent 50%), radial-gradient(ellipse at bottom right, rgba(244,201,90,.08), transparent 50%), var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.75; }
+:lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(244,201,90,.4); transition: all .15s; }
+a:hover { background: rgba(244,201,90,.08); }
+a.bare { border-bottom: none; }
+strong { font-weight: 600; color: var(--ink); }
+em { font-style: italic; color: var(--leaf); font-weight: 500; }
+code { font-family: var(--font-mono); font-size: 0.85em; background: var(--paper-2); padding: 0.08rem 0.35rem; border-radius: 4px; color: var(--rust); border: 1px solid var(--rule-soft); }
+pre { font-family: var(--font-mono); background: #0a1628; color: #e8e3d4; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; font-size: 0.84rem; line-height: 1.55; border: 1px solid var(--rule); }
+pre code { background: none; color: inherit; padding: 0; border: 0; font-size: inherit; }
+.container { max-width: 920px; margin: 0 auto; padding: 0 2rem; }
+@media (max-width: 720px) { .container { padding: 0 1.2rem; } }
+.nav { padding: 1.4rem 0; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: rgba(15,29,53,.88); backdrop-filter: blur(8px); z-index: 100; }
+.nav-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.nav-brand { font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 1.2rem; color: var(--ink); border: none; }
+.nav-brand .dot { color: var(--gold); }
+.nav-links { display: flex; gap: 1.4rem; font-family: var(--font-sans); font-size: 0.88rem; }
+.nav-links a { color: var(--ink-mute); border-bottom: none; font-weight: 500; }
+.nav-links a:hover { color: var(--rust); background: none; }
+.hero { padding: 4rem 0 2.6rem; border-bottom: 1px solid var(--ink); position: relative; }
+.hero::after { content: ""; position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%); width: 90px; height: 4px; background: var(--rust); }
+.eyebrow { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.08em; color: var(--rust); margin-bottom: 1.2rem; font-weight: 600; text-transform: uppercase; }
+.hero h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 1.4rem; color: var(--ink); }
+.hero h1 em { color: var(--rust); font-style: italic; }
+.hero-lede { font-size: 1.12rem; color: var(--ink-soft); max-width: 36em; margin: 0 0 1rem; line-height: 1.65; }
+.hero-meta { font-family: var(--font-sans); font-size: 0.84rem; color: var(--ink-mute); margin-top: 1.2rem; }
+.hero-meta strong { color: var(--gold); }
+.section { padding: 3.4rem 0; border-bottom: 1px dashed var(--rule); }
+.section:last-of-type { border-bottom: none; }
+.section h2 { font-family: var(--font-display); font-weight: 500; font-size: 1.85rem; letter-spacing: -0.01em; margin: 0 0 1.4rem; color: var(--ink); display: flex; align-items: baseline; gap: 0.7rem; }
+.section h2 .num { font-family: var(--font-mono); font-weight: 400; font-size: 0.9rem; color: var(--rust); letter-spacing: 0.06em; }
+.section h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.2rem; margin: 2rem 0 0.6rem; color: var(--ink); }
+.section h4 { font-family: var(--font-sans); font-weight: 600; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gold); margin: 1.4rem 0 0.4rem; }
+.section p { margin: 0 0 1rem; }
+.section ul { padding-left: 1.4rem; margin: 0.6rem 0 1rem; }
+.section li { margin: 0.4rem 0; }
+.section ol { padding-left: 1.4rem; margin: 0.6rem 0 1rem; }
+.section ol li { margin: 0.5rem 0; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0 1.4rem; background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; font-size: 0.9rem; }
+th, td { padding: 0.7rem 0.85rem; text-align: left; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+th { background: var(--leaf-soft); color: var(--ink); font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td code { font-size: 0.82rem; }
+.cb { background: var(--paper-card); border: 1px solid var(--rule); border-left: 4px solid var(--rust); border-radius: 8px; padding: 1rem 1.2rem; margin: 1.2rem 0; font-size: 0.96rem; }
+.cb.leaf { border-left-color: var(--leaf); background: var(--leaf-soft); }
+.cb.gold { border-left-color: var(--gold); background: var(--gold-soft); }
+.cb.sky { border-left-color: var(--sky); background: var(--sky-soft); }
+.cb.plum { border-left-color: var(--plum); background: var(--plum-soft); }
+.cb-h { font-family: var(--font-sans); font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: var(--ink-mute); margin: 0 0 0.3rem; }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.2rem 0; }
+@media (max-width: 720px) { .split { grid-template-columns: 1fr; } }
+.split > div { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; padding: 1rem 1.1rem; }
+.split h4 { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin: 0 0 0.6rem; font-weight: 600; }
+.qbank { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 12px; padding: 1.4rem 1.6rem; margin: 1.4rem 0; }
+.qbank h3 { margin-top: 0.6rem; color: var(--gold); font-size: 1.05rem; border-bottom: 1px solid var(--rule); padding-bottom: 0.5rem; }
+.qbank h3:first-child { margin-top: 0; }
+.qbank ol { margin: 0.4rem 0 1rem; padding-left: 1.4rem; }
+.qbank ol li { margin: 0.45rem 0; font-size: 0.94rem; }
+.qbank .qhint { color: var(--ink-mute); font-size: 0.82rem; font-style: italic; }
+.glossary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem 1.4rem; font-size: 0.88rem; margin: 1rem 0; }
+@media (max-width: 720px) { .glossary { grid-template-columns: 1fr; } }
+.glossary div { padding: 0.4rem 0; border-bottom: 1px dashed var(--rule-soft); }
+.glossary strong { color: var(--gold); }
+.foot { padding: 3rem 0 4rem; text-align: center; font-family: var(--font-sans); color: var(--ink-mute); font-size: 0.88rem; }
+.foot a { color: var(--ink-mute); border-bottom: 1px solid rgba(44,69,112,.3); }
+.toc { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 12px; padding: 1.2rem 1.6rem; margin: 1.4rem 0; }
+.toc h4 { color: var(--gold); margin: 0 0 0.6rem; }
+.toc ol { columns: 2; column-gap: 2rem; padding-left: 1.4rem; }
+@media (max-width: 720px) { .toc ol { columns: 1; } }
+.toc ol li { font-size: 0.9rem; margin: 0.25rem 0; }
+.toc a { border-bottom: none; color: var(--ink-soft); }
+.toc a:hover { color: var(--rust); }
+.ttap-link { font-family: "Fredoka", "Comfortaa", "Quicksand", system-ui, sans-serif !important; font-weight: 600 !important; color: var(--gold, #f4c95a) !important; letter-spacing: -0.005em; transition: color .15s ease, opacity .15s ease, transform .15s ease; }
+.ttap-link:hover { color: var(--rust, #e08e6f) !important; opacity: 0.95; background: none !important; transform: translateY(-1px); }
+.ttap-link .ttap-mark { display: inline-block; margin-right: 0.32em; color: var(--gold, #f4c95a); font-size: 0.85em; transform: translateY(-1px); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-row">
+    <a class="nav-brand" href="index.html"><span class="dot">★</span> 桃桃 Agent</a>
+    <div class="nav-links">
+      <a href="index.html">首页</a>
+      <a href="harness.html">Harness</a>
+      <a href="industrial.html">Industrial</a>
+      <a href="enterprise.html">Enterprise</a>
+      <a class="ttap-link" href="http://localhost:5180/" target="_blank" rel="noopener" title="打开配套 demo · 在线试玩 agent"><span class="ttap-mark">✦</span>TaotaoAgent</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <div class="eyebrow">Book 23 · Multi-Agent Architecture · 多智能体架构手册</div>
+    <h1>当 1 个 agent 不够 · <em>5 种合作模式</em>、4 个开源框架、4 个反例</h1>
+    <p class="hero-lede">
+      Multi-agent 是 2024-2026 最容易被滥用的设计。<strong>OpenAI、Anthropic 的 official
+      stance 都是 "default 单 agent，能不上就别上"</strong>。但当任务真的需要多个视角、多个角色、
+      或者一个 critic 把 actor 改稳，这本书把<em>真正用得上的 5 种模式</em>讲清楚 ——
+      Hierarchical（supervisor）、Hub-and-spoke（sub-agent-as-tool）、Debate、Voting、
+      Handoff、Reflection —— 每一种给你 "<strong>什么时候用 / 我们的代码长什么样 / 哪四个
+      开源框架最合适 / 实战踩了哪些坑</strong>"。
+    </p>
+    <p class="hero-lede">
+      与 Book 22（工业基建）配套：22 是单 agent 的下限，23 是当你确实需要多 agent 时的
+      上限。代码全在 <code>backend/agent/multi_agent/</code>，4 个 pattern 各 100-150
+      行，可以直接抄。
+    </p>
+    <p class="hero-meta">
+      <strong>10 章 · 30 题 · 60 词术语 · 4 框架横评</strong> · 代码文件 5 新 · 总 ~600 行
+    </p>
+  </div>
+</header>
+
+<main class="container">
+
+<section class="section">
+  <h2><span class="num">§0</span> 目录 · 5 模式 + 4 框架 · 一图速览</h2>
+  <div class="toc">
+    <h4>本书章节</h4>
+    <ol>
+      <li><a href="#ch1">§1 什么时候<em>不</em>该用 multi-agent</a></li>
+      <li><a href="#ch2">§2 模式 1 · Hierarchical / Supervisor</a></li>
+      <li><a href="#ch3">§3 模式 2 · Hub-and-spoke / Sub-agent-as-tool</a></li>
+      <li><a href="#ch4">§4 模式 3 · Debate · 多视角辩论</a></li>
+      <li><a href="#ch5">§5 模式 4 · Voting · 自一致性</a></li>
+      <li><a href="#ch6">§6 模式 5 · Handoff · OpenAI Swarm 风</a></li>
+      <li><a href="#ch7">§7 模式 6 · Reflection · Actor + Critic 循环</a></li>
+      <li><a href="#ch8">§8 4 框架横评 · LangGraph / AutoGen / CrewAI / Swarm</a></li>
+      <li><a href="#ch9">§9 我们的实现 · 一个 tool 包住 4 种模式</a></li>
+      <li><a href="#ch10">§10 共享 state · 通信 · 终止 · 评估 4 大难题</a></li>
+      <li><a href="#qa">问题速查 · 30 题</a></li>
+      <li><a href="#glossary">术语速查 · 60 词</a></li>
+    </ol>
+  </div>
+
+  <h3>5 模式 · 一句话辨别</h3>
+  <table>
+    <thead><tr><th>#</th><th>模式</th><th>结构</th><th>典型场景</th><th>失败模式</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><strong>Hierarchical</strong> · supervisor router</td><td>1 个 supervisor LLM 决定下一个 worker</td><td>多步骤、有明显角色分工的任务（research → write → review）</td><td>supervisor 自己变瓶颈 · 上下文塞太满</td></tr>
+      <tr><td>2</td><td><strong>Hub-and-spoke</strong> · sub-agent-as-tool</td><td>main agent 把 sub-agent 当 tool 调</td><td>主 loop 想保持轻量 · 让长 sub-task 在隔离 ctx 里跑（Claude Code Task）</td><td>main agent 不会"连续派"会重复派同一个</td></tr>
+      <tr><td>3</td><td><strong>Debate</strong></td><td>N 个 persona 互相反驳直到收敛</td><td>有争议的决策、政策、安全审查、多视角推理</td><td>3-6× 成本 · 经常卡在 "agree to disagree"</td></tr>
+      <tr><td>4</td><td><strong>Voting</strong> · self-consistency</td><td>N 个独立 agent 跑同一题 · 取众数</td><td>有限答案空间（math、MCQ、yes/no）</td><td>开放生成时 voting 没意义 · 答案没法 normalise</td></tr>
+      <tr><td>5</td><td><strong>Handoff</strong> · OpenAI Swarm</td><td>agent 之间显式交接控制权 · 无 supervisor</td><td>多领域客服、workflow 自动化、清晰交接边界</td><td>A↔B ping-pong · 全局记忆丢失</td></tr>
+      <tr><td>6</td><td><strong>Reflection</strong> · Reflexion</td><td>actor → critic → 改 → critic 再打分 · 直到 pass</td><td>code generation、长文写作、RFC 评审</td><td>critic 跟 actor 是同一个 LLM 时 <em>self-confirmation</em></td></tr>
+    </tbody>
+  </table>
+
+  <div class="cb gold">
+    <p class="cb-h">读法</p>
+    <p>每章三段：(1) <strong>是什么 + 何时用</strong> · (2) <strong>代码 / 伪代码</strong> · (3) <strong>失败模式 / 真实坑</strong>。
+    第 8 章是 4 框架横评（写过自家代码再看才有体感），第 10 章把跨模式的 4 大共性难题
+    （状态 / 通信 / 终止 / 评估）单独抽出来讨论。</p>
+  </div>
+</section>
+
+<section class="section" id="ch1">
+  <h2><span class="num">§1</span> 什么时候 <em>不</em> 该用 multi-agent · 默认答案：默认别用</h2>
+
+  <p>所有 multi-agent 章节之前先讲这一章 · 这是 senior 面试的<strong>第一个识别信号</strong>：
+    候选人能不能讲出"什么时候单 agent 就够"。</p>
+
+  <h3>OpenAI · Anthropic 的官方建议</h3>
+  <ul>
+    <li><strong>OpenAI Practical Guide to Building Agents (2024)</strong> · 原文："start with a single
+      agent and add complexity only when necessary"。</li>
+    <li><strong>Anthropic engineering blog · "Building effective agents" (Dec 2024)</strong>
+      · 列了 5 种 workflow（prompt chaining / routing / parallelization / orchestrator-workers
+      / evaluator-optimizer），并明确："单 agent 应是首选，multi-agent 只在以下三种情况下值得"：
+      <ol>
+        <li>任务有<strong>明显的并行子任务</strong>（research 5 个产品的对比 → 5 路并发）</li>
+        <li>任务需要<strong>多个独立 perspective</strong> 才能保证质量（红队审查）</li>
+        <li>不同步骤需要<strong>极不同的工具集 / 模型</strong>（vision agent + code agent）</li>
+      </ol>
+    </li>
+  </ul>
+
+  <h3>反例 · 这 4 种 90% 的人选了 multi-agent · 错的</h3>
+  <div class="split">
+    <div>
+      <h4>反例 1 · "我让 PM agent 跟 dev agent 协作"</h4>
+      <p>大多数情况 PM 部分就是<strong>一段 system prompt</strong>。两个 agent 在
+      内部"对话"只会让 token 翻 3 倍，效果还不如 actor + critic。</p>
+    </div>
+    <div>
+      <h4>反例 2 · "用 supervisor 路由不同 worker"</h4>
+      <p>很多 worker 之间差异只是 prompt 不同 · 一个 agent 带不同 system + 工具集
+      切换就够。supervisor 反而成单点。</p>
+    </div>
+    <div>
+      <h4>反例 3 · "10 个 agent 模拟一家公司做项目"</h4>
+      <p>对 demo 视频很惊艳，对真实任务 = 上下文爆炸 + 错误传播 +
+      调试地狱。AutoGen 早期 demo 全是这样，但生产没人用 10 个 agent。</p>
+    </div>
+    <div>
+      <h4>反例 4 · "我用 voting 提升对话质量"</h4>
+      <p>voting 只在<strong>有限答案空间</strong>有效。开放生成做 voting 等于多花 N×
+      钱然后 LLM judge 凑合挑一个，准确率不升。</p>
+    </div>
+  </div>
+
+  <h3>判断框架 · 3 道题</h3>
+  <ol>
+    <li>如果我把 multi-agent 折叠成 1 个 agent + 多个 system prompt section + 多个 tool · 还能完成任务吗？<strong>能 → 别用 multi-agent</strong>。</li>
+    <li>这些 agent 之间有<strong>真正独立的输出</strong>吗？还是只是步骤拆开？<strong>只是步骤拆 → 用 prompt chaining，不用 multi-agent</strong>。</li>
+    <li>每个 agent 是否需要<strong>不同的 model / 工具集 / 上下文窗口</strong>？<strong>否 → 不用</strong>。</li>
+  </ol>
+
+  <p>三个都不能立刻 yes，回到单 agent。本书剩下 9 章都假定你已经过了这一关。</p>
+</section>
+
+<section class="section" id="ch2">
+  <h2><span class="num">§2</span> 模式 1 · Hierarchical / Supervisor router</h2>
+
+  <h3>是什么</h3>
+  <p>一个 <strong>supervisor LLM</strong> 在每个回合决定下一步交给哪个 worker · worker 跑完返回
+  supervisor · supervisor 再决定下一步或终止。LangGraph 官方教程的 default
+  multi-agent pattern · 我们项目的 <code>graph</code> 版就是它。</p>
+
+  <h3>结构 · 我们的 graph 版</h3>
+  <pre><code class="lang-text">          ┌──────────────┐
+   user──▶│  supervisor  │ ◀──── (decides next)
+          └──┬─────┬─────┘
+             │     │
+       ┌─────▼┐  ┌─▼────┐  ┌──────┐
+       │resear│  │coder │  │writer│
+       │cher  │  │      │  │      │
+       └──────┘  └──────┘  └──────┘
+                    │
+                ┌───▼──┐
+                │critic│
+                └──────┘
+</code></pre>
+
+  <p>实现见 <code>backend/agent/graph.py</code> + <code>nodes/supervisor.py</code>。supervisor 用
+  <code>get_fast_llm()</code> 跑 · 节省 cost。worker 用主模型。</p>
+
+  <h3>何时用</h3>
+  <ul>
+    <li>任务<strong>步骤清晰、可枚举</strong> · 有明显的 worker 边界（research / draft / review）</li>
+    <li>需要<strong>显式的工作流可视化</strong>（LangSmith 拓扑图、给老板看的"agent 在干啥"）</li>
+    <li>不同 worker 用<strong>不同 system prompt 或不同模型</strong>（researcher 用 retrieval-aug，coder 用
+      structured output）</li>
+  </ul>
+
+  <h3>失败模式 · 3 个真实坑</h3>
+  <div class="split">
+    <div>
+      <h4>坑 1 · supervisor 自己塞太满</h4>
+      <p>每个 worker 的输出都堆在 supervisor 上下文里 · 跑 6-8 步后 supervisor token 爆。
+      <strong>解</strong>：worker 输出过 summariser 再塞给 supervisor · 不要原文。</p>
+    </div>
+    <div>
+      <h4>坑 2 · supervisor 反复 ping 同一个 worker</h4>
+      <p>因为 prompt 没说清"已经做过的事别重做"。<strong>解</strong>：supervisor prompt 里维护
+      <code>past_actions</code> 列表 · 显式提示"researcher 已被叫过 2 次"。</p>
+    </div>
+    <div>
+      <h4>坑 3 · 没有终止条件</h4>
+      <p>supervisor 一直觉得"还能更好" · 跑到 max_steps 才停。<strong>解</strong>：定义明确的
+      "done" tool（<code>final_answer</code>）+ 一个独立的 quality gate（critic）。</p>
+    </div>
+  </div>
+
+  <h3>对应代码</h3>
+  <p>我们的 supervisor / worker 节点都在 <code>backend/agent/nodes/</code>。看图谱用
+  <code>backend/agent/graph.py</code> 里的 <code>build_graph()</code>。</p>
+</section>
+
+<section class="section" id="ch3">
+  <h2><span class="num">§3</span> 模式 2 · Hub-and-spoke / Sub-agent-as-tool</h2>
+
+  <h3>是什么</h3>
+  <p>主 agent 不让出控制权 · 而是把 sub-agent 当成<strong>一个普通 tool</strong>调。主 agent 在
+  <code>tool_call</code> 阶段说 <code>dispatch_subagent(role="researcher", task="...")</code>，
+  sub-agent 在<strong>隔离 context</strong>里跑完，把简短结论返回作为 tool result。</p>
+
+  <h3>谁用</h3>
+  <ul>
+    <li><strong>Claude Code 的 <code>Task</code> tool</strong> · 全部官方 sub-agent 都是这个模式</li>
+    <li><strong>Cursor Agent / Devin</strong> · 主 loop 派 sub-loop 跑 verify / search</li>
+    <li>我们的 <strong>harness 版</strong> · <code>dispatch_subagent</code> 在
+      <code>backend/agent/harness/subagent.py</code></li>
+  </ul>
+
+  <h3>对比 supervisor 的优势</h3>
+  <div class="split">
+    <div>
+      <h4>主 ctx 不被污染</h4>
+      <p>sub-agent 跑了 20 个 tool call · 主 agent 只看到一段 200 字总结。
+      Claude Code 主 ctx 不爆的关键就是这个。</p>
+    </div>
+    <div>
+      <h4>主 agent 仍是决策者</h4>
+      <p>不像 supervisor 把"决定 worker"和"做 worker"切两层 · 主 agent 同时干两件事 ·
+      模型 reasoning 链不被打断。</p>
+    </div>
+  </div>
+
+  <h3>对比 supervisor 的劣势</h3>
+  <ul>
+    <li>主 agent prompt 里要列清楚每个 role 能干嘛 · 否则 LLM 不知道派谁</li>
+    <li>不容易并发派 N 个相同 role · 我们靠 <code>asyncio.gather</code> 在 loop 里手工做</li>
+    <li>没有<strong>跨 sub-agent 通信</strong> · sub-agent 互相不知道对方存在</li>
+  </ul>
+
+  <h3>看代码</h3>
+  <p><code>backend/agent/harness/subagent.py</code> · 80 行 ·
+  <code>_run_inner_loop()</code> 把所有 sub-agent 状态隔离 · 主 loop 只 await 一个 future。</p>
+
+  <pre><code class="lang-python">@tool
+def dispatch_subagent(role: str, task: str, max_steps: int = 8) -> str:
+    """Spawn a sub-agent in an isolated context to run `task`."""
+    # 主 ctx 看到的就是 sub-agent 的 final_answer · 不看中间过程
+    return _run_inner_loop(role, task, max_steps)</code></pre>
+</section>
+
+<section class="section" id="ch4">
+  <h2><span class="num">§4</span> 模式 3 · Debate · 多视角辩论</h2>
+
+  <h3>是什么</h3>
+  <p>N 个 persona（典型 3 个：optimist / skeptic / synthesiser）轮流就同一个问题发言 ·
+  每一轮看到所有人前一轮的回复 · 最后一个 synthesiser 写共识。<strong>Du et al. 2023
+  · "Improving Factuality and Reasoning in LLMs through Multiagent Debate"</strong>
+  实证 +6-12% 在 reasoning benchmark 上。</p>
+
+  <h3>典型 transcript</h3>
+  <pre><code class="lang-text">[optimist · r1] We should ship feature X · users are asking for it.
+                 ANSWER: ship X
+[skeptic · r1]  But X needs DB migration · risk of downtime > value.
+                 ANSWER: defer X
+[synth · r1]    Ship X behind a feature flag · default off · roll out 1%.
+                 ANSWER: ship X behind flag
+
+[optimist · r2] Synthesiser's flag plan is fine · agreed.
+                 ANSWER: ship X behind flag
+[skeptic · r2]  If we limit to 1% the migration risk is acceptable. agreed.
+                 ANSWER: ship X behind flag
+[synth · r2]    Consensus reached.
+                 ANSWER: ship X behind flag
+→ converged at r2 · final = synth's answer
+</code></pre>
+
+  <h3>我们的实现</h3>
+  <p><code>backend/agent/multi_agent/debate.py</code> · 关键设计：</p>
+  <ul>
+    <li>每个 agent 强制 end with <code>ANSWER: &lt;...&gt;</code> 行 · 方便 normalise + 检测收敛</li>
+    <li><strong>收敛检测</strong>：先 string 全等，否则 fast LLM 判 "all agents agree?" 一字 yes/no</li>
+    <li><strong>终止</strong>：收敛或 max_rounds（默认 3）</li>
+    <li>最后还有一轮独立的<strong>synthesis</strong> · 让一个 fresh LLM 读完整 transcript 写最终答案 ·
+      避免最后一个发言的 agent 偏向</li>
+  </ul>
+
+  <h3>何时用 · 何时别用</h3>
+  <div class="split">
+    <div>
+      <h4>用</h4>
+      <ul>
+        <li>有<strong>真正争议的决策</strong>（PM 评审、架构选型、安全分析）</li>
+        <li>需要<strong>红队 + 蓝队</strong>对抗（jailbreak detection、policy review）</li>
+        <li>问题<strong>没有 ground truth</strong>但需要 robust 的判断</li>
+      </ul>
+    </div>
+    <div>
+      <h4>别用</h4>
+      <ul>
+        <li>简单事实问答 · debate 只会让 token 翻 3-6 倍</li>
+        <li>有 ground truth 的题目（math、code）· voting / reflection 更好</li>
+        <li>低 latency 要求的对话场景 · debate 一般跑 6-9 个 LLM call</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>失败模式</h3>
+  <ul>
+    <li><strong>Agree to disagree</strong> · 两个 persona 立场太刚 · 永远不收敛 · 必须靠 max_rounds 兜底</li>
+    <li><strong>Persona collapse</strong> · 跑到 r2 r3 大家都被同化成同一个声音 · 解决：每轮重申 persona prompt</li>
+    <li><strong>Synthesiser bias</strong> · 最后一个 agent 决定 final · 解决：用独立的 fresh LLM 做 synthesis（我们就是这么做的）</li>
+  </ul>
+</section>
+
+<section class="section" id="ch5">
+  <h2><span class="num">§5</span> 模式 4 · Voting · 自一致性 (Self-Consistency)</h2>
+
+  <h3>是什么</h3>
+  <p><strong>Wang et al. ICLR 2023 · "Self-Consistency Improves CoT Reasoning"</strong>。
+  对同一个问题用 temperature&gt;0 跑 N 次 · 答案<strong>规范化后取众数</strong>。在 GSM8K 上
+  N=40 时 PaLM 540B 提升 +17.9%。生产里一般 N=5-7 就 saturate。</p>
+
+  <h3>关键三件事</h3>
+  <ol>
+    <li><strong>独立性</strong> · N 个 voter 互相<em>不</em>看对方答案 · 这是和 debate 的根本区别</li>
+    <li><strong>归一化</strong> · 答案要能 normalise 到同一个键去数票（lowercase + 去标点 + 截 200 字）</li>
+    <li><strong>tie-break</strong> · 平票时用 fast LLM judge 选"justification 写得更好的那个"</li>
+  </ol>
+
+  <h3>我们的实现 · 60 行</h3>
+  <pre><code class="lang-python"># backend/agent/multi_agent/voting.py
+async def _gather(task, n, sid, temperature):
+    return await asyncio.gather(*[
+        asyncio.to_thread(_one_voter, f"v{i+1}", task, sid, temperature)
+        for i in range(n)
+    ])
+
+def run_vote(task, *, n=5, temperature=0.7, session_id=""):
+    votes = asyncio.run(_gather(task, n, session_id, temperature))
+    counter = Counter(_normalise(v["answer"]) for v in votes)
+    top, top_count = counter.most_common(1)[0]
+    tied = [a for a,c in counter.items() if c == top_count]
+    if len(tied) > 1:
+        # tie-break · fast LLM picks best-justified raw answer
+        ...
+    return Result(final=..., meta={"distribution": dict(counter), ...})</code></pre>
+
+  <h3>何时用 · 何时别用</h3>
+  <div class="split">
+    <div>
+      <h4>用</h4>
+      <ul>
+        <li>数学 / 推理题 · 答案是数字或 A/B/C/D</li>
+        <li>是非判断 · 安全分类 · 标签预测</li>
+        <li>关键决策（投资、医疗）<strong>且</strong>有可枚举答案</li>
+      </ul>
+    </div>
+    <div>
+      <h4>别用</h4>
+      <ul>
+        <li>开放生成（写代码、写文章）· 答案空间太大没法 normalise</li>
+        <li>对话 / 多轮交互 · voting 一次性 · 没法增量</li>
+        <li>低延迟 · N=5 = 5× 单次延迟（除非完美并发）</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>实战经验</h3>
+  <ul>
+    <li><strong>N 不是越多越好</strong> · 实证 N=5-7 saturate · N=11 多花钱无收益</li>
+    <li><strong>temperature 必须 &gt; 0</strong> · 否则 N 个 voter 输出一模一样 · 投票变摆设</li>
+    <li><strong>异常值要丢</strong> · 偶尔一个 voter 输出 "I don't know" · normalise 之后会被
+      counter 当成单独一票 · 实际上应该 drop · 我们没做这一步 · 你可以加</li>
+  </ul>
+</section>
+
+<section class="section" id="ch6">
+  <h2><span class="num">§6</span> 模式 5 · Handoff · OpenAI Swarm 风</h2>
+
+  <h3>是什么</h3>
+  <p>OpenAI 在 <strong>2024-10 开源 <a href="https://github.com/openai/swarm">Swarm</a></strong>，提出
+  "<em>Routines &amp; Handoffs</em>" pattern · 没有 supervisor · 每个 agent 自己决定要不要把<strong>整个对话上下文</strong>
+  传给另一个 agent。终止条件 = 某 agent 不调用 <code>transfer_*</code> tool 而是直接返回文本。</p>
+
+  <h3>对比 supervisor 的本质区别</h3>
+  <table>
+    <thead><tr><th></th><th>Supervisor</th><th>Handoff (Swarm)</th></tr></thead>
+    <tbody>
+      <tr><td>谁决定下一步</td><td>专门的 supervisor LLM</td><td>当前正在跑的 agent 自己</td></tr>
+      <tr><td>额外 LLM 调用</td><td>每步多 1 个 supervisor 调用</td><td>0 · 决策内嵌</td></tr>
+      <tr><td>上下文传递</td><td>worker 输出 → supervisor 摘要 → 下个 worker</td><td>整个 message history 直接传</td></tr>
+      <tr><td>终止</td><td>supervisor 决定</td><td>当前 agent 不再 transfer 即终止</td></tr>
+      <tr><td>可视化</td><td>清晰 graph</td><td>flat sequence</td></tr>
+    </tbody>
+  </table>
+
+  <h3>典型场景 · 客服 triage</h3>
+  <pre><code class="lang-text">user: "我想退款 + 顺便问一下另一个订单到哪了"
+
+[triage]    分类 · 退款 + 物流 · 先转 refund agent
+            TRANSFER: refund_agent
+
+[refund]    处理退款 · 询问订单号 · 退款发起
+            ... 跟用户两轮对话 ...
+            完事 · 转物流
+            TRANSFER: shipping_agent
+
+[shipping]  查物流 · 给出 ETA
+            (no transfer · 自然终止)</code></pre>
+
+  <h3>我们的实现 · 简化版</h3>
+  <p><code>backend/agent/multi_agent/handoff.py</code> · 故意<strong>不用</strong> langchain agent 抽象 ·
+  纯 dict + while-loop · 100 行：</p>
+  <ul>
+    <li>每个 agent 的 system prompt 末尾 append "其它 agent 列表 + 转交语法"</li>
+    <li>parser 抓 trailing 行 <code>TRANSFER: &lt;name&gt;</code> · 没抓到 = 终止</li>
+    <li><code>max_hops</code> 兜底防 ping-pong</li>
+    <li>非法目标 / 自我转交 · 注入 system 提示让 agent 重写</li>
+  </ul>
+
+  <h3>失败模式</h3>
+  <ul>
+    <li><strong>A↔B ping-pong</strong> · 解：<code>max_hops</code> + same-name 检测 · 还可加"距离上次同名 ≤ 1 hop 即拒"</li>
+    <li><strong>Context bloat</strong> · message 一直传下去 · 解：在 transfer 时强制压缩历史 · 我们没做 · 生产建议加</li>
+    <li><strong>失忆</strong> · agent A 收集的 memory 没传给 agent B · 解：用共享 state（见 §10）</li>
+  </ul>
+</section>
+
+<section class="section" id="ch7">
+  <h2><span class="num">§7</span> 模式 6 · Reflection · Actor + Critic 循环</h2>
+
+  <h3>是什么</h3>
+  <p>两篇姊妹论文：</p>
+  <ul>
+    <li><strong>Reflexion</strong> (Shinn et al. NeurIPS 2023) · agent 跑完一遍 task · 写 self-reflection · 下一轮带着反思再跑</li>
+    <li><strong>Self-Refine</strong> (Madaan et al. 2023) · actor → critic 给 feedback → actor 改 · 循环</li>
+  </ul>
+
+  <p>两者本质一样 · 都是<strong>actor + critic 内循环</strong>。我们实现里两个 agent 用<strong>不同 model</strong>
+  （actor 用主模型 · critic 用 fast 模型）· 既省钱又减少 self-confirmation bias。</p>
+
+  <h3>结构</h3>
+  <pre><code class="lang-text">round 1: ACTOR  ── draft ──▶ CRITIC ── score:6 + fixes ─▶
+round 2: ACTOR  ── revise ─▶ CRITIC ── score:8 ──────── (≥ pass_score) STOP
+final: 返回 actor 最后一版 draft</code></pre>
+
+  <h3>我们的实现 · 关键点</h3>
+  <ul>
+    <li>critic 强制输出 <code>SCORE: N (1-10)</code> + <code>ISSUES:</code> + <code>FIXES:</code> · 解析失败 fallback 到 score=5（保守）</li>
+    <li>actor 第二轮拿到 critique 必须 output <strong>FULL</strong> revised draft · 不是 diff（避免半成品）</li>
+    <li>停止条件：score &ge; pass_score（默认 8）<strong>或</strong> max_rounds（默认 3）· 用 max_rounds 兜底</li>
+    <li>critic 用 <code>get_fast_llm()</code> · cost 砍 5×</li>
+  </ul>
+
+  <h3>真正的应用场景</h3>
+  <div class="split">
+    <div>
+      <h4>用</h4>
+      <ul>
+        <li><strong>code generation</strong> · critic 跑 lint/test · actor 改</li>
+        <li><strong>长文写作</strong> · critic 检查结构 / 论据 · actor 改</li>
+        <li><strong>RFC / 设计文档</strong> · critic 找缺失章节</li>
+        <li><strong>SQL / config</strong> · critic 跑 dry-run · actor 改</li>
+      </ul>
+    </div>
+    <div>
+      <h4>别用</h4>
+      <ul>
+        <li>对话 / 客服 · critic 没法判断对话质量</li>
+        <li>事实问答 · 第一轮答对了再跑 critic 是浪费</li>
+        <li>没有<strong>客观 rubric</strong> 的任务 · critic 没标准只会给 7 分凑合</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>失败模式 · 必须警惕</h3>
+  <ul>
+    <li><strong>Self-confirmation</strong> · actor + critic 用同一 LLM 同 prompt · critic 永远说"good job · score 9" · 解：critic 用<strong>不同模型</strong>或<strong>更强 system prompt</strong>（"be brutal"）</li>
+    <li><strong>Hallucinated fixes</strong> · critic 提的 fix 实际并不能改善 · actor 改了反而更差 · 解：跑实际 verifier（lint / test）替代 LLM critic</li>
+    <li><strong>Score inflation</strong> · 第二轮 critic 看到自己上次的 critique 被采纳 · 倾向于打高分 · 解：critic 不带历史 · 每轮都是 fresh LLM call</li>
+  </ul>
+</section>
+
+<section class="section" id="ch8">
+  <h2><span class="num">§8</span> 4 框架横评 · LangGraph / AutoGen / CrewAI / Swarm</h2>
+
+  <p>过去 2 年 multi-agent 框架百花齐放 · 这 4 个是 2026 仍在生产里见到的。
+  其它（HuggingGPT、MetaGPT、ChatDev demo 项目）已基本退役。</p>
+
+  <h3>横评表</h3>
+  <table>
+    <thead><tr><th></th><th>LangGraph</th><th>AutoGen / AG2</th><th>CrewAI</th><th>OpenAI Swarm</th></tr></thead>
+    <tbody>
+      <tr><th>核心抽象</th><td>有向图 (StateGraph)</td><td>conversational agent</td><td>Crew + Task + Process</td><td>Agent + handoff tool</td></tr>
+      <tr><th>主推模式</th><td>supervisor / hierarchical</td><td>group chat / debate</td><td>sequential + hierarchical crew</td><td>handoff</td></tr>
+      <tr><th>状态管理</th><td>显式 TypedDict + reducer</td><td>每个 agent 自己 history</td><td>shared context + memory</td><td>messages 整个传</td></tr>
+      <tr><th>持久化</th><td>checkpointer (SQLite/Redis)</td><td>caching · 部分</td><td>很弱</td><td>无</td></tr>
+      <tr><th>典型生产用户</th><td>LangChain ecosystem · 大量企业</td><td>Microsoft 内部 / 学术</td><td>初创 / agent 工坊</td><td>OpenAI 自家 demo + 教学</td></tr>
+      <tr><th>学习曲线</th><td>陡 (TypedDict / channels)</td><td>中</td><td>低 (yaml-friendly)</td><td>极低 (~200 行可读完)</td></tr>
+      <tr><th>调试 / 可观测</th><td>LangSmith 一流</td><td>middling</td><td>weak</td><td>print</td></tr>
+      <tr><th>缺点</th><td>过度抽象 · 简单任务杀鸡用牛刀</td><td>group chat 容易跑飞 · agent 互相 spam</td><td>"crew" 概念太重 · 改动一个 agent 牵一发动全身</td><td>本质是教学 demo · 没生产保证</td></tr>
+    </tbody>
+  </table>
+
+  <h3>选型建议</h3>
+  <div class="split">
+    <div>
+      <h4>已经在 LangChain 生态</h4>
+      <p>用 <strong>LangGraph</strong>。我们项目的 graph 版本就是 · 配 LangSmith 调试体验最好。</p>
+    </div>
+    <div>
+      <h4>团队偏 Microsoft / .NET</h4>
+      <p>用 <strong>AutoGen / AG2</strong>。group chat / nested chat 抽象做得好。</p>
+    </div>
+    <div>
+      <h4>"我就想 yaml 描述一个 crew"</h4>
+      <p><strong>CrewAI</strong>。但要接受它在生产 observability 上的弱点。</p>
+    </div>
+    <div>
+      <h4>学习 / 教学 / 自己撸</h4>
+      <p>读 <strong>OpenAI Swarm</strong> 的源码 · ~200 行就明白 handoff 模式 · 然后自己实现（我们的 <code>handoff.py</code> 就是这条路）。</p>
+    </div>
+  </div>
+
+  <h3>面试时的 framework 问题</h3>
+  <ul>
+    <li>"Why LangGraph 而不是 AutoGen？" · 答：LangGraph 把状态<strong>显式做成图</strong> · workflow 可枚举 · debug 好做。AutoGen 的 group chat 是<strong>涌现的</strong> · 调试时很难复现。</li>
+    <li>"为什么 OpenAI Swarm 没火？" · 答：Swarm 官方 readme 写明"experimental, not for production"。它的价值是教学 · 让你理解 handoff 不需要 framework。</li>
+    <li>"CrewAI 适合什么？" · 答：<strong>非工程团队</strong>用 yaml 拼 demo · 但生产 agent 一般会被重写。</li>
+  </ul>
+</section>
+
+<section class="section" id="ch9">
+  <h2><span class="num">§9</span> 我们的实现 · 一个 tool 包住 4 种模式</h2>
+
+  <h3>设计</h3>
+  <p>我们没把 multi-agent 做成一个独立"模式开关" · 而是<strong>包成一个 harness tool</strong>
+  让 LLM 自己挑：</p>
+
+  <pre><code class="lang-python">@tool
+def multi_agent_run(
+    pattern: Literal["debate", "vote", "handoff", "reflection"],
+    task: str,
+    n: int = 3,
+    max_rounds: int = 3,
+    pass_score: int = 8,
+) -> str:
+    """Run an inner multi-agent group on `task` and return the result."""</code></pre>
+
+  <p>主 agent 在 plan 出 "this needs N-vote self-consistency" 时主动调
+  <code>multi_agent_run("vote", task, n=5)</code> · 拿到 JSON summary（final + meta + last 4
+  trace events）· 继续主循环。</p>
+
+  <h3>4 个 pattern 的 1 行调用</h3>
+  <pre><code class="lang-python">from agent.multi_agent import (
+    run_debate, run_vote, run_handoff, run_reflection, AgentSpec,
+)
+
+# debate · 默认 3 个 persona
+r = run_debate("Should we deprecate API v1 in Q3?", max_rounds=3)
+
+# vote · self-consistency
+r = run_vote("What is 487 × 312?", n=5)
+
+# handoff · 自定义 agents
+r = run_handoff(
+    "I want a refund and to track another order",
+    [AgentSpec("triage", "..."), AgentSpec("refund", "..."), AgentSpec("ship", "...")],
+    entry="triage",
+)
+
+# reflection · code review style
+r = run_reflection(
+    "Write a python function to merge k sorted lists in O(n log k).",
+    max_rounds=3, pass_score=9,
+)
+
+print(r.final)        # 最终输出
+print(r.meta)         # 模式特定 stats
+print(r.trace[:3])    # 关键 events
+</code></pre>
+
+  <h3>统一 Result 形状</h3>
+  <p>所有 4 个 pattern 都返回 <code>multi_agent.Result</code>：</p>
+  <pre><code class="lang-python">@dataclass
+class Result:
+    final: str                       # 最终答案 · 给用户/上层 agent
+    trace: list[dict]                # [{agent, round, text}] · 调试用
+    meta: dict                       # rounds / votes / handoff path
+</code></pre>
+
+  <p>统一形状的好处：</p>
+  <ul>
+    <li>外层 wrapper 不用为每个 pattern 写不同序列化</li>
+    <li>trace 可以直接扔进 <code>data/traces/*.jsonl</code> · 复用现有 replay 系统</li>
+    <li>meta 是 pattern-specific 但<strong>对调用方透明</strong> · 调用方按需读</li>
+  </ul>
+
+  <h3>5 个新文件</h3>
+  <pre><code class="lang-text">backend/agent/multi_agent/
+├── __init__.py            · 公共 API
+├── types.py               · Result + AgentSpec
+├── debate.py              · ~150 lines
+├── voting.py              · ~120 lines
+├── handoff.py             · ~120 lines
+└── reflection.py          · ~120 lines
+
+backend/agent/tools/multi_agent_tool.py · LangChain @tool wrapper
+</code></pre>
+
+  <p>注册到 harness：<code>HARNESS_TOOLS</code> 里 append <code>multi_agent_run</code> ·
+  现在主 agent 可以原地调用任意 pattern。</p>
+</section>
+
+<section class="section" id="ch10">
+  <h2><span class="num">§10</span> 4 大共性难题 · 状态 · 通信 · 终止 · 评估</h2>
+
+  <p>不论选哪个 framework / pattern · 这 4 个问题你都要回答。面试时被问到 multi-agent
+  深问 · 90% 落在这里。</p>
+
+  <h3>难题 1 · 共享 state</h3>
+  <p>Agent 之间要不要共享内存？</p>
+  <ul>
+    <li><strong>不共享</strong>（debate / vote）· 每个 agent 独立 ctx · 简单 · 但"昨天同事讨论的结论"不能复用</li>
+    <li><strong>全共享</strong>（handoff）· message history 整段传 · 上下文爆炸风险高</li>
+    <li><strong>结构化共享</strong>（LangGraph TypedDict）· 显式声明哪些字段在哪些 agent 之间流动 · 工程量大但可控</li>
+    <li><strong>外存共享</strong>（blackboard）· agent 都读写同一个外部 KV / vector DB · 适合长寿命 agent</li>
+  </ul>
+
+  <p>实战经验：<strong>能不共享就不共享</strong>。需要时优先用 LangGraph 的 channel · 最后才考虑 blackboard。</p>
+
+  <h3>难题 2 · 通信协议</h3>
+  <p>Agent 之间怎么"说话"？三种主流：</p>
+  <ol>
+    <li><strong>Natural language</strong>（debate / handoff）· 简单 · 但解析脆弱（容易遇到"agent 不按格式输出"）</li>
+    <li><strong>Structured tool call</strong>（hub-and-spoke）· 主 agent 用 <code>tool_call</code> 派 sub-agent · 强类型 · 但 sub-agent 输出仍是 NL</li>
+    <li><strong>Message bus / event stream</strong>（高级）· agent 之间发 typed events · 适合长寿命 service · 工程极重</li>
+  </ol>
+
+  <p>建议：从 NL 起步 · 遇到解析问题改 structured · 不要一开始就上 message bus。</p>
+
+  <h3>难题 3 · 终止</h3>
+  <p>什么时候停？</p>
+  <ul>
+    <li><strong>显式 final tool</strong>（hub-and-spoke）· LLM 决定 done</li>
+    <li><strong>共识检测</strong>（debate）· LLM judge 判 "all agents agree"</li>
+    <li><strong>分数阈值</strong>（reflection）· critic score &ge; pass_score</li>
+    <li><strong>不再 transfer</strong>（handoff）· agent 返回普通 text</li>
+    <li><strong>Hard cap</strong>（所有模式）· max_rounds / max_hops 兜底 · <em>必须有</em></li>
+  </ul>
+
+  <p>反模式：<em>没有 hard cap</em>。任何 multi-agent 都<strong>必须</strong>有最后兜底 · 否则一个无限 loop bug 烧爆账单。</p>
+
+  <h3>难题 4 · 评估</h3>
+  <p>怎么知道我的 multi-agent 系统真的比单 agent 好？</p>
+  <ol>
+    <li><strong>A/B 评估</strong>：用 Book 14 的 eval framework · 同一组 golden cases 跑单 agent vs multi · 看 LLM-judge 分</li>
+    <li><strong>成本对比</strong>：multi-agent 通常 3-6× cost · 看 cost-adjusted accuracy</li>
+    <li><strong>失败案例分析</strong>：multi-agent 失败模式跟单 agent 不一样（self-confirmation / debate 不收敛 / handoff ping-pong）· 单独分类统计</li>
+    <li><strong>Trace 复盘</strong>：用 <code>multi_agent</code> 的 emit events 回放 · 看哪一步最先偏</li>
+  </ol>
+
+  <div class="cb gold">
+    <p class="cb-h">面试金句</p>
+    <p>"Multi-agent 不是<em>更厉害的 agent</em>，是<em>更复杂的 agent</em>。<strong>复杂度的代价必须用
+    可衡量的提升来 justify</strong>。如果 A/B test 显示单 agent 不输，那就回去用单 agent。
+    我做过的真实 production multi-agent 系统都是被 single-agent 替换过 ≥ 1 次之后才决定上的。"</p>
+  </div>
+</section>
+
+<section class="section qbank" id="qa">
+  <h2><span class="num">§QA</span> 30 题资深面试速查</h2>
+
+  <h3>基础（10 题）</h3>
+  <ol>
+    <li>列举 5 种 multi-agent pattern 并各举一个真实场景。</li>
+    <li>什么时候<em>不</em>该用 multi-agent？说出 3 个判断信号。</li>
+    <li>OpenAI Practical Guide 里对单 agent 的 default stance 是什么？</li>
+    <li>Anthropic "Building effective agents" 列了哪 5 种 workflow？</li>
+    <li>Hierarchical / supervisor 和 hub-and-spoke 的本质区别是什么？</li>
+    <li>self-consistency / voting 的论文是哪一篇？典型 N 是多少？</li>
+    <li>Reflexion 和 Self-Refine 的区别？</li>
+    <li>OpenAI Swarm 是什么？为什么没火？</li>
+    <li>debate pattern 的收敛检测怎么做？为什么不能只看字符串相等？</li>
+    <li>actor + critic 用同一个 LLM 会有什么 bug？</li>
+  </ol>
+
+  <h3>进阶（10 题）</h3>
+  <ol>
+    <li>设计一个安全审查 multi-agent · 你会选哪种 pattern？为什么？</li>
+    <li>你的 voting 系统遇到 2-2-1 平票，怎么 tie-break？</li>
+    <li>handoff pattern 容易出 A↔B ping-pong · 列出 3 种防御。</li>
+    <li>Reflection 里 critic 给 score 9 但答案明显错 · 你怎么排查？</li>
+    <li>LangGraph 的 supervisor 在第 6 步 token 爆了 · 优化方向？</li>
+    <li>你想让 5 个 sub-agent 并行跑同一个 task 取众数 · 写出代码骨架。</li>
+    <li>debate 跑到 max_rounds 还没收敛 · 怎么决定 final？</li>
+    <li>multi-agent system 怎么做 trace replay？key 应该是什么？</li>
+    <li>共享 state 的 4 种实现方式 · 各自适合的场景。</li>
+    <li>multi-agent 的成本通常是单 agent 的几倍？什么时候 justify？</li>
+  </ol>
+
+  <h3>系统设计（10 题）</h3>
+  <ol>
+    <li>设计一个客服 multi-agent · 包含 triage / billing / refund / escalate 4 个角色 · 你选什么 pattern？怎么终止？怎么 evaluate？</li>
+    <li>设计一个安全 review system · 一个红队 + 一个蓝队 + 一个 judge · 每个角色的 prompt 要点？</li>
+    <li>设计一个 code generation pipeline · 用 reflection · 怎么避免 critic 自满？</li>
+    <li>设计一个 research agent · 给 5 个 sub-question 分给 5 个 sub-agent 并行 · main agent 怎么 synthesise？</li>
+    <li>选型题：以下任务用 LangGraph / AutoGen / CrewAI / Swarm 哪个？解释。<br>(a) PM 团队 yaml 描述 (b) 安全 group chat (c) 复杂 hierarchical workflow (d) 教学 demo</li>
+    <li>设计一个 multi-agent debate 的 cost guardrail · 防止 N round 烧爆账单。</li>
+    <li>handoff pattern 怎么把<strong>记忆</strong>跨 agent 传递（不是 message history）？</li>
+    <li>multi-agent system 跑了 1000 次 · 怎么发现"哪种 failure 最多"？</li>
+    <li>multi-agent 上线之后<strong>quality 没提升 cost 翻 3 倍</strong> · 你的 5 个 next step。</li>
+    <li>给一个全新团队讲 multi-agent · 你的 30 分钟讲义大纲。</li>
+  </ol>
+</section>
+
+<section class="section" id="glossary">
+  <h2><span class="num">§G</span> 术语速查 · 60 词</h2>
+  <div class="glossary">
+    <div><strong>Single agent</strong> · 1 LLM + N tools + while loop</div>
+    <div><strong>Multi-agent</strong> · &gt; 1 LLM coordinated</div>
+    <div><strong>Supervisor</strong> · routing LLM</div>
+    <div><strong>Worker</strong> · supervisor 派出的执行 agent</div>
+    <div><strong>Hub-and-spoke</strong> · main + sub-agent-as-tool</div>
+    <div><strong>Sub-agent</strong> · 隔离 ctx 的内 loop</div>
+    <div><strong>Hierarchical</strong> · supervisor + workers</div>
+    <div><strong>Flat</strong> · agent 之间平等无 supervisor</div>
+    <div><strong>Handoff</strong> · 显式控制权交接</div>
+    <div><strong>Routine</strong> · Swarm 里的 system prompt</div>
+    <div><strong>Transfer tool</strong> · Swarm 转交语法</div>
+    <div><strong>Debate</strong> · 多 persona 互相反驳</div>
+    <div><strong>Persona</strong> · debate 里的角色 prompt</div>
+    <div><strong>Synthesiser</strong> · debate 的 final 合成 agent</div>
+    <div><strong>Voting</strong> · self-consistency</div>
+    <div><strong>Self-consistency</strong> · Wang 2022</div>
+    <div><strong>Voter</strong> · vote 里的 agent</div>
+    <div><strong>Tie-break</strong> · 平票决议</div>
+    <div><strong>Normalisation</strong> · 答案归一为投票键</div>
+    <div><strong>Reflection</strong> · actor + critic 循环</div>
+    <div><strong>Reflexion</strong> · Shinn NeurIPS 2023</div>
+    <div><strong>Self-Refine</strong> · Madaan 2023</div>
+    <div><strong>Actor</strong> · 写 draft 的 agent</div>
+    <div><strong>Critic</strong> · 给反馈的 agent</div>
+    <div><strong>Pass score</strong> · critic 阈值</div>
+    <div><strong>Self-confirmation bias</strong> · critic 跟 actor 同模型</div>
+    <div><strong>Group chat</strong> · AutoGen 多 agent 一锅</div>
+    <div><strong>Nested chat</strong> · AutoGen 子对话</div>
+    <div><strong>Crew</strong> · CrewAI 单位</div>
+    <div><strong>Process</strong> · CrewAI 执行模式</div>
+    <div><strong>StateGraph</strong> · LangGraph 主抽象</div>
+    <div><strong>Channel</strong> · LangGraph 状态字段</div>
+    <div><strong>Reducer</strong> · 多源更新合并</div>
+    <div><strong>Checkpointer</strong> · LangGraph 持久化</div>
+    <div><strong>Blackboard</strong> · 多 agent 共享外存</div>
+    <div><strong>Message bus</strong> · agent 间事件流</div>
+    <div><strong>Coordination</strong> · agent 间协调</div>
+    <div><strong>Orchestration</strong> · 主控 agent 编排</div>
+    <div><strong>Choreography</strong> · 无主控 agent 自治</div>
+    <div><strong>Termination</strong> · 终止条件</div>
+    <div><strong>Hard cap</strong> · max_rounds / max_hops</div>
+    <div><strong>Convergence</strong> · debate 收敛</div>
+    <div><strong>Ping-pong</strong> · A↔B 反复转交</div>
+    <div><strong>Context bloat</strong> · 上下文炸</div>
+    <div><strong>Persona collapse</strong> · debate 同化</div>
+    <div><strong>Hallucinated fix</strong> · critic 假修复</div>
+    <div><strong>Score inflation</strong> · critic 打分膨胀</div>
+    <div><strong>Cost guardrail</strong> · multi-agent token 预算</div>
+    <div><strong>Trace replay</strong> · 复现多 agent 失败</div>
+    <div><strong>Fan-out</strong> · 并行派 sub-agent</div>
+    <div><strong>Fan-in</strong> · 收集 sub-agent 结果</div>
+    <div><strong>Map-reduce</strong> · fan-out + fan-in 模板</div>
+    <div><strong>Plan-and-execute</strong> · 先 plan 再分派</div>
+    <div><strong>ReAct</strong> · reason + act 单 agent 基础</div>
+    <div><strong>Tool calling</strong> · LLM 函数调用</div>
+    <div><strong>Workflow</strong> · 可枚举步骤的"agent"</div>
+    <div><strong>Emergent behaviour</strong> · group chat 涌现</div>
+    <div><strong>LangSmith</strong> · LangGraph 调试</div>
+    <div><strong>AutoGen / AG2</strong> · MS 多 agent 框架</div>
+    <div><strong>CrewAI</strong> · yaml-friendly framework</div>
+    <div><strong>OpenAI Swarm</strong> · 教学 handoff 框架</div>
+  </div>
+</section>
+
+<section class="section">
+  <h2><span class="num">§∎</span> 收尾 · 下一步</h2>
+
+  <p>你现在可以：</p>
+  <ol>
+    <li>跑 <code>python -c "from agent.multi_agent import run_vote; print(run_vote('What is 17*23?', n=5).final)"</code> 试一遍 voting</li>
+    <li>在 chat 里说 "use multi_agent_run with debate to discuss whether to deprecate v1 API" 看主 agent 自己派</li>
+    <li>读 <code>backend/agent/multi_agent/*.py</code> 4 个文件 · 各 100-150 行 · 全是直白代码</li>
+    <li>在面试里把 §1 的 "默认别用" + §10 的 4 大难题用自己的话讲一遍</li>
+  </ol>
+
+  <h3>相关阅读</h3>
+  <ul>
+    <li><a href="harness.html">Book 02 · Harness</a> · 主 loop · sub-agent dispatch 细节</li>
+    <li><a href="langgraph-internals.html">Book 03 · LangGraph internals</a> · supervisor / channel / checkpointer</li>
+    <li><a href="agent-design.html">Book 10 · Agent System Design</a> · 整体架构</li>
+    <li><a href="industrial.html">Book 22 · Industrial Foundations</a> · 单 agent 的下限</li>
+    <li><a href="eval-observability.html">Book 14 · Eval &amp; Observability</a> · 怎么 A/B 评估单 vs multi</li>
+  </ul>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p>桃桃 Agent · Book 23 · v1.0 · 2026-05 · MIT</p>
+    <p><a href="index.html">← 回到首页</a> · <a href="https://github.com/your/taotao-agent">GitHub</a></p>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -31,6 +31,7 @@ from ..tools.calculator import calculator
 from ..tools.current_time import current_time
 from ..tools.file_ops import grep_in_files, list_files, read_file, write_file
 from ..tools.memory_tool import recall, remember
+from ..tools.multi_agent_tool import multi_agent_run
 from ..tools.profile_tool import read_profile, update_profile
 from ..tools.propose_edit import apply_edit, propose_edit
 from ..tools.python_repl import python_repl
@@ -86,6 +87,7 @@ HARNESS_TOOLS = [
     write_file,
     # --- harness control flow ------------------------------------------
     dispatch_subagent,
+    multi_agent_run,
     final_answer,
 ]
 

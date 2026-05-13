@@ -34,11 +34,21 @@ h2{font-size:1.05rem;margin:1.6rem 0 .35rem;color:var(--forest-deep)}
 .split h3{font-size:.78rem;font-family:var(--mono);letter-spacing:.1em;color:var(--ink-mute);text-transform:uppercase;margin:0 0 .4rem}
 .legend{font-size:.7rem;color:var(--ink-mute);font-family:var(--mono)}
 .legend b{color:var(--ink)}
+ }
+ }
 
-#open-app-fab { position: fixed; top: 14px; right: 16px; z-index: 999; display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.5rem 0.95rem; background: rgba(244,201,90,.92); color: #1d1d1f; font-family: var(--font-sans, system-ui, sans-serif); font-weight: 600; font-size: 0.82rem; letter-spacing: 0.02em; border: 1.5px solid #1d1d1f; border-radius: 999px; box-shadow: 2px 2px 0 #1d1d1f; text-decoration: none; transition: transform .12s ease, box-shadow .12s ease; } #open-app-fab:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 #1d1d1f; background: #fff5d8; } #open-app-fab .fab-icon { color: #c84a16; font-size: 0.7rem; } @media (max-width: 600px) { #open-app-fab .fab-text { display: none; } #open-app-fab { padding: 0.5rem 0.6rem; } }
+}
+
+.ttap-link:hover { transform: translateY(-1px); }
+.ttap-link { font-family: "Fredoka", "Comfortaa", "Quicksand", system-ui, sans-serif !important; font-weight: 600 !important; color: var(--gold, #f4c95a) !important; letter-spacing: -0.005em; transition: color .15s ease, opacity .15s ease, transform .15s ease; }
+.ttap-link:hover { color: var(--rust, #e08e6f) !important; opacity: 0.95; background: none !important; }
+.ttap-link .ttap-mark {
+  display: inline-block; margin-right: 0.32em;
+  color: var(--gold, #f4c95a); font-size: 0.85em;
+  transform: translateY(-1px);
+}
+.ttap-link.ttap-toc .ttap-mark { margin-left: 0.25em; margin-right: 0; font-size: 0.75em; opacity: 0.85; }
 </style></head><body>
-<a id="open-app-fab" href="/" target="_blank" rel="noopener" title="打开配套 demo · 在线试玩 agent"><span class="fab-icon">▶</span><span class="fab-text">在线 demo</span></a>
-
 
 <h1>Eval Report · taotao-agent</h1>
 <div class="muted">2026-05-12 17:15 · 3 cases × 2 engines · judge=anthropic:claude-3-5-sonnet-latest</div>
