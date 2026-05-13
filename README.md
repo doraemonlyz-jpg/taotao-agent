@@ -10,7 +10,7 @@ Built on **LangGraph 0.6** (orchestration backbone) + **FastAPI** (SSE streaming
 ![stack](https://img.shields.io/badge/backend-LangGraph%200.6%20%2B%20FastAPI-black)
 ![ui](https://img.shields.io/badge/frontend-React%2019%20%2B%20Vite-blue)
 
-> **📚 学习路径 · 23 本书覆盖 senior agent engineer 全方位面试（含行为面 + post-training + 多模态/语音 + benchmarks + 工业基建 + multi-agent）**
+> **📚 学习路径 · 24 本书覆盖 senior agent engineer 全方位面试（含行为面 + post-training + 多模态/语音 + benchmarks + 工业基建 + multi-agent + SaaS 产品化）**
 > - 🟢 **完全新手** → [`docs/learn.html`](docs/learn.html) — 《从 0 到面试》13 章 + 110 词术语表 + 60 道面试题 + 8 周路线 + 进阶专题（benchmark / reasoning / async / agentic RAG / vibe coding / security）+ 每节附公开教程 / GitHub demo URL
 > - 🟠 **要做企业级项目** → [`docs/enterprise.html`](docs/enterprise.html) — 《企业级交付手册》10 章 + 5 份 spec 模板（PRD / Tech Design / Eval Plan / Risk Assessment / Runbook）+ 12 层技术栈选型 + 6 大工程能力 + RACI + 5 个翻车复盘 + 50 道企业级面试题 + 50 项上线 checklist
 > - 🟣 **agent system design 面试** → [`docs/agent-design.html`](docs/agent-design.html) — 《Agent System Design · Senior》6 步答题框架 + 7 大产品反编译（Cursor / Claude Code / Devin / Perplexity / Operator / v0 / 企业 multi-agent）+ 12 个 design pattern + 20 道 senior 设计题 + 80 词术语表
@@ -36,13 +36,14 @@ Built on **LangGraph 0.6** (orchestration backbone) + **FastAPI** (SSE streaming
 > - ⚖️ **Agent Benchmarks 阅读手册** → [`docs/benchmarks.html`](docs/benchmarks.html) — SWE-bench (Verified/Lite/Live) / GAIA / BFCL / τ-bench / WebArena / OSWorld 6 大主流 + 5 大读 leaderboard 陷阱 (contamination / harness drift / sample selection / oracle / cost) + 30 题
 > - 📌 **3 大补丁**：[`docs/infra.html#ch-1-5`](docs/infra.html#ch-1-5) §1.5 LLM 基础 30 题速查（attention / KV cache / GQA / spec decoding / 采样 / tokenizer）· [`docs/p1-hardening.html#ch-8`](docs/p1-hardening.html#ch-8) §8 Cost-Latency 5 case study · [`docs/tool-design.html#ch-11`](docs/tool-design.html#ch-11) §11 Security 30 招攻防（OWASP LLM Top 10 + Constitutional AI）
 >
-> **🛠 2026-05 工业基建 + multi-agent · 让你从 demo 到 production · 从单 agent 到多 agent**
+> **🛠 2026-05 工业基建 + multi-agent + SaaS 产品化 · 从 demo → production → 公开付费**
 > - 🏭 **Book 22 · 工业化基建手册** → [`docs/industrial.html`](docs/industrial.html) — 反编译 Claude Code 的 17 件事 · plan mode · permission gate · hook system · `AGENTS.md` · tool result offset · slash commands · diff preview · subagent-as-md · 3 层 settings · `taotao_cli.py --continue/--resume/--plan` · notification · 12 章 + 30 题 + 60 词 · 配套代码 11 新文件
 > - 🤝 **Book 23 · Multi-Agent Architecture** → [`docs/multi-agent.html`](docs/multi-agent.html) — 5 大模式（hierarchical / hub-and-spoke / debate / vote / handoff / reflection）+ 4 框架横评（LangGraph / AutoGen / CrewAI / OpenAI Swarm）+ "默认别用" 判断框架 + 4 大共性难题（state / 通信 / 终止 / 评估）+ 30 题 + 60 词 · 配套 `backend/agent/multi_agent/` 4 个模式 ~600 行可跑代码 + `multi_agent_run` harness tool
+> - 🪐 **Book 24 · From Demo to Public SaaS** → [`docs/saas.html`](docs/saas.html) — 把 demo 推到任意陌生人能注册付费的程度 · 11 phase 路线图（auth/JWT/多租户/TLS/前端构建/外存化/横向扩展/沙箱/计费/合规/多区域/运维）+ 50 项上线 checklist + 30 题 + 60 词 · 配套 4 个 starter implementation：`backend/agent/auth/` (JWT + tenant resolver) · 多租户 memory namespacing · `deploy/nginx/taotao.conf.example` (TLS+反代+安全 header) · `frontend/Dockerfile.prod` (多阶段 nginx 静态托管)
 >
-> **🌐 全部 23 本书入口** → [`docs/index.html`](docs/index.html) — 按 7 阶段学习路径分类的 landing page · 39000+ 行 · 520+ 题 · 1220+ 词
+> **🌐 全部 24 本书入口** → [`docs/index.html`](docs/index.html) — 按 8 阶段学习路径分类的 landing page · 40000+ 行 · 550+ 题 · 1280+ 词
 >
-> 完整覆盖：learn 建心智 → 4 大支柱（framework/RAG/memory/tool）→ 3 本工程实战（eval/debug/enterprise）→ 3 本面试冲刺（system design + live coding + behavioral）→ 3 本进阶专项（infra/harness/对比）→ 3 本扩展速读（hermes/mcp/p1）→ 3 本必补（post-training/multimodal/benchmarks）→ 2 本架构封顶（industrial 工业基建 + multi-agent 多智能体）。
+> 完整覆盖：learn 建心智 → 4 大支柱（framework/RAG/memory/tool）→ 3 本工程实战（eval/debug/enterprise）→ 3 本面试冲刺（system design + live coding + behavioral）→ 3 本进阶专项（infra/harness/对比）→ 3 本扩展速读（hermes/mcp/p1）→ 3 本必补（post-training/multimodal/benchmarks）→ 3 本架构封顶（industrial 工业基建 + multi-agent 多智能体 + saas 产品化）。
 
 > **🐹 想用 Go 服务调 agent？** → [`clients/go-client/`](clients/go-client/) · 零依赖纯 stdlib SDK · `cli.Chat` 阻塞 / `cli.ChatStream` 流式 · 4 个可跑 demo
 >

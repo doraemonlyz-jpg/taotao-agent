@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>桃桃 Agent · Senior Agent Engineer 23 本书学习手册</title>
-<meta name="description" content="从 0 到 senior agent engineer 面试 · 23 本完整手册 · 8 阶段学习路径 · 39000+ 行内容 · 520+ 道面试题 · 1220+ 词术语表 · 涵盖 LangGraph / RAG / Memory / Tool / Eval / Debug / 系统设计 / Live Coding / 企业级交付 / AI Infra / Harness Engineering / Hermes / MCP / P1 生产化加固 / 行为面 / Post-Training / Multimodal &amp; Voice / Agent Benchmarks / Industrial 工业基建 / Multi-Agent 架构 · 含 LLM 基础 30 题 / Cost-Latency 5 case / Security 30 招攻防 三大补丁">
+<title>桃桃 Agent · Senior Agent Engineer 24 本书学习手册</title>
+<meta name="description" content="从 0 到 senior agent engineer 面试 · 24 本完整手册 · 8 阶段学习路径 · 40000+ 行内容 · 550+ 道面试题 · 1280+ 词术语表 · 涵盖 LangGraph / RAG / Memory / Tool / Eval / Debug / 系统设计 / Live Coding / 企业级交付 / AI Infra / Harness Engineering / Hermes / MCP / P1 生产化加固 / 行为面 / Post-Training / Multimodal &amp; Voice / Agent Benchmarks / Industrial 工业基建 / Multi-Agent 架构 / SaaS 产品化 · 含 LLM 基础 30 题 / Cost-Latency 5 case / Security 30 招攻防 三大补丁">
 <!-- Favicon · Petit Prince's gold star -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230f1d35'/%3E%3Cpath d='M32 10 L 36 26 L 54 28 L 40 38 L 44 54 L 32 44 L 20 54 L 24 38 L 10 28 L 28 26 Z' fill='%23f4c95a' stroke='%23fff5d8' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -311,10 +311,11 @@ footer.foot a:hover { color: var(--rust); }
     </a>
     <div class="nav-links">
       <a href="#path">学习路径</a>
-      <a href="#books">23 本书</a>
+      <a href="#books">24 本书</a>
       <a href="#coverage">面试覆盖</a>
       <a href="#about">关于</a>
       <a href="multi-agent.html">Multi-Agent</a>
+      <a href="saas.html">SaaS 化</a>
       <a class="ttap-link" href="http://localhost:5180/" target="_blank" rel="noopener" title="打开配套 demo · 在线试玩 agent"><span class="ttap-mark">✦</span>TaotaoAgent</a>
       
     </div>
@@ -451,10 +452,10 @@ footer.foot a:hover { color: var(--rust); }
 
   <div class="container hero-inner">
     <div class="hero-eyebrow">Senior Agent Engineer<span class="sep">·</span>Interview Manual<span class="sep">·</span>2026</div>
-    <h1>从 <span class="strike">"会用 LangChain"</span><br>到 <em>"我能 ship 一个生产级 agent · 也能扛 senior 面"</em><br>的 <span class="underline-hand">21 本</span>完整手册</h1>
+    <h1>从 <span class="strike">"会用 LangChain"</span><br>到 <em>"我能 ship 一个生产级 agent · 也能扛 senior 面"</em><br>的 <span class="underline-hand">24 本</span>完整手册</h1>
     <p class="hero-lede">
-      把 senior agent engineer 面试需要的<em>全部知识</em>——技术 + 行为 + 项目深挖——系统化成 21 本互相关联的手册：
-      <strong>8 阶段学习路径 · 39000+ 行内容 · 520+ 道面试题 · 1220+ 词术语</strong>。
+      把 senior agent engineer 面试需要的<em>全部知识</em>——技术 + 行为 + 项目深挖 + 工业基建 + 多 agent + 产品化——系统化成 24 本互相关联的手册：
+      <strong>8 阶段学习路径 · 40000+ 行内容 · 550+ 道面试题 · 1280+ 词术语</strong>。
       新增 4 本必补章节（<em>行为面 · Post-Training · Multimodal &amp; Voice · Agent Benchmarks</em>）+ 3 大补丁
       （LLM 基础 30 题速查 / Cost-Latency 5 case / Security 30 招攻防），覆盖 Anthropic / OpenAI / Stripe / Cursor 真实面试流程。
       配套一个真实可跑的 demo（<code>POST /chat</code> graph + <code>POST /chat/v2</code> harness + MCP 双向 + P1 加固）。
@@ -465,7 +466,7 @@ footer.foot a:hover { color: var(--rust); }
     </div>
     <div class="hero-cta">
       <a href="#path" class="btn btn-primary bare">★ 按路径开始学</a>
-      <a href="#books" class="btn btn-secondary bare">🗂️ 直接看 21 本</a>
+      <a href="#books" class="btn btn-secondary bare">🗂️ 直接看 24 本</a>
     </div>
   </div>
 </section>
@@ -474,10 +475,10 @@ footer.foot a:hover { color: var(--rust); }
 <section class="stats">
   <div class="container">
     <div class="stats-grid">
-      <div class="stat"><span class="num">23</span><span class="label">完整手册</span><span class="stat-hand">+6 新章</span></div>
-      <div class="stat"><span class="num">39k+</span><span class="label">行内容</span></div>
-      <div class="stat"><span class="num">520+</span><span class="label">面试题</span></div>
-      <div class="stat"><span class="num">1.2k+</span><span class="label">词术语表</span></div>
+      <div class="stat"><span class="num">24</span><span class="label">完整手册</span><span class="stat-hand">+7 新章</span></div>
+      <div class="stat"><span class="num">40k+</span><span class="label">行内容</span></div>
+      <div class="stat"><span class="num">550+</span><span class="label">面试题</span></div>
+      <div class="stat"><span class="num">1.28k+</span><span class="label">词术语表</span></div>
       <div class="stat"><span class="num">3</span><span class="label">大补丁</span><span class="stat-hand">LLM/Cost/Sec</span></div>
       <div class="stat"><span class="num">8</span><span class="label">学习阶段</span></div>
     </div>
@@ -565,6 +566,12 @@ footer.foot a:hover { color: var(--rust); }
         <p>5 大模式 + 4 框架横评（LangGraph / AutoGen / CrewAI / Swarm）· "默认别用" 判断框架 · 4 大共性难题 · 30 题 · 配套 600 行可跑代码</p>
         <a href="multi-agent.html" class="qs-link bare">看《Multi-Agent 架构》</a>
       </div>
+      <div class="qs-card qs-gold">
+        <h4>🪐 把 demo 推成公开付费 SaaS</h4>
+        <div class="qs-title">"任意陌生人能注册付费 · 我还差什么"</div>
+        <p>11 phase 路线图（auth/JWT/多租户/TLS/外存化/沙箱/Stripe/GDPR/多区域/CI-CD）· 50 项上线 checklist · 30 题 · 配套 4 个 starter impl（auth / 多租户 memory / nginx / Dockerfile.prod）</p>
+        <a href="saas.html" class="qs-link bare">看《From Demo to Public SaaS》</a>
+      </div>
     </div>
   </div>
 </section>
@@ -575,7 +582,7 @@ footer.foot a:hover { color: var(--rust); }
     <div class="section-head">
       <div class="sec-eyebrow">📍 Learning Path</div>
       <h2>8 阶段 <em>13-20 周</em> 完整路径</h2>
-      <p class="sec-lede">从 0 到能投 senior agent engineer · 每阶段独立可学 · 含行为面 + 多模态 + post-training 必补 + 工业基建 + multi-agent 架构封顶</p>
+      <p class="sec-lede">从 0 到能投 senior agent engineer · 每阶段独立可学 · 含行为面 + 多模态 + post-training 必补 + 工业基建 + multi-agent 架构封顶 + SaaS 产品化路线图</p>
     </div>
 
     <div class="roadmap">
@@ -910,15 +917,15 @@ footer.foot a:hover { color: var(--rust); }
       </div>
     </div>
 
-    <!-- ============== Phase 8 · NEW (2026-05) · 架构封顶 ============== -->
+    <!-- ============== Phase 8 · NEW (2026-05) · 架构封顶 + 产品化 ============== -->
     <div class="phase" id="phase-8">
       <div class="phase-head">
         <div class="phase-num">08</div>
         <div class="phase-meta">
-          <h3>架构封顶 · <em>从 demo 到生产 · 从单 agent 到多 agent</em></h3>
-          <div class="phase-sub"><strong>目标</strong>：把单 agent 推到 production 下限（工业基建 17 件事），再讲清楚什么时候真的需要多 agent，以及 5 大模式 + 4 框架横评。<em>这两本是面试时拉开 senior 与中级的关键</em>——能讲清楚 "为什么默认别用 multi-agent" 比能讲多 agent 模式更值钱。</div>
+          <h3>架构封顶 + 产品化 · <em>从 demo 到生产 · 从生产到付费 SaaS</em></h3>
+          <div class="phase-sub"><strong>目标</strong>：把单 agent 推到 production 下限（工业基建 17 件事），再讲清楚什么时候真的需要多 agent（5 大模式 + 4 框架横评），最后再走完<em>从 demo 到任意陌生人能注册付费</em>的 11 phase 产品化路线（auth/多租户/TLS/外存化/沙箱/Stripe/合规）。<em>这三本是面试拉开 senior 与中级的关键</em>——能讲清楚 "为什么默认别用 multi-agent" 和 "上 Tier 3 公开 SaaS 必补的 8 件事" 比单纯讲架构模式更值钱。</div>
         </div>
-        <span class="phase-time">⏱ 各 60 分钟 · 配套全代码</span>
+        <span class="phase-time">⏱ 各 60-90 分钟 · 配套全代码</span>
       </div>
       <div class="book-grid">
         <a href="industrial.html" class="book-card featured bare">
@@ -941,6 +948,16 @@ footer.foot a:hover { color: var(--rust); }
           </div>
           <span class="bk-link">学多 agent</span>
         </a>
+        <a href="saas.html" class="book-card featured bare">
+          <div class="bk-row"><span class="bk-emoji">🪐</span><span class="bk-num has-new">Book 24 · NEW</span></div>
+          <h4>From Demo to Public SaaS · 11 phase 产品化路线图</h4>
+          <div class="bk-eng">JWT / 多租户 / TLS / 外存化 / 沙箱 / Stripe / GDPR / SOC2 / 多区 / on-call</div>
+          <p class="bk-desc">把 demo 推到<strong>任意陌生人能注册付费</strong>的程度。先界定 Tier 1/2/3 三种部署目标（个人 / 企业内部 / 公开 SaaS），再展开 11 phase 完整路线——auth (JWT/OAuth/SSO) · 多租户隔离 (per-tenant collection · #1 数据风险) · TLS + 反代 · 前端 prod build · 外存化 (Postgres+vector cloud+S3) · 横向扩展 · 沙箱 (gVisor/Firecracker) · 计费 (Stripe metered) · 合规 (GDPR/CCPA/SOC2) · 多区域 (Active-Active vs Passive) · 运维 (CI/CD+on-call+status page)。50 项上线 checklist · 30 题 · 60 词 · 配套 4 个 starter impl（auth · 多租户 memory · nginx prod conf · frontend Dockerfile.prod）。</p>
+          <div class="bk-meta">
+            <span><strong>11</strong> phase</span><span><strong>50</strong> checklist</span><span><strong>30</strong> 题</span>
+          </div>
+          <span class="bk-link">学产品化</span>
+        </a>
       </div>
     </div>
   </div>
@@ -950,8 +967,8 @@ footer.foot a:hover { color: var(--rust); }
 <section class="section" id="books" style="background: var(--paper-2); padding-top: 4rem;">
   <div class="container">
     <div class="section-head">
-      <div class="sec-eyebrow">📚 All 23 Books</div>
-      <h2>23 本书 <em>一览表</em></h2>
+      <div class="sec-eyebrow">📚 All 24 Books</div>
+      <h2>24 本书 <em>一览表</em></h2>
       <p class="sec-lede">不按学习顺序 · 按主题快速扫 · ★ = 2026-05 必补</p>
     </div>
     <div class="book-grid">
@@ -978,6 +995,7 @@ footer.foot a:hover { color: var(--rust); }
       <a href="benchmarks.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">⚖️</span><span class="bk-num has-new">21 ★</span></div><h4>Agent Benchmarks 阅读手册</h4><p class="bk-desc">SWE-bench (Verified/Lite/Live) · GAIA · BFCL · τ-bench · WebArena · OSWorld · 5 陷阱 · 30 题</p><span class="bk-link">读</span></a>
       <a href="industrial.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🛠️</span><span class="bk-num has-new">22 ★</span></div><h4>工业化基建手册 · 反编译 Claude Code</h4><p class="bk-desc">17 features 全讲 · plan mode / permission / hooks / AGENTS.md / slash / diff preview / subagent.md / tool offset / 3-tier settings · 8 反编译结论 · 30 题</p><span class="bk-link">读</span></a>
       <a href="multi-agent.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🤝</span><span class="bk-num has-new">23 ★</span></div><h4>Multi-Agent Architecture</h4><p class="bk-desc">5 大模式（hierarchical / hub-and-spoke / debate / vote / handoff / reflection）+ 4 框架横评（LangGraph / AutoGen / CrewAI / Swarm）+ "默认别用" 判断框架 + 4 大共性难题 · 30 题 · 60 词 · 配套 600 行可跑代码</p><span class="bk-link">读</span></a>
+      <a href="saas.html" class="book-card bare"><div class="bk-row"><span class="bk-emoji">🪐</span><span class="bk-num has-new">24 ★</span></div><h4>From Demo to Public SaaS</h4><p class="bk-desc">11 phase 产品化路线图 · auth/JWT · 多租户隔离 · TLS+反代 · 前端 prod build · 外存化(pg+vector cloud+S3) · 横向扩展 · 沙箱(gVisor/Firecracker) · Stripe 计费 · GDPR/SOC2 合规 · 多区 DR · CI/CD+on-call · 50 项上线 checklist · 30 题 · 60 词 · 配套 4 starter impl</p><span class="bk-link">读</span></a>
     </div>
   </div>
 </section>
@@ -1028,6 +1046,7 @@ footer.foot a:hover { color: var(--rust); }
         <tr style="background:rgba(244,201,90,.04);"><td>⚖️ Agent Benchmarks ★</td><td class="x">●</td><td class="x">●</td><td class="dim">·</td><td>○</td><td>○</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td></tr>
         <tr style="background:rgba(244,201,90,.04);"><td>🛠️ 工业化基建 ★</td><td class="x">●</td><td class="x">●</td><td class="x">●</td><td class="x">●</td><td class="x">●</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td></tr>
         <tr style="background:rgba(244,201,90,.04);"><td>🤝 Multi-Agent ★</td><td class="x">●</td><td class="x">●</td><td class="x">●</td><td>○</td><td>○</td><td class="dim">·</td><td class="dim">·</td><td class="dim">·</td></tr>
+        <tr style="background:rgba(244,201,90,.04);"><td>🪐 SaaS 产品化 ★</td><td>○</td><td class="x">●</td><td>○</td><td>○</td><td class="x">●</td><td class="x">●</td><td>○</td><td class="dim">·</td></tr>
       </tbody>
     </table>
     <p style="text-align:center;font-size:0.78rem;color:var(--ink-mute);font-family:var(--font-sans);margin-top:1rem;">
@@ -1044,7 +1063,7 @@ footer.foot a:hover { color: var(--rust); }
       <h2>关于这套手册</h2>
     </div>
     <div style="max-width: 42em; margin: 0 auto;">
-      <p>这套 23 本手册是为 <strong>2026 年 senior agent engineer 面试</strong>系统化整理的——不是教程合集 · 是按 "从 0 到能上岗" 路径设计的<em>完整体系</em>。2026-05 新增 4 本 senior 必补章节（行为面 / Post-Training / Multimodal &amp; Voice / Agent Benchmarks）+ 3 大补丁（LLM 30 题速查 / Cost-Latency 5 case / Security 30 招攻防）+ Book 22 工业化基建（反编译 Claude Code 17 features）+ Book 23 Multi-Agent Architecture（5 模式 + 4 框架横评 + "默认别用" 判断框架）。</p>
+      <p>这套 24 本手册是为 <strong>2026 年 senior agent engineer 面试</strong>系统化整理的——不是教程合集 · 是按 "从 0 到能上岗" 路径设计的<em>完整体系</em>。2026-05 新增 4 本 senior 必补章节（行为面 / Post-Training / Multimodal &amp; Voice / Agent Benchmarks）+ 3 大补丁（LLM 30 题速查 / Cost-Latency 5 case / Security 30 招攻防）+ Book 22 工业化基建（反编译 Claude Code 17 features）+ Book 23 Multi-Agent Architecture（5 模式 + 4 框架横评 + "默认别用" 判断框架）+ Book 24 From Demo to Public SaaS（11 phase 产品化路线图 + 50 项上线 checklist + 配套 auth / 多租户 / nginx / Dockerfile.prod 4 starter impl）。</p>
 
       <h4 style="font-family:var(--font-display);font-weight:500;font-size:1.3rem;margin:2rem 0 0.6rem;color:var(--ink);">📐 设计原则</h4>
       <ol>
@@ -1062,7 +1081,7 @@ footer.foot a:hover { color: var(--rust); }
       <table style="width:100%;border-collapse:collapse;margin-top:0.8rem;font-size:0.92rem;background:var(--paper-card);border:1px solid var(--rule);border-radius:8px;overflow:hidden;box-shadow:var(--shadow-soft);">
         <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">总行数</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>~38,000</strong></td></tr>
         <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">章节</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>~210</strong></td></tr>
-        <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">面试题</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>520+</strong></td></tr>
+        <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">面试题</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>550+</strong></td></tr>
         <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">术语词</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>1,100+</strong></td></tr>
         <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">SVG 图</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>50+</strong></td></tr>
         <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">Failure mode / 翻车 / 面试三档</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>75+</strong></td></tr>
@@ -1097,7 +1116,7 @@ footer.foot a:hover { color: var(--rust); }
   </svg>
   <div class="container">
     <h2>准备好开始 <em>从 0 到 senior</em> 了吗？</h2>
-    <p class="lede">推荐顺序：先读 <strong>Book 01 (应用入门)</strong> · 30 分钟建立认知 · 然后看 <strong>Book 02 (实现详解)</strong> 跟 demo 跑一遍 · 按 Phase 2 选你最缺的支柱 · 临考前用 <strong>Book 18 (Behavioral)</strong> 准备项目深挖剧本 · 想直接学生产化看 <strong>Book 17 (P1)</strong> · 想进一步看详细工业化基建看 <strong>Book 22 (工业化手册)</strong> · 多 agent 架构面试看 <strong>Book 23 (Multi-Agent)</strong> · 面 Anthropic / OpenAI 加读 <strong>Book 19 (Post-Training)</strong> + <strong>Book 21 (Benchmarks)</strong>。</p>
+    <p class="lede">推荐顺序：先读 <strong>Book 01 (应用入门)</strong> · 30 分钟建立认知 · 然后看 <strong>Book 02 (实现详解)</strong> 跟 demo 跑一遍 · 按 Phase 2 选你最缺的支柱 · 临考前用 <strong>Book 18 (Behavioral)</strong> 准备项目深挖剧本 · 想直接学生产化看 <strong>Book 17 (P1)</strong> · 想进一步看详细工业化基建看 <strong>Book 22 (工业化手册)</strong> · 多 agent 架构面试看 <strong>Book 23 (Multi-Agent)</strong> · 想把 demo 推成公开付费 SaaS 看 <strong>Book 24 (SaaS 产品化)</strong> · 面 Anthropic / OpenAI 加读 <strong>Book 19 (Post-Training)</strong> + <strong>Book 21 (Benchmarks)</strong>。</p>
     <div class="cta-row">
       <a href="learn.html" class="btn bare">📖 从 Book 01 开始</a>
       <a href="behavioral.html" class="btn bare">🦊 临考练 Book 18 行为面</a>
@@ -1117,7 +1136,7 @@ footer.foot a:hover { color: var(--rust); }
     </div>
     <div class="row" style="margin-top:0.6rem;">
       <span>Set in Fraunces · Lora · Outfit · Caveat · JetBrains Mono</span>
-      <span>23 books · 39000+ lines · 520+ Qs · 1220+ terms</span>
+      <span>24 books · 40000+ lines · 550+ Qs · 1280+ terms</span>
     </div>
   </div>
 </footer>

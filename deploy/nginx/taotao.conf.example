@@ -1,0 +1,142 @@
+# taotao-agent · nginx production config example
+#
+# What this gives you:
+#   - TLS termination (HTTPS) on :443 with HTTP→HTTPS redirect on :80
+#   - Reverse proxy to FastAPI backend (uvicorn on :8000)
+#   - SSE streaming compatibility (no buffering, long timeouts)
+#   - Static frontend served directly (built React app)
+#   - Security headers (HSTS, CSP, X-Frame-Options, X-Content-Type-Options,
+#     Referrer-Policy, Permissions-Policy)
+#   - Per-IP request limit zone (extra defence on top of slowapi)
+#
+# Usage:
+#   1. Replace `your-domain.example.com` with your real domain.
+#   2. Get certs (certbot --nginx -d your-domain.example.com).
+#   3. Drop frontend `npm run build` output at /var/www/taotao-agent.
+#   4. sudo nginx -t && sudo systemctl reload nginx
+#
+# See Book 24 · Phase 3 (TLS) and Phase 4 (Frontend prod build).
+
+# ---------------------- per-IP rate-limit zone --------------------------
+# 10 req/s per IP, burst 20.  Tuned conservatively · raise if you have
+# legit power users.
+limit_req_zone $binary_remote_addr zone=taotao_api:10m rate=10r/s;
+
+# ---------------------- HTTP → HTTPS upgrade ---------------------------
+server {
+    listen 80;
+    listen [::]:80;
+    server_name your-domain.example.com;
+
+    # Let's Encrypt validation
+    location /.well-known/acme-challenge/ { root /var/www/certbot; }
+
+    # Everything else → HTTPS
+    location / { return 301 https://$host$request_uri; }
+}
+
+# ---------------------- HTTPS main server ------------------------------
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name your-domain.example.com;
+
+    # ====== TLS · Mozilla "intermediate" config (Apr 2025) ============
+    ssl_certificate     /etc/letsencrypt/live/your-domain.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/your-domain.example.com/privkey.pem;
+    ssl_session_timeout 1d;
+    ssl_session_cache shared:MozSSL:10m;  # ~40000 sessions
+    ssl_session_tickets off;
+    ssl_protocols TLSv1.3 TLSv1.2;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers off;
+
+    # OCSP stapling
+    ssl_stapling on;
+    ssl_stapling_verify on;
+    resolver 1.1.1.1 1.0.0.1 valid=300s;
+    resolver_timeout 5s;
+
+    # ====== Security headers ==========================================
+    # HSTS · 2 years + preload (only enable preload after you're 100% sure)
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
+    # CSP · adjust connect-src for your API + LLM endpoints
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://api.openai.com https://api.anthropic.com; frame-ancestors 'none';" always;
+
+    # ====== Body limits ==============================================
+    # Allow large JSON payloads (long chat, file uploads via tool)
+    client_max_body_size 10m;
+    client_body_timeout 60s;
+
+    # ====== Static frontend ==========================================
+    # `npm run build` output goes here · nginx serves directly
+    root /var/www/taotao-agent;
+    index index.html;
+
+    # SPA fallback for client-side routing
+    location / {
+        try_files $uri $uri/ /index.html;
+        # Aggressive cache for content-hashed assets
+        location ~* \.(js|css|woff2?|ttf|svg|png|jpg|webp)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+    }
+
+    # ====== Backend API · /api/* → uvicorn :8000 ======================
+    location /api/ {
+        # Rate limit · 10 r/s per IP, burst 20, no delay (return 503 if over)
+        limit_req zone=taotao_api burst=20 nodelay;
+
+        # Strip /api prefix when forwarding to backend
+        rewrite ^/api/(.*)$ /$1 break;
+        proxy_pass http://127.0.0.1:8000;
+
+        # ---- Standard proxy headers ----
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host  $host;
+
+        # ---- SSE / long polling friendly ----
+        proxy_buffering off;             # don't buffer SSE chunks
+        proxy_cache off;
+        proxy_set_header Connection "";  # disable keep-alive close races
+        chunked_transfer_encoding on;
+        proxy_read_timeout  3600s;       # SSE can stay open up to 1 h
+        proxy_send_timeout  3600s;
+        keepalive_timeout   75s;
+    }
+
+    # ====== /metrics · Prometheus scrape (allow only Prom IPs) ========
+    location /api/metrics {
+        # allow 10.0.0.0/8;  # or your Prometheus subnet
+        # deny all;
+        rewrite ^/api/metrics$ /metrics break;
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    # ====== /docs · OpenAPI Swagger (lock down in real prod) =========
+    location /api/docs {
+        # auth_basic "ops only";
+        # auth_basic_user_file /etc/nginx/.htpasswd-ops;
+        rewrite ^/api/docs$ /docs break;
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    # ====== Health (cheap · no rate limit) ===========================
+    location = /api/health {
+        access_log off;
+        rewrite ^/api/health$ /health break;
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    # ====== Default deny on dotfiles ==================================
+    location ~ /\. { deny all; }
+}

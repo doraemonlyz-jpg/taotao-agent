@@ -1,0 +1,109 @@
+# taotao-agent · production frontend Dockerfile
+#
+# Multi-stage:
+#   1. node:22-alpine  · build the React app (vite production bundle)
+#   2. nginx:1.27-alpine  · serve the static dist + handle SPA routing
+#
+# Why not vite preview / vite dev?
+#   - vite dev = HMR + sourcemaps + no minify · NOT for prod (slow, leaks code)
+#   - vite preview = "smoke test the build" · single-process, no security headers
+#   - nginx-as-CDN-edge = right answer · gzip/brotli, immutable cache, sendfile
+#
+# Build:
+#   docker build -t taotao-frontend:prod -f Dockerfile.prod .
+# Run (standalone for testing):
+#   docker run -p 8080:80 taotao-frontend:prod
+# Run (behind real nginx · the recommended topology):
+#   docker run -d --name taotao-frontend taotao-frontend:prod
+#   # then your edge nginx proxies / → http://taotao-frontend
+#
+# In production we expect this container to sit behind another nginx
+# (or Cloudflare / AWS ALB) that terminates TLS · see deploy/nginx/.
+
+# ====================================================================
+# Stage 1 · build
+# ====================================================================
+FROM node:22-alpine AS builder
+
+WORKDIR /app
+
+# Install deps first · maximises Docker layer cache hits when only
+# source files change.
+COPY package.json package-lock.json* ./
+RUN npm ci --no-audit --no-fund
+
+# Copy source after deps to keep the dep layer warm
+COPY . .
+
+# Build args: API base + docs URL · injected at build time as VITE_*
+# vars (vite reads VITE_* from env and inlines into the bundle).
+ARG VITE_API_BASE=/api
+ARG VITE_DOCS_URL=/api/tutorial/index.html
+ENV VITE_API_BASE=${VITE_API_BASE}
+ENV VITE_DOCS_URL=${VITE_DOCS_URL}
+
+# tsc -b && vite build · package.json's "build" script
+RUN npm run build
+
+# Sanity: dist/ must exist
+RUN test -d /app/dist && test -f /app/dist/index.html
+
+# ====================================================================
+# Stage 2 · serve
+# ====================================================================
+FROM nginx:1.27-alpine AS runtime
+
+# Drop the default nginx welcome page
+RUN rm -rf /usr/share/nginx/html/*
+
+# Inline minimal nginx config · SPA fallback + immutable asset cache +
+# gzip on.  In prod, the edge nginx (deploy/nginx/taotao.conf.example)
+# does TLS / security headers / rate limit · this layer is just static.
+RUN cat > /etc/nginx/conf.d/default.conf <<'EOF'
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # gzip · text-y assets only
+    gzip on;
+    gzip_types text/plain text/css application/javascript application/json image/svg+xml;
+    gzip_min_length 256;
+
+    # SPA fallback for client-side routing
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Hashed assets · 1y immutable cache (vite hashes filenames)
+    location ~* \.(js|css|woff2?|ttf|svg|png|jpg|webp)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+
+    # Healthcheck · cheap
+    location = /healthz {
+        access_log off;
+        return 200 "ok\n";
+        add_header Content-Type text/plain;
+    }
+
+    # Reject hidden / dotfiles
+    location ~ /\. { deny all; }
+}
+EOF
+
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Run as non-root · nginx will drop priv after binding 80 if you uncomment
+# this and add a sidecar that binds 8080 instead.  Default nginx image
+# already runs worker as nginx user · master needs root for port 80.
+
+EXPOSE 80
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget -qO- http://127.0.0.1/healthz || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]

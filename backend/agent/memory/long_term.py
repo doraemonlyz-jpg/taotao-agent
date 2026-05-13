@@ -45,17 +45,55 @@ def _parse_iso(s: str | None) -> datetime | None:
         return None
 
 
+def _safe_tenant(tenant_id: str | None) -> str:
+    """Coerce a tenant id into a chroma-collection-safe slug.
+
+    Chroma collection names must match `^[a-zA-Z0-9._-]{3,63}$`.  We also
+    enforce no leading/trailing dot.  Anything weird falls back to "default".
+    """
+    import re
+    raw = (tenant_id or "default").strip()
+    slug = re.sub(r"[^a-zA-Z0-9._-]+", "-", raw).strip(".-_")
+    if not (3 <= len(slug) <= 50):
+        return "default"
+    return slug or "default"
+
+
+def _collection_name(tenant: str) -> str:
+    return f"agent_memories_{_safe_tenant(tenant)}"
+
+
 class LongTermMemory:
-    def __init__(self) -> None:
+    """Per-tenant chroma-backed long-term memory.
+
+    Each tenant gets its own chroma collection · this is the
+    *namespacing* primitive that keeps user A's memories from leaking
+    into user B's `recall()` results.
+
+    Backward-compat: `LongTermMemory()` with no args = the legacy
+    "default" tenant collection · so existing single-tenant callers keep
+    working.  Multi-tenant callers should use `LongTermMemory.for_tenant(tid)`
+    or pass `tenant_id="..."` directly.
+    """
+
+    def __init__(self, tenant_id: str | None = None) -> None:
         cfg = get_settings()
+        self.tenant_id = _safe_tenant(tenant_id)
         self.client = chromadb.PersistentClient(
             path=str(cfg.chroma_dir),
             settings=ChromaSettings(anonymized_telemetry=False),
         )
+        # Per-tenant collection · `agent_memories_<tenant>` ·
+        # strong isolation, no risk of forgetting a where-clause filter.
         self.collection = self.client.get_or_create_collection(
-            name="agent_memories",
-            metadata={"hnsw:space": "cosine"},
+            name=_collection_name(self.tenant_id),
+            metadata={"hnsw:space": "cosine", "tenant": self.tenant_id},
         )
+
+    @classmethod
+    def for_tenant(cls, tenant_id: str | None) -> "LongTermMemory":
+        """Convenience constructor · `mem = LongTermMemory.for_tenant(ident.tenant_id)`"""
+        return cls(tenant_id=tenant_id)
 
     def remember(self, text: str, kind: str = "fact", session_id: str | None = None) -> str:
         mem_id = str(uuid.uuid4())
