@@ -16,33 +16,33 @@
 
 :root {
   /* warm cream paper, very inviting */
-  --paper:        #f7f2e6;
-  --paper-2:      #efe7d2;
-  --paper-card:   #fdfaf1;
-  --ink:          #322d25;
-  --ink-soft:     #56504a;
-  --ink-mute:     #a09988;
-  --rule:         #d6cdb8;
-  --rule-soft:    #e8e0cd;
+  --paper:        #0f1d35;
+  --paper-2:      #162844;
+  --paper-card:   #1c3155;
+  --ink:          #f5ecd2;
+  --ink-soft:     #c8be9b;
+  --ink-mute:     #7e8aa6;
+  --rule:         #2c4570;
+  --rule-soft:    #1f3458;
 
   /* friendly accents — used sparingly */
-  --leaf:         #7c9f7d;     /* concept / learn */
-  --leaf-soft:    #e7ecd8;
-  --rust:         #cb7d61;     /* important / tip */
-  --rust-soft:    #f3dfd0;
-  --sky:          #82a9c4;     /* code / tech */
-  --sky-soft:     #e6edf2;
-  --plum:         #a690b1;     /* analogy */
-  --plum-soft:    #ede5ee;
-  --gold:         #c8a061;     /* interview / Q&A */
-  --gold-soft:    #f1e3b9;
+  --leaf:         #8eb58f;     /* concept / learn */
+  --leaf-soft:    #1d3a38;
+  --rust:         #e08e6f;     /* important / tip */
+  --rust-soft:    #3a2a22;
+  --sky:          #6a96bc;     /* code / tech */
+  --sky-soft:     #1f3050;
+  --plum:         #c0a3d1;     /* analogy */
+  --plum-soft:    #2a1f3a;
+  --gold:         #f4c95a;     /* interview / Q&A */
+  --gold-soft:    #3a2f1f;
 
-  --code-bg:      #f0e8d3;
-  --code-fg:      #322d25;
-  --code-key:     #cb7d61;
-  --code-str:     #7c9f7d;
-  --code-cmt:     #a09988;
-  --code-fn:      #a690b1;
+  --code-bg:      #0a1628;
+  --code-fg:      #f5ecd2;
+  --code-key:     #e08e6f;
+  --code-str:     #8eb58f;
+  --code-cmt:     #7e8aa6;
+  --code-fn:      #c0a3d1;
 
   --font-display: "Fraunces", "Times New Roman", serif;
   --font-body:    "Lora", "Iowan Old Style", Georgia, serif;
@@ -57,7 +57,7 @@ body {
   margin: 0;
   background:
     radial-gradient(ellipse at top left, rgba(215,200,165,0.12), transparent 50%),
-    radial-gradient(ellipse at bottom right, rgba(180,195,215,0.08), transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(140,180,220,0.08), transparent 50%),
     var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
@@ -68,8 +68,8 @@ body {
 :lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
 .book-body p, .book-body li { color: var(--ink-soft); }
 
-a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(181,104,72,0.4); }
-a:hover { background: rgba(181,104,72,0.08); }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(244,201,90,0.4); }
+a:hover { background: rgba(244,201,90,0.08); }
 em { font-style: italic; color: var(--leaf); font-weight: 500; }
 strong { font-weight: 600; color: var(--ink); }
 
@@ -191,7 +191,7 @@ strong { font-weight: 600; color: var(--ink); }
 }
 .toc-foot a {
   color: var(--ink-mute);
-  border-bottom-color: rgba(160,153,136,0.3);
+  border-bottom-color: rgba(44,69,112,0.3);
 }
 .toc-foot a:hover { color: var(--rust); }
 
@@ -560,7 +560,7 @@ tr:hover td { background: rgba(215,200,165,0.13); }
   border-radius: 12px;
   padding: 1.6rem 1.4rem 1.2rem;
   margin: 1.4rem 0 1.8rem;
-  box-shadow: 0 1px 3px rgba(50,45,37,0.04);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 .figure svg { display: block; width: 100%; height: auto; max-width: 760px; margin: 0 auto; }
 .figure figcaption {
@@ -576,7 +576,7 @@ tr:hover td { background: rgba(215,200,165,0.13); }
 
 /* SVG primitives — shared across all figures */
 .fig-box       { fill: var(--paper-card); stroke: var(--ink-soft); stroke-width: 1.5; }
-.fig-box-soft  { fill: #f0e8d3; stroke: var(--rule); stroke-width: 1.2; }
+.fig-box-soft  { fill: #0a1628; stroke: var(--rule); stroke-width: 1.2; }
 .fig-box-leaf  { fill: var(--leaf-soft); stroke: var(--leaf); stroke-width: 1.5; }
 .fig-box-rust  { fill: var(--rust-soft); stroke: var(--rust); stroke-width: 1.5; }
 .fig-box-sky   { fill: var(--sky-soft); stroke: var(--sky); stroke-width: 1.5; }
@@ -1034,10 +1034,10 @@ executor.invoke({<span class="s">"input"</span>: <span class="s">"北京 - 上�
         <svg viewBox="0 0 760 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Agent 10-component reference architecture">
           <defs>
             <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#a09988"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#7e8aa6"/>
             </marker>
             <marker id="arr-rust" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#cb7d61"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#e08e6f"/>
             </marker>
           </defs>
 
@@ -1192,7 +1192,7 @@ llm_with_tools = llm.bind_tools([calculator])
         <svg viewBox="0 0 760 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tool calling step-by-step flow">
           <defs>
             <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#a09988"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#7e8aa6"/>
             </marker>
           </defs>
 
@@ -1379,10 +1379,10 @@ llm_with_tools = llm.bind_tools([calculator])
         <svg viewBox="0 0 760 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Supervisor multi-agent topology">
           <defs>
             <marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#a09988"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#7e8aa6"/>
             </marker>
             <marker id="arr3r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#cb7d61"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#e08e6f"/>
             </marker>
           </defs>
 
@@ -1871,10 +1871,10 @@ v = client.embeddings.<span class="f">create</span>(
         <svg viewBox="0 0 760 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="RAG vs Agent comparison">
           <defs>
             <marker id="arr5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#a09988"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#7e8aa6"/>
             </marker>
             <marker id="arr5r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#cb7d61"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#e08e6f"/>
             </marker>
           </defs>
 
@@ -2113,10 +2113,10 @@ v = client.embeddings.<span class="f">create</span>(
         <svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Supervisor pattern with state loop">
           <defs>
             <marker id="arr7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#a09988"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#7e8aa6"/>
             </marker>
             <marker id="arr7r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#cb7d61"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#e08e6f"/>
             </marker>
           </defs>
 

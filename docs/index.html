@@ -11,22 +11,22 @@
 <style>
 :root {
   /* paper · clean morning light · soft mint cream (小清新基底) */
-  --paper: #f7f2e6; --paper-2: #efe7d2; --paper-card: #fdfaf1;
+  --paper: #0f1d35; --paper-2: #162844; --paper-card: #1c3155;
   /* ink · charcoal with slight cool tint */
-  --ink: #322d25; --ink-soft: #56504a; --ink-mute: #a09988;
-  --rule: #d6cdb8; --rule-soft: #e8e0cd;
+  --ink: #f5ecd2; --ink-soft: #c8be9b; --ink-mute: #7e8aa6;
+  --rule: #2c4570; --rule-soft: #1f3458;
   /* nature palette · sage / pastel forest */
-  --leaf: #7c9f7d; --leaf-deep: #5a7e5d; --leaf-soft: #e7ecd8;
-  --moss: #99ad9a; --moss-soft: #e6ecd8;
+  --leaf: #8eb58f; --leaf-deep: #6e926d; --leaf-soft: #1d3a38;
+  --moss: #7e9b81; --moss-soft: #1d3530;
   /* warm accent · soft coral instead of brick rust */
-  --rust: #cb7d61; --rust-soft: #f3dfd0; --terra: #b56848;
+  --rust: #e08e6f; --rust-soft: #3a2a22; --terra: #c97852;
   /* sky · pale watercolor */
-  --sky:  #a8c2d4; --sky-deep: #82a9c4; --sky-soft:  #e6edf2;
-  --night: #2a4565; --night-deep: #1d3050;
+  --sky:  #8db8d8; --sky-deep: #6a96bc; --sky-soft:  #1f3050;
+  --night: #08152a; --night-deep: #050d1c;
   /* misc · all toned down for 小清新 */
-  --plum: #a690b1; --plum-soft: #ede5ee;
-  --gold: #d4b272; --gold-soft: #f1e3b9; --gold-warm: #e9c882;
-  --teal: #83a8a0; --teal-soft: #e2ece7;
+  --plum: #c0a3d1; --plum-soft: #2a1f3a;
+  --gold: #e6c478; --gold-soft: #3a2f1f; --gold-warm: #f7d987;
+  --teal: #6e9a92; --teal-soft: #1c2e2c;
   --coral: #e8a195; --coral-soft: #fbe4dd;
 
   --font-display: "Fraunces", "Times New Roman", serif;
@@ -36,26 +36,27 @@
   --font-hand: "Caveat", "Bradley Hand", cursive;
   --font-zh: "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
 
-  --shadow-soft: 0 4px 14px rgba(50,45,37,.08), 0 1px 3px rgba(50,45,37,.05);
-  --shadow-cloud: 0 8px 28px rgba(50,45,37,.10), 0 2px 6px rgba(50,45,37,.06);
+  --shadow-soft: 0 6px 20px rgba(0,0,0,.40), 0 1px 3px rgba(0,0,0,.30);
+  --shadow-cloud: 0 12px 38px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.30);
+  --rose: #e09bab; --rose-soft: #3a1f25;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 
-/* paper texture · whisper-soft grain · cool palette */
+/* night-sky paper · twilight gradient + faint nebula washes + grain */
 body {
   margin: 0;
   background:
-    radial-gradient(ellipse 60% 40% at 15% 8%,  rgba(180,195,215,.20), transparent 60%),
-    radial-gradient(ellipse 55% 38% at 85% 18%, rgba(215,165,145,.13), transparent 60%),
-    radial-gradient(ellipse 70% 50% at 50% 100%, rgba(160,180,140,.14), transparent 55%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.42 0 0 0 0 0.36 0 0 0 0.030 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 60% 40% at 12% 6%,   rgba(244,201,90,.10), transparent 65%),
+    radial-gradient(ellipse 55% 38% at 88% 14%,  rgba(192,163,209,.12), transparent 65%),
+    radial-gradient(ellipse 70% 45% at 50% 100%, rgba(224,142,111,.10), transparent 55%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='6'/%3E%3CfeColorMatrix values='0 0 0 0 0.95 0 0 0 0 0.92 0 0 0 0 0.82 0 0 0 0.025 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E"),
     var(--paper);
   color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.7;
 }
 :lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
-a { color: var(--terra); text-decoration: none; border-bottom: 1px solid rgba(181,104,72,.45); transition: all .15s; }
-a:hover { background: rgba(181,104,72,.08); }
+a { color: var(--terra); text-decoration: none; border-bottom: 1px solid rgba(244,201,90,.45); transition: all .15s; }
+a:hover { background: rgba(244,201,90,.08); }
 a.bare { border-bottom: none; }
 em { font-style: italic; color: var(--leaf-deep); font-weight: 500; }
 strong { font-weight: 600; color: var(--ink); }
@@ -64,7 +65,7 @@ strong { font-weight: 600; color: var(--ink); }
 @media (max-width: 720px) { .container { padding: 0 1.2rem; } }
 
 /* ===== nav bar ===== */
-.nav { padding: 1.2rem 0; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: rgba(247,250,243,.92); backdrop-filter: blur(10px); z-index: 100; }
+.nav { padding: 1.2rem 0; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: rgba(15,29,53,.85); backdrop-filter: blur(10px); z-index: 100; }
 .nav-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
 .nav-brand { font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 1.35rem; color: var(--ink); border: none; display: inline-flex; align-items: center; gap: .55rem; }
 .nav-brand .dot { color: var(--rust); }
@@ -72,53 +73,78 @@ strong { font-weight: 600; color: var(--ink); }
 .nav-links { display: flex; gap: 1.5rem; font-family: var(--font-sans); font-size: 0.9rem; }
 .nav-links a { color: var(--ink-mute); border-bottom: none; font-weight: 500; }
 .nav-links a:hover { color: var(--rust); background: none; }
-.nav-cta { font-family: var(--font-sans); font-size: 0.85rem; padding: 0.45rem 1.1rem; background: var(--terra); color: white !important; border-radius: 999px; border: none; font-weight: 500; box-shadow: 0 2px 6px rgba(181,104,72,.28); }
+.nav-cta { font-family: var(--font-sans); font-size: 0.85rem; padding: 0.45rem 1.1rem; background: var(--terra); color: white !important; border-radius: 999px; border: none; font-weight: 500; box-shadow: 0 2px 6px rgba(244,201,90,.28); }
 .nav-cta:hover { background: #b56344; }
 
 /* ===== hero · totoro sky + rolling hills ===== */
 .hero {
   padding: 5.5rem 0 8rem; position: relative; overflow: hidden;
   background:
-    linear-gradient(180deg, rgba(168,194,212,.30) 0%, rgba(168,194,212,.10) 35%, transparent 65%);
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(140,180,220,.18) 0%, transparent 55%),
+    linear-gradient(180deg, #08152a 0%, #0f1d35 55%, #1a1530 100%);
 }
-/* Ghibli watercolor style — soft fills, drift animation, gentle shadows */
+/* Petit Prince night-sky — gold stars, crescent moon, asteroid B-612 */
 .hero-sky { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-.hero-sky .cloud { fill: var(--paper-card); opacity: .88; filter: drop-shadow(0 4px 8px rgba(74,143,196,.10)); }
-.hero-sky .cloud-2 { opacity: .68; }
-.hero-sky .leaf-drift { fill: var(--leaf); opacity: .60; }
-.hero-sky .leaf-drift-2 { fill: var(--moss); opacity: .55; }
-.hero-sky .star { fill: var(--gold-warm); opacity: .75; }
-@keyframes drift { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(20px, 8px); } }
-@keyframes sway { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(8deg); } }
-.hero-sky .cloud-grp-a { animation: drift 22s ease-in-out infinite; transform-origin: center; }
-.hero-sky .cloud-grp-b { animation: drift 28s ease-in-out infinite reverse; }
+.hero-sky .star { fill: var(--gold-warm); }
+.hero-sky .star-faint { fill: var(--gold-warm); opacity: .45; }
+.hero-sky .star-bright { fill: #fff5d8; filter: drop-shadow(0 0 4px rgba(244,201,90,.65)); }
+.hero-sky .moon { fill: #f7d987; opacity: .92; filter: drop-shadow(0 0 18px rgba(244,201,90,.45)); }
+.hero-sky .moon-shadow { fill: #1c2748; }
+.hero-sky .planet-asteroid { fill: #6e926d; }
+.hero-sky .planet-stripe { fill: #4f7a5d; opacity: .7; }
+.hero-sky .planet-edge { fill: none; stroke: #8eb58f; stroke-width: 1; opacity: .6; }
+.hero-sky .prince-body { fill: #f4c95a; }
+.hero-sky .prince-scarf { fill: #e08e6f; }
+.hero-sky .prince-leg, .hero-sky .prince-arm { fill: none; stroke: #f4c95a; stroke-width: 2; stroke-linecap: round; }
+.hero-sky .rose-stem { fill: none; stroke: #6e926d; stroke-width: 1.6; stroke-linecap: round; }
+.hero-sky .rose-bud { fill: var(--rose); }
+.hero-sky .leaf-drift { fill: #6e926d; opacity: .55; }
+.hero-sky .leaf-drift-2 { fill: #8eb58f; opacity: .45; }
+.hero-sky .baobab { fill: none; stroke: #2c4570; stroke-width: 2; stroke-linecap: round; opacity: .7; }
+.hero-sky .baobab-crown { fill: #1f3458; opacity: .8; stroke: #2c4570; stroke-width: 1; }
+.hero-sky .hat-boa { fill: none; stroke: var(--ink-mute); stroke-width: 1.4; opacity: .55; }
+@keyframes twinkle { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+@keyframes twinkle-soft { 0%, 100% { opacity: .8; } 50% { opacity: .25; } }
+@keyframes float-slow { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(8px, -4px); } }
+@keyframes sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(5deg); } }
+.hero-sky .star-bright { animation: twinkle 4s ease-in-out infinite; }
+.hero-sky .star { animation: twinkle-soft 6s ease-in-out infinite; }
+.hero-sky .star.s2 { animation-delay: 1.4s; }
+.hero-sky .star.s3 { animation-delay: 2.7s; }
+.hero-sky .star.s4 { animation-delay: 3.3s; }
+.hero-sky .star.s5 { animation-delay: 0.8s; }
+.hero-sky .asteroid-grp { animation: float-slow 7s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
 .hero-sky .leaf-grp { animation: sway 9s ease-in-out infinite; transform-origin: 50% 100%; }
 .hero-sky .leaf-grp-2 { animation: sway 12s ease-in-out infinite reverse; transform-origin: 50% 100%; }
 
-.hero-hill { position: absolute; left: 0; right: 0; bottom: -1px; width: 100%; height: 140px; pointer-events: none; z-index: 0; }
-.hero-hill .hill-back { fill: var(--moss-soft); }
-.hero-hill .hill-mid  { fill: var(--moss); opacity: .58; }
-.hero-hill .hill-front{ fill: var(--leaf); opacity: .38; }
-.hero-hill .tree { fill: var(--leaf-deep); opacity: .60; }
+/* Sahara dunes — replaces rolling hills */
+.hero-hill { position: absolute; left: 0; right: 0; bottom: -1px; width: 100%; height: 160px; pointer-events: none; z-index: 0; }
+.hero-hill .dune-back  { fill: #3a2a22; opacity: .85; }
+.hero-hill .dune-mid   { fill: #4a3528; opacity: .92; }
+.hero-hill .dune-front { fill: #2a1c14; }
+.hero-hill .dune-edge  { fill: none; stroke: #e08e6f; stroke-width: 1; opacity: .35; }
 
 .hero-inner { position: relative; z-index: 1; }
-.hero-eyebrow { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.1em; color: var(--rust); margin-bottom: 1.4rem; font-weight: 600; text-transform: uppercase; text-align: center; }
-.hero-eyebrow .sep { color: var(--rule); margin: 0 0.55rem; font-weight: 400; }
-.hero h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(2.6rem, 5.5vw, 4.6rem); line-height: 1.04; letter-spacing: -0.02em; margin: 0 auto 1.6rem; color: var(--ink); text-align: center; max-width: 14em; }
-.hero h1 em { color: var(--rust); font-style: italic; }
+.hero-eyebrow { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.1em; color: var(--gold); margin-bottom: 1.4rem; font-weight: 600; text-transform: uppercase; text-align: center; }
+.hero-eyebrow .sep { color: rgba(245,236,210,.35); margin: 0 0.55rem; font-weight: 400; }
+.hero h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(2.6rem, 5.5vw, 4.6rem); line-height: 1.04; letter-spacing: -0.02em; margin: 0 auto 1.6rem; color: #f7eece; text-align: center; max-width: 14em; text-shadow: 0 2px 16px rgba(0,0,0,.4); }
+.hero h1 em { color: var(--rose); font-style: italic; }
 .hero h1 .strike { position: relative; }
 .hero h1 .strike::after { content: ""; position: absolute; left: -3%; right: -3%; top: 53%; height: 5px; background:
-  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 5' preserveAspectRatio='none'%3E%3Cpath d='M0 3 Q 25 0 50 3 T 100 3 T 150 3 T 200 3' stroke='%238a948a' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") repeat-x; background-size: 200px 5px; transform: rotate(-1.5deg); }
-.hero h1 .underline-hand { position: relative; color: var(--leaf-deep); font-style: italic; }
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 5' preserveAspectRatio='none'%3E%3Cpath d='M0 3 Q 25 0 50 3 T 100 3 T 150 3 T 200 3' stroke='%23c8be9b' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") repeat-x; background-size: 200px 5px; transform: rotate(-1.5deg); }
+.hero h1 .underline-hand { position: relative; color: #f4c95a; font-style: italic; }
 .hero h1 .underline-hand::after { content: ""; position: absolute; left: 0; right: 0; bottom: -10px; height: 8px; background:
-  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 8' preserveAspectRatio='none'%3E%3Cpath d='M2 5 Q 50 0 100 4 T 198 4' stroke='%237eb287' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat; background-size: 100% 8px; opacity: .85; }
-.hero-lede { font-size: 1.18rem; color: var(--ink-soft); max-width: 38em; margin: 0 auto 2.5rem; line-height: 1.65; text-align: center; }
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 8' preserveAspectRatio='none'%3E%3Cpath d='M2 5 Q 50 0 100 4 T 198 4' stroke='%23f4c95a' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat; background-size: 100% 8px; opacity: .85; }
+.hero-lede { font-size: 1.18rem; color: rgba(245,236,210,.85); max-width: 38em; margin: 0 auto 2.5rem; line-height: 1.65; text-align: center; }
+.hero-quote { font-family: var(--font-hand); font-size: 1.35rem; color: var(--gold); text-align: center; margin: 0 auto 1.8rem; opacity: .85; transform: rotate(-1deg); max-width: 32em; }
+.hero-quote .qfr { font-style: italic; }
+.hero-quote .qattr { display: block; font-family: var(--font-sans); font-size: 0.7rem; color: rgba(245,236,210,.5); letter-spacing: .14em; text-transform: uppercase; margin-top: .35rem; transform: rotate(1deg); }
 .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem; }
-.btn { font-family: var(--font-sans); font-weight: 500; font-size: 0.95rem; padding: 0.85rem 1.7rem; border-radius: 999px; border: 2px solid var(--ink); cursor: pointer; transition: all .18s; box-shadow: var(--shadow-soft); }
-.btn-primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-.btn-primary:hover { background: var(--terra); border-color: var(--terra); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(181,104,72,.32); }
-.btn-secondary { background: rgba(255,253,246,.85); color: var(--ink); }
-.btn-secondary:hover { background: var(--ink); color: var(--paper); transform: translateY(-2px); }
+.btn { font-family: var(--font-sans); font-weight: 500; font-size: 0.95rem; padding: 0.85rem 1.7rem; border-radius: 999px; border: 2px solid var(--gold); cursor: pointer; transition: all .18s; box-shadow: 0 4px 14px rgba(0,0,0,.3); }
+.btn-primary { background: var(--gold); color: #0f1d35; border-color: var(--gold); }
+.btn-primary:hover { background: var(--gold-warm); border-color: var(--gold-warm); transform: translateY(-2px); box-shadow: 0 6px 22px rgba(244,201,90,.45); }
+.btn-secondary { background: transparent; color: #f5ecd2; border-color: rgba(245,236,210,.55); }
+.btn-secondary:hover { background: rgba(245,236,210,.10); border-color: var(--gold); color: var(--gold); transform: translateY(-2px); }
 
 /* ===== Hand-drawn section divider ===== */
 .divider {
@@ -158,7 +184,7 @@ strong { font-weight: 600; color: var(--ink); }
 /* ===== phase ===== */
 .phase { margin-bottom: 4rem; position: relative; }
 .phase-head { display: flex; align-items: baseline; gap: 1.2rem; padding-bottom: 1rem; border-bottom: 2px solid var(--ink); margin-bottom: 1.8rem; flex-wrap: wrap; }
-.phase-num { font-family: var(--font-display); font-weight: 700; font-size: 3rem; line-height: 1; color: var(--terra); font-style: italic; text-shadow: 1px 1px 0 rgba(180,195,215,.45); }
+.phase-num { font-family: var(--font-display); font-weight: 700; font-size: 3rem; line-height: 1; color: var(--terra); font-style: italic; text-shadow: 1px 1px 0 rgba(140,180,220,.45); }
 .phase-meta { flex: 1; min-width: 220px; }
 .phase-meta h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.7rem; margin: 0 0 0.3rem; color: var(--ink); letter-spacing: -0.005em; }
 .phase-meta h3 em { color: var(--rust); font-style: italic; font-weight: 500; }
@@ -189,7 +215,7 @@ strong { font-weight: 600; color: var(--ink); }
 
 /* ===== Roadmap progress ===== */
 .roadmap { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 18px; padding: 2.4rem; margin: 0 0 4rem; box-shadow: var(--shadow-soft); position: relative; overflow: hidden; }
-.roadmap::before { content: ""; position: absolute; top: -30px; right: -30px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(180,195,215,.40), transparent 70%); pointer-events: none; }
+.roadmap::before { content: ""; position: absolute; top: -30px; right: -30px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(140,180,220,.40), transparent 70%); pointer-events: none; }
 .roadmap::after { content: ""; position: absolute; bottom: -40px; left: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(215,200,165,.28), transparent 70%); pointer-events: none; }
 .roadmap h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.55rem; margin: 0 0 1.6rem; color: var(--ink); text-align: center; }
 .roadmap-bar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.55rem; margin-bottom: 1.2rem; }
@@ -215,26 +241,27 @@ strong { font-weight: 600; color: var(--ink); }
 
 /* ===== Final CTA · spirited away night sky ===== */
 /* final-cta · spirited away night sky */
-.final-cta { background: linear-gradient(180deg, var(--night) 0%, var(--night-deep) 100%); color: var(--paper); padding: 5rem 0 5.5rem; margin-top: 4rem; position: relative; overflow: hidden; }
+/* final-cta · the prince watching the sunset over Sahara */
+.final-cta { background: linear-gradient(180deg, #1a1530 0%, #4a2840 35%, #c97852 75%, #f4c95a 100%); color: #f5ecd2; padding: 5rem 0 5.5rem; margin-top: 4rem; position: relative; overflow: hidden; }
 .final-cta .sky-svg { position: absolute; inset: 0; pointer-events: none; }
 .final-cta .sky-svg .star { fill: #fff4d8; }
 .final-cta .sky-svg .star-bright { fill: #fff4d8; opacity: 1; }
-.final-cta .sky-svg .moon { fill: #f7e7a3; opacity: .9; filter: drop-shadow(0 0 12px rgba(247,231,163,.4)); }
-.final-cta .sky-svg .pine { fill: #0d1a2c; }
-.final-cta .sky-svg .hill-night { fill: #112240; }
+.final-cta .sky-svg .sun { fill: #f7d987; opacity: .95; filter: drop-shadow(0 0 24px rgba(247,217,135,.7)); }
+.final-cta .sky-svg .pine { fill: #1a1020; }
+.final-cta .sky-svg .hill-night { fill: #1a1020; }
 @keyframes twinkle { 0%, 100% { opacity: .85; } 50% { opacity: .35; } }
 .final-cta .sky-svg .star { animation: twinkle 4s ease-in-out infinite; }
 .final-cta .sky-svg .star.s2 { animation-delay: 1.2s; }
 .final-cta .sky-svg .star.s3 { animation-delay: 2.5s; }
 .final-cta .sky-svg .star.s4 { animation-delay: 3.1s; }
 .final-cta .container { position: relative; z-index: 1; }
-.final-cta h2 { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.9rem, 3.4vw, 2.55rem); margin: 0 0 1rem; text-align: center; color: var(--paper); }
-.final-cta h2 em { color: var(--gold-warm); font-style: italic; }
-.final-cta .lede { text-align: center; color: rgba(249,241,222,.78); max-width: 38em; margin: 0 auto 2rem; font-style: italic; font-family: var(--font-display); font-size: 1.05rem; }
-.final-cta .cta-row { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; }
-.final-cta .btn { background: var(--paper); color: var(--ink); border-color: var(--paper); }
-.final-cta .btn:hover { background: var(--rust); color: white; border-color: var(--rust); }
-.final-cta .hand-note { font-family: var(--font-hand); color: var(--gold-warm); font-size: 1.4rem; text-align: center; margin-top: 1.5rem; transform: rotate(-2deg); display: block; }
+.final-cta h2 { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.9rem, 3.4vw, 2.55rem); margin: 0 0 1rem; text-align: center; color: #f7eece; text-shadow: 0 2px 14px rgba(74,40,64,.55); }
+.final-cta h2 em { color: #fff5d8; font-style: italic; }
+.final-cta .lede { text-align: center; color: rgba(249,241,222,.92); max-width: 38em; margin: 0 auto 2rem; font-style: italic; font-family: var(--font-display); font-size: 1.05rem; text-shadow: 0 1px 6px rgba(74,40,64,.4); }
+.final-cta .cta-row { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; position: relative; z-index: 2; }
+.final-cta .btn { background: #1a1530; color: #f5ecd2; border-color: #1a1530; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+.final-cta .btn:hover { background: #f4c95a; color: #1a1530; border-color: #f4c95a; }
+.final-cta .hand-note { font-family: var(--font-hand); color: #fff5d8; font-size: 1.4rem; text-align: center; margin-top: 1.5rem; transform: rotate(-2deg); display: block; text-shadow: 0 1px 8px rgba(74,40,64,.45); }
 
 footer.foot { padding: 2.5rem 0 3rem; border-top: 1px solid var(--rule); background: var(--paper-2); font-family: var(--font-sans); font-size: 0.85rem; color: var(--ink-mute); position: relative; }
 footer.foot .row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; align-items: baseline; }
@@ -261,49 +288,129 @@ footer.foot a:hover { color: var(--rust); }
   </div>
 </nav>
 
-<!-- ============== Hero · Totoro 的天空 (Ghibli watercolor) ============== -->
+<!-- ============== Hero · 小王子 starry night ============== -->
 <section class="hero">
-  <!-- Sky · soft puffy clouds + drifting leaves + small stars -->
+  <!-- Night sky · scattered stars, crescent moon, asteroid B-612 with the prince + a rose -->
   <svg class="hero-sky" viewBox="0 0 1400 600" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-    <g class="cloud-grp-a">
-      <ellipse class="cloud" cx="200" cy="130" rx="110" ry="34"/>
-      <ellipse class="cloud" cx="155" cy="115" rx="55" ry="26"/>
-      <ellipse class="cloud" cx="240" cy="115" rx="65" ry="28"/>
-    </g>
-    <g class="cloud-grp-b">
-      <ellipse class="cloud cloud-2" cx="1180" cy="90" rx="125" ry="36"/>
-      <ellipse class="cloud cloud-2" cx="1130" cy="75" rx="55" ry="26"/>
-      <ellipse class="cloud cloud-2" cx="1230" cy="75" rx="55" ry="26"/>
-    </g>
-    <g class="cloud-grp-a" style="animation-duration: 32s;">
-      <ellipse class="cloud cloud-2" cx="950" cy="200" rx="80" ry="22" opacity="0.55"/>
-      <ellipse class="cloud cloud-2" cx="920" cy="190" rx="40" ry="18" opacity="0.55"/>
-    </g>
+    <!-- many small stars (faint, twinkling) -->
     <g>
-      <circle class="star" cx="400" cy="80" r="2.5"/>
-      <circle class="star" cx="700" cy="50" r="2"/>
-      <circle class="star" cx="850" cy="120" r="2.2"/>
-      <circle class="star" cx="1320" cy="150" r="2"/>
+      <circle class="star-faint" cx="80"   cy="60"  r="1.3"/>
+      <circle class="star-faint" cx="160"  cy="180" r="1.1"/>
+      <circle class="star-faint" cx="260"  cy="40"  r="1.2"/>
+      <circle class="star-faint" cx="340"  cy="220" r="1.0"/>
+      <circle class="star-faint" cx="420"  cy="100" r="1.4"/>
+      <circle class="star-faint" cx="520"  cy="260" r="1.0"/>
+      <circle class="star-faint" cx="600"  cy="60"  r="1.3"/>
+      <circle class="star-faint" cx="700"  cy="180" r="1.1"/>
+      <circle class="star-faint" cx="800"  cy="40"  r="1.2"/>
+      <circle class="star-faint" cx="900"  cy="240" r="1.0"/>
+      <circle class="star-faint" cx="1010" cy="80"  r="1.4"/>
+      <circle class="star-faint" cx="1100" cy="220" r="1.1"/>
+      <circle class="star-faint" cx="1180" cy="40"  r="1.0"/>
+      <circle class="star-faint" cx="1260" cy="180" r="1.3"/>
+      <circle class="star-faint" cx="1340" cy="100" r="1.0"/>
+      <circle class="star-faint" cx="60"   cy="380" r="1.1"/>
+      <circle class="star-faint" cx="240"  cy="320" r="1.2"/>
+      <circle class="star-faint" cx="500"  cy="380" r="1.0"/>
+      <circle class="star-faint" cx="780"  cy="340" r="1.1"/>
+      <circle class="star-faint" cx="1100" cy="380" r="1.2"/>
+      <circle class="star-faint" cx="1340" cy="340" r="1.0"/>
     </g>
-    <g class="leaf-grp" transform="translate(120 410)">
-      <path class="leaf-drift" d="M0 0 Q -10 -22 -22 -28 Q -10 -10 -8 6 Q -3 0 0 0z"/>
+    <!-- medium stars (slow twinkle) -->
+    <g>
+      <circle class="star"     cx="120"  cy="120" r="1.8"/>
+      <circle class="star s2"  cx="380"  cy="60"  r="2.0"/>
+      <circle class="star s3"  cx="640"  cy="160" r="1.8"/>
+      <circle class="star s4"  cx="980"  cy="170" r="2.0"/>
+      <circle class="star s5"  cx="1280" cy="80"  r="2.2"/>
+      <circle class="star s2"  cx="1340" cy="270" r="1.8"/>
+      <circle class="star s3"  cx="200"  cy="280" r="1.9"/>
+      <circle class="star s4"  cx="460"  cy="320" r="2.0"/>
+      <circle class="star s5"  cx="860"  cy="280" r="2.0"/>
     </g>
-    <g class="leaf-grp-2" transform="translate(180 460) rotate(20)">
-      <path class="leaf-drift-2" d="M0 0 Q 8 -18 18 -22 Q 8 -8 6 6 Q 3 0 0 0z"/>
+    <!-- bright 4-point stars (twinkle, with glow) -->
+    <g>
+      <path class="star-bright" d="M 300 160 l 3 -10 l 3 10 l 10 3 l -10 3 l -3 10 l -3 -10 l -10 -3 z"/>
+      <path class="star-bright" d="M 800 90  l 3 -10 l 3 10 l 10 3 l -10 3 l -3 10 l -3 -10 l -10 -3 z"/>
+      <path class="star-bright" d="M 1140 230 l 3 -10 l 3 10 l 10 3 l -10 3 l -3 10 l -3 -10 l -10 -3 z"/>
+      <path class="star-bright" d="M 70 240 l 2.5 -8 l 2.5 8 l 8 2.5 l -8 2.5 l -2.5 8 l -2.5 -8 l -8 -2.5 z"/>
     </g>
-    <g class="leaf-grp" transform="translate(1280 430) rotate(-30)">
-      <path class="leaf-drift" d="M0 0 Q -10 -22 -22 -28 Q -10 -10 -8 6 Q -3 0 0 0z"/>
+
+    <!-- Crescent moon, top-right -->
+    <g transform="translate(1180 110)">
+      <circle class="moon" cx="0" cy="0" r="42"/>
+      <circle class="moon-shadow" cx="14" cy="-8" r="38"/>
+    </g>
+
+    <!-- Distant lavender planet, mid-left -->
+    <g transform="translate(140 340)">
+      <circle cx="0" cy="0" r="22" fill="#c0a3d1" opacity=".5"/>
+      <ellipse cx="0" cy="2" rx="32" ry="5" fill="none" stroke="#c0a3d1" stroke-width="1.4" opacity=".55" transform="rotate(-12)"/>
+    </g>
+    <!-- Distant sand planet, top-mid -->
+    <g transform="translate(560 80)">
+      <circle cx="0" cy="0" r="14" fill="#e08e6f" opacity=".55"/>
+      <circle cx="-4" cy="-3" r="3" fill="#0f1d35" opacity=".4"/>
+    </g>
+
+    <!-- Asteroid B-612 with the little prince + a rose -->
+    <g class="asteroid-grp" transform="translate(1080 420)">
+      <!-- planet body -->
+      <circle class="planet-asteroid" cx="0" cy="0" r="60"/>
+      <path class="planet-stripe" d="M -55 18 q 25 -14 55 -10 q 30 4 55 -8 l 0 50 l -110 0 z"/>
+      <circle class="planet-edge" cx="0" cy="0" r="60"/>
+      <!-- baobab roots (reaching down inside) -->
+      <path class="baobab" d="M -30 22 q -8 14 -14 28"/>
+      <path class="baobab" d="M -28 22 q -2 14 -2 28"/>
+      <path class="baobab" d="M 32 18 q 6 14 14 28"/>
+      <!-- rose on its stem, right of the prince -->
+      <g transform="translate(28 -68)">
+        <path class="rose-stem" d="M 0 18 q 2 -10 -2 -22"/>
+        <circle class="rose-bud" cx="-4" cy="-8" r="6"/>
+        <circle class="rose-bud" cx="-2" cy="-12" r="4" opacity=".7"/>
+        <path class="rose-stem" d="M -1 4 q -6 -2 -10 -6"/>
+      </g>
+      <!-- the little prince, standing on top -->
+      <g transform="translate(-12 -82)">
+        <!-- hair (gold spikes) -->
+        <path class="prince-body" d="M -8 -6 q 0 -10 8 -10 q 8 0 8 10 q 4 -2 4 4 q 0 6 -10 6 q -2 4 -8 0 q -8 0 -8 -6 q 0 -4 6 -4 z"/>
+        <!-- head -->
+        <circle class="prince-body" cx="0" cy="2" r="6.5"/>
+        <!-- scarf -->
+        <path class="prince-scarf" d="M -6 9 q 6 4 12 0 l 6 6 l -3 3 l -3 -4 l 0 4 l -3 0 l 0 -4 l -6 4 l -6 -3 z"/>
+        <!-- body (cape) -->
+        <path class="prince-body" d="M -7 12 q 0 8 7 8 q 7 0 7 -8 z"/>
+        <!-- legs -->
+        <line class="prince-leg" x1="-4" y1="20" x2="-5" y2="32"/>
+        <line class="prince-leg" x1="4"  y1="20" x2="5"  y2="32"/>
+        <!-- arm (waving toward rose) -->
+        <line class="prince-arm" x1="6" y1="14" x2="14" y2="6"/>
+      </g>
+    </g>
+
+    <!-- A faraway baobab silhouette, bottom-left -->
+    <g class="leaf-grp" transform="translate(180 470)">
+      <line class="baobab" x1="0" y1="0" x2="0" y2="40"/>
+      <line class="baobab" x1="0" y1="6" x2="-14" y2="-2"/>
+      <line class="baobab" x1="0" y1="6" x2="14" y2="-2"/>
+      <ellipse class="baobab-crown" cx="0" cy="-6" rx="22" ry="9"/>
+      <ellipse class="baobab-crown" cx="-14" cy="-10" rx="9" ry="5"/>
+      <ellipse class="baobab-crown" cx="14" cy="-10" rx="9" ry="5"/>
+    </g>
+
+    <!-- The famous "boa eating an elephant" hat shape, mid-bottom-right easter egg -->
+    <g class="leaf-grp-2" transform="translate(820 450)">
+      <path class="hat-boa" d="M -36 0 q 0 -28 36 -28 q 36 0 36 28 z"/>
+      <path class="hat-boa" d="M -36 0 l 72 0"/>
     </g>
   </svg>
 
-  <!-- Rolling hills at bottom -->
-  <svg class="hero-hill" viewBox="0 0 1400 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-    <path class="hill-back"  d="M0 80 Q 200 30 400 60 T 800 50 T 1200 65 T 1400 55 L 1400 140 L 0 140 Z"/>
-    <path class="hill-mid"   d="M0 100 Q 250 60 500 90 T 1000 85 T 1400 95 L 1400 140 L 0 140 Z"/>
-    <path class="hill-front" d="M0 115 Q 300 90 600 110 T 1200 110 T 1400 115 L 1400 140 L 0 140 Z"/>
-    <g class="tree" transform="translate(290 92)"><path d="M0 0 L -8 18 L -3 18 L -7 28 L 7 28 L 3 18 L 8 18 Z"/></g>
-    <g class="tree" transform="translate(880 86)"><path d="M0 0 L -10 22 L -4 22 L -8 32 L 8 32 L 4 22 L 10 22 Z"/></g>
-    <g class="tree" transform="translate(1110 96)"><path d="M0 0 L -7 16 L -3 16 L -6 24 L 6 24 L 3 16 L 7 16 Z"/></g>
+  <!-- Sahara dunes at bottom (where the narrator's plane crashed) -->
+  <svg class="hero-hill" viewBox="0 0 1400 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path class="dune-back"  d="M0 70 Q 240 28 480 56 T 960 50 T 1400 64 L 1400 160 L 0 160 Z"/>
+    <path class="dune-mid"   d="M0 96 Q 220 50 460 84 T 920 76 T 1400 92 L 1400 160 L 0 160 Z"/>
+    <path class="dune-front" d="M0 122 Q 260 88 540 112 T 1080 110 T 1400 124 L 1400 160 L 0 160 Z"/>
+    <path class="dune-edge"  d="M0 122 Q 260 88 540 112 T 1080 110 T 1400 124"/>
   </svg>
 
   <div class="container hero-inner">
@@ -315,8 +422,12 @@ footer.foot a:hover { color: var(--rust); }
       不是教程合集 · 是按 "从 0 到能上岗" 路径设计的<em>完整体系</em>，
       配套一个真实可跑的 demo（<code>POST /chat</code> graph + <code>POST /chat/v2</code> harness + MCP 双向 + P1 加固）。
     </p>
+    <div class="hero-quote">
+      <span class="qfr">« On ne voit bien qu'avec le cœur. L'essentiel est invisible pour les yeux. »</span>
+      <span class="qattr">— Antoine de Saint-Exupéry · 用心才能看见，重要的东西用眼是看不见的</span>
+    </div>
     <div class="hero-cta">
-      <a href="#path" class="btn btn-primary bare">📚 按路径开始学</a>
+      <a href="#path" class="btn btn-primary bare">★ 按路径开始学</a>
       <a href="#books" class="btn btn-secondary bare">🗂️ 直接看 17 本</a>
     </div>
   </div>
@@ -781,32 +892,27 @@ footer.foot a:hover { color: var(--rust); }
   </div>
 </section>
 
-<!-- ============== Final CTA · spirited away night sky ============== -->
+<!-- ============== Final CTA · sunset over the Sahara ============== -->
 <section class="final-cta">
   <svg class="sky-svg" viewBox="0 0 1400 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-    <circle class="moon" cx="1180" cy="80" r="36"/>
-    <circle cx="1196" cy="68" r="6" fill="#1d2f4a" opacity=".25"/>
-    <circle cx="1170" cy="92" r="4" fill="#1d2f4a" opacity=".2"/>
-    <circle class="star star-bright" cx="120" cy="60" r="2.4"/>
-    <circle class="star s2" cx="240" cy="100" r="1.8"/>
-    <circle class="star s3" cx="380" cy="40" r="2"/>
-    <circle class="star" cx="520" cy="90" r="1.6"/>
-    <circle class="star s4" cx="660" cy="55" r="2.2"/>
-    <circle class="star s2" cx="780" cy="130" r="1.8"/>
-    <circle class="star" cx="900" cy="70" r="2"/>
-    <circle class="star s3" cx="1020" cy="130" r="1.6"/>
-    <circle class="star s4" cx="1300" cy="170" r="2"/>
-    <circle class="star" cx="80" cy="200" r="1.4"/>
-    <circle class="star s2" cx="450" cy="180" r="1.8"/>
-    <circle class="star s3" cx="850" cy="200" r="1.6"/>
-    <path class="hill-night" d="M0 320 Q 300 240 600 290 T 1200 280 T 1400 310 L 1400 400 L 0 400 Z"/>
-    <g class="pine">
-      <path d="M120 320 L 110 350 L 117 350 L 113 365 L 127 365 L 123 350 L 130 350 Z"/>
-      <path d="M180 310 L 168 345 L 176 345 L 171 365 L 189 365 L 184 345 L 192 345 Z"/>
-      <path d="M260 318 L 250 348 L 257 348 L 253 365 L 267 365 L 263 348 L 270 348 Z"/>
-      <path d="M980 314 L 968 348 L 976 348 L 971 368 L 989 368 L 984 348 L 992 348 Z"/>
-      <path d="M1060 320 L 1050 350 L 1057 350 L 1053 365 L 1067 365 L 1063 350 L 1070 350 Z"/>
-      <path d="M1140 312 L 1128 348 L 1136 348 L 1131 368 L 1149 368 L 1144 348 L 1152 348 Z"/>
+    <!-- a few last-twilight stars at the very top -->
+    <circle class="star star-bright" cx="120"  cy="40"  r="2"/>
+    <circle class="star s2"          cx="380"  cy="60"  r="1.6"/>
+    <circle class="star s3"          cx="900"  cy="50"  r="1.8"/>
+    <circle class="star s4"          cx="1300" cy="40"  r="1.6"/>
+    <!-- the setting sun, low on the horizon -->
+    <circle class="sun" cx="700" cy="280" r="64"/>
+    <circle class="sun" cx="700" cy="280" r="36" opacity=".9"/>
+    <!-- sand dunes silhouette -->
+    <path class="hill-night" d="M0 320 Q 240 268 480 300 T 920 296 T 1400 312 L 1400 400 L 0 400 Z"/>
+    <!-- the little prince standing on a dune, watching the sunset -->
+    <g transform="translate(940 296)" fill="#1a1020">
+      <path d="M -3 -28 q 0 -7 3 -7 q 3 0 3 7 q 2 -1 2 2 q 0 4 -5 4 q -1 3 -3 0 q -5 0 -5 -4 q 0 -3 5 -2 z"/>
+      <circle cx="0" cy="-21" r="4.5"/>
+      <path d="M -5 -16 q 5 3 10 0 l 4 4 l -2 2 l -2 -3 l 0 3 l -2 0 l 0 -3 l -4 3 l -4 -2 z"/>
+      <path d="M -5 -10 q 0 6 5 6 q 5 0 5 -6 z"/>
+      <line x1="-3" y1="-3" x2="-4" y2="6" stroke="#1a1020" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="3"  y1="-3" x2="4"  y2="6" stroke="#1a1020" stroke-width="1.5" stroke-linecap="round"/>
     </g>
   </svg>
   <div class="container">

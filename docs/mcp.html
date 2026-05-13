@@ -10,13 +10,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --paper: #f7f2e6; --paper-2: #efe7d2; --paper-card: #fdfaf1;
-  --ink: #322d25; --ink-soft: #56504a; --ink-mute: #a09988;
-  --rule: #d6cdb8; --rule-soft: #e8e0cd;
-  --leaf: #7c9f7d; --leaf-soft: #e7ecd8;
-  --rust: #cb7d61; --rust-soft: #f3dfd0;
-  --sky:  #82a9c4; --sky-soft:  #e6edf2;
-  --gold: #c8a061; --gold-soft: #f1e3b9;
+  --paper: #0f1d35; --paper-2: #162844; --paper-card: #1c3155;
+  --ink: #f5ecd2; --ink-soft: #c8be9b; --ink-mute: #7e8aa6;
+  --rule: #2c4570; --rule-soft: #1f3458;
+  --leaf: #8eb58f; --leaf-soft: #1d3a38;
+  --rust: #e08e6f; --rust-soft: #3a2a22;
+  --sky:  #6a96bc; --sky-soft:  #1f3050;
+  --gold: #f4c95a; --gold-soft: #3a2f1f;
   --teal: #1f7a6b; --teal-soft: #ddeeea;
   --font-display: "Fraunces", "Times New Roman", serif;
   --font-body: "Lora", "Iowan Old Style", Georgia, serif;
@@ -26,21 +26,21 @@
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { margin: 0; background: radial-gradient(ellipse at top left, rgba(215,200,165,.14), transparent 50%), radial-gradient(ellipse at bottom right, rgba(180,195,215,.10), transparent 50%), var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.75; }
+body { margin: 0; background: radial-gradient(ellipse at top left, rgba(215,200,165,.14), transparent 50%), radial-gradient(ellipse at bottom right, rgba(140,180,220,.10), transparent 50%), var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.75; }
 :lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
-a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(181,104,72,.4); transition: all .15s; }
-a:hover { background: rgba(181,104,72,.08); }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(244,201,90,.4); transition: all .15s; }
+a:hover { background: rgba(244,201,90,.08); }
 a.bare { border-bottom: none; }
 strong { font-weight: 600; color: var(--ink); }
 em { font-style: italic; color: var(--leaf); font-weight: 500; }
 code { font-family: var(--font-mono); font-size: 0.85em; background: var(--paper-2); padding: 0.08rem 0.35rem; border-radius: 4px; color: var(--rust); border: 1px solid var(--rule-soft); }
-pre { font-family: var(--font-mono); background: #322d25; color: #e8e3d4; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; font-size: 0.84rem; line-height: 1.55; }
+pre { font-family: var(--font-mono); background: #f5ecd2; color: #e8e3d4; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; font-size: 0.84rem; line-height: 1.55; }
 pre code { background: none; color: inherit; padding: 0; border: 0; font-size: inherit; }
 
 .container { max-width: 920px; margin: 0 auto; padding: 0 2rem; }
 @media (max-width: 720px) { .container { padding: 0 1.2rem; } }
 
-.nav { padding: 1.4rem 0; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: rgba(251,245,232,.95); backdrop-filter: blur(8px); z-index: 100; }
+.nav { padding: 1.4rem 0; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: rgba(15,29,53,.88); backdrop-filter: blur(8px); z-index: 100; }
 .nav-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
 .nav-brand { font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 1.2rem; color: var(--ink); border: none; }
 .nav-brand .dot { color: var(--rust); }
@@ -88,7 +88,7 @@ td code { font-size: 0.82rem; }
 .q-a { color: var(--ink-soft); font-size: 0.96rem; }
 
 .foot { padding: 3rem 0 4rem; text-align: center; font-family: var(--font-sans); color: var(--ink-mute); font-size: 0.88rem; }
-.foot a { color: var(--ink-mute); border-bottom: 1px solid rgba(160,153,136,.3); }
+.foot a { color: var(--ink-mute); border-bottom: 1px solid rgba(44,69,112,.3); }
 </style>
 </head>
 <body>

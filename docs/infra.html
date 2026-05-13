@@ -10,25 +10,25 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --paper:        #f7f2e6;
-  --paper-2:      #efe7d2;
-  --paper-card:   #fdfaf1;
-  --ink:          #322d25;
-  --ink-soft:     #56504a;
-  --ink-mute:     #a09988;
-  --rule:         #d6cdb8;
-  --rule-soft:    #e8e0cd;
-  --leaf:         #7c9f7d; --leaf-soft: #e7ecd8;
-  --rust:         #cb7d61; --rust-soft: #f3dfd0;
-  --sky:          #82a9c4; --sky-soft:  #e6edf2;
-  --plum:         #a690b1; --plum-soft: #ede5ee;
-  --gold:         #c8a061; --gold-soft: #f1e3b9;
-  --code-bg:      #f0e8d3;
-  --code-fg:      #322d25;
-  --code-key:     #cb7d61;
-  --code-str:     #7c9f7d;
-  --code-cmt:     #a09988;
-  --code-fn:      #a690b1;
+  --paper:        #0f1d35;
+  --paper-2:      #162844;
+  --paper-card:   #1c3155;
+  --ink:          #f5ecd2;
+  --ink-soft:     #c8be9b;
+  --ink-mute:     #7e8aa6;
+  --rule:         #2c4570;
+  --rule-soft:    #1f3458;
+  --leaf:         #8eb58f; --leaf-soft: #1d3a38;
+  --rust:         #e08e6f; --rust-soft: #3a2a22;
+  --sky:          #6a96bc; --sky-soft:  #1f3050;
+  --plum:         #c0a3d1; --plum-soft: #2a1f3a;
+  --gold:         #f4c95a; --gold-soft: #3a2f1f;
+  --code-bg:      #0a1628;
+  --code-fg:      #f5ecd2;
+  --code-key:     #e08e6f;
+  --code-str:     #8eb58f;
+  --code-cmt:     #7e8aa6;
+  --code-fn:      #c0a3d1;
   --font-display: "Fraunces", "Times New Roman", serif;
   --font-body:    "Lora", "Iowan Old Style", Georgia, serif;
   --font-sans:    "Outfit", system-ui, -apple-system, sans-serif;
@@ -41,7 +41,7 @@ body {
   margin: 0;
   background:
     radial-gradient(ellipse at top left, rgba(215,200,165,0.12), transparent 50%),
-    radial-gradient(ellipse at bottom right, rgba(180,195,215,0.08), transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(140,180,220,0.08), transparent 50%),
     var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
@@ -51,8 +51,8 @@ body {
 }
 :lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
 .book-body p, .book-body li { color: var(--ink-soft); }
-a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(181,104,72,0.4); }
-a:hover { background: rgba(181,104,72,0.08); }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(244,201,90,0.4); }
+a:hover { background: rgba(244,201,90,0.08); }
 em { font-style: italic; color: var(--leaf); font-weight: 500; }
 strong { font-weight: 600; color: var(--ink); }
 
@@ -123,7 +123,7 @@ strong { font-weight: 600; color: var(--ink); }
   font-size: 0.74rem; color: var(--ink-mute);
   line-height: 1.6;
 }
-.toc-foot a { color: var(--ink-mute); border-bottom-color: rgba(160,153,136,0.3); }
+.toc-foot a { color: var(--ink-mute); border-bottom-color: rgba(44,69,112,0.3); }
 .toc-foot a:hover { color: var(--rust); }
 
 .book-body { padding: 2rem 0 6rem; max-width: 800px; }
@@ -326,7 +326,7 @@ table code { font-size: 0.82em; }
   background: var(--paper-card); border: 1px solid var(--rule);
   border-radius: 12px; padding: 1.6rem 1.4rem 1.2rem;
   margin: 1.4rem 0 1.8rem;
-  box-shadow: 0 1px 3px rgba(50,45,37,0.04);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 .figure svg { display: block; width: 100%; height: auto; max-width: 760px; margin: 0 auto; }
 .figure figcaption {
@@ -337,7 +337,7 @@ table code { font-size: 0.82em; }
 .figure figcaption strong { color: var(--ink-soft); font-weight: 600; text-transform: none; letter-spacing: 0; }
 
 .fig-box       { fill: var(--paper-card); stroke: var(--ink-soft); stroke-width: 1.5; }
-.fig-box-soft  { fill: #f0e8d3; stroke: var(--rule); stroke-width: 1.2; }
+.fig-box-soft  { fill: #0a1628; stroke: var(--rule); stroke-width: 1.2; }
 .fig-box-leaf  { fill: var(--leaf-soft); stroke: var(--leaf); stroke-width: 1.5; }
 .fig-box-rust  { fill: var(--rust-soft); stroke: var(--rust); stroke-width: 1.5; }
 .fig-box-sky   { fill: var(--sky-soft); stroke: var(--sky); stroke-width: 1.5; }
@@ -749,7 +749,7 @@ footer.colophon .row {
         <svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="GPU memory hierarchy">
           <defs>
             <marker id="g2-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#a09988"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#7e8aa6"/>
             </marker>
           </defs>
           <!-- SM grid on left -->
@@ -1051,7 +1051,7 @@ footer.colophon .row {
         <svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Disaggregated prefill decode">
           <defs>
             <marker id="dp-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#cb7d61"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#e08e6f"/>
             </marker>
           </defs>
 
@@ -1512,7 +1512,7 @@ footer.colophon .row {
         <svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MoE architecture">
           <defs>
             <marker id="moe-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#a09988"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#7e8aa6"/>
             </marker>
           </defs>
 
@@ -1708,21 +1708,21 @@ footer.colophon .row {
         <svg viewBox="0 0 760 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="HNSW layered graph">
           <!-- layer 2 -->
           <text class="fig-t-label fig-t-rust" x="40" y="40">Layer 2 (稀疏)</text>
-          <circle cx="200" cy="40" r="6" fill="#cb7d61"/>
-          <circle cx="380" cy="40" r="6" fill="#cb7d61"/>
-          <circle cx="560" cy="40" r="6" fill="#cb7d61"/>
+          <circle cx="200" cy="40" r="6" fill="#e08e6f"/>
+          <circle cx="380" cy="40" r="6" fill="#e08e6f"/>
+          <circle cx="560" cy="40" r="6" fill="#e08e6f"/>
           <line class="fig-line-rust" x1="200" y1="40" x2="380" y2="40"/>
           <line class="fig-line-rust" x1="380" y1="40" x2="560" y2="40"/>
 
           <!-- layer 1 -->
           <text class="fig-t-label fig-t-sky" x="40" y="120">Layer 1</text>
-          <circle cx="160" cy="120" r="5" fill="#82a9c4"/>
-          <circle cx="240" cy="120" r="5" fill="#82a9c4"/>
-          <circle cx="320" cy="120" r="5" fill="#82a9c4"/>
-          <circle cx="400" cy="120" r="5" fill="#82a9c4"/>
-          <circle cx="480" cy="120" r="5" fill="#82a9c4"/>
-          <circle cx="560" cy="120" r="5" fill="#82a9c4"/>
-          <circle cx="640" cy="120" r="5" fill="#82a9c4"/>
+          <circle cx="160" cy="120" r="5" fill="#6a96bc"/>
+          <circle cx="240" cy="120" r="5" fill="#6a96bc"/>
+          <circle cx="320" cy="120" r="5" fill="#6a96bc"/>
+          <circle cx="400" cy="120" r="5" fill="#6a96bc"/>
+          <circle cx="480" cy="120" r="5" fill="#6a96bc"/>
+          <circle cx="560" cy="120" r="5" fill="#6a96bc"/>
+          <circle cx="640" cy="120" r="5" fill="#6a96bc"/>
           <line class="fig-line" x1="160" y1="120" x2="240" y2="120"/>
           <line class="fig-line" x1="240" y1="120" x2="320" y2="120"/>
           <line class="fig-line" x1="320" y1="120" x2="400" y2="120"/>
@@ -1737,7 +1737,7 @@ footer.colophon .row {
 
           <!-- layer 0 (dense) -->
           <text class="fig-t-label fig-t-leaf" x="40" y="210">Layer 0 (密集 · 全部点)</text>
-          <g fill="#7c9f7d">
+          <g fill="#8eb58f">
             <circle cx="120" cy="210" r="4"/>
             <circle cx="160" cy="210" r="4"/>
             <circle cx="200" cy="210" r="4"/>
@@ -1758,7 +1758,7 @@ footer.colophon .row {
           <line class="fig-dash-leaf" x1="400" y1="125" x2="440" y2="205"/>
 
           <!-- arrow showing search path -->
-          <path d="M 200 30 Q 250 80 320 110 Q 380 160 440 200" stroke="#a690b1" stroke-width="2" fill="none" stroke-dasharray="4 3"/>
+          <path d="M 200 30 Q 250 80 320 110 Q 380 160 440 200" stroke="#c0a3d1" stroke-width="2" fill="none" stroke-dasharray="4 3"/>
           <text class="fig-t-sm fig-t-plum" x="40" y="260">搜索路径：从顶层 entry → 每层 greedy walk → 进下一层 → 找到底层 K-NN</text>
         </svg>
         <figcaption><strong>Figure 9.2</strong> · HNSW · 多层 small-world graph · 类似跳表的 O(log N) 检索</figcaption>
