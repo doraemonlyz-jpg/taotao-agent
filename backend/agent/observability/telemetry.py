@@ -41,8 +41,56 @@ def _otlp_endpoint() -> str | None:
     return v or None
 
 
+def _otlp_protocol() -> str:
+    """`grpc` (default) or `http/protobuf`. Most cloud providers accept
+    BOTH but the default endpoint port differs:
+      - gRPC:    :4317
+      - HTTP:    :4318  (path /v1/traces gets appended by the SDK)
+    Honeycomb / Grafana Cloud / Datadog all expose HTTP on standard 443.
+    """
+    return (os.environ.get("OTEL_EXPORTER_OTLP_PROTOCOL") or "grpc").strip().lower()
+
+
+def _otlp_headers() -> dict[str, str] | None:
+    """Parse `OTEL_EXPORTER_OTLP_HEADERS=key1=val1,key2=val2`.
+
+    The OTel spec uses comma-separated `key=value` pairs.  Required for
+    Honeycomb (`x-honeycomb-team`), Grafana Cloud (`Authorization`), etc.
+    """
+    raw = (os.environ.get("OTEL_EXPORTER_OTLP_HEADERS") or "").strip()
+    if not raw:
+        return None
+    out: dict[str, str] = {}
+    for kv in raw.split(","):
+        if "=" not in kv:
+            continue
+        k, v = kv.split("=", 1)
+        out[k.strip()] = v.strip()
+    return out or None
+
+
+def _otlp_insecure() -> bool:
+    """Default: insecure for grpc (local Jaeger/Tempo is :4317 plain),
+    secure for http (cloud providers always TLS).  Override with
+    `OTEL_EXPORTER_OTLP_INSECURE=1`."""
+    raw = (os.environ.get("OTEL_EXPORTER_OTLP_INSECURE") or "").strip().lower()
+    if raw in {"1", "true", "yes", "on"}:
+        return True
+    if raw in {"0", "false", "no", "off"}:
+        return False
+    # Auto: insecure only for plain gRPC localhost-style endpoints.
+    ep = _otlp_endpoint() or ""
+    return _otlp_protocol() == "grpc" and not ep.startswith("https://")
+
+
 def _service_name() -> str:
     return os.environ.get("OTEL_SERVICE_NAME") or "taotao-agent"
+
+
+def _service_env() -> str:
+    """Logical environment label (dev | staging | prod).  Free-form ·
+    most observability backends use it for filtering."""
+    return os.environ.get("OTEL_DEPLOYMENT_ENVIRONMENT") or os.environ.get("ENV") or "dev"
 
 
 # --------------------------------------------------------------- init
@@ -67,21 +115,39 @@ def install_telemetry(app: FastAPI) -> dict:
         resource = Resource.create({
             "service.name": _service_name(),
             "service.version": "0.2.0",
+            "deployment.environment": _service_env(),
         })
         provider = TracerProvider(resource=resource)
 
         endpoint = _otlp_endpoint()
         if endpoint:
+            protocol = _otlp_protocol()
+            headers = _otlp_headers()
+            insecure = _otlp_insecure()
             try:
-                from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
-                    OTLPSpanExporter,
-                )
-                exporter = OTLPSpanExporter(endpoint=endpoint, insecure=True)
-                status["otel_exporter"] = f"otlp:{endpoint}"
+                if protocol == "http/protobuf" or protocol == "http":
+                    # HTTP transport · used by Honeycomb, Grafana Cloud, New Relic.
+                    from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+                        OTLPSpanExporter as HTTPExporter,
+                    )
+                    exporter = HTTPExporter(endpoint=endpoint, headers=headers)
+                else:
+                    # gRPC transport (default) · Tempo, Jaeger, OTel Collector.
+                    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+                        OTLPSpanExporter,
+                    )
+                    exporter = OTLPSpanExporter(
+                        endpoint=endpoint,
+                        insecure=insecure,
+                        headers=headers,
+                    )
+                tls = "insecure" if insecure else "tls"
+                hdr = f" +{len(headers)}h" if headers else ""
+                status["otel_exporter"] = f"otlp:{protocol}:{endpoint} ({tls}{hdr})"
             except Exception as e:  # pragma: no cover
                 log.warning("OTLP exporter unavailable, falling back to console: %s", e)
                 exporter = ConsoleSpanExporter()
-                status["otel_exporter"] = "console (OTLP unavailable)"
+                status["otel_exporter"] = f"console (OTLP {protocol} unavailable)"
         else:
             exporter = ConsoleSpanExporter()
             status["otel_exporter"] = "console"

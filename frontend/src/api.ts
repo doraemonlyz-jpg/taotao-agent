@@ -8,8 +8,29 @@
  * annotations · once those exist we can flip to the generated ones.
  */
 import type { Schemas } from "./api/index";
+import { authHeaders, clearAuth } from "./auth";
 
 const BASE = "/api";
+
+/* Module-local fetch wrapper · transparently attaches auth headers
+ * (X-API-Key or Authorization: Bearer based on the user's pick in
+ * LoginPanel) so we don't have to touch every callsite below.
+ *
+ * 401 → clear stored credentials so AuthGate flips back to login.
+ * Errors propagate · callers handle them like before.
+ */
+const _origFetch = window.fetch.bind(window);
+async function fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const headers: Record<string, string> = {
+    ...((init?.headers as Record<string, string>) || {}),
+    ...authHeaders(),
+  };
+  const res = await _origFetch(input, { ...init, headers });
+  if (res.status === 401) {
+    clearAuth();
+  }
+  return res;
+}
 
 export type ChatIn = Schemas["ChatIn"];
 export type MemoryIn = Schemas["MemoryIn"];

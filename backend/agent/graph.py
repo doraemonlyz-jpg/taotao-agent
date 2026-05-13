@@ -35,14 +35,36 @@ Visual:
 """
 from __future__ import annotations
 
-import aiosqlite
+import logging
+import os
 import sqlite3
 
+import aiosqlite
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.graph import END, START, StateGraph
 
 from .config import get_settings
+
+log = logging.getLogger("agent.graph")
+
+
+def _postgres_dsn() -> str | None:
+    """Return the Postgres DSN if configured, else None.
+
+    Production deploys set `DATABASE_URL=postgresql://...` and the graph
+    automatically swaps SqliteSaver → PostgresSaver. Connection pooling
+    is handled by langgraph-checkpoint-postgres which uses psycopg.
+
+    Schema migration runs on first connect (idempotent).  No Alembic
+    needed · langgraph-checkpoint-postgres ships its own DDL.
+    """
+    v = (os.environ.get("DATABASE_URL") or "").strip()
+    if not v:
+        return None
+    if not v.startswith(("postgres://", "postgresql://")):
+        return None
+    return v
 
 from .nodes import (
     coder_subagent,
@@ -137,14 +159,85 @@ _async_compiled = None
 _sync_compiled = None
 
 
+def _build_async_saver():
+    """Pick AsyncSqliteSaver (default) or AsyncPostgresSaver (DATABASE_URL set).
+
+    PostgresSaver is the production choice: durable across backend
+    restarts, supports concurrent processes (uvicorn workers > 1),
+    handles backups via standard pg_dump.
+
+    SqliteSaver is fine for local dev and single-process demos · it
+    locks the DB file so multiple uvicorn workers will deadlock on it.
+    """
+    cfg = get_settings()
+    dsn = _postgres_dsn()
+    if dsn:
+        try:
+            from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+
+            log.info("graph checkpointer: AsyncPostgresSaver (DATABASE_URL set)")
+            # The Postgres saver wants its setup() called once · safe to
+            # call repeatedly (idempotent CREATE TABLE IF NOT EXISTS).
+            saver_cm = AsyncPostgresSaver.from_conn_string(dsn)
+            # `from_conn_string` returns an async context manager that yields the
+            # saver. We enter it and never exit · matches the SqliteSaver
+            # lifetime (singleton per process).  Exit happens at process exit.
+            saver = saver_cm.__aenter__  # store the awaitable factory
+            return ("postgres", saver_cm)
+        except ImportError as e:
+            log.error(
+                "DATABASE_URL set but langgraph-checkpoint-postgres not installed: %s · "
+                "falling back to sqlite. Install with: uv add langgraph-checkpoint-postgres",
+                e,
+            )
+        except Exception as e:  # pragma: no cover · degrade gracefully
+            log.warning("Postgres saver init failed (%s) · falling back to sqlite", e)
+
+    log.info("graph checkpointer: AsyncSqliteSaver · %s", cfg.checkpoint_db)
+    async_conn = aiosqlite.connect(str(cfg.checkpoint_db))
+    return ("sqlite", AsyncSqliteSaver(async_conn))
+
+
+def _build_sync_saver():
+    """Sync equivalent · same Postgres-when-set logic."""
+    cfg = get_settings()
+    dsn = _postgres_dsn()
+    if dsn:
+        try:
+            from langgraph.checkpoint.postgres import PostgresSaver
+
+            log.info("sync graph checkpointer: PostgresSaver")
+            saver_cm = PostgresSaver.from_conn_string(dsn)
+            return ("postgres", saver_cm)
+        except ImportError as e:
+            log.error("langgraph-checkpoint-postgres not installed: %s", e)
+        except Exception as e:  # pragma: no cover
+            log.warning("sync Postgres saver init failed: %s", e)
+
+    log.info("sync graph checkpointer: SqliteSaver · %s", cfg.checkpoint_db)
+    conn = sqlite3.connect(str(cfg.checkpoint_db), check_same_thread=False)
+    return ("sqlite", SqliteSaver(conn))
+
+
 def get_graph():
-    """Streaming-friendly graph (AsyncSqliteSaver). Survives backend restarts."""
+    """Streaming-friendly graph · async checkpointer (Postgres or sqlite)."""
     global _async_compiled
     if _async_compiled is None:
-        cfg = get_settings()
-        async_conn = aiosqlite.connect(str(cfg.checkpoint_db))
-        saver = AsyncSqliteSaver(async_conn)
-        _async_compiled = build_graph().compile(checkpointer=saver)
+        backend, saver = _build_async_saver()
+        if backend == "postgres":
+            # Postgres saver returns a context manager · enter it lazily
+            # via a small adapter so callers can keep using the existing
+            # async-graph API.  The CM stays open for the process lifetime.
+            import asyncio
+
+            real_saver = asyncio.get_event_loop().run_until_complete(saver.__aenter__())
+            try:
+                asyncio.get_event_loop().run_until_complete(real_saver.setup())
+            except Exception as e:  # pragma: no cover · idempotent setup
+                log.debug("Postgres saver setup() noop: %s", e)
+            _async_compiled = build_graph().compile(checkpointer=real_saver)
+        else:
+            _async_compiled = build_graph().compile(checkpointer=saver)
     return _async_compiled
 
 
@@ -152,10 +245,16 @@ def get_sync_graph():
     """Synchronous equivalent for any non-streaming callers."""
     global _sync_compiled
     if _sync_compiled is None:
-        cfg = get_settings()
-        conn = sqlite3.connect(str(cfg.checkpoint_db), check_same_thread=False)
-        saver = SqliteSaver(conn)
-        _sync_compiled = build_graph().compile(checkpointer=saver)
+        backend, saver = _build_sync_saver()
+        if backend == "postgres":
+            real_saver = saver.__enter__()
+            try:
+                real_saver.setup()
+            except Exception as e:  # pragma: no cover
+                log.debug("sync Postgres setup noop: %s", e)
+            _sync_compiled = build_graph().compile(checkpointer=real_saver)
+        else:
+            _sync_compiled = build_graph().compile(checkpointer=saver)
     return _sync_compiled
 
 

@@ -21,6 +21,30 @@
 
 services:
 
+  # Postgres · production checkpointer + quota DB.
+  # Optional · the agent falls back to sqlite if DATABASE_URL is unset.
+  # Enable by setting DATABASE_URL in backend/.env (uncomment below).
+  postgres:
+    image: postgres:16-alpine
+    container_name: taotao-postgres
+    environment:
+      POSTGRES_USER: taotao
+      POSTGRES_PASSWORD: taotao_dev_password
+      POSTGRES_DB: taotao
+    ports:
+      # Exposed for `psql -h localhost -U taotao` ad-hoc · don't expose
+      # in real prod (let only the agent service reach it via the
+      # compose network).
+      - "5432:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taotao -d taotao"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   agent:
     build:
       context: ./backend
@@ -29,11 +53,20 @@ services:
     container_name: taotao-agent
     env_file:
       - ./backend/.env
+    environment:
+      # Override / inject extras here · these win over .env.
+      # Uncomment to use the Postgres service above for checkpoints + quota:
+      #   DATABASE_URL: postgresql://taotao:taotao_dev_password@postgres:5432/taotao
+      # Default = blank → sqlite fallback (dev-friendly).
+      DATABASE_URL: ${DATABASE_URL:-}
     ports:
       - "8000:8000"
     volumes:
       # persistent state across restarts (chroma, checkpoints, traces, HF cache)
       - ./data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
       interval: 15s

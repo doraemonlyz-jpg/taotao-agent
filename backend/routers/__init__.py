@@ -12,6 +12,6 @@ Why split:
     `memory` is multi-tenant, `observability` is read-only and cheap.
   - Pattern matches FastAPI's official guidance · APIRouter + include_router.
 """
-from . import chat, memory, meta, observability
+from . import admin, billing, chat, memory, meta, observability
 
-__all__ = ["chat", "memory", "meta", "observability"]
+__all__ = ["admin", "billing", "chat", "memory", "meta", "observability"]

@@ -78,6 +78,27 @@ def add(usage_metadata: dict | None, session_id: str | None) -> None:
         if session_id:
             _add_locked(_per_session[session_id], inp, out, cc, cr)
 
+    # Persist to per-user quota counter · async-safe sqlite upsert.
+    # Wrapped in try because quota module imports auth which imports us
+    # transitively · don't crash the LLM callback over a billing miss.
+    try:
+        from ..auth import get_current_identity
+        from ..quota import _enabled as quota_enabled, record_usage
+
+        if quota_enabled():
+            ident = get_current_identity()
+            tokens = inp + out + cc + cr
+            cost = estimate_cost(
+                {"input": inp, "output": out, "cache_creation": cc, "cache_read": cr},
+                get_settings().model,
+            )
+            record_usage(
+                tenant_id=ident.tenant_id, user_id=ident.user_id,
+                tokens=tokens, cost_usd=cost,
+            )
+    except Exception:  # pragma: no cover · defensive
+        pass
+
 
 def estimate_cost(counts: dict[str, int], model: str | None = None) -> float:
     m = model or get_settings().model

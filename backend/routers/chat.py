@@ -28,6 +28,7 @@ from agent.harness import run_harness
 from agent.harness.persistence import get_store as get_harness_store
 from agent.harness.tools import tool_descriptions as harness_tool_descriptions
 from agent.observability import UsageCallback, event_bus
+from agent.quota import enforce_user_quota
 from agent.security import chat_rate_limit, enforce_session_budget, require_api_key
 from agent.slash_commands import dispatch as slash_dispatch
 
@@ -43,7 +44,11 @@ class ChatIn(BaseModel):
 
 
 # ------------- /chat (graph backend) ---------------------------------- #
-@router.post("/chat", tags=["chat"], dependencies=[Depends(require_api_key)])
+@router.post(
+    "/chat",
+    tags=["chat"],
+    dependencies=[Depends(require_api_key), Depends(enforce_user_quota)],
+)
 @maybe_rate_limit(chat_rate_limit())
 async def chat(request: Request, payload: ChatIn):
     sid = payload.session_id or str(uuid.uuid4())
@@ -140,7 +145,11 @@ async def chat(request: Request, payload: ChatIn):
 
 
 # ------------- /chat/v2 (harness backend) ----------------------------- #
-@router.post("/chat/v2", tags=["chat"], dependencies=[Depends(require_api_key)])
+@router.post(
+    "/chat/v2",
+    tags=["chat"],
+    dependencies=[Depends(require_api_key), Depends(enforce_user_quota)],
+)
 @maybe_rate_limit(chat_rate_limit())
 async def chat_v2(request: Request, payload: ChatIn):
     """Same wire format as /chat · runs the HARNESS implementation instead

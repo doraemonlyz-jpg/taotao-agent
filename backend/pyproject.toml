@@ -40,6 +40,15 @@ dependencies = [
     "opentelemetry-instrumentation-fastapi>=0.48b0",
     "opentelemetry-instrumentation-httpx>=0.48b0",
     "opentelemetry-exporter-otlp-proto-grpc>=1.27.0",
+    "opentelemetry-exporter-otlp-proto-http>=1.27.0",
+    # Postgres checkpointer · used when DATABASE_URL is set (production).
+    # Falls back to SqliteSaver in dev.  See agent/graph.py:_postgres_dsn.
+    "langgraph-checkpoint-postgres>=2.0.0",
+    "psycopg[binary]>=3.2.0",
+    "psycopg-pool>=3.2.0",
+    # Stripe metered billing · used only when STRIPE_API_KEY is set.
+    # Lazy-imported so unrelated paths (Ollama-only / CI / tests) don't pay it.
+    "stripe>=11.0.0",
     "prometheus-fastapi-instrumentator>=7.0.0",
     "ddgs>=9.14.2",
     "mcp[cli]>=1.27.1",

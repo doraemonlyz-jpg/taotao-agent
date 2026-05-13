@@ -20,6 +20,11 @@ os.environ.pop("SENTRY_DSN", None)
 os.environ.pop("OTEL_EXPORTER_OTLP_ENDPOINT", None)
 os.environ["RATE_LIMIT_ENABLED"] = "0"
 os.environ.setdefault("API_KEY", "")  # disable auth in tests by default
+# Disable MCP HTTP server in tests · its FastMCP session manager raises
+# RuntimeError when a second TestClient enters the lifespan (the manager
+# can only `.run()` once per instance, and we share the FastAPI app
+# instance across test modules for performance).
+os.environ["MCP_HTTP_ENABLED"] = "0"
 
 # Hermetic data dir · isolated per-session temp · cleaned in fin
 _TMP = Path(tempfile.mkdtemp(prefix="taotao-tests-"))

@@ -161,7 +161,7 @@ set_limiter(LIMITER)
 # --------------------------------------------------------------------- #
 # 6. Import routers (now that the limiter is set) · include them on app.
 # --------------------------------------------------------------------- #
-from routers import chat, memory, meta, observability  # noqa: E402
+from routers import admin, billing, chat, memory, meta, observability  # noqa: E402
 
 meta.set_feature_status(
     security=SECURITY_STATUS,
@@ -173,6 +173,8 @@ app.include_router(meta.router)
 app.include_router(chat.router)
 app.include_router(memory.router)
 app.include_router(observability.router)
+app.include_router(admin.router)  # /admin/* · all gated by require_admin_identity
+app.include_router(billing.router)  # /billing/* · Stripe checkout/portal/webhook
 
 
 # --------------------------------------------------------------------- #

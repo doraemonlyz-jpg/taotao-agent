@@ -227,6 +227,46 @@ def require_admin(ident: Identity) -> Identity:
     return ident
 
 
+def _admin_user_ids() -> set[str]:
+    """Comma-separated list of user_ids granted admin role automatically.
+
+    Useful for API_KEY mode (no roles in the auth payload) and for
+    bootstrapping the very first admin in a fresh deployment.
+
+    Example: `ADMIN_USERS=alice@acme.com,ops@acme.com,shared`
+
+    In JWT mode, the `roles` claim should still drive admin status ·
+    this is just a backstop.
+    """
+    raw = (os.environ.get("ADMIN_USERS") or "").strip()
+    if not raw:
+        return set()
+    return {p.strip() for p in raw.split(",") if p.strip()}
+
+
+async def require_admin_identity(
+    request: Request,
+) -> Identity:
+    """FastAPI dependency · returns the caller's Identity, 403s if not admin.
+
+    Use as `Depends(require_admin_identity)` on every /admin/* endpoint.
+    Promotes a non-admin Identity to admin if its `user_id` is listed in
+    `ADMIN_USERS` env (bootstrap helper).
+    """
+    ident = await current_identity(request)
+    bootstrap = _admin_user_ids()
+    if ident.user_id in bootstrap and not ident.is_admin:
+        # Promote · return a copy with admin role added.
+        ident = Identity(
+            user_id=ident.user_id,
+            tenant_id=ident.tenant_id,
+            email=ident.email,
+            roles=tuple(set(ident.roles) | {"admin"}),
+            raw=ident.raw,
+        )
+    return require_admin(ident)
+
+
 # --------------------------------------------------------------------- #
 # ContextVar plumbing · enables tools (no request access) to read tenant
 # --------------------------------------------------------------------- #

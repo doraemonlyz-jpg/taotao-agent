@@ -1471,3 +1471,192 @@ body::after {
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
+
+/* =====================================================================
+ * Auth · login screen + checking spinner
+ *
+ * Match the rest of the app's storybook palette · soft cream paper +
+ * "Little Prince" rust accents.  Login should feel like opening a
+ * journal, not signing into a SaaS.
+ * ===================================================================== */
+.auth-checking {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(196, 77, 42, 0.06), transparent 60%),
+    radial-gradient(circle at 80% 70%, rgba(74, 95, 122, 0.05), transparent 60%),
+    var(--paper, #fdfaf2);
+  padding: 2rem;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: white;
+  border-radius: 18px;
+  padding: 2.4rem 2.2rem 1.8rem;
+  box-shadow: 0 20px 60px rgba(45, 40, 35, 0.08), 0 4px 12px rgba(45, 40, 35, 0.05);
+  border: 1px solid rgba(45, 40, 35, 0.06);
+}
+
+.login-title {
+  margin: 0 0 0.4rem;
+  font-family: 'Comic Sans MS', 'Marker Felt', 'Chalkboard SE', system-ui, sans-serif;
+  font-size: 2rem;
+  color: var(--ink, #2d2823);
+  text-align: center;
+}
+
+.login-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: rgba(45, 40, 35, 0.55);
+  margin-bottom: 1.4rem;
+}
+
+.login-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(45, 40, 35, 0.2);
+  display: inline-block;
+}
+.login-dot-ok   { background: #4caf50; box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15); }
+.login-dot-down { background: #c44d2a; box-shadow: 0 0 0 3px rgba(196, 77, 42, 0.15); }
+
+.login-tabs {
+  display: flex;
+  background: rgba(45, 40, 35, 0.04);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 1.4rem;
+}
+
+.login-tab {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  padding: 0.5rem 0.4rem;
+  font-size: 0.82rem;
+  border-radius: 7px;
+  cursor: pointer;
+  color: rgba(45, 40, 35, 0.6);
+  transition: all 0.15s ease;
+}
+
+.login-tab:hover {
+  color: var(--ink, #2d2823);
+}
+
+.login-tab.active {
+  background: white;
+  color: var(--ink, #2d2823);
+  box-shadow: 0 2px 6px rgba(45, 40, 35, 0.06);
+  font-weight: 500;
+}
+
+.login-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.login-hint {
+  font-size: 0.85rem;
+  color: rgba(45, 40, 35, 0.7);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.login-hint code {
+  background: rgba(45, 40, 35, 0.06);
+  padding: 0.05rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.78rem;
+}
+
+.login-input {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid rgba(45, 40, 35, 0.15);
+  background: rgba(45, 40, 35, 0.02);
+  font-size: 0.9rem;
+  font-family: 'JetBrains Mono', Menlo, monospace;
+  color: var(--ink, #2d2823);
+  box-sizing: border-box;
+}
+
+.login-input:focus {
+  outline: none;
+  border-color: rgba(196, 77, 42, 0.5);
+  background: white;
+}
+
+.login-textarea {
+  resize: vertical;
+  min-height: 96px;
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.login-cta {
+  background: var(--rust, #c44d2a);
+  color: white;
+  border: 0;
+  border-radius: 8px;
+  padding: 0.7rem 1.2rem;
+  font-size: 0.92rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-top: 0.2rem;
+}
+
+.login-cta:hover:not(:disabled) {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+.login-cta:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.login-error {
+  background: rgba(196, 77, 42, 0.1);
+  border-left: 3px solid var(--rust, #c44d2a);
+  color: rgba(45, 40, 35, 0.85);
+  font-size: 0.82rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 4px;
+  margin: 0.6rem 0 0;
+}
+
+.login-footer {
+  font-size: 0.74rem;
+  color: rgba(45, 40, 35, 0.45);
+  margin: 1.6rem 0 0;
+  text-align: center;
+}
+
+.login-footer a {
+  color: var(--rust, #c44d2a);
+  text-decoration: none;
+}
+
+.login-footer a:hover {
+  text-decoration: underline;
+}

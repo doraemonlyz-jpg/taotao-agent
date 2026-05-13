@@ -25,6 +25,7 @@ from .identity import (
     get_current_identity,
     get_current_tenant_id,
     require_admin,
+    require_admin_identity,
     use_identity,
 )
 
@@ -35,5 +36,6 @@ __all__ = [
     "get_current_identity",
     "get_current_tenant_id",
     "require_admin",
+    "require_admin_identity",
     "use_identity",
 ]
