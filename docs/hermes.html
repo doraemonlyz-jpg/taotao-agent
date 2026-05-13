@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hermes 速读 · 桃桃 Agent</title>
+<meta name="description" content="Nous Research Hermes 模型 + Hermes tool-calling XML 格式 · 一页讲清来龙去脉 + 怎么在 taotao-agent 里用">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #fbf5e8; --paper-2: #f4ecd6; --paper-card: #ffffff;
+  --ink: #1d1a14; --ink-soft: #3a3327; --ink-mute: #756c5c;
+  --rule: #d8cdb0; --rule-soft: #e8debc;
+  --leaf: #4a8a4a; --leaf-soft: #ebf3e7;
+  --rust: #c44d2a; --rust-soft: #fae6dc;
+  --sky:  #2c6ca8; --sky-soft:  #e2edf5;
+  --gold: #b8881e; --gold-soft: #f7eccd;
+  --teal: #1f7a6b; --teal-soft: #ddeeea;
+  --font-display: "Fraunces", "Times New Roman", serif;
+  --font-body: "Lora", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  --font-zh: "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: radial-gradient(ellipse at top left, rgba(196,178,144,.14), transparent 50%), radial-gradient(ellipse at bottom right, rgba(74,138,74,.10), transparent 50%), var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.75; }
+:lang(zh) { font-family: var(--font-zh); line-height: 1.85; }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid rgba(196,77,42,.4); transition: all .15s; }
+a:hover { background: rgba(196,77,42,.08); }
+a.bare { border-bottom: none; }
+strong { font-weight: 600; color: var(--ink); }
+em { font-style: italic; color: var(--leaf); font-weight: 500; }
+code { font-family: var(--font-mono); font-size: 0.85em; background: var(--paper-2); padding: 0.08rem 0.35rem; border-radius: 4px; color: var(--rust); border: 1px solid var(--rule-soft); }
+pre { font-family: var(--font-mono); background: #1d1a14; color: #e8e3d4; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; font-size: 0.84rem; line-height: 1.55; }
+pre code { background: none; color: inherit; padding: 0; border: 0; font-size: inherit; }
+
+.container { max-width: 920px; margin: 0 auto; padding: 0 2rem; }
+@media (max-width: 720px) { .container { padding: 0 1.2rem; } }
+
+/* nav */
+.nav { padding: 1.4rem 0; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: rgba(251,245,232,.95); backdrop-filter: blur(8px); z-index: 100; }
+.nav-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.nav-brand { font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 1.2rem; color: var(--ink); border: none; }
+.nav-brand .dot { color: var(--rust); }
+.nav-links { display: flex; gap: 1.4rem; font-family: var(--font-sans); font-size: 0.88rem; }
+.nav-links a { color: var(--ink-mute); border-bottom: none; font-weight: 500; }
+.nav-links a:hover { color: var(--rust); background: none; }
+
+/* hero */
+.hero { padding: 4rem 0 2.6rem; border-bottom: 1px solid var(--ink); position: relative; }
+.hero::after { content: ""; position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%); width: 90px; height: 4px; background: var(--rust); }
+.eyebrow { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.08em; color: var(--rust); margin-bottom: 1.2rem; font-weight: 600; text-transform: uppercase; }
+.hero h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 1.4rem; color: var(--ink); }
+.hero h1 em { color: var(--rust); font-style: italic; }
+.hero-lede { font-size: 1.12rem; color: var(--ink-soft); max-width: 36em; margin: 0; line-height: 1.65; }
+
+/* sections */
+.section { padding: 3.4rem 0; border-bottom: 1px dashed var(--rule); }
+.section:last-of-type { border-bottom: none; }
+.section h2 { font-family: var(--font-display); font-weight: 500; font-size: 1.85rem; letter-spacing: -0.01em; margin: 0 0 1.4rem; color: var(--ink); display: flex; align-items: baseline; gap: 0.7rem; }
+.section h2 .num { font-family: var(--font-mono); font-weight: 400; font-size: 0.9rem; color: var(--rust); letter-spacing: 0.06em; }
+.section h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.2rem; margin: 2rem 0 0.6rem; color: var(--ink); }
+.section p { margin: 0 0 1rem; }
+.section ul { padding-left: 1.4rem; margin: 0.6rem 0 1rem; }
+.section li { margin: 0.3rem 0; }
+
+/* table */
+table { border-collapse: collapse; width: 100%; margin: 1rem 0 1.4rem; background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; font-size: 0.92rem; }
+th, td { padding: 0.65rem 0.85rem; text-align: left; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+th { background: var(--leaf-soft); color: var(--ink); font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td code { font-size: 0.82rem; }
+
+/* callouts */
+.cb { background: var(--paper-card); border: 1px solid var(--rule); border-left: 4px solid var(--rust); border-radius: 8px; padding: 1rem 1.2rem; margin: 1.2rem 0; font-size: 0.96rem; }
+.cb.leaf { border-left-color: var(--leaf); background: var(--leaf-soft); }
+.cb.gold { border-left-color: var(--gold); background: var(--gold-soft); }
+.cb.sky { border-left-color: var(--sky); background: var(--sky-soft); }
+.cb-h { font-family: var(--font-sans); font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: var(--ink-mute); margin: 0 0 0.3rem; }
+
+/* split */
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.2rem 0; }
+@media (max-width: 720px) { .split { grid-template-columns: 1fr; } }
+.split > div { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; padding: 1rem 1.1rem; }
+.split h4 { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin: 0 0 0.6rem; font-weight: 600; }
+.split pre { margin: 0; font-size: 0.78rem; }
+
+/* footer */
+.foot { padding: 3rem 0 4rem; text-align: center; font-family: var(--font-sans); color: var(--ink-mute); font-size: 0.88rem; }
+.foot a { color: var(--ink-mute); border-bottom: 1px solid rgba(117,108,92,.3); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-row">
+    <a class="nav-brand" href="index.html"><span class="dot">●</span> 桃桃 Agent</a>
+    <div class="nav-links">
+      <a href="index.html">首页</a>
+      <a href="learn.html">学习手册</a>
+      <a href="harness.html">Harness</a>
+      <a href="implementation.html">实现细节</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <div class="eyebrow">速读手册 · 5 分钟版</div>
+    <h1>Hermes 是什么 · 它给 <em>开源 agent</em> 解决了什么问题</h1>
+    <p class="hero-lede">
+      一页讲清三件事：① Nous Research 的 Hermes 模型系列是什么、为什么 agent 圈子离不开它；
+      ② Hermes 那套 <code>&lt;tool_call&gt;</code> XML 格式怎么工作、为什么后来变成开源 LLM 调工具的事实标准；
+      ③ 在你这个 taotao-agent 里怎么一行命令切到 Hermes，能跑得多快。
+    </p>
+  </div>
+</header>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 1</span>一句话 + 三层含义</h2>
+    <p>
+      <strong>Nous Research 出的开源 LLM 系列</strong>，靠"会调工具的开源模型"在 agent 圈出名。
+      听到 "Hermes" 这个词，根据上下文可能指三个不同东西，区分清楚就不会混。
+    </p>
+
+    <table>
+      <thead><tr><th style="width: 20%">含义</th><th>是什么</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>① 模型</strong></td>
+          <td>Llama / Mistral / Qwen 的微调系列。最新 <code>Hermes 4</code> 在 2025 年 8 月发布，14B / 70B / 405B 三个尺寸，base 是 Llama-3.1。亮点：<em>hybrid reasoning</em>（推理可以 prompt 控制开关）+ uncensored（不像 Llama Instruct 动不动 refuse）+ 训练目标里显式写了 tool calling。</td>
+        </tr>
+        <tr>
+          <td><strong>② Tool-call 格式</strong></td>
+          <td>Hermes 团队定义的协议：用纯文本 XML 标签 <code>&lt;tool_call&gt;{...}&lt;/tool_call&gt;</code> 描述一次工具调用。后来 Qwen / Mistral / DeepSeek 自己 fine-tune tool 版本时全都抄了类似 schema，成开源圈事实标准。</td>
+        </tr>
+        <tr>
+          <td><strong>③ 团队</strong></td>
+          <td>Nous Research，Discord 上的开放权重研究社区，没融过资，纯靠贡献者推动。除了 Hermes 还做过 Capybara、DeepHermes、Genstruct 等实验性数据集。</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 2</span>Hermes 模型简史 · 一张表说完</h2>
+
+    <table>
+      <thead><tr><th>版本</th><th>时间</th><th>base</th><th>关键升级</th></tr></thead>
+      <tbody>
+        <tr><td><code>Hermes 1</code></td><td>2023</td><td>Llama-1</td><td>第一代 instruction-tuned，无 tool 能力</td></tr>
+        <tr><td><code>Hermes 2</code></td><td>2024 上半年</td><td>Mistral / Mixtral</td><td>role-play / 长格式 instruction-following 显著提升</td></tr>
+        <tr><td><strong><code>Hermes 2 Pro</code></strong></td><td>2024-05</td><td>Llama-3 8B / 70B</td><td>🔑 <em>首次原生 tool calling</em>，定义了 <code>&lt;tool_call&gt;</code> 格式</td></tr>
+        <tr><td><code>Hermes 3</code></td><td>2024-08</td><td>Llama-3.1 8B/70B/405B</td><td>128K 上下文，agentic 任务持续微调</td></tr>
+        <tr><td><strong><code>Hermes 4</code></strong></td><td>2025-08</td><td>Llama-3.1 14B/70B/405B</td><td>🔑 <em>hybrid reasoning</em> · system prompt 一行就能开关 chain-of-thought</td></tr>
+      </tbody>
+    </table>
+
+    <div class="cb leaf">
+      <p class="cb-h">为什么 "2 Pro" 是分水岭</p>
+      <p style="margin: 0">
+        2024 年 5 月之前，开源里"能调工具"的模型都得靠 ReAct prompt 硬凑（让模型按 <code>Thought:/Action:/Observation:</code>
+        格式输出，再用正则解析），不稳。Hermes 2 Pro 是<strong>第一个把 tool calling 当成训练目标</strong>的开源模型，
+        从此 ChatOllama / vLLM 等推理框架可以直接把 <code>tools=[...]</code> 参数喂进去，模型出标准结构化结果。
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 3</span>Hermes 的 tool-call 格式 · 跟 OpenAI 区别</h2>
+    <p>
+      OpenAI / Anthropic 的工具调用是<strong>结构化字段</strong>（API 层就有 <code>tool_calls</code> 的 schema）。
+      Hermes 不一样，它把 tool call 编码成<strong>消息文本里的 XML 标签</strong>。两边对比：
+    </p>
+
+    <div class="split">
+      <div>
+        <h4>OpenAI 风格</h4>
+<pre><code>{
+  "role": "assistant",
+  "content": null,
+  "tool_calls": [{
+    "id": "call_abc",
+    "function": {
+      "name": "calculator",
+      "arguments": "{\"expr\":\"2+2\"}"
+    }
+  }]
+}</code></pre>
+      </div>
+      <div>
+        <h4>Hermes 风格</h4>
+<pre><code>{
+  "role": "assistant",
+  "content": "&lt;tool_call&gt;\n{\"name\":\"calculator\",\"arguments\":{\"expr\":\"2+2\"}}\n&lt;/tool_call&gt;"
+}</code></pre>
+      </div>
+    </div>
+
+    <p>结果回灌时也是文本：</p>
+
+<pre><code>{
+  "role": "tool",
+  "content": "&lt;tool_response&gt;\n{\"result\": 4}\n&lt;/tool_response&gt;"
+}</code></pre>
+
+    <h3>这个设计为什么后来变标准</h3>
+    <ul>
+      <li><strong>任何 base LLM 都能学</strong>：不需要改 chat template，不需要加 special token，纯文本就行。</li>
+      <li><strong>system prompt 里就能描述</strong>：把工具 schema 用 JSON 写在 system 里，加一句 "if you need a tool, emit <code>&lt;tool_call&gt;...&lt;/tool_call&gt;</code>"，base 模型 zero-shot 就大概率会用了。</li>
+      <li><strong>streaming 友好</strong>：完全是文本流，不需要等结构化字段闭合再返回客户端。</li>
+      <li><strong>多 call 简单</strong>：连续多个 <code>&lt;tool_call&gt;</code> 块就是 parallel tool call，不需要数组 schema。</li>
+    </ul>
+
+    <div class="cb sky">
+      <p class="cb-h">推理框架在背后做了啥</p>
+      <p style="margin: 0">
+        Ollama / vLLM / LM Studio 这些推理框架收到 <code>tools=[...]</code> 参数后，会自动把工具 schema 注入 system prompt
+        （Hermes 风格 XML），然后流式扫描模型输出，遇到 <code>&lt;tool_call&gt;</code> 就提取出来组装成 OpenAI 风格的
+        <code>tool_calls</code> 字段返回给你。<strong>所以你的应用代码完全不用改</strong>，
+        换 Hermes 跟换 GPT-4 在调用层是一模一样的。
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 4</span>实测 · Hermes 3 8B vs Qwen 2.5 14B</h2>
+    <p>
+      在你这个 taotao-agent 里跑一条 <code>"compute 17 * 23 with the calculator tool"</code>，
+      两个本地模型对比（M3 Max，Ollama 0.23.x，2026-05）：
+    </p>
+
+    <table>
+      <thead><tr><th>模型</th><th>大小</th><th>首次响应</th><th>tool call 正确率</th><th>结果</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>ollama:hermes3:8b</code></td>
+          <td>4.7 GB</td>
+          <td><strong>~6s</strong></td>
+          <td>✓</td>
+          <td>正确生成 <code>{name: calculator, args: {expr: "17 * 23"}}</code>，内容字段空，标准 schema</td>
+        </tr>
+        <tr>
+          <td><code>ollama:qwen2.5:14b</code></td>
+          <td>9.0 GB</td>
+          <td>~20s</td>
+          <td>✓</td>
+          <td>正确，但偶尔 args 字段名漂移（<code>expression</code> vs <code>expr</code>）</td>
+        </tr>
+        <tr>
+          <td><code>ollama:deepseek-r1:14b</code></td>
+          <td>9.0 GB</td>
+          <td>—</td>
+          <td>✗ 不支持</td>
+          <td>Ollama 模板不暴露 tool calling，全部跑 ReAct 文本格式，不进 graph</td>
+        </tr>
+        <tr>
+          <td><code>ollama:deepseek-coder-v2:16b</code></td>
+          <td>8.9 GB</td>
+          <td>—</td>
+          <td>✗ 不支持</td>
+          <td>同上</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="cb gold">
+      <p class="cb-h">结论</p>
+      <p style="margin: 0">
+        本地能跑、能调工具、又不占显存的"性价比之王"目前是 <strong>hermes3:8b</strong>。
+        小 4 GB、快 3 倍、tool 调用更稳。Qwen 14B 在长文本/中文回答上仍然更好，但纯 tool-driven workflow
+        建议默认 Hermes。
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 5</span>在 taotao-agent 里怎么用</h2>
+
+    <h3>1 · 装模型（一次）</h3>
+<pre><code>ollama pull hermes3:8b      # 4.7 GB · ~80s 在 100 Mbps 上</code></pre>
+
+    <h3>2 · 在 picker 里切（每次）</h3>
+    <p>装完打开 frontend，model picker 自动会列出 <code>ollama:hermes3:8b</code> 并标 <code>tools</code> 角标 — 因为：</p>
+    <ul>
+      <li><code>backend/agent/models_catalog.py</code> 的 <code>discover_ollama()</code> 直接调 <code>http://localhost:11434/api/tags</code>，列你装的全部模型。</li>
+      <li><code>OLLAMA_NO_TOOL_PATTERNS</code> 黑名单里没有 <code>"hermes"</code>，所以默认按 "支持工具" 处理（实测正确）。</li>
+    </ul>
+
+    <p>或者写到 <code>backend/.env</code> 当默认：</p>
+<pre><code>AGENT_MODEL=ollama:hermes3:8b
+AGENT_FAST_MODEL=ollama:qwen2.5:7b   # router/critic 仍用 qwen 小模型也行</code></pre>
+
+    <h3>3 · 跑一把</h3>
+    <p>graph 和 harness 两个端点都不用改一行代码 — 之前讲的那套 <em>"应用代码无感"</em> 就是这个意思。直接发：</p>
+<pre><code>curl -N -X POST http://127.0.0.1:8000/chat/v2 \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"compute 17 * 23 and tell me the result"}'</code></pre>
+    <p>SSE 流里能看到一模一样的 <code>tool_call</code> / <code>tool_result</code> 事件 — Ollama 已经把 Hermes XML 翻译成标准格式喂给 langchain。</p>
+
+    <div class="cb">
+      <p class="cb-h">什么时候 <em>不</em> 选 Hermes</p>
+      <ul style="margin: 0; padding-left: 1.2rem">
+        <li><strong>需要中文长文 / 长 reasoning chain</strong> → Qwen 14B / 32B 更好</li>
+        <li><strong>已经接 Anthropic / OpenAI</strong> 且不在乎花钱 → Sonnet 4.5 / GPT-4o 更准更稳</li>
+        <li><strong>纯代码生成 + 不调工具</strong> → DeepSeek-Coder-v2 仍然是开源代码王者</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 6</span>面试可能会被问的几句话</h2>
+    <ul>
+      <li><strong>Q: Hermes 跟 ChatML 是一回事吗？</strong> 不是。ChatML 是 chat 消息<em>模板</em>（<code>&lt;|im_start|&gt;...&lt;|im_end|&gt;</code> 那套）。Hermes tool 格式是套在 ChatML 里面的<em>工具调用协议</em>。两者正交。</li>
+      <li><strong>Q: 为什么 OpenAI 不用 Hermes 这种 XML 格式？</strong> 因为 OpenAI 的模型可以在 SFT 阶段直接学结构化字段（API 端拿到的就不是文本），不需要"靠 prompt 教模型用文本编码工具调用"这条 hack 路径。开源模型没这个特权（API 层就是裸文本），所以走 Hermes 这条更实用。</li>
+      <li><strong>Q: parallel tool call 怎么处理？</strong> 模型连续输出多个 <code>&lt;tool_call&gt;</code> 块，推理框架按顺序提取，组成数组返回。本质跟 OpenAI 的 <code>tool_calls: [{},{},...]</code> 等价。</li>
+      <li><strong>Q: Hermes 4 的 hybrid reasoning 是什么？</strong> system prompt 加一句 <code>think before answering</code> 时模型走 chain-of-thought，去掉这句就直接答。等于把 OpenAI o-series 的"思考预算"开放成 prompt-controlled 开关。</li>
+      <li><strong>Q: Hermes 跟 DeepSeek 比谁更适合本地 agent？</strong> 看任务。<em>纯 reasoning</em> DeepSeek-R1 强但不调工具；<em>tool-driven workflow</em> 必须选 Hermes / Qwen。在 Ollama 上 DeepSeek 系全部不暴露 function calling，不是模型问题是 Ollama template 问题，但用户视角就是 — 不能用。</li>
+    </ul>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2><span class="num">§ 7</span>继续读</h2>
+    <ul>
+      <li>Nous Research GitHub · <a href="https://github.com/NousResearch" target="_blank" rel="noopener">github.com/NousResearch</a></li>
+      <li>Hermes 4 release · <a href="https://nousresearch.com/hermes4/" target="_blank" rel="noopener">nousresearch.com/hermes4</a></li>
+      <li>Hermes 2 Pro 论文 / 模型卡 · <a href="https://huggingface.co/NousResearch/Hermes-2-Pro-Llama-3-8B" target="_blank" rel="noopener">HF model card</a></li>
+      <li>Ollama Hermes 主页 · <a href="https://ollama.com/library/hermes3" target="_blank" rel="noopener">ollama.com/library/hermes3</a></li>
+      <li>本项目相关章节 · <a href="learn.html">learn.html</a> §6（Tool Calling 演化史）· <a href="tool-design.html">tool-design.html</a>（function calling 4 流派）· <a href="harness.html">harness.html</a>（XML 工具协议在 harness 里如何利用）</li>
+    </ul>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="container">
+    <p>桃桃 Agent · <a href="index.html">回首页</a> · <a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank" rel="noopener">GitHub</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
