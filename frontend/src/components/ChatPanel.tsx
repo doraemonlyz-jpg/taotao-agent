@@ -1,7 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { streamChat, type Engine, type TraceEvent } from "../api";
 import { pick, samples, useLang } from "../i18n";
-import MarkdownBubble from "./MarkdownBubble";
+
+// Lazy · the markdown stack is ~280KB (react-markdown + remark-gfm +
+// rehype-highlight + highlight.js). Loading it on demand keeps the
+// initial paint snappy. The fallback is a plain text render so a slow
+// network user still sees the answer immediately.
+const MarkdownBubble = lazy(() => import("./MarkdownBubble"));
+
+function PlainText({ text }: { text: string }) {
+  return <div className="md md-fallback">{text}</div>;
+}
 
 interface Turn {
   role: "user" | "assistant" | "system";
@@ -159,7 +168,9 @@ export default function ChatPanel({
                 // User text is plain — never render their `**` as bold.
                 turn.text
               ) : (
-                <MarkdownBubble text={turn.text} />
+                <Suspense fallback={<PlainText text={turn.text} />}>
+                  <MarkdownBubble text={turn.text} />
+                </Suspense>
               )}
             </div>
             {turn.meta && <div className="bubble-meta">{turn.meta}</div>}
@@ -171,7 +182,9 @@ export default function ChatPanel({
             <div className="bubble-role">{t("roleAgent")}</div>
             {streaming ? (
               <div className="bubble-text">
-                <MarkdownBubble text={streaming} />
+                <Suspense fallback={<PlainText text={streaming} />}>
+                  <MarkdownBubble text={streaming} />
+                </Suspense>
                 <span className="caret">▋</span>
               </div>
             ) : (
