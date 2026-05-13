@@ -2152,28 +2152,158 @@ KEEP_RECENT = 8
         <p class="sub">每个都不超过 30 行新代码</p>
       </header>
 
-      <h3 id="ext-tool"><span class="anchor">§17.1</span>加一个新工具</h3>
+      <h3 id="ext-tool"><span class="anchor">§17.1</span>加一个新工具 · 完整 recipe</h3>
+
+      <p>这是项目里 <em>最常做</em> 的扩展。30 行 Python + 改两行 import = 新工具上线，
+      graph 和 harness 两个端点都自动能用。这一节用真实合入项目的 <code>current_time</code> 工具走全流程。</p>
+
+      <h4>第 1 步 · 写工具文件</h4>
+
+      <p>工具就是个普通函数 + <code>@tool</code> 装饰器。LangChain 自动从类型注解和 docstring
+      生成 JSON schema 喂给 LLM。文件丢在 <code>backend/agent/tools/&lt;name&gt;.py</code>：</p>
+
+<pre><span class="c"># backend/agent/tools/current_time.py</span>
+<span class="k">from</span> __future__ <span class="k">import</span> annotations
+<span class="k">import</span> datetime <span class="k">as</span> dt
+<span class="k">from</span> zoneinfo <span class="k">import</span> ZoneInfo
+<span class="k">from</span> langchain_core.tools <span class="k">import</span> tool
+
+
+<span class="k">@tool</span>
+<span class="k">def</span> <span class="f">current_time</span>(timezone: str = <span class="s">"UTC"</span>) -> str:
+    <span class="s">"""Get the current wall-clock time in the given IANA timezone.
+
+    Use this whenever the question depends on "now" — relative dates
+    ("yesterday", "next Monday"), age calculations, freshness checks
+    on web search results, scheduling, etc. NEVER guess the current
+    date from your training data.
+
+    Args:
+        timezone: IANA timezone name like "Asia/Shanghai", "UTC",
+                  "America/Los_Angeles". Defaults to "UTC".
+    """</span>
+    <span class="k">try</span>:
+        tz = <span class="f">ZoneInfo</span>(timezone)
+    <span class="k">except</span> Exception:
+        <span class="k">return</span> <span class="f">f"Unknown timezone {timezone!r}. Try 'UTC' or an IANA name like 'Asia/Shanghai'."</span>
+    now = dt.datetime.<span class="f">now</span>(tz)
+    <span class="k">return</span> now.<span class="f">strftime</span>(<span class="s">"%Y-%m-%d %H:%M:%S %Z (%A, week %V)"</span>)
+</pre>
+
+      <h4>第 2 步 · 在<em>两个</em> registry 里注册</h4>
+
+      <div class="callout warn">
+        <span class="lbl">坑点</span>
+        <p>项目有 <strong>两套 registry</strong> · 不要只改 graph 那边，否则 harness 端点不会暴露这个工具。</p>
+      </div>
+
+<pre><span class="c"># backend/agent/tools/registry.py · 给 graph (POST /chat) 用</span>
+<span class="k">from</span> .current_time <span class="k">import</span> current_time
+
+all_tools = [
+    calculator,
+    current_time,    <span class="c"># ← 加这里</span>
+    web_search,
+    ...
+]
+
+<span class="c"># backend/agent/harness/tools.py · 给 harness (POST /chat/v2) 用</span>
+<span class="k">from</span> ..tools.current_time <span class="k">import</span> current_time
+
+HARNESS_TOOLS = [
+    web_search, read_file, list_files, grep_in_files,
+    calculator,
+    current_time,    <span class="c"># ← 加这里</span>
+    python_repl,
+    ...
+]
+</pre>
+
+      <h4>第 3 步 · 重启 + 验证</h4>
+
+<pre>$ uvicorn app:app --reload    <span class="c"># 自动重启即可</span>
+
+$ curl -s http://127.0.0.1:8000/tools | jq '.[].name' | grep current_time
+"current_time"                                <span class="c"># graph ✓</span>
+
+$ curl -s http://127.0.0.1:8000/chat/v2/tools | jq '.[].name' | grep current_time
+"current_time"                                <span class="c"># harness ✓</span>
+
+$ curl -s -N -X POST http://127.0.0.1:8000/chat/v2 \
+    -H 'Content-Type: application/json' \
+    -d '{"message":"What time is it in Shanghai?"}'
+
+<span class="c"># SSE stream:</span>
+<span class="c"># tool_call:   current_time({"timezone":"Asia/Shanghai"})</span>
+<span class="c"># tool_result: 2026-05-13 12:23:49 CST (Wednesday, week 20)</span>
+<span class="c"># answer:      "The current time in Shanghai is 12:23 PM on Wednesday..."</span>
+</pre>
+
+      <p>不需要改 executor、不需要改 system prompt、不需要碰前端 — model picker 旁边的
+      Tools 面板下次刷新会自动列出 <code>current_time</code>。</p>
+
+      <h4>核心约定 · 抄就完事了</h4>
+
+      <table class="recipe">
+        <thead><tr><th>写法</th><th>作用</th></tr></thead>
+        <tbody>
+          <tr><td><code>@tool</code> 装饰器</td><td>把函数包装成 LangChain <code>BaseTool</code></td></tr>
+          <tr><td>函数名</td><td>LLM 看到的 tool name · 小写下划线、描述性</td></tr>
+          <tr><td><strong>docstring 第 1 段</strong></td><td>给 LLM 看的"什么时候用我"，<em>比函数名更重要</em></td></tr>
+          <tr><td><code>Args:</code> 段</td><td>每个参数的语义。LLM 严格按 docstring 选参数</td></tr>
+          <tr><td>类型注解</td><td>自动生成 JSON schema · 强约束 LLM 输出</td></tr>
+          <tr><td>默认值</td><td>让参数可选，模型可以省略</td></tr>
+          <tr><td><strong>return <code>str</code></strong></td><td>返回什么 LLM 就看到什么。<em>不要返回 dict</em>（会被 str() 后丢信息）</td></tr>
+        </tbody>
+      </table>
+
+      <h4>7 条最佳实践</h4>
 
       <ol>
-        <li>在 <code>backend/agent/tools/</code> 新建一个文件，写 <code>@tool</code> 函数</li>
-        <li>导入到 <code>tools/registry.py</code> 的 <code>all_tools</code> 列表</li>
-        <li>不需要改 executor、不需要改 prompt——下一次<strong>用户问相关问题，tool router 自动绑给 LLM</strong></li>
+        <li><strong>docstring 写 "Use this when..."</strong> — 模型不靠工具名挑工具，靠这一句</li>
+        <li><strong>永远 return str</strong> — 把结构化数据格式化成 LLM 能读的文字（如 <code>"x=42, y=10"</code>）</li>
+        <li><strong>错误也返回字符串</strong> — <code>return f"Error: {e!r}. Try ..."</code> 给 LLM 自我修复的提示，不要 raise</li>
+        <li><strong>参数尽量少</strong> — 超过 3 个参数 LLM 容易漏填，考虑用 <code>args_schema</code> + Pydantic 拆分</li>
+        <li><strong>用 <code>Literal[...]</code> 做枚举</strong> — <code>mode: Literal["fast","accurate"]</code>，自动 schema 强约束</li>
+        <li><strong>副作用工具留 dry_run</strong> — 写文件 / 改数据库的工具加 <code>dry_run: bool = False</code>，让 LLM 先预览</li>
+        <li><strong>耗时工具加超时</strong> — harness 的 <code>safe_run_tool</code> 已经统一加了 30s 上限；graph 里要自己加 <code>asyncio.wait_for</code></li>
       </ol>
 
-      <p>例如加一个 <code>get_weather</code>：</p>
+      <h4>进阶 · 不一定现在用</h4>
 
-<pre><span class="c"># tools/weather.py</span>
-<span class="k">@tool</span>
-<span class="k">def</span> <span class="f">get_weather</span>(city: str) -> str:
-    <span class="s">"""Return current temperature and conditions for a city."""</span>
-    r = httpx.<span class="f">get</span>(<span class="f">f"https://wttr.in/{city}?format=j1"</span>)
-    d = r.<span class="f">json</span>()[<span class="s">"current_condition"</span>][0]
-    <span class="k">return</span> <span class="f">f"{d['temp_C']}°C, {d['weatherDesc'][0]['value']}"</span>
-
-<span class="c"># tools/registry.py</span>
-<span class="k">from</span> .weather <span class="k">import</span> get_weather
-all_tools = [..., get_weather]
-</pre>
+      <table class="recipe">
+        <thead><tr><th>场景</th><th>怎么做</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>需要复杂参数（嵌套 dict / 列表）</td>
+            <td>定义 <code>class MyArgs(BaseModel)</code>，给 <code>@tool(args_schema=MyArgs)</code></td>
+          </tr>
+          <tr>
+            <td>工具要异步（HTTP / DB）</td>
+            <td>改成 <code>async def</code>，LangChain 自动识别 · 在 graph / harness 里都正确 await</td>
+          </tr>
+          <tr>
+            <td>工具拿到 graph state</td>
+            <td>用 <code>from langchain_core.tools import InjectedState</code> 注入，参数加 <code>state: Annotated[dict, InjectedState]</code></td>
+          </tr>
+          <tr>
+            <td>限制谁能调（admin only）</td>
+            <td>函数体里 raise <code>PermissionError</code>，error 节点会 catch · 或在 docstring 里写 "(internal · don't expose)"</td>
+          </tr>
+          <tr>
+            <td>超过 20 个 tool（context bloat）</td>
+            <td>设 <code>AGENT_TOOL_ROUTE_TOPK=5</code> · <code>tools/router.py</code> 按 query embedding 相似度只绑 top-5 给 LLM</td>
+          </tr>
+          <tr>
+            <td>工具结果太长（>4000 字符）</td>
+            <td><code>safe_run_tool</code> 自动截到 <code>AGENT_TOOL_RESULT_MAX_CHARS</code> · 自定义可以在工具里手动 <code>return result[:2000] + "..."</code></td>
+          </tr>
+          <tr>
+            <td>结果想 cache（同 args 不重算）</td>
+            <td>harness 的 <code>safe_run_tool</code> 内置了 in-memory cache（按 (name, args_json) 哈希）· graph 没有，要自己加 <code>functools.lru_cache</code></td>
+          </tr>
+        </tbody>
+      </table>
 
       <h3 id="ext-subagent"><span class="anchor">§17.2</span>加一个新 sub-agent</h3>
 

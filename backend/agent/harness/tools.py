@@ -28,6 +28,7 @@ from __future__ import annotations
 from langchain_core.tools import tool
 
 from ..tools.calculator import calculator
+from ..tools.current_time import current_time
 from ..tools.file_ops import grep_in_files, list_files, read_file, write_file
 from ..tools.memory_tool import recall, remember
 from ..tools.profile_tool import read_profile, update_profile
@@ -67,6 +68,7 @@ HARNESS_TOOLS = [
     grep_in_files,
     # --- compute -------------------------------------------------------
     calculator,
+    current_time,
     python_repl,
     # --- memory --------------------------------------------------------
     recall,

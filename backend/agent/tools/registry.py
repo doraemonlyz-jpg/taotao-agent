@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from .calculator import calculator
+from .current_time import current_time
 from .file_ops import grep_in_files, list_files, read_file, write_file
 from .memory_tool import recall, remember
 from .profile_tool import read_profile, update_profile
@@ -11,6 +12,7 @@ from .web_search import web_search
 
 all_tools = [
     calculator,
+    current_time,
     web_search,
     read_file,
     write_file,
