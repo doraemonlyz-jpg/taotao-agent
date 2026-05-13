@@ -11,21 +11,21 @@
 <style>
 :root {
   /* paper · clean morning light · soft mint cream (小清新基底) */
-  --paper: #fbfaf6; --paper-2: #f3f1ea; --paper-card: #ffffff;
+  --paper: #f7f2e6; --paper-2: #efe7d2; --paper-card: #fdfaf1;
   /* ink · charcoal with slight cool tint */
-  --ink: #2a2826; --ink-soft: #4f4d48; --ink-mute: #9a978f;
-  --rule: #d8d4cc; --rule-soft: #ebe8e0;
+  --ink: #322d25; --ink-soft: #56504a; --ink-mute: #a09988;
+  --rule: #d6cdb8; --rule-soft: #e8e0cd;
   /* nature palette · sage / pastel forest */
-  --leaf: #6b9b6b; --leaf-deep: #4f7a52; --leaf-soft: #ebf0e3;
-  --moss: #95a796; --moss-soft: #eaf0e2;
+  --leaf: #7c9f7d; --leaf-deep: #5a7e5d; --leaf-soft: #e7ecd8;
+  --moss: #99ad9a; --moss-soft: #e6ecd8;
   /* warm accent · soft coral instead of brick rust */
-  --rust: #c97a5e; --rust-soft: #f5e3d8; --terra: #b56848;
+  --rust: #cb7d61; --rust-soft: #f3dfd0; --terra: #b56848;
   /* sky · pale watercolor */
-  --sky:  #a6c1d4; --sky-deep: #7ea9c4; --sky-soft:  #e8eef2;
+  --sky:  #a8c2d4; --sky-deep: #82a9c4; --sky-soft:  #e6edf2;
   --night: #2a4565; --night-deep: #1d3050;
   /* misc · all toned down for 小清新 */
-  --plum: #a690b1; --plum-soft: #efe7f0;
-  --gold: #d4b272; --gold-soft: #f3e8c2; --gold-warm: #e9c882;
+  --plum: #a690b1; --plum-soft: #ede5ee;
+  --gold: #d4b272; --gold-soft: #f1e3b9; --gold-warm: #e9c882;
   --teal: #83a8a0; --teal-soft: #e2ece7;
   --coral: #e8a195; --coral-soft: #fbe4dd;
 
@@ -36,8 +36,8 @@
   --font-hand: "Caveat", "Bradley Hand", cursive;
   --font-zh: "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
 
-  --shadow-soft: 0 1px 0 rgba(42,40,38,.04), 0 4px 12px rgba(42,40,38,.04);
-  --shadow-cloud: 0 2px 0 rgba(42,40,38,.06), 0 8px 18px rgba(42,40,38,.06);
+  --shadow-soft: 0 4px 14px rgba(50,45,37,.08), 0 1px 3px rgba(50,45,37,.05);
+  --shadow-cloud: 0 8px 28px rgba(50,45,37,.10), 0 2px 6px rgba(50,45,37,.06);
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -46,7 +46,10 @@ html { scroll-behavior: smooth; }
 body {
   margin: 0;
   background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='2' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.53 0 0 0 0 0.50 0 0 0 0.025 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 60% 40% at 15% 8%,  rgba(180,195,215,.20), transparent 60%),
+    radial-gradient(ellipse 55% 38% at 85% 18%, rgba(215,165,145,.13), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 50% 100%, rgba(160,180,140,.14), transparent 55%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.42 0 0 0 0 0.36 0 0 0 0.030 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E"),
     var(--paper);
   color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.7;
 }
@@ -75,28 +78,28 @@ strong { font-weight: 600; color: var(--ink); }
 /* ===== hero · totoro sky + rolling hills ===== */
 .hero {
   padding: 5.5rem 0 8rem; position: relative; overflow: hidden;
-  background: var(--paper);
+  background:
+    linear-gradient(180deg, rgba(168,194,212,.30) 0%, rgba(168,194,212,.10) 35%, transparent 65%);
 }
-/* sketch-style — no fills, just pencil strokes */
+/* Ghibli watercolor style — soft fills, drift animation, gentle shadows */
 .hero-sky { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-.hero-sky .stroke { fill: none; stroke: var(--ink); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
-.hero-sky .stroke-soft { fill: none; stroke: var(--ink-mute); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
-.hero-sky .stroke-leaf { fill: none; stroke: var(--leaf-deep); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: .65; }
-.hero-sky .wash-cloud { fill: var(--paper-card); opacity: .55; }
-.hero-sky .wash-leaf { fill: var(--leaf); opacity: .25; }
-.hero-sky .wash-coral { fill: var(--rust); opacity: .18; }
-@keyframes drift { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(18px, 6px); } }
-@keyframes sway { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(7deg); } }
+.hero-sky .cloud { fill: var(--paper-card); opacity: .88; filter: drop-shadow(0 4px 8px rgba(74,143,196,.10)); }
+.hero-sky .cloud-2 { opacity: .68; }
+.hero-sky .leaf-drift { fill: var(--leaf); opacity: .60; }
+.hero-sky .leaf-drift-2 { fill: var(--moss); opacity: .55; }
+.hero-sky .star { fill: var(--gold-warm); opacity: .75; }
+@keyframes drift { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(20px, 8px); } }
+@keyframes sway { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(8deg); } }
 .hero-sky .cloud-grp-a { animation: drift 22s ease-in-out infinite; transform-origin: center; }
 .hero-sky .cloud-grp-b { animation: drift 28s ease-in-out infinite reverse; }
 .hero-sky .leaf-grp { animation: sway 9s ease-in-out infinite; transform-origin: 50% 100%; }
 .hero-sky .leaf-grp-2 { animation: sway 12s ease-in-out infinite reverse; transform-origin: 50% 100%; }
 
-.hero-hill { position: absolute; left: 0; right: 0; bottom: -1px; width: 100%; height: 130px; pointer-events: none; z-index: 0; }
-.hero-hill .hill-stroke { fill: none; stroke: var(--ink); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
-.hero-hill .hill-stroke-soft { fill: none; stroke: var(--ink-mute); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; opacity: .5; }
-.hero-hill .hill-wash { fill: var(--leaf); opacity: .10; }
-.hero-hill .tree-stroke { fill: none; stroke: var(--leaf-deep); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; opacity: .7; }
+.hero-hill { position: absolute; left: 0; right: 0; bottom: -1px; width: 100%; height: 140px; pointer-events: none; z-index: 0; }
+.hero-hill .hill-back { fill: var(--moss-soft); }
+.hero-hill .hill-mid  { fill: var(--moss); opacity: .58; }
+.hero-hill .hill-front{ fill: var(--leaf); opacity: .38; }
+.hero-hill .tree { fill: var(--leaf-deep); opacity: .60; }
 
 .hero-inner { position: relative; z-index: 1; }
 .hero-eyebrow { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.1em; color: var(--rust); margin-bottom: 1.4rem; font-weight: 600; text-transform: uppercase; text-align: center; }
@@ -139,13 +142,13 @@ strong { font-weight: 600; color: var(--ink); }
 
 /* ===== quick start ===== */
 .qs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.4rem; }
-.qs-card { background: var(--paper-card); border: 1.5px solid var(--ink); border-radius: 16px; padding: 1.6rem 1.5rem; transition: all .2s ease; position: relative; box-shadow: 3px 3px 0 var(--ink); }
+.qs-card { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 16px; padding: 1.6rem 1.5rem; transition: all .25s cubic-bezier(.4,.0,.2,1); border-bottom: 3px solid var(--rule); position: relative; box-shadow: var(--shadow-soft); }
 .qs-card.qs-rust { border-left: 4px solid var(--rust); }
 .qs-card.qs-leaf { border-left: 4px solid var(--leaf); }
 .qs-card.qs-sky { border-left: 4px solid var(--sky-deep); }
 .qs-card.qs-plum { border-left: 4px solid var(--plum); }
 .qs-card.qs-gold { border-left: 4px solid var(--gold); }
-.qs-card:hover { transform: translate(-2px, -2px) rotate(-.3deg); box-shadow: 5px 5px 0 var(--ink); }
+.qs-card:hover { transform: translateY(-4px) rotate(-.3deg); box-shadow: var(--shadow-cloud); border-color: var(--ink-mute); }
 .qs-card h4 { font-family: var(--font-sans); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--rust); margin: 0 0 0.4rem; }
 .qs-card .qs-title { font-family: var(--font-display); font-weight: 500; font-size: 1.25rem; line-height: 1.3; color: var(--ink); margin: 0 0 0.7rem; }
 .qs-card p { font-size: 0.92rem; color: var(--ink-soft); margin: 0 0 1rem; line-height: 1.6; }
@@ -155,7 +158,7 @@ strong { font-weight: 600; color: var(--ink); }
 /* ===== phase ===== */
 .phase { margin-bottom: 4rem; position: relative; }
 .phase-head { display: flex; align-items: baseline; gap: 1.2rem; padding-bottom: 1rem; border-bottom: 2px solid var(--ink); margin-bottom: 1.8rem; flex-wrap: wrap; }
-.phase-num { font-family: var(--font-display); font-weight: 700; font-size: 3rem; line-height: 1; color: var(--terra); font-style: italic; text-shadow: 1px 1px 0 rgba(170,190,210,.45); }
+.phase-num { font-family: var(--font-display); font-weight: 700; font-size: 3rem; line-height: 1; color: var(--terra); font-style: italic; text-shadow: 1px 1px 0 rgba(180,195,215,.45); }
 .phase-meta { flex: 1; min-width: 220px; }
 .phase-meta h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.7rem; margin: 0 0 0.3rem; color: var(--ink); letter-spacing: -0.005em; }
 .phase-meta h3 em { color: var(--rust); font-style: italic; font-weight: 500; }
@@ -165,8 +168,8 @@ strong { font-weight: 600; color: var(--ink); }
 
 /* ===== book grid ===== */
 .book-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 1.2rem; }
-.book-card { background: var(--paper-card); border: 1.5px solid var(--ink); border-radius: 14px; padding: 1.4rem 1.5rem 1.2rem; transition: all .2s ease; display: flex; flex-direction: column; min-height: 230px; position: relative; box-shadow: 3px 3px 0 var(--ink); }
-.book-card:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--ink); border-color: var(--ink); }
+.book-card { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 14px; padding: 1.4rem 1.5rem 1.2rem; transition: all .25s cubic-bezier(.4,.0,.2,1); display: flex; flex-direction: column; min-height: 230px; position: relative; box-shadow: var(--shadow-soft); }
+.book-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-cloud); border-color: var(--leaf); }
 .book-card a { border: none; }
 .book-card .bk-row { display: flex; gap: 0.8rem; align-items: baseline; margin-bottom: 0.6rem; }
 .book-card .bk-emoji { font-size: 1.4rem; line-height: 1; }
@@ -185,9 +188,9 @@ strong { font-weight: 600; color: var(--ink); }
 .bk-num.has-new::after { content: "✦"; color: var(--rust); margin-left: .35rem; font-weight: 700; }
 
 /* ===== Roadmap progress ===== */
-.roadmap { background: var(--paper-card); border: 1.5px dashed var(--ink); border-radius: 18px; padding: 2.4rem; margin: 0 0 4rem; box-shadow: var(--shadow-soft); position: relative; overflow: hidden; }
-.roadmap::before { content: ""; position: absolute; top: -30px; right: -30px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(170,190,210,.40), transparent 70%); pointer-events: none; }
-.roadmap::after { content: ""; position: absolute; bottom: -40px; left: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(180,178,170,.28), transparent 70%); pointer-events: none; }
+.roadmap { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 18px; padding: 2.4rem; margin: 0 0 4rem; box-shadow: var(--shadow-soft); position: relative; overflow: hidden; }
+.roadmap::before { content: ""; position: absolute; top: -30px; right: -30px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(180,195,215,.40), transparent 70%); pointer-events: none; }
+.roadmap::after { content: ""; position: absolute; bottom: -40px; left: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(215,200,165,.28), transparent 70%); pointer-events: none; }
 .roadmap h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.55rem; margin: 0 0 1.6rem; color: var(--ink); text-align: center; }
 .roadmap-bar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.55rem; margin-bottom: 1.2rem; }
 .roadmap-step { text-align: center; padding: 0.7rem 0.4rem; border-radius: 10px; font-family: var(--font-sans); font-size: 0.74rem; font-weight: 600; color: white; box-shadow: 0 2px 5px rgba(0,0,0,.1); }
@@ -208,31 +211,30 @@ strong { font-weight: 600; color: var(--ink); }
 .coverage td:first-child { text-align: left; font-family: var(--font-display); font-weight: 500; color: var(--ink); }
 .coverage td.x { color: var(--rust); font-weight: 700; font-size: 1.05rem; }
 .coverage td.dim { color: var(--rule); }
-.coverage tr:hover td { background: rgba(180,178,170,.10); }
+.coverage tr:hover td { background: rgba(215,200,165,.10); }
 
 /* ===== Final CTA · spirited away night sky ===== */
-/* final-cta · same paper bg, sketch-style moon + hill outlines (no dark block) */
-.final-cta { background: var(--paper-2); color: var(--ink); padding: 5rem 0 5.5rem; margin-top: 4rem; position: relative; overflow: hidden; border-top: 1px dashed var(--rule); border-bottom: 1px dashed var(--rule); }
+/* final-cta · spirited away night sky */
+.final-cta { background: linear-gradient(180deg, var(--night) 0%, var(--night-deep) 100%); color: var(--paper); padding: 5rem 0 5.5rem; margin-top: 4rem; position: relative; overflow: hidden; }
 .final-cta .sky-svg { position: absolute; inset: 0; pointer-events: none; }
-.final-cta .sky-svg .star { fill: none; stroke: var(--ink); stroke-width: 1.4; opacity: .55; }
-.final-cta .sky-svg .star-bright { fill: none; stroke: var(--ink); stroke-width: 1.6; opacity: .8; }
-.final-cta .sky-svg .moon { fill: none; stroke: var(--ink); stroke-width: 1.8; opacity: .75; }
-.final-cta .sky-svg .moon-wash { fill: var(--gold-soft); opacity: .55; }
-.final-cta .sky-svg .pine { fill: none; stroke: var(--leaf-deep); stroke-width: 1.5; stroke-linejoin: round; opacity: .7; }
-.final-cta .sky-svg .hill-night { fill: none; stroke: var(--ink); stroke-width: 1.5; opacity: .55; stroke-linecap: round; }
+.final-cta .sky-svg .star { fill: #fff4d8; }
+.final-cta .sky-svg .star-bright { fill: #fff4d8; opacity: 1; }
+.final-cta .sky-svg .moon { fill: #f7e7a3; opacity: .9; filter: drop-shadow(0 0 12px rgba(247,231,163,.4)); }
+.final-cta .sky-svg .pine { fill: #0d1a2c; }
+.final-cta .sky-svg .hill-night { fill: #112240; }
 @keyframes twinkle { 0%, 100% { opacity: .85; } 50% { opacity: .35; } }
 .final-cta .sky-svg .star { animation: twinkle 4s ease-in-out infinite; }
 .final-cta .sky-svg .star.s2 { animation-delay: 1.2s; }
 .final-cta .sky-svg .star.s3 { animation-delay: 2.5s; }
 .final-cta .sky-svg .star.s4 { animation-delay: 3.1s; }
 .final-cta .container { position: relative; z-index: 1; }
-.final-cta h2 { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.9rem, 3.4vw, 2.55rem); margin: 0 0 1rem; text-align: center; color: var(--ink); }
-.final-cta h2 em { color: var(--terra); font-style: italic; }
-.final-cta .lede { text-align: center; color: var(--ink-soft); max-width: 38em; margin: 0 auto 2rem; font-style: italic; font-family: var(--font-display); font-size: 1.05rem; }
+.final-cta h2 { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.9rem, 3.4vw, 2.55rem); margin: 0 0 1rem; text-align: center; color: var(--paper); }
+.final-cta h2 em { color: var(--gold-warm); font-style: italic; }
+.final-cta .lede { text-align: center; color: rgba(249,241,222,.78); max-width: 38em; margin: 0 auto 2rem; font-style: italic; font-family: var(--font-display); font-size: 1.05rem; }
 .final-cta .cta-row { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; }
-.final-cta .btn { background: var(--paper-card); color: var(--ink); border-color: var(--ink); }
-.final-cta .btn:hover { background: var(--ink); color: var(--paper-card); border-color: var(--ink); }
-.final-cta .hand-note { font-family: var(--font-hand); color: var(--terra); font-size: 1.4rem; text-align: center; margin-top: 1.5rem; transform: rotate(-2deg); display: block; }
+.final-cta .btn { background: var(--paper); color: var(--ink); border-color: var(--paper); }
+.final-cta .btn:hover { background: var(--rust); color: white; border-color: var(--rust); }
+.final-cta .hand-note { font-family: var(--font-hand); color: var(--gold-warm); font-size: 1.4rem; text-align: center; margin-top: 1.5rem; transform: rotate(-2deg); display: block; }
 
 footer.foot { padding: 2.5rem 0 3rem; border-top: 1px solid var(--rule); background: var(--paper-2); font-family: var(--font-sans); font-size: 0.85rem; color: var(--ink-mute); position: relative; }
 footer.foot .row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; align-items: baseline; }
@@ -259,88 +261,49 @@ footer.foot a:hover { color: var(--rust); }
   </div>
 </nav>
 
-<!-- ============== Hero · 简笔画 sketch (pencil-on-paper) ============== -->
+<!-- ============== Hero · Totoro 的天空 (Ghibli watercolor) ============== -->
 <section class="hero">
-  <!-- Sky · stroke-only clouds + sun outline + drifting leaves -->
+  <!-- Sky · soft puffy clouds + drifting leaves + small stars -->
   <svg class="hero-sky" viewBox="0 0 1400 600" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-    <!-- big cloud, top-left, with a hint of cream wash behind the strokes -->
-    <g class="cloud-grp-a" transform="translate(180 130)">
-      <path class="wash-cloud" d="M -90 0 q -22 -28 6 -34 q 4 -26 36 -22 q 14 -28 50 -16 q 22 -22 50 -2 q 28 -8 36 14 q 26 6 16 28 q 18 18 -8 28 z"/>
-      <path class="stroke" d="M -90 0 q -22 -28 6 -34 q 4 -26 36 -22 q 14 -28 50 -16 q 22 -22 50 -2 q 28 -8 36 14 q 26 6 16 28 q 18 18 -8 28 z"/>
+    <g class="cloud-grp-a">
+      <ellipse class="cloud" cx="200" cy="130" rx="110" ry="34"/>
+      <ellipse class="cloud" cx="155" cy="115" rx="55" ry="26"/>
+      <ellipse class="cloud" cx="240" cy="115" rx="65" ry="28"/>
     </g>
-    <!-- smaller cloud, top-right -->
-    <g class="cloud-grp-b" transform="translate(1180 90)">
-      <path class="wash-cloud" d="M -70 0 q -16 -22 8 -26 q 6 -22 30 -16 q 14 -20 38 -8 q 22 -10 32 8 q 20 4 12 22 q 14 14 -10 22 z"/>
-      <path class="stroke-soft" d="M -70 0 q -16 -22 8 -26 q 6 -22 30 -16 q 14 -20 38 -8 q 22 -10 32 8 q 20 4 12 22 q 14 14 -10 22 z"/>
+    <g class="cloud-grp-b">
+      <ellipse class="cloud cloud-2" cx="1180" cy="90" rx="125" ry="36"/>
+      <ellipse class="cloud cloud-2" cx="1130" cy="75" rx="55" ry="26"/>
+      <ellipse class="cloud cloud-2" cx="1230" cy="75" rx="55" ry="26"/>
     </g>
-    <!-- tiny cloud · floating mid-right -->
-    <g class="cloud-grp-a" style="animation-duration: 32s;" transform="translate(950 220)">
-      <path class="stroke-soft" d="M -50 0 q -10 -16 8 -18 q 6 -16 22 -10 q 12 -14 28 -4 q 14 -4 18 8 q 12 4 6 14 q 6 10 -8 12 z"/>
+    <g class="cloud-grp-a" style="animation-duration: 32s;">
+      <ellipse class="cloud cloud-2" cx="950" cy="200" rx="80" ry="22" opacity="0.55"/>
+      <ellipse class="cloud cloud-2" cx="920" cy="190" rx="40" ry="18" opacity="0.55"/>
     </g>
-    <!-- sun · simple outlined circle with rays -->
-    <g class="cloud-grp-b" transform="translate(800 80)">
-      <circle class="stroke" cx="0" cy="0" r="22"/>
-      <line class="stroke-soft" x1="0" y1="-34" x2="0" y2="-44"/>
-      <line class="stroke-soft" x1="0" y1="34" x2="0" y2="44"/>
-      <line class="stroke-soft" x1="-34" y1="0" x2="-44" y2="0"/>
-      <line class="stroke-soft" x1="34" y1="0" x2="44" y2="0"/>
-      <line class="stroke-soft" x1="-24" y1="-24" x2="-32" y2="-32"/>
-      <line class="stroke-soft" x1="24" y1="-24" x2="32" y2="-32"/>
-      <line class="stroke-soft" x1="-24" y1="24" x2="-32" y2="32"/>
-      <line class="stroke-soft" x1="24" y1="24" x2="32" y2="32"/>
+    <g>
+      <circle class="star" cx="400" cy="80" r="2.5"/>
+      <circle class="star" cx="700" cy="50" r="2"/>
+      <circle class="star" cx="850" cy="120" r="2.2"/>
+      <circle class="star" cx="1320" cy="150" r="2"/>
     </g>
-    <!-- drifting leaves · stroke-only, tiny coral wash -->
     <g class="leaf-grp" transform="translate(120 410)">
-      <path class="wash-leaf" d="M0 0 Q -10 -22 -22 -28 Q -10 -10 -8 6 Q -3 0 0 0z"/>
-      <path class="stroke-leaf" d="M0 0 Q -10 -22 -22 -28 Q -10 -10 -8 6 Q -3 0 0 0z"/>
-      <line class="stroke-leaf" x1="-2" y1="-2" x2="-15" y2="-20" />
+      <path class="leaf-drift" d="M0 0 Q -10 -22 -22 -28 Q -10 -10 -8 6 Q -3 0 0 0z"/>
     </g>
     <g class="leaf-grp-2" transform="translate(180 460) rotate(20)">
-      <path class="wash-coral" d="M0 0 Q 8 -18 18 -22 Q 8 -8 6 6 Q 3 0 0 0z"/>
-      <path class="stroke-leaf" d="M0 0 Q 8 -18 18 -22 Q 8 -8 6 6 Q 3 0 0 0z"/>
+      <path class="leaf-drift-2" d="M0 0 Q 8 -18 18 -22 Q 8 -8 6 6 Q 3 0 0 0z"/>
     </g>
     <g class="leaf-grp" transform="translate(1280 430) rotate(-30)">
-      <path class="wash-leaf" d="M0 0 Q -10 -22 -22 -28 Q -10 -10 -8 6 Q -3 0 0 0z"/>
-      <path class="stroke-leaf" d="M0 0 Q -10 -22 -22 -28 Q -10 -10 -8 6 Q -3 0 0 0z"/>
-      <line class="stroke-leaf" x1="-2" y1="-2" x2="-15" y2="-20" />
-    </g>
-    <!-- bird squiggles · 3 little 'm' shapes -->
-    <g class="cloud-grp-a">
-      <path class="stroke-soft" d="M 460 70 q 6 -8 12 0 q 6 -8 12 0"/>
-      <path class="stroke-soft" d="M 510 90 q 5 -7 10 0 q 5 -7 10 0"/>
-      <path class="stroke-soft" d="M 1320 160 q 6 -8 12 0 q 6 -8 12 0"/>
+      <path class="leaf-drift" d="M0 0 Q -10 -22 -22 -28 Q -10 -10 -8 6 Q -3 0 0 0z"/>
     </g>
   </svg>
 
-  <!-- Hills · stroke-only outlines, very faint green wash, simple triangle pines -->
+  <!-- Rolling hills at bottom -->
   <svg class="hero-hill" viewBox="0 0 1400 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- back hill · soft pencil -->
-    <path class="hill-stroke-soft" d="M0 80 Q 200 30 400 60 T 800 50 T 1200 65 T 1400 55"/>
-    <!-- mid hill · main pencil + faint wash below -->
-    <path class="hill-wash"   d="M0 100 Q 250 60 500 90 T 1000 85 T 1400 95 L 1400 140 L 0 140 Z"/>
-    <path class="hill-stroke" d="M0 100 Q 250 60 500 90 T 1000 85 T 1400 95"/>
-    <!-- front hill outline -->
-    <path class="hill-stroke-soft" d="M0 118 Q 300 92 600 112 T 1200 112 T 1400 116"/>
-    <!-- pine triangles · simple two-stroke sketch -->
-    <g class="tree-stroke" transform="translate(290 78)">
-      <path d="M 0 0 L -10 22 L 10 22 Z"/>
-      <line x1="0" y1="22" x2="0" y2="32"/>
-    </g>
-    <g class="tree-stroke" transform="translate(880 70)">
-      <path d="M 0 0 L -12 26 L 12 26 Z"/>
-      <line x1="0" y1="26" x2="0" y2="38"/>
-    </g>
-    <g class="tree-stroke" transform="translate(1110 82)">
-      <path d="M 0 0 L -8 18 L 8 18 Z"/>
-      <line x1="0" y1="18" x2="0" y2="28"/>
-    </g>
-    <!-- a couple of grass tufts · vv shapes -->
-    <g class="hill-stroke-soft">
-      <path d="M 60 122 l 4 -8 l 4 8"/>
-      <path d="M 70 122 l 3 -6 l 3 6"/>
-      <path d="M 1330 124 l 4 -8 l 4 8"/>
-      <path d="M 1340 124 l 3 -6 l 3 6"/>
-    </g>
+    <path class="hill-back"  d="M0 80 Q 200 30 400 60 T 800 50 T 1200 65 T 1400 55 L 1400 140 L 0 140 Z"/>
+    <path class="hill-mid"   d="M0 100 Q 250 60 500 90 T 1000 85 T 1400 95 L 1400 140 L 0 140 Z"/>
+    <path class="hill-front" d="M0 115 Q 300 90 600 110 T 1200 110 T 1400 115 L 1400 140 L 0 140 Z"/>
+    <g class="tree" transform="translate(290 92)"><path d="M0 0 L -8 18 L -3 18 L -7 28 L 7 28 L 3 18 L 8 18 Z"/></g>
+    <g class="tree" transform="translate(880 86)"><path d="M0 0 L -10 22 L -4 22 L -8 32 L 8 32 L 4 22 L 10 22 Z"/></g>
+    <g class="tree" transform="translate(1110 96)"><path d="M0 0 L -7 16 L -3 16 L -6 24 L 6 24 L 3 16 L 7 16 Z"/></g>
   </svg>
 
   <div class="container hero-inner">
@@ -821,33 +784,29 @@ footer.foot a:hover { color: var(--rust); }
 <!-- ============== Final CTA · spirited away night sky ============== -->
 <section class="final-cta">
   <svg class="sky-svg" viewBox="0 0 1400 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-    <!-- moon · stroke-only with faint warm wash -->
-    <circle class="moon-wash" cx="1180" cy="80" r="36"/>
     <circle class="moon" cx="1180" cy="80" r="36"/>
-    <!-- twinkling 4-point sketch stars (cross strokes) -->
-    <g class="star-bright"><line x1="120" y1="50" x2="120" y2="70"/><line x1="110" y1="60" x2="130" y2="60"/></g>
-    <g class="star"><line x1="240" y1="93" x2="240" y2="107"/><line x1="233" y1="100" x2="247" y2="100"/></g>
-    <g class="star-bright"><line x1="380" y1="32" x2="380" y2="48"/><line x1="372" y1="40" x2="388" y2="40"/></g>
-    <g class="star"><line x1="520" y1="84" x2="520" y2="96"/><line x1="514" y1="90" x2="526" y2="90"/></g>
-    <g class="star-bright"><line x1="660" y1="46" x2="660" y2="64"/><line x1="651" y1="55" x2="669" y2="55"/></g>
-    <g class="star"><line x1="780" y1="124" x2="780" y2="136"/><line x1="774" y1="130" x2="786" y2="130"/></g>
-    <g class="star"><line x1="900" y1="62" x2="900" y2="78"/><line x1="892" y1="70" x2="908" y2="70"/></g>
-    <g class="star"><line x1="1020" y1="124" x2="1020" y2="136"/><line x1="1014" y1="130" x2="1026" y2="130"/></g>
-    <g class="star"><line x1="1300" y1="162" x2="1300" y2="178"/><line x1="1292" y1="170" x2="1308" y2="170"/></g>
-    <g class="star"><line x1="80" y1="194" x2="80" y2="206"/><line x1="74" y1="200" x2="86" y2="200"/></g>
-    <g class="star"><line x1="450" y1="173" x2="450" y2="187"/><line x1="443" y1="180" x2="457" y2="180"/></g>
-    <g class="star"><line x1="850" y1="193" x2="850" y2="207"/><line x1="843" y1="200" x2="857" y2="200"/></g>
-    <!-- distant hill outline -->
-    <path class="hill-night" d="M0 320 Q 300 240 600 290 T 1200 280 T 1400 310"/>
-    <!-- pine forest · simple triangle outlines -->
+    <circle cx="1196" cy="68" r="6" fill="#1d2f4a" opacity=".25"/>
+    <circle cx="1170" cy="92" r="4" fill="#1d2f4a" opacity=".2"/>
+    <circle class="star star-bright" cx="120" cy="60" r="2.4"/>
+    <circle class="star s2" cx="240" cy="100" r="1.8"/>
+    <circle class="star s3" cx="380" cy="40" r="2"/>
+    <circle class="star" cx="520" cy="90" r="1.6"/>
+    <circle class="star s4" cx="660" cy="55" r="2.2"/>
+    <circle class="star s2" cx="780" cy="130" r="1.8"/>
+    <circle class="star" cx="900" cy="70" r="2"/>
+    <circle class="star s3" cx="1020" cy="130" r="1.6"/>
+    <circle class="star s4" cx="1300" cy="170" r="2"/>
+    <circle class="star" cx="80" cy="200" r="1.4"/>
+    <circle class="star s2" cx="450" cy="180" r="1.8"/>
+    <circle class="star s3" cx="850" cy="200" r="1.6"/>
+    <path class="hill-night" d="M0 320 Q 300 240 600 290 T 1200 280 T 1400 310 L 1400 400 L 0 400 Z"/>
     <g class="pine">
-      <path d="M 120 318 L 108 352 L 132 352 Z"/>
-      <line x1="120" y1="352" x2="120" y2="362" stroke="currentColor" stroke-width="1.5"/>
-      <path d="M 180 308 L 165 348 L 195 348 Z"/>
-      <path d="M 260 316 L 248 350 L 272 350 Z"/>
-      <path d="M 980 312 L 965 350 L 995 350 Z"/>
-      <path d="M 1060 320 L 1048 352 L 1072 352 Z"/>
-      <path d="M 1140 310 L 1125 350 L 1155 350 Z"/>
+      <path d="M120 320 L 110 350 L 117 350 L 113 365 L 127 365 L 123 350 L 130 350 Z"/>
+      <path d="M180 310 L 168 345 L 176 345 L 171 365 L 189 365 L 184 345 L 192 345 Z"/>
+      <path d="M260 318 L 250 348 L 257 348 L 253 365 L 267 365 L 263 348 L 270 348 Z"/>
+      <path d="M980 314 L 968 348 L 976 348 L 971 368 L 989 368 L 984 348 L 992 348 Z"/>
+      <path d="M1060 320 L 1050 350 L 1057 350 L 1053 365 L 1067 365 L 1063 350 L 1070 350 Z"/>
+      <path d="M1140 312 L 1128 348 L 1136 348 L 1131 368 L 1149 368 L 1144 348 L 1152 348 Z"/>
     </g>
   </svg>
   <div class="container">

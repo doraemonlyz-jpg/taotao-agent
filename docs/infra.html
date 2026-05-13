@@ -10,24 +10,24 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --paper:        #fbfaf6;
-  --paper-2:      #f3f1ea;
-  --paper-card:   #ffffff;
-  --ink:          #2a2826;
-  --ink-soft:     #4f4d48;
-  --ink-mute:     #9a978f;
-  --rule:         #d8d4cc;
-  --rule-soft:    #ebe8e0;
-  --leaf:         #6b9b6b; --leaf-soft: #ebf0e3;
-  --rust:         #c97a5e; --rust-soft: #f5e3d8;
-  --sky:          #7ea9c4; --sky-soft:  #e8eef2;
-  --plum:         #a690b1; --plum-soft: #efe7f0;
-  --gold:         #c1995a; --gold-soft: #f3e8c2;
-  --code-bg:      #f5f3ec;
-  --code-fg:      #2a2826;
-  --code-key:     #c97a5e;
-  --code-str:     #6b9b6b;
-  --code-cmt:     #9a978f;
+  --paper:        #f7f2e6;
+  --paper-2:      #efe7d2;
+  --paper-card:   #fdfaf1;
+  --ink:          #322d25;
+  --ink-soft:     #56504a;
+  --ink-mute:     #a09988;
+  --rule:         #d6cdb8;
+  --rule-soft:    #e8e0cd;
+  --leaf:         #7c9f7d; --leaf-soft: #e7ecd8;
+  --rust:         #cb7d61; --rust-soft: #f3dfd0;
+  --sky:          #82a9c4; --sky-soft:  #e6edf2;
+  --plum:         #a690b1; --plum-soft: #ede5ee;
+  --gold:         #c8a061; --gold-soft: #f1e3b9;
+  --code-bg:      #f0e8d3;
+  --code-fg:      #322d25;
+  --code-key:     #cb7d61;
+  --code-str:     #7c9f7d;
+  --code-cmt:     #a09988;
   --code-fn:      #a690b1;
   --font-display: "Fraunces", "Times New Roman", serif;
   --font-body:    "Lora", "Iowan Old Style", Georgia, serif;
@@ -40,8 +40,8 @@ html { scroll-behavior: smooth; }
 body {
   margin: 0;
   background:
-    radial-gradient(ellipse at top left, rgba(180,178,170,0.12), transparent 50%),
-    radial-gradient(ellipse at bottom right, rgba(170,190,210,0.08), transparent 50%),
+    radial-gradient(ellipse at top left, rgba(215,200,165,0.12), transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(180,195,215,0.08), transparent 50%),
     var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
@@ -123,7 +123,7 @@ strong { font-weight: 600; color: var(--ink); }
   font-size: 0.74rem; color: var(--ink-mute);
   line-height: 1.6;
 }
-.toc-foot a { color: var(--ink-mute); border-bottom-color: rgba(154,151,143,0.3); }
+.toc-foot a { color: var(--ink-mute); border-bottom-color: rgba(160,153,136,0.3); }
 .toc-foot a:hover { color: var(--rust); }
 
 .book-body { padding: 2rem 0 6rem; max-width: 800px; }
@@ -318,7 +318,7 @@ th {
   color: var(--ink); font-weight: 600; background: var(--paper-2);
 }
 tr:last-child td { border-bottom: none; }
-tr:hover td { background: rgba(180,178,170,0.13); }
+tr:hover td { background: rgba(215,200,165,0.13); }
 table code { font-size: 0.82em; }
 
 /* SVG figures */
@@ -326,7 +326,7 @@ table code { font-size: 0.82em; }
   background: var(--paper-card); border: 1px solid var(--rule);
   border-radius: 12px; padding: 1.6rem 1.4rem 1.2rem;
   margin: 1.4rem 0 1.8rem;
-  box-shadow: 0 1px 3px rgba(42,40,38,0.04);
+  box-shadow: 0 1px 3px rgba(50,45,37,0.04);
 }
 .figure svg { display: block; width: 100%; height: auto; max-width: 760px; margin: 0 auto; }
 .figure figcaption {
@@ -337,7 +337,7 @@ table code { font-size: 0.82em; }
 .figure figcaption strong { color: var(--ink-soft); font-weight: 600; text-transform: none; letter-spacing: 0; }
 
 .fig-box       { fill: var(--paper-card); stroke: var(--ink-soft); stroke-width: 1.5; }
-.fig-box-soft  { fill: #f5f3ec; stroke: var(--rule); stroke-width: 1.2; }
+.fig-box-soft  { fill: #f0e8d3; stroke: var(--rule); stroke-width: 1.2; }
 .fig-box-leaf  { fill: var(--leaf-soft); stroke: var(--leaf); stroke-width: 1.5; }
 .fig-box-rust  { fill: var(--rust-soft); stroke: var(--rust); stroke-width: 1.5; }
 .fig-box-sky   { fill: var(--sky-soft); stroke: var(--sky); stroke-width: 1.5; }
@@ -749,7 +749,7 @@ footer.colophon .row {
         <svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="GPU memory hierarchy">
           <defs>
             <marker id="g2-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#9a978f"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#a09988"/>
             </marker>
           </defs>
           <!-- SM grid on left -->
@@ -1051,7 +1051,7 @@ footer.colophon .row {
         <svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Disaggregated prefill decode">
           <defs>
             <marker id="dp-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#c97a5e"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#cb7d61"/>
             </marker>
           </defs>
 
@@ -1512,7 +1512,7 @@ footer.colophon .row {
         <svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MoE architecture">
           <defs>
             <marker id="moe-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#9a978f"/>
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#a09988"/>
             </marker>
           </defs>
 
@@ -1708,21 +1708,21 @@ footer.colophon .row {
         <svg viewBox="0 0 760 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="HNSW layered graph">
           <!-- layer 2 -->
           <text class="fig-t-label fig-t-rust" x="40" y="40">Layer 2 (稀疏)</text>
-          <circle cx="200" cy="40" r="6" fill="#c97a5e"/>
-          <circle cx="380" cy="40" r="6" fill="#c97a5e"/>
-          <circle cx="560" cy="40" r="6" fill="#c97a5e"/>
+          <circle cx="200" cy="40" r="6" fill="#cb7d61"/>
+          <circle cx="380" cy="40" r="6" fill="#cb7d61"/>
+          <circle cx="560" cy="40" r="6" fill="#cb7d61"/>
           <line class="fig-line-rust" x1="200" y1="40" x2="380" y2="40"/>
           <line class="fig-line-rust" x1="380" y1="40" x2="560" y2="40"/>
 
           <!-- layer 1 -->
           <text class="fig-t-label fig-t-sky" x="40" y="120">Layer 1</text>
-          <circle cx="160" cy="120" r="5" fill="#7ea9c4"/>
-          <circle cx="240" cy="120" r="5" fill="#7ea9c4"/>
-          <circle cx="320" cy="120" r="5" fill="#7ea9c4"/>
-          <circle cx="400" cy="120" r="5" fill="#7ea9c4"/>
-          <circle cx="480" cy="120" r="5" fill="#7ea9c4"/>
-          <circle cx="560" cy="120" r="5" fill="#7ea9c4"/>
-          <circle cx="640" cy="120" r="5" fill="#7ea9c4"/>
+          <circle cx="160" cy="120" r="5" fill="#82a9c4"/>
+          <circle cx="240" cy="120" r="5" fill="#82a9c4"/>
+          <circle cx="320" cy="120" r="5" fill="#82a9c4"/>
+          <circle cx="400" cy="120" r="5" fill="#82a9c4"/>
+          <circle cx="480" cy="120" r="5" fill="#82a9c4"/>
+          <circle cx="560" cy="120" r="5" fill="#82a9c4"/>
+          <circle cx="640" cy="120" r="5" fill="#82a9c4"/>
           <line class="fig-line" x1="160" y1="120" x2="240" y2="120"/>
           <line class="fig-line" x1="240" y1="120" x2="320" y2="120"/>
           <line class="fig-line" x1="320" y1="120" x2="400" y2="120"/>
@@ -1737,7 +1737,7 @@ footer.colophon .row {
 
           <!-- layer 0 (dense) -->
           <text class="fig-t-label fig-t-leaf" x="40" y="210">Layer 0 (密集 · 全部点)</text>
-          <g fill="#6b9b6b">
+          <g fill="#7c9f7d">
             <circle cx="120" cy="210" r="4"/>
             <circle cx="160" cy="210" r="4"/>
             <circle cx="200" cy="210" r="4"/>
