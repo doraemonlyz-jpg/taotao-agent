@@ -5,7 +5,7 @@ description = "Production-shape agent demo with all 6+4 components on LangGraph 
 requires-python = ">=3.11"
 dependencies = [
     # --- core agent stack ---
-    "langgraph>=0.6.0",
+    "langgraph>=1.2.0",
     "langchain>=0.3.20",
     "langchain-core>=0.3.40",
     "langchain-openai>=0.3.0",
@@ -15,22 +15,22 @@ dependencies = [
     "langchain-ollama>=0.2.0",
     # --- memory ---
     "chromadb>=0.5.20",
-    "sentence-transformers>=3.3.0",
+    "sentence-transformers>=5.5.0",
     # pin: onnxruntime 1.26 has no macos-arm64 wheel as of May 2026
-    "onnxruntime<1.26",
+    "onnxruntime<1.27",
     # --- tools ---
     "duckduckgo-search>=6.3.0",
     "numexpr>=2.10.0",
     # --- api ---
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.32.0",
-    "sse-starlette>=2.1.0",
+    "sse-starlette>=3.4.4",
     "python-dotenv>=1.0.0",
     "pydantic>=2.9.0",
     # --- utils ---
     "rich>=13.9.0",
     "httpx>=0.27.0",
-    "langgraph-checkpoint-sqlite>=3.0.3",
+    "langgraph-checkpoint-sqlite>=3.1.0",
     # --- security: auth / rate-limit / sentry ---
     "slowapi>=0.1.9",
     "sentry-sdk[fastapi]>=2.18.0",
@@ -50,7 +50,7 @@ dependencies = [
     # Lazy-imported so unrelated paths (Ollama-only / CI / tests) don't pay it.
     "stripe>=11.0.0",
     "prometheus-fastapi-instrumentator>=7.0.0",
-    "ddgs>=9.14.2",
+    "ddgs>=9.14.4",
     "mcp[cli]>=1.27.1",
     "langchain-mcp-adapters>=0.2.2",
 ]
@@ -60,7 +60,7 @@ dev = [
     "pytest>=8.3.0",
     "pytest-asyncio>=0.24.0",
     "httpx>=0.27.0",
-    "ruff>=0.7.0",
+    "ruff>=0.15.13",
     "mypy>=1.13.0",
     "pyjwt[crypto]>=2.9.0",  # used by agent.auth + tested in tests/test_auth.py
 ]
