@@ -33,7 +33,7 @@ dependencies = [
     "langgraph-checkpoint-sqlite>=3.0.3",
     # --- security: auth / rate-limit / sentry ---
     "slowapi>=0.1.9",
-    "sentry-sdk[fastapi]>=2.18.0",
+    "sentry-sdk[fastapi]>=2.60.0",
     # --- observability: OpenTelemetry + Prometheus ---
     "opentelemetry-api>=1.27.0",
     "opentelemetry-sdk>=1.27.0",
