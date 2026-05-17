@@ -44,7 +44,7 @@ dependencies = [
     # Postgres checkpointer · used when DATABASE_URL is set (production).
     # Falls back to SqliteSaver in dev.  See agent/graph.py:_postgres_dsn.
     "langgraph-checkpoint-postgres>=2.0.0",
-    "psycopg[binary]>=3.2.0",
+    "psycopg[binary]>=3.3.4",
     "psycopg-pool>=3.2.0",
     # Stripe metered billing · used only when STRIPE_API_KEY is set.
     # Lazy-imported so unrelated paths (Ollama-only / CI / tests) don't pay it.
