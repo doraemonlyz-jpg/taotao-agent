@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>桃桃 Agent · Senior Agent Engineer 27 本书学习手册</title>
-<meta name="description" content="从 0 到 senior agent engineer 面试 · 24 本完整手册 · 8 阶段学习路径 · 40000+ 行内容 · 550+ 道面试题 · 1280+ 词术语表 · 涵盖 LangGraph / RAG / Memory / Tool / Eval / Debug / 系统设计 / Live Coding / 企业级交付 / AI Infra / Harness Engineering / Hermes / MCP / P1 生产化加固 / 行为面 / Post-Training / Multimodal &amp; Voice / Agent Benchmarks / Industrial 工业基建 / Multi-Agent 架构 / SaaS 产品化 · 含 LLM 基础 30 题 / Cost-Latency 5 case / Security 30 招攻防 三大补丁">
+<title>桃桃 Agent · 27 本 Agent 工程学习手册</title>
+<meta name="description" content="从 0 到 agent 工程面试 · 27 本完整手册 · 8 阶段学习路径 · 40000+ 行内容 · 550+ 道面试题 · 1280+ 词术语表 · 涵盖 LangGraph / RAG / Memory / Tool / Eval / Debug / 系统设计 / Live Coding / 企业级交付 / AI Infra / Harness Engineering / Hermes / MCP / P1 生产化加固 / 行为面 / Post-Training / Multimodal &amp; Voice / Agent Benchmarks / Industrial 工业基建 / Multi-Agent 架构 / SaaS 产品化 / Safety / Background Agents / Agentic UX · 含 LLM 基础 30 题 / Cost-Latency 5 case / Security 30 招攻防 三大补丁">
 <!-- Favicon · Petit Prince's gold star -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230f1d35'/%3E%3Cpath d='M32 10 L 36 26 L 54 28 L 40 38 L 44 54 L 32 44 L 20 54 L 24 38 L 10 28 L 28 26 Z' fill='%23f4c95a' stroke='%23fff5d8' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -129,11 +129,33 @@ strong { font-weight: 600; color: var(--ink); }
 .hero-inner { position: relative; z-index: 1; }
 .hero-eyebrow { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.1em; color: var(--gold); margin-bottom: 1.4rem; font-weight: 600; text-transform: uppercase; text-align: center; }
 .hero-eyebrow .sep { color: rgba(245,236,210,.35); margin: 0 0.55rem; font-weight: 400; }
-.hero h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(2.6rem, 5.5vw, 4.6rem); line-height: 1.04; letter-spacing: -0.02em; margin: 0 auto 1.6rem; color: #f7eece; text-align: center; max-width: 14em; text-shadow: 0 2px 16px rgba(0,0,0,.4); }
+.hero h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(2.45rem, 4.9vw, 4.25rem); line-height: 1.12; letter-spacing: 0; margin: 0 auto 1.8rem; color: #f7eece; text-align: center; max-width: 15.5em; text-shadow: 0 2px 16px rgba(0,0,0,.4); }
 .hero h1 em { color: var(--rose); font-style: italic; }
+.hero h1 .hero-kicker,
+.hero h1 .hero-main,
+.hero h1 .hero-outcome,
+.hero h1 .hero-count { display: block; }
+.hero h1 .hero-main { margin-top: .12em; }
+.hero h1 .hero-outcome { margin-top: .04em; color: #f7eece; }
+.hero h1 .hero-count {
+  position: relative;
+  width: fit-content;
+  margin: .36em auto 0;
+  padding: 0 .12em .12em;
+  color: #f7eece;
+  white-space: nowrap;
+}
+.hero h1 .hero-count-num {
+  color: #f4c95a;
+  font-style: italic;
+  font-size: 1.08em;
+  margin-right: .16em;
+}
+.hero h1 .hero-count::after { content: ""; position: absolute; left: .12em; right: .12em; bottom: -8px; height: 8px; background:
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 8' preserveAspectRatio='none'%3E%3Cpath d='M2 5 Q 50 0 100 4 T 198 4' stroke='%23f4c95a' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat; background-size: 100% 8px; opacity: .85; }
 .hero h1 .strike { position: relative; }
-.hero h1 .strike::after { content: ""; position: absolute; left: -3%; right: -3%; top: 53%; height: 5px; background:
-  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 5' preserveAspectRatio='none'%3E%3Cpath d='M0 3 Q 25 0 50 3 T 100 3 T 150 3 T 200 3' stroke='%23c8be9b' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") repeat-x; background-size: 200px 5px; transform: rotate(-1.5deg); }
+.hero h1 .strike::after { content: ""; position: absolute; left: -3%; right: -3%; top: 58%; height: 4px; background:
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 5' preserveAspectRatio='none'%3E%3Cpath d='M0 3 Q 25 0 50 3 T 100 3 T 150 3 T 200 3' stroke='%23c8be9b' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") repeat-x; background-size: 200px 5px; transform: rotate(-1.5deg); opacity: .78; }
 .hero h1 .underline-hand { position: relative; color: #f4c95a; font-style: italic; }
 .hero h1 .underline-hand::after { content: ""; position: absolute; left: 0; right: 0; bottom: -10px; height: 8px; background:
   url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 8' preserveAspectRatio='none'%3E%3Cpath d='M2 5 Q 50 0 100 4 T 198 4' stroke='%23f4c95a' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat; background-size: 100% 8px; opacity: .85; }
@@ -316,7 +338,7 @@ footer.foot a:hover { color: var(--rust); }
       <a href="#about">关于</a>
       <a href="multi-agent.html">Multi-Agent</a>
       <a href="saas.html">SaaS 化</a>
-      <a class="ttap-link" href="http://localhost:5180/" target="_blank" rel="noopener" title="打开配套 demo · 在线试玩 agent"><span class="ttap-mark">✦</span>TaotaoAgent</a>
+      <a class="ttap-link" href="https://doraemonlyz.com/" title="打开配套 demo · 在线试玩 agent"><span class="ttap-mark">✦</span>TaotaoAgent</a>
       
     </div>
     <a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank" class="nav-cta bare">GitHub ↗</a>
@@ -451,13 +473,17 @@ footer.foot a:hover { color: var(--rust); }
 
 
   <div class="container hero-inner">
-    <div class="hero-eyebrow">Senior Agent Engineer<span class="sep">·</span>Interview Manual<span class="sep">·</span>2026</div>
-    <h1>从 <span class="strike">"会用 LangChain"</span><br>到 <em>"我能 ship 一个生产级 agent · 也能扛 senior 面"</em><br>的 <span class="underline-hand">24 本</span>完整手册</h1>
+    <div class="hero-eyebrow">Agent Engineering Manual<span class="sep">·</span>Interview Prep<span class="sep">·</span>2026</div>
+    <h1>
+      <span class="hero-kicker">从 <span class="strike">会调框架</span></span>
+      <span class="hero-main">到 <em>能设计、调试、评估</em></span>
+      <span class="hero-outcome">并上线 agent 系统</span>
+      <span class="hero-count"><span class="hero-count-num">27</span><span class="hero-count-text">本完整手册</span></span>
+    </h1>
     <p class="hero-lede">
-      把 senior agent engineer 面试需要的<em>全部知识</em>——技术 + 行为 + 项目深挖 + 工业基建 + 多 agent + 产品化——系统化成 24 本互相关联的手册：
+      把 agent 工程面试需要的<em>全部知识</em>——技术 + 行为 + 项目深挖 + 工业基建 + 多 agent + 产品化 + 安全 + 后台任务 + agentic UX——系统化成 27 本互相关联的手册：
       <strong>8 阶段学习路径 · 40000+ 行内容 · 550+ 道面试题 · 1280+ 词术语</strong>。
-      新增 4 本必补章节（<em>行为面 · Post-Training · Multimodal &amp; Voice · Agent Benchmarks</em>）+ 3 大补丁
-      （LLM 基础 30 题速查 / Cost-Latency 5 case / Security 30 招攻防），覆盖 Anthropic / OpenAI / Stripe / Cursor 真实面试流程。
+      从 LangGraph / RAG / memory / tool design，到 eval、debug、harness、MCP、SaaS 化、safety、background agents 和 agentic UX，覆盖 Anthropic / OpenAI / Stripe / Cursor 真实面试流程。
       配套一个真实可跑的 demo（<code>POST /chat</code> graph + <code>POST /chat/v2</code> harness + MCP 双向 + P1 加固）。
     </p>
     <div class="hero-quote">
@@ -466,7 +492,7 @@ footer.foot a:hover { color: var(--rust); }
     </div>
     <div class="hero-cta">
       <a href="#path" class="btn btn-primary bare">★ 按路径开始学</a>
-      <a href="#books" class="btn btn-secondary bare">🗂️ 直接看 24 本</a>
+      <a href="#books" class="btn btn-secondary bare">🗂️ 直接看 27 本</a>
     </div>
   </div>
 </section>
@@ -475,7 +501,7 @@ footer.foot a:hover { color: var(--rust); }
 <section class="stats">
   <div class="container">
     <div class="stats-grid">
-      <div class="stat"><span class="num">24</span><span class="label">完整手册</span><span class="stat-hand">+7 新章</span></div>
+      <div class="stat"><span class="num">27</span><span class="label">完整手册</span><span class="stat-hand">8 阶段</span></div>
       <div class="stat"><span class="num">40k+</span><span class="label">行内容</span></div>
       <div class="stat"><span class="num">550+</span><span class="label">面试题</span></div>
       <div class="stat"><span class="num">1.28k+</span><span class="label">词术语表</span></div>
@@ -582,7 +608,7 @@ footer.foot a:hover { color: var(--rust); }
     <div class="section-head">
       <div class="sec-eyebrow">📍 Learning Path</div>
       <h2>8 阶段 <em>13-20 周</em> 完整路径</h2>
-      <p class="sec-lede">从 0 到能投 senior agent engineer · 每阶段独立可学 · 含行为面 + 多模态 + post-training 必补 + 工业基建 + multi-agent 架构封顶 + SaaS 产品化路线图</p>
+      <p class="sec-lede">从 0 到能投 agent 工程岗位 · 每阶段独立可学 · 含行为面 + 多模态 + post-training 必补 + 工业基建 + multi-agent 架构封顶 + SaaS 产品化路线图</p>
     </div>
 
     <div class="roadmap">
@@ -1096,12 +1122,12 @@ footer.foot a:hover { color: var(--rust); }
       <h2>关于这套手册</h2>
     </div>
     <div style="max-width: 42em; margin: 0 auto;">
-      <p>这套 24 本手册是为 <strong>2026 年 senior agent engineer 面试</strong>系统化整理的——不是教程合集 · 是按 "从 0 到能上岗" 路径设计的<em>完整体系</em>。2026-05 新增 4 本 senior 必补章节（行为面 / Post-Training / Multimodal &amp; Voice / Agent Benchmarks）+ 3 大补丁（LLM 30 题速查 / Cost-Latency 5 case / Security 30 招攻防）+ Book 22 工业化基建（反编译 Claude Code 17 features）+ Book 23 Multi-Agent Architecture（5 模式 + 4 框架横评 + "默认别用" 判断框架）+ Book 24 From Demo to Public SaaS（11 phase 产品化路线图 + 50 项上线 checklist + 配套 auth / 多租户 / nginx / Dockerfile.prod 4 starter impl）。</p>
+      <p>这套 27 本手册是为 <strong>2026 年 agent 工程面试</strong>系统化整理的——不是教程合集 · 是按 "从 0 到能上岗" 路径设计的<em>完整体系</em>。主线覆盖应用入门、实现详解、LangGraph / RAG / memory / tool design、eval / debugging、system design、live coding、企业级交付、AI infra、harness engineering、MCP、生产化加固、行为面、post-training、多模态、benchmarks、工业化基建、multi-agent、SaaS 产品化、safety、background agents 和 agentic UX。</p>
 
       <h4 style="font-family:var(--font-display);font-weight:500;font-size:1.3rem;margin:2rem 0 0.6rem;color:var(--ink);">📐 设计原则</h4>
       <ol>
         <li><strong>面试导向</strong>——每本配 12-50 道 senior 面试题 + 答题模板 · 不是 "了解一下" 而是 "能上场答"</li>
-        <li><strong>覆盖完整</strong>——21 本各有独立主题 · 横跨技术 (Books 01–17) + 软实力 (Book 18) + 高阶专题 (Books 19–21)，覆盖 Anthropic / OpenAI / Stripe / Cursor / Mistral / 字节 等头部 senior 流程的<em>每一轮</em></li>
+        <li><strong>覆盖完整</strong>——27 本各有独立主题 · 横跨技术实现 (Books 01–17) + 行为面 (Book 18) + 高阶专题 (Books 19–27)，覆盖 Anthropic / OpenAI / Stripe / Cursor / Mistral / 字节 等头部 senior 流程的<em>每一轮</em></li>
         <li><strong>真坑 vs 玄学</strong>——每本都有 "翻车复盘" / "面试三档答案" · 别人用真血换的经验</li>
         <li><strong>引用一手资料</strong>——官方文档 / 源码 / paper · 不抄博客抄博客</li>
         <li><strong>跟 demo 同步</strong>——本项目 Book 02 / 13 / 15 / 16 / 17 / 18 都有真实可跑的代码对照 · 改了代码就改书</li>
@@ -1112,10 +1138,10 @@ footer.foot a:hover { color: var(--rust); }
 
       <h4 style="font-family:var(--font-display);font-weight:500;font-size:1.3rem;margin:2rem 0 0.6rem;color:var(--ink);">📊 数据</h4>
       <table style="width:100%;border-collapse:collapse;margin-top:0.8rem;font-size:0.92rem;background:var(--paper-card);border:1px solid var(--rule);border-radius:8px;overflow:hidden;box-shadow:var(--shadow-soft);">
-        <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">总行数</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>~38,000</strong></td></tr>
-        <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">章节</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>~210</strong></td></tr>
+        <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">总行数</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>40,000+</strong></td></tr>
+        <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">章节</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>220+</strong></td></tr>
         <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">面试题</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>550+</strong></td></tr>
-        <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">术语词</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>1,100+</strong></td></tr>
+        <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">术语词</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>1,280+</strong></td></tr>
         <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">SVG 图</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>50+</strong></td></tr>
         <tr><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);">Failure mode / 翻车 / 面试三档</td><td style="padding:0.55rem 0.85rem;border-bottom:1px solid var(--rule-soft);text-align:right;font-family:var(--font-mono);"><strong>75+</strong></td></tr>
         <tr><td style="padding:0.55rem 0.85rem;">头部公司行为面真题（含 Anthropic / OpenAI / Stripe / Cursor / 字节）</td><td style="padding:0.55rem 0.85rem;text-align:right;font-family:var(--font-mono);"><strong>30+</strong></td></tr>
@@ -1164,7 +1190,7 @@ footer.foot a:hover { color: var(--rust); }
 <footer class="foot">
   <div class="container">
     <div class="row">
-      <span><strong>桃桃 Agent</strong> · Senior Agent Engineer Manual · v1.2 · 2026-05 (+4 books +3 patches)</span>
+      <span><strong>桃桃 Agent</strong> · Agent Engineering Manual · v1.2 · 2026-05 (+4 books +3 patches)</span>
       <span><a href="https://github.com/doraemonlyz-jpg/taotao-agent" target="_blank">github.com/doraemonlyz-jpg/taotao-agent</a></span>
     </div>
     <div class="row" style="margin-top:0.6rem;">
