@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>登录 · 桃桃 Agent 学习手册</title>
+<meta name="description" content="登录后进入桃桃 Agent 学习手册。">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230f1d35'/%3E%3Cpath d='M32 10 L 36 26 L 54 28 L 40 38 L 44 54 L 32 44 L 20 54 L 24 38 L 10 28 L 28 26 Z' fill='%23f4c95a' stroke='%23fff5d8' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Lora:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #0f1d35;
+  --paper-2: #162844;
+  --paper-card: #1c3155;
+  --ink: #f5ecd2;
+  --ink-soft: #c8be9b;
+  --ink-mute: #7e8aa6;
+  --rule: #2c4570;
+  --gold: #f4c95a;
+  --gold-warm: #f7d987;
+  --rust: #e08e6f;
+  --leaf: #8eb58f;
+  --font-display: "Fraunces", "Times New Roman", serif;
+  --font-body: "Lora", Georgia, serif;
+  --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  min-height: 100vh;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  padding: clamp(1rem, 3vw, 2.5rem);
+  overflow-x: hidden;
+  background:
+    radial-gradient(ellipse 42% 28% at 12% 12%, rgba(244,201,90,.13), transparent 70%),
+    radial-gradient(ellipse 36% 24% at 88% 8%, rgba(192,163,209,.11), transparent 70%),
+    radial-gradient(ellipse 70% 50% at 50% 110%, rgba(224,142,111,.16), transparent 58%),
+    linear-gradient(180deg, #08152a 0%, #0f1d35 58%, #18142d 100%),
+    #0f1d35;
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 12% 18%, rgba(247,217,135,.75) 0 2px, transparent 3px),
+    radial-gradient(circle at 76% 16%, rgba(245,236,210,.62) 0 1px, transparent 2px),
+    radial-gradient(circle at 88% 46%, rgba(244,201,90,.52) 0 2px, transparent 3px),
+    radial-gradient(circle at 24% 72%, rgba(200,190,155,.42) 0 1px, transparent 2px),
+    radial-gradient(circle at 58% 9%, rgba(244,201,90,.48) 0 1px, transparent 2px);
+}
+.dune {
+  position: fixed;
+  left: -4vw;
+  right: -4vw;
+  bottom: -1px;
+  height: min(24vh, 190px);
+  pointer-events: none;
+  background:
+    radial-gradient(95% 100% at 18% 100%, #3a2a22 0 52%, transparent 53%),
+    radial-gradient(95% 100% at 82% 100%, #4a3528 0 54%, transparent 55%),
+    linear-gradient(180deg, transparent 0 40%, #2a1c14 41% 100%);
+  opacity: .9;
+}
+.login-shell {
+  width: min(100%, 1040px);
+  position: relative;
+  z-index: 1;
+}
+.login-frame {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(360px, .72fr);
+  min-height: 620px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(244,201,90,.24);
+  border-radius: 28px;
+  background:
+    linear-gradient(135deg, rgba(28,49,85,.82), rgba(15,29,53,.96)),
+    var(--paper-card);
+  box-shadow: 0 34px 90px rgba(0,0,0,.46), 0 2px 12px rgba(0,0,0,.28);
+}
+.lang-toggle {
+  position: absolute;
+  top: 1.1rem;
+  right: 1.1rem;
+  z-index: 5;
+  margin: 0;
+  border: 1px solid rgba(244,201,90,.34);
+  border-radius: 999px;
+  padding: .42rem .76rem;
+  min-width: 3.2rem;
+  background: rgba(8,21,42,.48);
+  color: var(--gold-warm);
+  cursor: pointer;
+  font: 700 .76rem var(--font-sans);
+  letter-spacing: .08em;
+  box-shadow: none;
+  backdrop-filter: blur(10px);
+}
+.lang-toggle:hover {
+  transform: translateY(-1px);
+  background: rgba(244,201,90,.12);
+  box-shadow: 0 8px 20px rgba(0,0,0,.18);
+}
+.story-panel {
+  position: relative;
+  min-height: 620px;
+  padding: clamp(2rem, 4vw, 3.2rem);
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 80% 55% at 26% 20%, rgba(247,217,135,.13), transparent 64%),
+    radial-gradient(ellipse 60% 42% at 78% 24%, rgba(142,181,143,.10), transparent 66%),
+    linear-gradient(180deg, rgba(8,21,42,.12), rgba(8,21,42,.42));
+}
+.story-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 12% 24%, rgba(245,236,210,.86) 0 2px, transparent 3px),
+    radial-gradient(circle at 84% 17%, rgba(244,201,90,.62) 0 2px, transparent 3px),
+    radial-gradient(circle at 58% 11%, rgba(245,236,210,.48) 0 1px, transparent 2px),
+    radial-gradient(circle at 34% 78%, rgba(244,201,90,.46) 0 1px, transparent 2px);
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  margin-bottom: 2.6rem;
+  color: var(--gold-warm);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: .02em;
+  position: relative;
+  z-index: 2;
+}
+.brand .star { filter: drop-shadow(0 0 8px rgba(244,201,90,.35)); }
+.cover-copy {
+  position: relative;
+  z-index: 2;
+  max-width: 24rem;
+}
+.cover-kicker {
+  margin: 0 0 .7rem;
+  color: var(--gold);
+  font-family: var(--font-sans);
+  font-size: .76rem;
+  font-weight: 700;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+.cover-copy .cover-line {
+  margin: 0;
+  color: #f7eece;
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 5.2vw, 4.8rem);
+  font-weight: 600;
+  line-height: .96;
+  letter-spacing: 0;
+  text-shadow: 0 4px 18px rgba(0,0,0,.28);
+}
+.cover-copy .cover-sub {
+  margin: .85rem 0 0;
+  color: rgba(245,236,210,.72);
+  font-family: var(--font-sans);
+  font-size: .84rem;
+  font-weight: 600;
+  letter-spacing: .14em;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+.cover-note {
+  width: fit-content;
+  margin: 1.15rem 0 0;
+  padding-bottom: .28rem;
+  color: var(--gold-warm);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-style: italic;
+  border-bottom: 0;
+  background:
+    linear-gradient(90deg, rgba(244,201,90,.75), rgba(244,201,90,.06)) 0 100% / 100% 2px no-repeat;
+}
+.storybook-scene {
+  position: absolute;
+  left: clamp(1rem, 4vw, 3rem);
+  right: clamp(1rem, 3vw, 2.2rem);
+  bottom: 0;
+  z-index: 1;
+  height: min(48%, 300px);
+  overflow: visible;
+}
+.storybook-scene .moon { fill: var(--gold-warm); filter: drop-shadow(0 0 22px rgba(244,201,90,.34)); }
+.storybook-scene .moon-cut { fill: #13233e; }
+.storybook-scene .star { fill: var(--gold); }
+.storybook-scene .star-soft { fill: #fff5d8; opacity: .72; }
+.storybook-scene .star,
+.storybook-scene .star-soft,
+.storybook-scene .star-dot {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: twinkle 3.8s ease-in-out infinite;
+}
+.storybook-scene .star-soft:nth-of-type(2n),
+.storybook-scene .star-dot:nth-of-type(2n) { animation-delay: 1.2s; }
+.storybook-scene .star-soft:nth-of-type(3n),
+.storybook-scene .star-dot:nth-of-type(3n) { animation-delay: 2.1s; }
+.storybook-scene .planet-mini {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: planet-drift 8s ease-in-out infinite;
+}
+.storybook-scene .planet-ring {
+  fill: none;
+  stroke: rgba(245,236,210,.48);
+  stroke-width: 1.2;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ring-turn 9s linear infinite;
+}
+.storybook-scene .planet-body { fill: #8eb58f; }
+.storybook-scene .planet-cap { fill: rgba(15,29,53,.18); }
+.storybook-scene .orbit,
+.storybook-scene .constellation,
+.storybook-scene .guide-line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.storybook-scene .orbit { stroke: rgba(245,236,210,.46); stroke-width: 1.4; }
+.storybook-scene .constellation { stroke: rgba(244,201,90,.40); stroke-width: 1.1; }
+.storybook-scene .dune-back { fill: #4a3528; opacity: .9; }
+.storybook-scene .dune-mid { fill: #3a2a22; opacity: .96; }
+.storybook-scene .dune-front { fill: #24170f; }
+.storybook-scene .guide-line { stroke: rgba(245,236,210,.22); stroke-width: 1.2; }
+@keyframes twinkle {
+  0%, 100% { opacity: .46; transform: scale(.88); }
+  45% { opacity: 1; transform: scale(1.08); }
+}
+@keyframes planet-drift {
+  0%, 100% { transform: translate(0, 0) rotate(-2deg); filter: drop-shadow(0 0 2px rgba(244,201,90,.05)); }
+  50% { transform: translate(8px, -5px) rotate(4deg); filter: drop-shadow(0 0 10px rgba(244,201,90,.22)); }
+}
+@keyframes ring-turn {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.card {
+  align-self: center;
+  justify-self: center;
+  width: min(100%, 380px);
+  border: 1px solid rgba(244,201,90,.22);
+  border-top: 5px solid var(--gold);
+  border-radius: 20px;
+  padding: 2.25rem;
+  background:
+    linear-gradient(145deg, rgba(28,49,85,.96), rgba(11,24,46,.98)),
+    var(--paper-card);
+  box-shadow: 0 22px 56px rgba(0,0,0,.34), 0 1px 8px rgba(0,0,0,.24);
+  position: relative;
+  margin: 2rem;
+}
+.card::before {
+  content: "";
+  position: absolute;
+  left: 1.85rem;
+  right: 1.85rem;
+  top: 4.55rem;
+  height: 7px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 8' preserveAspectRatio='none'%3E%3Cpath d='M3 5 Q55 1 110 4 T217 4' stroke='%23f4c95a' stroke-width='2.2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat;
+  background-size: 100% 7px;
+  opacity: .7;
+  pointer-events: none;
+}
+h1 {
+  margin: 0 0 .8rem;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 2.65rem);
+  line-height: 1.05;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.lede {
+  margin: 0 0 2rem;
+  color: var(--ink-soft);
+  font-family: var(--font-body);
+  font-size: clamp(1.04rem, 1.65vw, 1.22rem);
+  line-height: 1.86;
+  max-width: 19rem;
+}
+form {
+  display: grid;
+  gap: 1rem;
+}
+label {
+  display: grid;
+  gap: .45rem;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: .82rem;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+input {
+  width: 100%;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: rgba(8,21,42,.76);
+  color: var(--ink);
+  padding: .9rem 1rem;
+  font: 500 1rem var(--font-sans);
+  outline: none;
+  transition: border-color .16s, box-shadow .16s, background .16s;
+}
+input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(244,201,90,.16);
+  background: rgba(8,21,42,.88);
+}
+button {
+  margin-top: .4rem;
+  border: 0;
+  border-radius: 999px;
+  padding: .95rem 1.2rem;
+  background: var(--gold);
+  color: #0f1d35;
+  cursor: pointer;
+  font: 700 1rem var(--font-sans);
+  box-shadow: 0 12px 28px rgba(244,201,90,.26);
+  transition: transform .16s, box-shadow .16s, background .16s;
+}
+button:hover {
+  transform: translateY(-1px);
+  background: var(--gold-warm);
+  box-shadow: 0 14px 34px rgba(244,201,90,.34);
+}
+button:disabled {
+  cursor: wait;
+  opacity: .76;
+  transform: none;
+}
+.error {
+  display: none;
+  margin: .15rem 0 0;
+  padding: .75rem .9rem;
+  border-left: 4px solid var(--rust);
+  border-radius: 10px;
+  background: rgba(224,142,111,.12);
+  color: #f3c7bb;
+  font-family: var(--font-sans);
+  font-size: .9rem;
+}
+.error.show { display: block; }
+@media (max-width: 560px) {
+  body { padding: 1rem; }
+  .login-frame { grid-template-columns: 1fr; min-height: 0; border-radius: 22px; }
+  .lang-toggle { top: .85rem; right: .85rem; }
+  .story-panel { min-height: 310px; padding: 1.55rem; }
+  .brand { margin-bottom: 1.4rem; }
+  .cover-copy .cover-line { font-size: clamp(2.2rem, 12vw, 3.4rem); }
+  .cover-copy .cover-sub { font-size: .72rem; }
+  .cover-note { font-size: .95rem; }
+  .storybook-scene { height: 44%; left: .9rem; right: .9rem; }
+  .card { width: auto; margin: 0; border-radius: 0; border-left: 0; border-right: 0; border-bottom: 0; padding: 1.55rem; }
+  .card::before { left: 1.35rem; right: 1.35rem; top: 4.55rem; }
+}
+@media (min-width: 561px) and (max-width: 860px) {
+  .login-frame { grid-template-columns: 1fr; }
+  .story-panel { min-height: 410px; }
+  .card { width: min(100% - 3rem, 440px); margin: 2rem auto; }
+}
+</style>
+<script src="auth.js"></script>
+</head>
+<body>
+  <div class="dune" aria-hidden="true"></div>
+  <main class="login-shell">
+    <section class="login-frame" aria-label="桃桃 Agent 登录">
+      <button class="lang-toggle" id="lang-toggle" type="button" aria-label="Switch language">EN</button>
+      <div class="story-panel">
+        <div class="brand"><span class="star">✦</span><span>TaotaoAgent</span></div>
+        <div class="cover-copy">
+          <p class="cover-kicker" data-i18n="coverKicker">桃桃 Agent</p>
+          <p class="cover-line" data-i18n="coverLine">27 本手册</p>
+          <p class="cover-sub" data-i18n="coverSub">Agent 工程现场笔记</p>
+          <p class="cover-note" data-i18n="coverNote">写给认真造系统的人</p>
+        </div>
+        <svg class="storybook-scene" viewBox="0 0 560 330" aria-hidden="true" preserveAspectRatio="xMidYMax meet">
+          <circle class="moon" cx="464" cy="54" r="34"></circle>
+          <circle class="moon-cut" cx="478" cy="43" r="33"></circle>
+          <path class="star" d="M76 38l5 16 16 5-16 5-5 16-5-16-16-5 16-5z"></path>
+          <path class="star-soft" d="M332 42l3 9 9 3-9 3-3 9-3-9-9-3 9-3z"></path>
+          <path class="star-soft" d="M492 148l3 10 10 3-10 3-3 10-3-10-10-3 10-3z"></path>
+          <g transform="translate(392 94)">
+            <g class="planet-mini">
+              <ellipse class="planet-ring" cx="0" cy="0" rx="31" ry="9"></ellipse>
+              <circle class="planet-body" cx="0" cy="0" r="18"></circle>
+              <path class="planet-cap" d="M-16 8c11 8 27 4 34-8 1 11-7 21-19 22-10 1-18-4-22-12z"></path>
+            </g>
+          </g>
+          <g transform="translate(102 158) scale(.62)">
+            <g class="planet-mini">
+              <ellipse class="planet-ring" cx="0" cy="0" rx="29" ry="8"></ellipse>
+              <circle class="planet-body" cx="0" cy="0" r="16"></circle>
+              <path class="planet-cap" d="M-13 7c9 6 22 3 28-7 0 9-7 17-17 18-8 0-15-4-18-10z"></path>
+            </g>
+          </g>
+          <path class="orbit" d="M92 124c94-42 228-56 370-17"></path>
+          <path class="constellation" d="M122 104l48 28 56-18 42 34"></path>
+          <circle class="star-soft" cx="122" cy="104" r="3"></circle>
+          <circle class="star-soft" cx="170" cy="132" r="2.4"></circle>
+          <circle class="star-soft" cx="226" cy="114" r="2.7"></circle>
+          <circle class="star-soft" cx="268" cy="148" r="2.2"></circle>
+          <circle class="star-dot" cx="48" cy="128" r="2.1" fill="#f4c95a"></circle>
+          <circle class="star-dot" cx="286" cy="84" r="1.8" fill="#fff5d8"></circle>
+          <circle class="star-dot" cx="438" cy="172" r="2.2" fill="#f4c95a"></circle>
+          <circle class="star-dot" cx="516" cy="88" r="1.7" fill="#fff5d8"></circle>
+          <path class="dune-back" d="M0 250c84-46 166-55 250-24 98 36 203 22 310-34v138H0z"></path>
+          <path class="dune-mid" d="M0 278c99-48 205-49 318-10 84 29 160 16 242-26v88H0z"></path>
+          <path class="dune-front" d="M0 304c104-26 209-27 316-5 87 18 170 15 244-14v45H0z"></path>
+          <path class="guide-line" d="M174 240c54-31 133-32 190-2"></path>
+          <path class="guide-line" d="M224 214c37-17 85-17 124 0"></path>
+        </svg>
+      </div>
+      <section class="card" aria-labelledby="login-title">
+        <p id="login-title" class="lede" data-i18n="lede">在星星亮起来之前，先确认你的名字和口令。</p>
+
+        <form id="login-form">
+          <label>
+            <span data-i18n="username">用户名</span>
+            <input id="username" name="username" type="text" autocomplete="username" required autofocus>
+          </label>
+          <label>
+            <span data-i18n="password">密码</span>
+            <input id="password" name="password" type="password" autocomplete="current-password" required>
+          </label>
+          <button id="submit" type="submit" data-i18n="submit">登录并继续</button>
+          <p id="error" class="error" role="alert"></p>
+        </form>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const form = document.querySelector("#login-form");
+    const button = document.querySelector("#submit");
+    const langToggle = document.querySelector("#lang-toggle");
+    const errorBox = document.querySelector("#error");
+    const params = new URLSearchParams(window.location.search);
+    const nextUrl = window.taotaoAuth.safeNextUrl(params.get("next"));
+    const previewMode = params.get("preview") === "1";
+    const LANG_KEY = "taotao-docs-lang";
+    const copy = {
+      zh: {
+        title: "登录 · 桃桃 Agent 学习手册",
+        toggle: "EN",
+        coverKicker: "桃桃 Agent",
+        coverLine: "27 本手册",
+        coverSub: "Agent 工程现场笔记",
+        coverNote: "写给认真造系统的人",
+        lede: "在星星亮起来之前，先确认你的名字和口令。",
+        username: "用户名",
+        password: "密码",
+        submit: "登录并继续",
+        submitting: "正在登录...",
+        badCredentials: "用户名或密码不正确。",
+        loginFailed: "登录失败，请稍后重试。",
+      },
+      en: {
+        title: "Sign in · Taotao Agent Field Notes",
+        toggle: "中文",
+        coverKicker: "Taotao Agent",
+        coverLine: "27 Books",
+        coverSub: "Agent Engineering Field Notes",
+        coverNote: "for building real systems",
+        lede: "Before the stars light up, confirm your name and passphrase.",
+        username: "Username",
+        password: "Password",
+        submit: "Sign in and continue",
+        submitting: "Signing in...",
+        badCredentials: "Username or password is incorrect.",
+        loginFailed: "Sign-in failed. Please try again.",
+      },
+    };
+    let currentLang = window.localStorage.getItem(LANG_KEY) || "zh";
+
+    function t(key) {
+      return copy[currentLang][key];
+    }
+
+    function applyLanguage(lang) {
+      currentLang = lang === "en" ? "en" : "zh";
+      window.localStorage.setItem(LANG_KEY, currentLang);
+      document.documentElement.lang = currentLang === "zh" ? "zh-CN" : "en";
+      document.title = t("title");
+      document.querySelectorAll("[data-i18n]").forEach((node) => {
+        node.textContent = t(node.dataset.i18n);
+      });
+      langToggle.textContent = t("toggle");
+      langToggle.setAttribute("aria-label", currentLang === "zh" ? "Switch to English" : "切换到中文");
+    }
+
+    applyLanguage(currentLang);
+    langToggle.addEventListener("click", () => {
+      applyLanguage(currentLang === "zh" ? "en" : "zh");
+    });
+
+    if (!previewMode && window.taotaoAuth.isAuthenticated()) {
+      window.location.replace(nextUrl);
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      errorBox.classList.remove("show");
+      errorBox.textContent = "";
+      button.disabled = true;
+      button.textContent = t("submitting");
+
+      try {
+        const ok = await window.taotaoAuth.login(
+          form.elements.username.value,
+          form.elements.password.value
+        );
+
+        if (!ok) {
+          errorBox.textContent = t("badCredentials");
+          errorBox.classList.add("show");
+          button.disabled = false;
+          button.textContent = t("submit");
+          return;
+        }
+
+        window.location.replace(nextUrl);
+      } catch (error) {
+        errorBox.textContent = error.message || t("loginFailed");
+        errorBox.classList.add("show");
+        button.disabled = false;
+        button.textContent = t("submit");
+      }
+    });
+  </script>
+</body>
+</html>
