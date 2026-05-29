@@ -382,6 +382,13 @@ pre .f { color: var(--code-fn); font-weight: 500; }
   padding-left: 0.3rem;
 }
 .code-cap a { color: inherit; border-bottom-color: var(--rule); }
+.code-cap a[href^="https://github.com/doraemonlyz-jpg/taotao-agent/"]::after,
+.fileref[href^="https://github.com/doraemonlyz-jpg/taotao-agent/"]::after {
+  content: " ↗";
+  color: var(--gold);
+  font-family: var(--font-sans);
+  font-size: 0.82em;
+}
 
 /* ---------- Callout box system ---------- */
 .box {
@@ -1259,7 +1266,7 @@ response = llm.invoke(<span class="s">"用一句话解释 Agent"</span>)
 </pre>
 
       <h5>桃桃 Agent 在哪</h5>
-      <p><a href="../backend/agent/nodes/llm.py" class="fileref">backend/agent/nodes/llm.py</a> ——
+      <p><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/nodes/llm.py" class="fileref">backend/agent/nodes/llm.py</a> ——
       用 <code>get_llm()</code>（强）和 <code>get_fast_llm()</code>（快/便宜）做<strong>双档路由</strong>。</p>
 
       <div class="box interview">
@@ -1348,7 +1355,7 @@ llm_with_tools = llm.bind_tools([calculator])
       </figure>
 
       <h5>桃桃 Agent 在哪</h5>
-      <p><a href="../backend/agent/tools/" class="fileref">backend/agent/tools/</a> 12 个工具，每个都过 <code>safe_run_tool</code> wrapper（超时 + 缓存 + 截断）。</p>
+      <p><a href="https://github.com/doraemonlyz-jpg/taotao-agent/tree/main/backend/agent/tools" class="fileref">backend/agent/tools/</a> 12 个工具，每个都过 <code>safe_run_tool</code> wrapper（超时 + 缓存 + 截断）。</p>
 
       <div class="box tip">
         <div class="box-label">小白最容易踩的坑</div>
@@ -1474,7 +1481,7 @@ llm_with_tools = llm.bind_tools([calculator])
 
       <p>LangGraph 提供了 <code>ToolNode</code> 帮你做这件事，但它没有超时和截断。生产里通常自己写一个：</p>
 
-      <p class="code-cap"><a href="../backend/agent/nodes/executor.py">桃桃 Agent · executor.py</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/nodes/executor.py">桃桃 Agent · executor.py</a></p>
 <pre><span class="k">def</span> <span class="f">tool_node</span>(state: AgentState) -> dict:
     last = state[<span class="s">"messages"</span>][-1]
     msgs = []
@@ -2472,7 +2479,7 @@ v = client.embeddings.<span class="f">create</span>(
         <li><strong>事实核查</strong>：对关键数字/日期/引用做二次校验</li>
       </ul>
 
-      <p class="code-cap"><a href="../backend/agent/nodes/guardrails.py">桃桃 Agent · guardrails.py</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/nodes/guardrails.py">桃桃 Agent · guardrails.py</a></p>
 <pre>_INJECTION = re.<span class="f">compile</span>(
     <span class="s">r"(ignore (all )?previous|disregard|reveal (your )?(system )?(prompt|instructions)|"</span>
     <span class="s">r"jailbreak|DAN mode|developer mode)"</span>,

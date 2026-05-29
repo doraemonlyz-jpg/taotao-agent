@@ -528,6 +528,13 @@ tr:hover td { background: rgba(215,200,165,0.13); }
   border: none;
 }
 .fileref:hover { background: rgba(47, 80, 55, 0.14); }
+.fileref[href^="https://github.com/doraemonlyz-jpg/taotao-agent/"]::after,
+.code-cap a[href^="https://github.com/doraemonlyz-jpg/taotao-agent/"]::after {
+  content: " ↗";
+  color: var(--amber);
+  font-family: var(--font-sans);
+  font-size: 0.82em;
+}
 
 footer.colophon {
   margin-top: 6rem;
@@ -773,21 +780,21 @@ END</div>
       <table>
         <thead><tr><th>组件</th><th>文件</th><th>行数</th></tr></thead>
         <tbody>
-          <tr><td>State 定义</td><td><a class="fileref" href="../backend/agent/state.py">backend/agent/state.py</a></td><td>~60</td></tr>
-          <tr><td>Graph 装配</td><td><a class="fileref" href="../backend/agent/graph.py">backend/agent/graph.py</a></td><td>~160</td></tr>
-          <tr><td>Perception</td><td><a class="fileref" href="../backend/agent/nodes/perception.py">nodes/perception.py</a></td><td>~135</td></tr>
-          <tr><td>Guardrails</td><td><a class="fileref" href="../backend/agent/nodes/guardrails.py">nodes/guardrails.py</a></td><td>~110</td></tr>
-          <tr><td>Planner</td><td><a class="fileref" href="../backend/agent/nodes/planner.py">nodes/planner.py</a></td><td>~95</td></tr>
-          <tr><td>Executor + ToolNode</td><td><a class="fileref" href="../backend/agent/nodes/executor.py">nodes/executor.py</a></td><td>~125</td></tr>
-          <tr><td>Supervisor + sub-agents</td><td><a class="fileref" href="../backend/agent/nodes/supervisor.py">nodes/supervisor.py</a></td><td>~210</td></tr>
-          <tr><td>Critic</td><td><a class="fileref" href="../backend/agent/nodes/critic.py">nodes/critic.py</a></td><td>~155</td></tr>
-          <tr><td>Extractor</td><td><a class="fileref" href="../backend/agent/nodes/extractor.py">nodes/extractor.py</a></td><td>~140</td></tr>
-          <tr><td>Summarizer</td><td><a class="fileref" href="../backend/agent/nodes/summarizer.py">nodes/summarizer.py</a></td><td>~55</td></tr>
-          <tr><td>Memory (4 stores)</td><td><a class="fileref" href="../backend/agent/memory/">backend/agent/memory/</a></td><td>~430</td></tr>
-          <tr><td>Tools (12)</td><td><a class="fileref" href="../backend/agent/tools/">backend/agent/tools/</a></td><td>~520</td></tr>
-          <tr><td>LLM router</td><td><a class="fileref" href="../backend/agent/nodes/llm.py">nodes/llm.py</a></td><td>~70</td></tr>
-          <tr><td>FastAPI app</td><td><a class="fileref" href="../backend/app.py">backend/app.py</a></td><td>~290</td></tr>
-          <tr><td>Frontend root</td><td><a class="fileref" href="../frontend/src/">frontend/src/</a></td><td>~1.4k</td></tr>
+          <tr><td>State 定义</td><td><a class="fileref" href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/state.py">backend/agent/state.py</a></td><td>~60</td></tr>
+          <tr><td>Graph 装配</td><td><a class="fileref" href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/graph.py">backend/agent/graph.py</a></td><td>~160</td></tr>
+          <tr><td>Perception</td><td><a class="fileref" href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/nodes/perception.py">nodes/perception.py</a></td><td>~135</td></tr>
+          <tr><td>Guardrails</td><td><a class="fileref" href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/nodes/guardrails.py">nodes/guardrails.py</a></td><td>~110</td></tr>
+          <tr><td>Planner</td><td><a class="fileref" href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/nodes/planner.py">nodes/planner.py</a></td><td>~95</td></tr>
+          <tr><td>Executor + ToolNode</td><td><a class="fileref" href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/nodes/executor.py">nodes/executor.py</a></td><td>~125</td></tr>
+          <tr><td>Supervisor + sub-agents</td><td><a class="fileref" href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/nodes/supervisor.py">nodes/supervisor.py</a></td><td>~210</td></tr>
+          <tr><td>Critic</td><td><a class="fileref" href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/nodes/critic.py">nodes/critic.py</a></td><td>~155</td></tr>
+          <tr><td>Extractor</td><td><a class="fileref" href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/nodes/extractor.py">nodes/extractor.py</a></td><td>~140</td></tr>
+          <tr><td>Summarizer</td><td><a class="fileref" href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/nodes/summarizer.py">nodes/summarizer.py</a></td><td>~55</td></tr>
+          <tr><td>Memory (4 stores)</td><td><a class="fileref" href="https://github.com/doraemonlyz-jpg/taotao-agent/tree/main/backend/agent/memory">backend/agent/memory/</a></td><td>~430</td></tr>
+          <tr><td>Tools (12)</td><td><a class="fileref" href="https://github.com/doraemonlyz-jpg/taotao-agent/tree/main/backend/agent/tools">backend/agent/tools/</a></td><td>~520</td></tr>
+          <tr><td>LLM router</td><td><a class="fileref" href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/nodes/llm.py">nodes/llm.py</a></td><td>~70</td></tr>
+          <tr><td>FastAPI app</td><td><a class="fileref" href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/app.py">backend/app.py</a></td><td>~290</td></tr>
+          <tr><td>Frontend root</td><td><a class="fileref" href="https://github.com/doraemonlyz-jpg/taotao-agent/tree/main/frontend/src">frontend/src/</a></td><td>~1.4k</td></tr>
         </tbody>
       </table>
     </section>
@@ -804,7 +811,7 @@ END</div>
       因为它要在节点之间序列化、要走 checkpointer 落盘、要容忍部分字段缺失。
       Taotao Agent 的 <code>AgentState</code> 长这样：</p>
 
-      <p class="code-cap"><a href="../backend/agent/state.py">backend/agent/state.py</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/state.py">backend/agent/state.py</a></p>
 <pre><span class="k">class</span> <span class="f">AgentState</span>(TypedDict, total=False):
     <span class="c"># --- 5. Perception input ---</span>
     user_input: str
@@ -874,7 +881,7 @@ END</div>
       <p>state 走 <code>AsyncSqliteSaver</code> 落到 <code>data/checkpoints.sqlite</code>，
       所以 <em>backend 重启不丢会话</em>——前端用同一个 session_id 接回去就能续。</p>
 
-      <p class="code-cap"><a href="../backend/agent/graph.py">backend/agent/graph.py</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/graph.py">backend/agent/graph.py</a></p>
 <pre><span class="k">def</span> <span class="f">get_graph</span>():
     <span class="s">"""Streaming-friendly graph (AsyncSqliteSaver). Survives backend restarts."""</span>
     <span class="k">global</span> _async_compiled
@@ -913,7 +920,7 @@ END</div>
 
       <p>但要让 cache 真正命中，需要把消息严格<strong>分两层</strong>：</p>
 
-      <p class="code-cap"><a href="../backend/agent/nodes/perception.py">backend/agent/nodes/perception.py</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/nodes/perception.py">backend/agent/nodes/perception.py</a></p>
 <pre><span class="k">def</span> <span class="f">_build_static_system</span>(prompt_caching: bool):
     <span class="s">"""Build the SystemMessage. Static = identical across turns,
     so we attach Anthropic cache_control to make it cacheable."""</span>
@@ -974,7 +981,7 @@ END</div>
       <p>HyDE (<em>Hypothetical Document Embeddings</em>) 的解决思路：先让一个 cheap model 写个<strong>假想答案</strong>，
       用<strong>这段假想答案</strong>去做向量查询。假想答案在语义空间里更接近真正存的内容。</p>
 
-      <p class="code-cap"><a href="../backend/agent/memory/long_term.py">backend/agent/memory/long_term.py</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/memory/long_term.py">backend/agent/memory/long_term.py</a></p>
 <pre><span class="k">def</span> <span class="f">recall_hyde</span>(self, query: str, k: int = 4) -> list[str]:
     <span class="s">"""Generate a hypothetical answer first, then search by it.
     Used for vague / short queries where direct vector search misses."""</span>
@@ -1029,7 +1036,7 @@ END</div>
         <li>查 session 累计花费，超 <code>AGENT_SESSION_BUDGET_USD</code> 直接拒绝本轮</li>
       </ol>
 
-      <p class="code-cap"><a href="../backend/agent/nodes/guardrails.py">backend/agent/nodes/guardrails.py</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/nodes/guardrails.py">backend/agent/nodes/guardrails.py</a></p>
 <pre>_INJECTION = re.compile(
     <span class="s">r"(ignore (all )?previous|disregard (the )?(above|prior)|"</span>
     <span class="s">r"reveal (your )?(system )?(prompt|instructions)|"</span>
@@ -1099,7 +1106,7 @@ END</div>
 
       <p>所以 planner 的第一件事是<strong>启发式短路</strong>：</p>
 
-      <p class="code-cap"><a href="../backend/agent/nodes/planner.py">backend/agent/nodes/planner.py</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/nodes/planner.py">backend/agent/nodes/planner.py</a></p>
 <pre><span class="k">def</span> <span class="f">_trivial</span>(text: str) -> bool:
     <span class="s">"""Cheap, deterministic shortcut — skip the LLM entirely for short
     chitchat / yes-no / single-tool questions."""</span>
@@ -1129,7 +1136,7 @@ END</div>
 
       <p>修法是<strong>三层熔断</strong>，按硬度排：</p>
 
-      <p class="code-cap"><a href="../backend/agent/nodes/supervisor.py">backend/agent/nodes/supervisor.py</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/nodes/supervisor.py">backend/agent/nodes/supervisor.py</a></p>
 <pre>MAX_PER_SPECIALIST = 2
 MAX_TOTAL_HOPS = 5
 
@@ -1194,7 +1201,7 @@ MAX_TOTAL_HOPS = 5
 
       <p>所以 Taotao Agent 把它替换成自己的 <code>tool_node</code>，靠一个 <code>safe_run_tool</code> wrapper 解决：</p>
 
-      <p class="code-cap"><a href="../backend/agent/nodes/executor.py">backend/agent/nodes/executor.py</a> + <a href="../backend/agent/tools/safe_exec.py">tools/safe_exec.py</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/nodes/executor.py">backend/agent/nodes/executor.py</a> + <a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/tools/safe_exec.py">tools/safe_exec.py</a></p>
 <pre><span class="c"># --- safe_exec.py ----------------------------------------------------</span>
 _EXECUTOR = concurrent.futures.ThreadPoolExecutor(max_workers=8)
 _CACHE: OrderedDict[str, str] = OrderedDict()
@@ -1327,7 +1334,7 @@ ALWAYS_ON = {<span class="s">"remember"</span>, <span class="s">"recall"</span>,
       解决方案：<strong>开新进程</strong>跑，硬超时，stdout/stderr 都截断。
       <em>不</em>用 <code>exec()</code>，<em>不</em>用 docker（demo 阶段太重）：</p>
 
-      <p class="code-cap"><a href="../backend/agent/tools/python_repl.py">backend/agent/tools/python_repl.py</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/tools/python_repl.py">backend/agent/tools/python_repl.py</a></p>
 <pre><span class="k">@tool</span>
 <span class="k">def</span> <span class="f">python_repl</span>(code: str) -> str:
     <span class="s">"""Run Python code in a fresh subprocess. Return stdout (or stderr).
@@ -1397,7 +1404,7 @@ ALWAYS_ON = {<span class="s">"remember"</span>, <span class="s">"recall"</span>,
       <p>批评器跑一次本身代价不小（一次 fast_llm 调用 + structured_output）。
       如果上一步明显是<strong>琐碎答案</strong>，直接跳过：</p>
 
-      <p class="code-cap"><a href="../backend/agent/nodes/critic.py">backend/agent/nodes/critic.py</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/nodes/critic.py">backend/agent/nodes/critic.py</a></p>
 <pre><span class="k">def</span> <span class="f">_should_skip_critic</span>(user_q: str, draft: str, tool_calls_made: int) -> str | None:
     <span class="s">"""Heuristic gate — return reason-string to skip, or None to run critic."""</span>
     q, d = user_q.strip().lower(), draft.strip()
@@ -1476,7 +1483,7 @@ ALWAYS_ON = {<span class="s">"remember"</span>, <span class="s">"recall"</span>,
       <p>Extractor 节点本身只是<strong>启动一个后台线程</strong>，立刻 return 让图继续往下走。
       实际的 LLM 调用 + 数据库写入都在线程里：</p>
 
-      <p class="code-cap"><a href="../backend/agent/nodes/extractor.py">backend/agent/nodes/extractor.py</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/nodes/extractor.py">backend/agent/nodes/extractor.py</a></p>
 <pre><span class="k">def</span> <span class="f">extractor</span>(state: AgentState) -> dict:
     sid = state.get(<span class="s">"session_id"</span>, <span class="s">""</span>)
     user_text  = state.get(<span class="s">"user_input"</span>, <span class="s">""</span>)
@@ -1576,7 +1583,7 @@ ALWAYS_ON = {<span class="s">"remember"</span>, <span class="s">"recall"</span>,
       <p>消息条数超 24 时，summarizer 节点把前面的"老消息"压成一段 SystemMessage 摘要，
       用 <code>RemoveMessage</code> 把原消息从历史里抹掉：</p>
 
-      <p class="code-cap"><a href="../backend/agent/nodes/summarizer.py">backend/agent/nodes/summarizer.py</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/nodes/summarizer.py">backend/agent/nodes/summarizer.py</a></p>
 <pre>SUMMARIZE_THRESHOLD = 24
 KEEP_RECENT = 8
 
@@ -1630,7 +1637,7 @@ KEEP_RECENT = 8
 
       <p>所以 Profile 是个简单 JSON 文件，加<strong>线程锁</strong>避免并发写冲突：</p>
 
-      <p class="code-cap"><a href="../backend/agent/memory/profile.py">backend/agent/memory/profile.py</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/memory/profile.py">backend/agent/memory/profile.py</a></p>
 <pre><span class="k">class</span> <span class="f">Profile</span>:
     <span class="k">def</span> <span class="f">__init__</span>(self, path: Path):
         self.path = path
@@ -1658,7 +1665,7 @@ KEEP_RECENT = 8
 
       <p>这种"两段式"设计跟 Anthropic Skills 一脉相承——避免每轮把所有指令都全量喂进去。</p>
 
-      <p class="code-cap"><a href="../backend/data/skills/concise-answers.md">backend/data/skills/concise-answers.md</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/data/skills/concise-answers.md">backend/data/skills/concise-answers.md</a></p>
 <pre><span class="m">---</span>
 <span class="k">name</span>: concise-answers
 <span class="k">description</span>: Keep answers short, no preamble
@@ -1693,7 +1700,7 @@ KEEP_RECENT = 8
         <li>提供 <code>reset_llm_cache()</code> 给 <code>POST /model</code> 端点用，实现<strong>热切换</strong></li>
       </ol>
 
-      <p class="code-cap"><a href="../backend/agent/nodes/llm.py">backend/agent/nodes/llm.py</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/nodes/llm.py">backend/agent/nodes/llm.py</a></p>
 <pre><span class="k">def</span> <span class="f">_provider_kwargs</span>(name: str) -> dict:
     <span class="s">"""Pick up env-supplied overrides so the same code path serves
     hosted APIs *and* local OpenAI-compatible servers / Ollama."""</span>
@@ -1746,7 +1753,7 @@ KEEP_RECENT = 8
       用户要是把它们设成 big model，executor 一调 <code>bind_tools</code> 就崩。
       所以 catalog 维护一个黑名单：</p>
 
-      <p class="code-cap"><a href="../backend/agent/models_catalog.py">backend/agent/models_catalog.py</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/models_catalog.py">backend/agent/models_catalog.py</a></p>
 <pre>OLLAMA_NO_TOOL_PATTERNS: tuple[str, ...] = (
     <span class="s">"deepseek-r1"</span>, <span class="s">"deepseek-coder-v2"</span>, <span class="s">"deepseek-v2.5"</span>, <span class="s">"deepseek-v2"</span>,
     <span class="s">"gemma"</span>, <span class="s">"phi3"</span>, <span class="s">"phi4"</span>,
@@ -1785,7 +1792,7 @@ KEEP_RECENT = 8
         <li><strong>UsageCallback</strong>——挂在每个 LLM 调用上，捕获 token 用量到 usage.snapshot()</li>
       </ul>
 
-      <p class="code-cap"><a href="../backend/agent/observability/tracer.py">backend/agent/observability/tracer.py</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/agent/observability/tracer.py">backend/agent/observability/tracer.py</a></p>
 <pre><span class="k">def</span> <span class="f">emit</span>(node: str, kind: str, payload: dict, *, session_id: str = <span class="s">""</span>) -> <span class="k">None</span>:
     evt = {<span class="s">"ts"</span>: time.time(), <span class="s">"node"</span>: node, <span class="s">"kind"</span>: kind,
            <span class="s">"payload"</span>: payload, <span class="s">"session_id"</span>: session_id}
@@ -1840,7 +1847,7 @@ KEEP_RECENT = 8
       过滤 <code>on_chat_model_stream</code> 类型，
       用 <code>metadata.langgraph_node</code> 判断是不是要 forward 给用户：</p>
 
-      <p class="code-cap"><a href="../backend/app.py">backend/app.py</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/backend/app.py">backend/app.py</a></p>
 <pre>USER_FACING_NODES = {<span class="s">"executor"</span>, <span class="s">"writer"</span>}
 
 <span class="k">async</span> <span class="k">for</span> ev <span class="k">in</span> graph.astream_events(...{<span class="s">"version"</span>: <span class="s">"v2"</span>}):
@@ -1869,7 +1876,7 @@ KEEP_RECENT = 8
       <p>浏览器自带 <code>EventSource</code>，但<strong>不能 POST</strong>——它只能 GET。
       Taotao Agent 的 <code>/chat</code> 是 POST（要塞 message body），所以前端用 <code>fetch + ReadableStream</code> 手写 SSE 解析：</p>
 
-      <p class="code-cap"><a href="../frontend/src/api.ts">frontend/src/api.ts</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/frontend/src/api.ts">frontend/src/api.ts</a></p>
 <pre><span class="k">export</span> <span class="k">function</span> <span class="f">streamChat</span>(message, sessionId, handlers): () =&gt; <span class="k">void</span> {
   <span class="k">const</span> ctrl = <span class="k">new</span> AbortController();
 
@@ -1950,7 +1957,7 @@ KEEP_RECENT = 8
       每个有 hover tooltip。下方一条<strong>预算进度条</strong>，
       ok 状态绿、warn (≥ 75%) 琥珀、over 红边框：</p>
 
-      <p class="code-cap"><a href="../frontend/src/components/TokenMeter.tsx">frontend/src/components/TokenMeter.tsx</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/frontend/src/components/TokenMeter.tsx">frontend/src/components/TokenMeter.tsx</a></p>
 <pre>{showBudget &amp;&amp; (
   &lt;div className={<span class="s">`meter-budget ${budgetState}`</span>}&gt;
     &lt;div className=<span class="s">"budget-bar"</span>&gt;
@@ -1970,7 +1977,7 @@ KEEP_RECENT = 8
 
       <p>没用任何 i18n 库。整套实现就是个 <code>{key: {en, zh}}</code> dict + Context：</p>
 
-      <p class="code-cap"><a href="../frontend/src/i18n.tsx">frontend/src/i18n.tsx</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/frontend/src/i18n.tsx">frontend/src/i18n.tsx</a></p>
 <pre><span class="k">export</span> <span class="k">const</span> ui = {
   brandPrefix: { en: <span class="s">"Taotao"</span>, zh: <span class="s">"桃桃"</span> },
   brandSuffix: { en: <span class="s">"Agent"</span>, zh: <span class="s">"Agent"</span> },
@@ -1998,7 +2005,7 @@ KEEP_RECENT = 8
         我们用 <code>openapi-typescript</code> 把 FastAPI 自动生成的 OpenAPI 3.1 schema 转成 TypeScript 类型，让<strong>编译期</strong>而不是<em>运行期</em>报红。
       </p>
 
-      <p class="code-cap"><a href="../frontend/package.json">frontend/package.json</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/frontend/package.json">frontend/package.json</a></p>
 <pre><span class="s">"scripts"</span>: {
   <span class="s">"gen:api"</span>: <span class="s">"cd ../backend &amp;&amp; uv run python -c \"import json; from app import app; open('../frontend/openapi.json','w').write(json.dumps(app.openapi(), indent=2))\" &amp;&amp; openapi-typescript ./openapi.json -o ./src/api/schema.gen.ts"</span>
 }
@@ -2011,7 +2018,7 @@ KEEP_RECENT = 8
         <li>前端用 <code>Schemas["ChatIn"]</code> 这种<em>派生类型</em>，不再手写</li>
       </ol>
 
-      <p class="code-cap"><a href="../frontend/src/api.ts">frontend/src/api.ts</a></p>
+      <p class="code-cap"><a href="https://github.com/doraemonlyz-jpg/taotao-agent/blob/main/frontend/src/api.ts">frontend/src/api.ts</a></p>
 <pre><span class="k">import type</span> { Schemas } <span class="k">from</span> <span class="s">"./api/index"</span>;
 
 <span class="k">export type</span> ChatIn      = Schemas[<span class="s">"ChatIn"</span>];
