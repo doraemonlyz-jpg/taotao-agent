@@ -102,9 +102,58 @@ pre .f { color: var(--code-fn); font-weight: 500; }
 .box.deep { background: var(--plum-soft); border-color: var(--plum); }
 .box.deep .box-label { color: var(--plum); }
 .box.deep .box-label::before { content: "✦"; font-weight: 600; }
-.box.interview { background: var(--gold-soft); border-color: var(--gold); }
-.box.interview .box-label { color: var(--gold); }
+.box.interview {
+  background:
+    linear-gradient(135deg, rgba(244,201,90,0.12), rgba(28,49,85,0.9) 42%, rgba(15,29,53,0.82));
+  border: 1px solid rgba(244,201,90,0.24);
+  border-left: 4px solid var(--gold);
+  box-shadow: 0 12px 34px rgba(5,12,24,0.18);
+  padding: 1.45rem 1.6rem;
+}
+.box.interview .box-label {
+  width: fit-content;
+  color: var(--gold);
+  background: rgba(244,201,90,0.08);
+  border: 1px solid rgba(244,201,90,0.28);
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem 0.25rem 0.55rem;
+  margin-bottom: 1rem;
+  letter-spacing: 0.04em;
+}
 .box.interview .box-label::before { content: "🎯"; }
+.box.interview p {
+  margin: 0.72rem 0;
+  color: #ded5b8;
+  font-size: 1.01rem;
+  line-height: 1.9;
+}
+.box.interview p:first-of-type {
+  margin-top: 0;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px dashed rgba(244,201,90,0.26);
+  color: var(--ink);
+}
+.box.interview p:first-of-type strong:first-child {
+  color: var(--gold);
+}
+.box.interview p strong,
+.box.interview li strong {
+  color: #fff1c8;
+}
+.box.interview ol,
+.box.interview ul {
+  margin: 0.7rem 0 0.9rem;
+  padding-left: 1.3rem;
+}
+.box.interview li {
+  margin: 0.35rem 0;
+  color: #ded5b8;
+  line-height: 1.85;
+}
+.box.interview em {
+  color: #9fca9d;
+}
 .box.reading { background: var(--sky-soft); border-color: var(--sky); }
 .box.reading .box-label { color: var(--sky); }
 .box.reading .box-label::before { content: "📚"; }
