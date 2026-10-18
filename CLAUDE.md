@@ -525,6 +525,7 @@ Group J · Frontend
 
 | Date | Commit | What |
 |---|---|---|
+| 2026-10-18 | (this) | Opt-in Parallel Search MCP preset via `MCP_PARALLEL_SEARCH_ENABLED=1`, shared by graph and harness; preserves built-in search and custom MCP choices, with `mcp__*` permission gating. |
 | 2026-05-13 | (this) | **P0 debt cleanup** · `LICENSE` (MIT) · ContextVar-based identity middleware in `app.py` (multi-tenancy now ACTUALLY enforced via `get_memory()`) · `backend/tests/` with 56 passing tests (auth + tenant isolation + tools + multi-agent + app HTTP) · ruff + mypy configured in `pyproject.toml` (scoped to new code) · `.github/workflows/test.yml` 3-job CI (backend lint+type+test · frontend build · docs sanity) · `frontend/src/vite-env.d.ts` to fix pre-existing TS error |
 | 2026-05-13 | `83ca4ea` | Book 24 · From Demo to Public SaaS · 11-phase roadmap + 4 starter implementations (auth, multi-tenant memory, nginx prod, frontend Dockerfile.prod) |
 | 2026-05-13 | `1c8b83a` | docs(diagrams): swap ASCII art for Mermaid · matches Petit-Prince palette |

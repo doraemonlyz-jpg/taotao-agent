@@ -28,8 +28,10 @@ Two transports supported:
                          Add `headers: {Authorization: Bearer ...}` if
                          the server requires auth.
 
-If `MCP_CLIENT_CONFIG` is unset, this module is a no-op and our registry
-keeps its original built-in tools only.
+Set `MCP_PARALLEL_SEARCH_ENABLED=1` to add the built-in anonymous Parallel
+Search MCP preset. It works independently of `MCP_CLIENT_CONFIG`; entries
+in that file override the preset. With neither setting, this module is
+a no-op and our registry keeps its original built-in tools only.
 
 Lifetime
 --------
@@ -39,6 +41,7 @@ asyncio loop, fetching the tool objects, and caching them. Each tool's
 `langchain-mcp-adapters` is designed to work outside of LangGraph
 streaming. The trade-off: simple, but no connection pooling.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -46,44 +49,71 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from langchain_core.tools import BaseTool
 
 log = logging.getLogger("agent.mcp.client")
 
 
+def _builtin_servers() -> dict[str, Any]:
+    """Return explicitly enabled presets, without reading API keys."""
+    if os.environ.get("MCP_PARALLEL_SEARCH_ENABLED", "").strip() != "1":
+        return {}
+    return {
+        # Keep the least-trust mcp__* permission rule for remote tools.
+        "mcp__parallel": {
+            "url": "https://search.parallel.ai/mcp",
+            "transport": "streamable_http",
+            "headers": {"User-Agent": "taotao-agent/0.1.0"},
+            "timeout": 10.0,
+            "sse_read_timeout": 15.0,
+        }
+    }
+
+
 def _load_config() -> dict[str, Any] | None:
+    presets = _builtin_servers()
     raw = (os.environ.get("MCP_CLIENT_CONFIG") or "").strip()
     if not raw:
-        return None
+        return presets or None
     p = Path(raw).expanduser()
     if not p.exists():
         log.warning("MCP_CLIENT_CONFIG=%s does not exist · skipping", p)
         return None
     try:
         data = json.loads(p.read_text(encoding="utf-8"))
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         log.warning("MCP_CLIENT_CONFIG=%s failed to parse · %r", p, e)
         return None
-
-    servers = data.get("mcpServers") or data.get("servers") or {}
-    if not isinstance(servers, dict) or not servers:
+    if not isinstance(data, dict):
+        log.warning("MCP_CLIENT_CONFIG=%s must contain a JSON object · skipping", p)
         return None
-    return servers
+
+    servers = data.get("mcpServers")
+    if servers is None or servers == {}:
+        servers = data.get("servers", {})
+    if not isinstance(servers, dict):
+        return None
+    # A saved entry wins in full, including {"disabled": true}. Never
+    # replace an explicit server URL, credentials or headers with a preset.
+    return {**presets, **servers} or None
 
 
 def _normalize(servers: dict[str, Any]) -> dict[str, dict[str, Any]]:
     """Coerce Claude-Desktop-shaped entries into adapter-shaped ones."""
     out: dict[str, dict[str, Any]] = {}
     for name, cfg in servers.items():
-        if not isinstance(cfg, dict):
+        if not isinstance(cfg, dict) or cfg.get("disabled") is True:
             continue
         if "url" in cfg:
             transport = cfg.get("transport", "streamable_http")
             entry: dict[str, Any] = {"url": cfg["url"], "transport": transport}
             if "headers" in cfg:
                 entry["headers"] = cfg["headers"]
+            for option in ("timeout", "sse_read_timeout"):
+                if option in cfg:
+                    entry[option] = cfg[option]
             out[name] = entry
         elif "command" in cfg:
             entry = {
@@ -130,24 +160,34 @@ def load_external_tools() -> list[BaseTool]:
 
     try:
         from langchain_mcp_adapters.client import MultiServerMCPClient
-    except Exception as e:  # noqa: BLE001
+        from langchain_mcp_adapters.sessions import Connection
+    except Exception as e:
         log.warning("langchain-mcp-adapters not installed · %r", e)
         _CACHED = []
         return _CACHED
 
     async def _fetch() -> list[BaseTool]:
-        # tool_name_prefix=True names tools as `<server>__<tool>` to avoid
+        # tool_name_prefix=True names tools as `<server>_<tool>` to avoid
         # collisions with our built-in tools (e.g. our `read_file` vs
         # filesystem-server's `read_file`).
-        client = MultiServerMCPClient(connections, tool_name_prefix=True)
+        client = MultiServerMCPClient(
+            cast("dict[str, Connection]", connections), tool_name_prefix=True
+        )
         tools = await client.get_tools()
         return list(tools)
 
     try:
-        tools = asyncio.run(_fetch())
+        asyncio.get_running_loop()
     except RuntimeError:
-        # If we're already inside an event loop (e.g. test harness),
-        # create a fresh thread with its own loop.
+        in_event_loop = False
+    else:
+        in_event_loop = True
+
+    def _resolve() -> list[BaseTool]:
+        if not in_event_loop:
+            return asyncio.run(_fetch())
+        # Import-time loading may run inside the application's event loop.
+        # Detect that before creating a coroutine, so none is left unawaited.
         import threading
 
         result: dict[str, Any] = {}
@@ -155,18 +195,19 @@ def load_external_tools() -> list[BaseTool]:
         def _runner() -> None:
             try:
                 result["tools"] = asyncio.run(_fetch())
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 result["error"] = e
 
         t = threading.Thread(target=_runner)
         t.start()
         t.join(timeout=30)
         if "error" in result:
-            log.warning("MCP client fetch failed · %r", result["error"])
-            _CACHED = []
-            return _CACHED
-        tools = result.get("tools", [])
-    except Exception as e:  # noqa: BLE001
+            raise result["error"]
+        return result.get("tools", [])
+
+    try:
+        tools = _resolve()
+    except Exception as e:
         log.warning("MCP client fetch failed · %r", e)
         _CACHED = []
         return _CACHED

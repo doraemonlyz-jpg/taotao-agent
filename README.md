@@ -327,6 +327,29 @@ curl -s -X POST http://127.0.0.1:8000/mcp/ \
 
 Full manual: [docs/mcp.html](docs/mcp.html) (协议 + 双向实现 + 5 道面试题).
 
+#### Optional Parallel search and page fetching
+
+Set `MCP_PARALLEL_SEARCH_ENABLED=1` in `backend/.env` and restart the server
+or CLI to add [Parallel Search MCP](https://docs.parallel.ai/integrations/mcp/search-mcp)
+to both the graph and harness tool registries. No Parallel account or API key
+is needed; anonymous search uses Fast mode and has free-tier limits.
+
+The agent can call `mcp__parallel_web_search` with `objective` and
+`search_queries`, then `mcp__parallel_web_fetch` with the source `urls`.
+These tools pass through `safe_run_tool` (timeout, cache, truncation,
+permissions and hooks). The existing `mcp__*` policy asks before execution;
+use your usual permission controls to allow or deny them. For example, after
+allowing the tools, ask the agent to find current Python release notes and
+read the source page before answering with citations.
+
+The built-in `web_search` keeps its DuckDuckGo/Tavily selection. Set the flag
+to `0` and restart to remove the preset. Existing `MCP_CLIENT_CONFIG` servers
+are retained; an explicit `mcp__parallel` entry overrides the preset in full
+(including its URL and headers), and `{"disabled": true}` disables it. A missing
+or malformed explicit config keeps external tools disabled. Preset requests
+use a 10-second connection timeout and 15-second read timeout; failures surface
+through the normal tool error path without switching providers.
+
 ### Eval
 
 ```bash
